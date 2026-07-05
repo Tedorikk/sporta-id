@@ -78,7 +78,7 @@ export default function ShowEvent({ event }: { event: Event }) {
                                 src={formatImageUrl(event.banner)}
                                 alt={`${event.name} cover`}
                                 /* Changed aspect-video to aspect-[4/5] to lock the 4:5 Instagram ratio */
-                                className="aspect-[4/5] w-full object-cover transition-transform duration-500 hover:scale-[1.01]"
+                                className="aspect-4/5 w-full object-cover transition-transform duration-500 hover:scale-[1.01]"
                             />
                         </section>
                     )}
