@@ -2,16 +2,94 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Event;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class EventController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $events = Event::all();
-        return Inertia::render('dashboard/events/index', ['events' => $events]);
+        $view = $request->input('view', 'grid');
+
+        $filters = $request->only(['search', 'category', 'status']);
+
+        $base = Event::query()
+            ->search($filters['search'] ?? null)
+            ->category($filters['category'] ?? null)
+            ->status($filters['status'] ?? null);
+
+        $categories = Event::query()
+            ->whereNotNull('category')
+            ->distinct()
+            ->orderBy('category')
+            ->pluck('category');
+
+        $stats = $this->computeStats(clone $base);
+
+        if ($view === 'calendar') {
+            $month = $request->input('month', now()->format('Y-m'));
+            $start = Carbon::parse($month . '-01')->startOfMonth();
+            $end = $start->copy()->endOfMonth();
+
+            $events = (clone $base)
+                ->where(function ($q) use ($start, $end) {
+                    $q->whereBetween('start_date', [$start, $end])
+                        ->orWhereBetween('end_date', [$start, $end])
+                        ->orWhere(function ($q2) use ($start, $end) {
+                            $q2->where('start_date', '<=', $start)
+                               ->where('end_date', '>=', $end);
+                        });
+                })
+                ->orderBy('start_date')
+                ->get();
+
+            return Inertia::render('dashboard/events/index', [
+                'view' => 'calendar',
+                'month' => $start->format('Y-m'),
+                'events' => $events,
+                'filters' => $filters,
+                'categories' => $categories,
+                'stats' => $stats,
+            ]);
+        }
+
+        $events = (clone $base)
+            ->orderBy('start_date', 'desc')
+            ->paginate(9)
+            ->withQueryString();
+
+        return Inertia::render('dashboard/events/index', [
+            'view' => 'grid',
+            'events' => $events,
+            'filters' => $filters,
+            'categories' => $categories,
+            'stats' => $stats,
+        ]);
+    }
+
+    private function computeStats($query): array
+    {
+        $today = now()->startOfDay();
+
+        // clone once per branch so each count query doesn't leak into the next
+        $total = (clone $query)->count();
+        $published = (clone $query)->where('is_published', true)->count();
+        $upcoming = (clone $query)->where('start_date', '>', $today)->count();
+        $ongoing = (clone $query)
+            ->where('start_date', '<=', $today)
+            ->where('end_date', '>=', $today)
+            ->count();
+        $past = (clone $query)->where('end_date', '<', $today)->count();
+
+        return [
+            'total' => $total,
+            'published' => $published,
+            'upcoming' => $upcoming,
+            'ongoing' => $ongoing,
+            'past' => $past,
+        ];
     }
 
     public function show(Event $event)
@@ -28,30 +106,16 @@ class EventController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'min:5', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'contact_person' => ['required', 'string', 'regex:/^\+[1-9]\d{1,14}$/'],
-            'category' => ['required', 'string'],
-            'is_published' => ['required', 'boolean'],
-            'start_date' => ['required', 'date'],
-            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
-            'banner' => ['nullable', 'url'],
-        ], [
-            'contact_person.regex' => 'Invalid E.164 format',
-            'end_date.after_or_equal' => 'End date must be on or after the start date',
-        ]);
+        $validated = $this->validated($request);
 
-        $event = Event::create($validated);
+        Event::create($validated);
 
         return redirect()
             ->route('events.index')
-            ->with([
-                'toast' => [
-                    'title' => 'Success',
-                    'description' => 'Event created successfully.',
-                ],
-            ]);
+            ->with(['toast' => [
+                'title' => 'Success',
+                'description' => 'Event created successfully.',
+            ]]);
     }
 
     public function edit(Event $event)
@@ -63,7 +127,33 @@ class EventController extends Controller
 
     public function update(Request $request, Event $event)
     {
-        $validated = $request->validate([
+        $validated = $this->validated($request);
+
+        $event->update($validated);
+
+        return redirect()
+            ->route('events.show', $event)
+            ->with(['toast' => [
+                'title' => 'Success',
+                'description' => 'Event updated successfully.',
+            ]]);
+    }
+
+    public function destroy(Event $event)
+    {
+        $event->delete();
+
+        return redirect()
+            ->route('events.index')
+            ->with(['toast' => [
+                'title' => 'Success',
+                'description' => 'Event deleted successfully.',
+            ]]);
+    }
+
+    private function validated(Request $request): array
+    {
+        return $request->validate([
             'name' => ['required', 'string', 'min:5', 'max:255'],
             'description' => ['nullable', 'string'],
             'contact_person' => ['required', 'string', 'regex:/^\+[1-9]\d{1,14}$/'],
@@ -76,30 +166,5 @@ class EventController extends Controller
             'contact_person.regex' => 'Invalid E.164 format',
             'end_date.after_or_equal' => 'End date must be on or after the start date',
         ]);
-
-        $event->update($validated);
-
-        return redirect()
-            ->route('events.show', $event)
-            ->with([
-                'toast' => [
-                    'title' => 'Success',
-                    'description' => 'Event updated successfully.',
-                ],
-            ]);
-    }
-
-    public function destroy(Event $event)
-    {
-        $event->delete();
-
-        return redirect()
-            ->route('events.index')
-            ->with([
-                'toast' => [
-                    'title' => 'Success',
-                    'description' => 'Event deleted successfully.',
-                ],
-            ]);
     }
 }

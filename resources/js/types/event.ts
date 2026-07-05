@@ -1,15 +1,39 @@
-export type Event = {
+export type EventStatus = 'upcoming' | 'ongoing' | 'past';
+
+export interface Event {
     id: number;
     name: string;
-    description?: string | null;
-    contact_person?: string | null;
-    category?: string | null;
-    is_published?: boolean | false;
-    start_date?: string | null;
-    end_date?: string | null;
-    banner?: string | null;
-    created_at: string;
-    updated_at: string;
-};
+    description: string | null;
+    contact_person: string;
+    category: string;
+    is_published: boolean;
+    start_date: string;
+    end_date: string;
+    banner: string | null;
+    status: EventStatus;
+}
 
-export const EVENT_CATEGORIES = [{ value: 'BASKETBALL', label: 'Basketball' }];
+export interface PaginatedEvents {
+    data: Event[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+    links: { url: string | null; label: string; active: boolean }[];
+}
+
+export interface EventFilters {
+    search?: string;
+    category?: string;
+    status?: string;
+}
+
+export interface EventStats {
+    total: number;
+    published: number;
+    upcoming: number;
+    ongoing: number;
+    past: number;
+}
