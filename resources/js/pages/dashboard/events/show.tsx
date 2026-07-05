@@ -77,11 +77,15 @@ export default function ShowEvent({ event }: { event: Event }) {
                             <img
                                 src={formatImageUrl(event.banner)}
                                 alt={`${event.name} cover`}
-                                className="aspect-video w-full object-cover transition-transform duration-500 hover:scale-[1.01]"
+                                /* Changed aspect-video to aspect-[4/5] to lock the 4:5 Instagram ratio */
+                                className="aspect-[4/5] w-full object-cover transition-transform duration-500 hover:scale-[1.01]"
                             />
                         </section>
                     )}
+                </div>
 
+                {/* Right Column (Sidebar Sticky Metadata) */}
+                <div className="flex flex-col gap-6 lg:col-span-1">
                     <section
                         id="details"
                         className="flex flex-col gap-4 rounded-xl border bg-card p-6 shadow-sm md:p-8"
@@ -97,11 +101,6 @@ export default function ShowEvent({ event }: { event: Event }) {
                             )}
                         </div>
                     </section>
-                </div>
-
-                {/* Right Column (Sidebar Sticky Metadata) */}
-                {/* Right Column (Sidebar Sticky Metadata) */}
-                <div className="flex flex-col gap-6 lg:col-span-1">
                     <div className="sticky top-6 flex flex-col gap-6 rounded-xl border bg-card shadow-sm">
                         <div className="border-b p-6 pb-4">
                             <h3 className="font-semibold tracking-tight">
