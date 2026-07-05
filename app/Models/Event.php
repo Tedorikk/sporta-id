@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Event extends Model
 {
@@ -71,5 +73,27 @@ class Event extends Model
                 default => null,
             };
         });
+    }
+
+    // Relasi Polymorphic
+    public function specific(): MorphTo
+    {
+        return $this->morphTo(__FUNCTION__, 'eventable_type', 'eventable_id');
+    }
+
+    // Relasi ke Modul Turnamen
+    public function teams(): HasMany
+    {
+        return $this->hasMany(Team::class);
+    }
+
+    public function pools(): HasMany
+    {
+        return $this->hasMany(Pool::class);
+    }
+
+    public function matches(): HasMany
+    {
+        return $this->hasMany(GameMatch::class);
     }
 }
