@@ -1,8 +1,14 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ChevronLeft, Pencil, Plus, Trash2, UserPlus } from 'lucide-react';
+import { format } from 'date-fns';
+import { ChevronLeft, Mail, Pencil, Phone, Plus, Trash2, UserPlus } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    HoverCard,
+    HoverCardContent,
+    HoverCardTrigger,
+} from '@/components/ui/hover-card';
 import {
     Table,
     TableBody,
@@ -17,10 +23,7 @@ import type { Player } from '@/types/player';
 import type { Team } from '@/types/team';
 import { PlayerFormDialog } from './components/player-form-dialog';
 
-const STATUS_BADGE: Record<
-    Team['status'],
-    { label: string; className: string }
-> = {
+const STATUS_BADGE: Record<Team['status'], { label: string; className: string }> = {
     verified: {
         label: 'Verified',
         className: 'bg-emerald-500 hover:bg-emerald-600',
@@ -28,6 +31,47 @@ const STATUS_BADGE: Record<
     pending: { label: 'Pending', className: '' },
     rejected: { label: 'Rejected', className: '' },
 };
+
+function PlayerHoverContent({ player }: { player: Player }) {
+    return (
+        <div className="flex gap-3">
+            {player.photo ? (
+                <img
+                    src={player.photo}
+                    alt={player.name}
+                    className="h-20 w-16 shrink-0 rounded-md object-cover"
+                />
+            ) : (
+                <div className="flex h-20 w-16 shrink-0 items-center justify-center rounded-md bg-primary/10 text-lg font-bold text-primary">
+                    {player.name.substring(0, 2).toUpperCase()}
+                </div>
+            )}
+            <div className="flex flex-col gap-1">
+                <p className="font-semibold leading-none">{player.name}</p>
+                <p className="text-xs text-muted-foreground">
+                    #{player.jersey_number}
+                    {player.position ? ` &middot; ${player.position}` : ''}
+                </p>
+
+                <div className="mt-2 flex flex-col gap-1 text-xs text-muted-foreground">
+                    <span>
+                        {player.dob
+                            ? format(new Date(player.dob), 'PPP')
+                            : 'DOB not set'}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                        <Phone className="h-3 w-3" />
+                        {player.phone_number ?? '-'}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                        <Mail className="h-3 w-3" />
+                        {player.email ?? '-'}
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 export default function ShowTeam({
     event,
@@ -162,67 +206,87 @@ export default function ShowTeam({
                                 </TableRow>
                             ) : (
                                 players.map((player) => (
-                                    <TableRow key={player.id}>
-                                        <TableCell className="font-bold italic text-xl">
-                                            {player.jersey_number}
-                                        </TableCell>
-                                        <TableCell className="font-medium">
-                                            {player.name}
-                                        </TableCell>
-                                        <TableCell>
-                                            {player.position ?? (
-                                                <span className="text-muted-foreground">
-                                                    -
-                                                </span>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex justify-end gap-2">
-                                                <PlayerFormDialog
-                                                    event={event}
-                                                    team={team}
-                                                    player={player}
-                                                    trigger={
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                        >
-                                                            <Pencil className="h-4 w-4" />
-                                                        </Button>
-                                                    }
-                                                />
-                                                <DeleteConfirmationDialog
-                                                    trigger={
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="text-destructive"
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    }
-                                                    confirmationValue={
-                                                        player.name
-                                                    }
-                                                    description={
-                                                        <>
-                                                            Ini akan menghapus
-                                                            pemain{' '}
-                                                            <span className="font-semibold">
-                                                                {player.name}
-                                                            </span>{' '}
-                                                            secara permanen.
-                                                        </>
-                                                    }
-                                                    onConfirm={() =>
-                                                        handleDeletePlayer(
-                                                            player,
-                                                        )
-                                                    }
-                                                />
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
+                                    <HoverCard
+                                        key={player.id}
+                                        openDelay={150}
+                                        closeDelay={100}
+                                    >
+                                        <HoverCardTrigger asChild>
+                                            <TableRow className="cursor-default">
+                                                <TableCell className="font-bold italic text-xl">
+                                                    {player.jersey_number}
+                                                </TableCell>
+                                                <TableCell className="font-medium">
+                                                    {player.name}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {player.position ?? (
+                                                        <span className="text-muted-foreground">
+                                                            -
+                                                        </span>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <div className="flex justify-end gap-2">
+                                                        <PlayerFormDialog
+                                                            event={event}
+                                                            team={team}
+                                                            player={player}
+                                                            trigger={
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                >
+                                                                    <Pencil className="h-4 w-4" />
+                                                                </Button>
+                                                            }
+                                                        />
+                                                        <DeleteConfirmationDialog
+                                                            trigger={
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="text-destructive"
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                            }
+                                                            confirmationValue={
+                                                                player.name
+                                                            }
+                                                            description={
+                                                                <>
+                                                                    Ini akan
+                                                                    menghapus
+                                                                    pemain{' '}
+                                                                    <span className="font-semibold">
+                                                                        {
+                                                                            player.name
+                                                                        }
+                                                                    </span>{' '}
+                                                                    secara
+                                                                    permanen.
+                                                                </>
+                                                            }
+                                                            onConfirm={() =>
+                                                                handleDeletePlayer(
+                                                                    player,
+                                                                )
+                                                            }
+                                                        />
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        </HoverCardTrigger>
+                                        <HoverCardContent
+                                            className="w-72"
+                                            align="start"
+                                        >
+                                            <PlayerHoverContent
+                                                player={player}
+                                            />
+                                        </HoverCardContent>
+                                    </HoverCard>
                                 ))
                             )}
                         </TableBody>
