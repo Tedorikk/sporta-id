@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ChevronLeft, Plus, Pencil, Trash2, Search, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { ChevronLeft, Plus, Pencil, Trash2, Search, CheckCircle, XCircle, Clock, Eye } from 'lucide-react';
 import { useState } from 'react';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { Badge } from '@/components/ui/badge';
@@ -38,7 +38,7 @@ export default function TeamsIndex({ event, teams, filters }: TeamsIndexProps) {
 
     return (
         <div className="mx-auto flex h-full w-full max-w-6xl flex-1 flex-col gap-8 overflow-x-hidden px-4 py-6 md:px-8 md:py-8">
-            <Head title={`Tim - ${event.name}`} />
+            <Head title={`Teams - ${event.name}`} />
 
             <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-start gap-4">
@@ -49,17 +49,17 @@ export default function TeamsIndex({ event, teams, filters }: TeamsIndexProps) {
                     </Button>
                     <div className="flex flex-col gap-2">
                         <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
-                            Manajemen Tim
+                            Team Management
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Kelola tim yang terdaftar di turnamen {event.name}
+                            Manage team participated in {event.name}
                         </p>
                     </div>
                 </div>
                 <Button asChild>
                     <Link href={`/dashboard/events/${event.id}/teams/create`}>
                         <Plus className="mr-2 h-4 w-4" />
-                        Tambah Tim
+                        Add New Team
                     </Link>
                 </Button>
             </section>
@@ -70,7 +70,7 @@ export default function TeamsIndex({ event, teams, filters }: TeamsIndexProps) {
                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground ml-2" />
                         <Input
                             type="search"
-                            placeholder="Cari nama tim..."
+                            placeholder="Find team by name..."
                             className="pl-10"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
@@ -82,18 +82,18 @@ export default function TeamsIndex({ event, teams, filters }: TeamsIndexProps) {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Nama Tim</TableHead>
+                                <TableHead>Team Name</TableHead>
                                 <TableHead>Manager</TableHead>
-                                <TableHead>Kontak</TableHead>
+                                <TableHead>Contact</TableHead>
                                 <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Aksi</TableHead>
+                                <TableHead className="text-right">Action</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {teams.data.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={5} className="h-24 text-center">
-                                        Tidak ada tim yang ditemukan.
+                                        No team found.
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -115,13 +115,13 @@ export default function TeamsIndex({ event, teams, filters }: TeamsIndexProps) {
                                         <TableCell>{team.manager_phone}</TableCell>
                                         <TableCell>
                                             {team.status === 'verified' && (
-                                                <Badge variant="default" className="bg-emerald-500 hover:bg-emerald-600"><CheckCircle className="mr-1 h-3 w-3" /> Terverifikasi</Badge>
+                                                <Badge variant="default" className="bg-emerald-500 hover:bg-emerald-600"><CheckCircle className="mr-1 h-3 w-3" /> Verified</Badge>
                                             )}
                                             {team.status === 'pending' && (
-                                                <Badge variant="secondary"><Clock className="mr-1 h-3 w-3" /> Menunggu</Badge>
+                                                <Badge variant="secondary"><Clock className="mr-1 h-3 w-3" /> Waiting</Badge>
                                             )}
                                             {team.status === 'rejected' && (
-                                                <Badge variant="destructive"><XCircle className="mr-1 h-3 w-3" /> Ditolak</Badge>
+                                                <Badge variant="destructive"><XCircle className="mr-1 h-3 w-3" /> Rejected</Badge>
                                             )}
                                         </TableCell>
                                         <TableCell className="text-right">
@@ -129,6 +129,11 @@ export default function TeamsIndex({ event, teams, filters }: TeamsIndexProps) {
                                                 <Button variant="ghost" size="icon" asChild>
                                                     <Link href={`/dashboard/events/${event.id}/teams/${team.id}/edit`}>
                                                         <Pencil className="h-4 w-4" />
+                                                    </Link>
+                                                </Button>
+                                                <Button variant="ghost" size="icon" asChild>
+                                                    <Link href={`/dashboard/events/${event.id}/teams/${team.id}`}>
+                                                        <Eye className="h-4 w-4" />
                                                     </Link>
                                                 </Button>
                                                 <DeleteConfirmationDialog
@@ -140,7 +145,7 @@ export default function TeamsIndex({ event, teams, filters }: TeamsIndexProps) {
                                                     confirmationValue={team.name}
                                                     description={
                                                         <>
-                                                            Ini akan menghapus tim <span className="font-semibold">{team.name}</span> secara permanen.
+                                                            This will delete the team <span className="font-semibold">{team.name}</span> permanently.
                                                         </>
                                                     }
                                                     onConfirm={() => {

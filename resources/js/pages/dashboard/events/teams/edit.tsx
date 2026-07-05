@@ -31,7 +31,7 @@ export default function EditTeam({
                     </Button>
                     <div>
                         <h1 className="scroll-m-20 text-4xl font-bold tracking-tight text-balance">
-                            Edit Tim
+                            Edit Team
                         </h1>
                         <p className="">
                             Update the details for &quot;{team.name}&quot;.
@@ -49,6 +49,6 @@ export default function EditTeam({
 EditTeam.layout = {
     breadcrumbs: [
         { title: 'Events', href: events.index() },
-        { title: 'Edit Tim', href: '#' },
+        { title: 'Edit Team', href: '#' },
     ],
 };

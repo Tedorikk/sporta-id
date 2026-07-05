@@ -47,7 +47,7 @@ class TeamController extends Controller
 
         return redirect()->route('teams.index', $event)->with(['toast' => [
             'title' => 'Success',
-            'description' => 'Tim berhasil ditambahkan.',
+            'description' => 'Team added successfully.',
         ]]);
     }
 
@@ -73,7 +73,7 @@ class TeamController extends Controller
 
         return redirect()->route('teams.index', $event)->with(['toast' => [
             'title' => 'Success',
-            'description' => 'Tim berhasil diperbarui.',
+            'description' => 'Team updated successfully.',
         ]]);
     }
 
@@ -83,7 +83,17 @@ class TeamController extends Controller
 
         return redirect()->route('teams.index', $event)->with(['toast' => [
             'title' => 'Success',
-            'description' => 'Tim berhasil dihapus.',
+            'description' => 'Team deleted successfully.',
         ]]);
+    }
+
+    public function show(Event $event, Team $team)
+    {
+        $team->load('players');
+
+        return Inertia::render('dashboard/events/teams/show', [
+            'event' => $event,
+            'team' => $team,
+        ]);
     }
 }

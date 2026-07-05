@@ -27,14 +27,14 @@ import type { Event } from '@/types/event';
 import type { Team } from '@/types/team';
 
 const TEAM_STATUSES = [
-    { value: 'pending', label: 'Menunggu' },
-    { value: 'verified', label: 'Terverifikasi' },
-    { value: 'rejected', label: 'Ditolak' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'verified', label: 'Verified' },
+    { value: 'rejected', label: 'Rejected' },
 ]
 
 const teamSchema = z.object({
-    name: z.string().min(1, 'Nama tim wajib diisi').max(255),
-    manager_name: z.string().min(1, 'Nama manager wajib diisi').max(255),
+    name: z.string().min(1, 'Team name is required').max(255),
+    manager_name: z.string().min(1, 'Manager name is required').max(255),
     manager_phone: z
         .string()
         .regex(/^\+[1-9]\d{1,14}$/, 'Invalid E.164 format'),
@@ -112,7 +112,7 @@ function FormContent({ event, team }: TeamFormProps) {
                                 className="columns-1"
                             >
                                 <FieldLabel htmlFor="logo">
-                                    Logo Tim
+                                    Team Logo
                                 </FieldLabel>
                                 <UploadImage
                                     {...field}
@@ -146,13 +146,13 @@ function FormContent({ event, team }: TeamFormProps) {
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
                                     <FieldLabel htmlFor="name">
-                                        Nama Tim
+                                        Team Name
                                     </FieldLabel>
                                     <Input
                                         {...field}
                                         id="name"
-                                        placeholder="Masukkan nama tim"
-                                        aria-label="Nama Tim"
+                                        placeholder="Input Team Name"
+                                        aria-label="Team Name"
                                         aria-invalid={fieldState.invalid}
                                         autoComplete="off"
                                         disabled={isSaving}
@@ -172,13 +172,13 @@ function FormContent({ event, team }: TeamFormProps) {
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
                                     <FieldLabel htmlFor="manager_name">
-                                        Nama Manager
+                                        Manager Name
                                     </FieldLabel>
                                     <Input
                                         {...field}
                                         id="manager_name"
-                                        placeholder="Nama penanggung jawab"
-                                        aria-label="Nama Manager"
+                                        placeholder="Input Manager Name"
+                                        aria-label="Manager Name"
                                         aria-invalid={fieldState.invalid}
                                         autoComplete="off"
                                         disabled={isSaving}
@@ -198,13 +198,13 @@ function FormContent({ event, team }: TeamFormProps) {
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
                                     <FieldLabel htmlFor="manager_phone">
-                                        Kontak Manager (WA)
+                                        Manager Contact (WA)
                                     </FieldLabel>
                                     <Input
                                         {...field}
                                         id="manager_phone"
                                         placeholder="+628123456789"
-                                        aria-label="Kontak Manager"
+                                        aria-label="Manager Contact (WA)"
                                         aria-invalid={fieldState.invalid}
                                         autoComplete="off"
                                         disabled={isSaving}
@@ -235,7 +235,7 @@ function FormContent({ event, team }: TeamFormProps) {
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
                                     <FieldLabel htmlFor="status">
-                                        Status Verifikasi
+                                        Verification Status
                                     </FieldLabel>
                                     <Select
                                         value={field.value}
@@ -244,11 +244,11 @@ function FormContent({ event, team }: TeamFormProps) {
                                     >
                                         <SelectTrigger
                                             id="status"
-                                            aria-label="Status Verifikasi"
+                                            aria-label="Select Verification Status"
                                             aria-invalid={fieldState.invalid}
                                             className="cursor-pointer"
                                         >
-                                            <SelectValue placeholder="Pilih status" />
+                                            <SelectValue placeholder="Select Status" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {TEAM_STATUSES.map((option) => (
@@ -285,7 +285,7 @@ function FormContent({ event, team }: TeamFormProps) {
                                     : 'Creating...'
                                 : isEditing
                                     ? 'Save Changes'
-                                    : 'Simpan Tim'}
+                                    : 'Create Team'}
                         </Button>
                     </FieldGroup>
                 </FieldGroup>

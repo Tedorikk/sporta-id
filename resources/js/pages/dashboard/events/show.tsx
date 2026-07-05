@@ -66,6 +66,12 @@ export default function ShowEvent({ event }: { event: Event }) {
                 </div>
             </section>
 
+            <div className="grid grid-cols-1 gap-8">
+                {event.category === 'BASKETBALL' && (
+                    <BasketballManagement key={event.id} event={event} />
+                )}
+            </div>
+
             {/* Main Content Grid */}
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
                 {/* Left Column (Main Event Content) */}
@@ -203,12 +209,6 @@ export default function ShowEvent({ event }: { event: Event }) {
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-8">
-                {event.category === 'BASKETBALL' && (
-                    <BasketballManagement key={event.id} event={event} />
-                )}
             </div>
         </div>
     );

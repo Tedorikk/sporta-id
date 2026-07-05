@@ -1,3 +1,5 @@
+import type { Player } from './player';
+
 export type TeamStatus = 'pending' | 'verified' | 'rejected';
 
 export const TEAM_STATUSES: { value: TeamStatus; label: string }[] = [
@@ -16,4 +18,5 @@ export interface Team {
     status: TeamStatus;
     created_at: string;
     updated_at: string;
+    players?: Player[];
 }
