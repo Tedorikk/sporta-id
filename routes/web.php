@@ -3,6 +3,7 @@
 use App\Http\Controllers\BasketballEventController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\ImageUploadController;
+use App\Http\Controllers\TeamController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'landing')->name('home');

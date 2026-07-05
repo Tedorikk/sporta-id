@@ -17,6 +17,8 @@ export interface Event {
     matches_count?: number;
 }
 
+export const EVENT_CATEGORIES = [{ value: 'BASKETBALL', label: 'Basketball' }];
+
 export interface PaginatedEvents {
     data: Event[];
     current_page: number;
