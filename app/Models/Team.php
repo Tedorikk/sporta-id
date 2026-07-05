@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\BasketballEventCategory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -10,7 +11,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Team extends Model
 {
     protected $fillable = [
-        'event_id', 'name', 'manager_name', 'manager_phone', 'logo', 'status',
+        'event_id', 'name', 'manager_name', 'manager_phone', 'logo', 'status', 'basketball_event_category_id',
+    ];
+
+    protected $casts = [
+        'basketball_event_category_id' => 'integer',
     ];
 
     public function event(): BelongsTo
@@ -26,5 +31,10 @@ class Team extends Model
     public function pools(): BelongsToMany
     {
         return $this->belongsToMany(Pool::class);
+    }
+
+    public function basketballEventCategory(): BelongsTo
+    {
+        return $this->belongsTo(BasketballEventCategory::class, 'basketball_event_category_id', 'id');
     }
 }

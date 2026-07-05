@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BasketballEvent;
+use App\Models\BasketballEventCategory;
 use App\Models\Event;
 use App\Models\Team;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class TeamController extends Controller
@@ -14,6 +17,7 @@ class TeamController extends Controller
         $search = $request->input('search');
 
         $teams = $event->teams()
+            ->with('basketballEventCategory')
             ->when($search, fn ($q) => $q->where('name', 'like', "%{$search}%"))
             ->latest()
             ->paginate(10)
@@ -30,18 +34,13 @@ class TeamController extends Controller
     {
         return Inertia::render('dashboard/events/teams/create', [
             'event' => $event,
+            'categories' => $this->availableCategories($event),
         ]);
     }
 
     public function store(Request $request, Event $event)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'manager_name' => ['required', 'string', 'max:255'],
-            'manager_phone' => ['required', 'string', 'max:20'],
-            'logo' => ['nullable', 'url', 'max:255'],
-            'status' => ['required', 'in:pending,verified,rejected'],
-        ]);
+        $validated = $this->validated($request, $event);
 
         $event->teams()->create($validated);
 
@@ -56,18 +55,13 @@ class TeamController extends Controller
         return Inertia::render('dashboard/events/teams/edit', [
             'event' => $event,
             'team' => $team,
+            'categories' => $this->availableCategories($event, $team),
         ]);
     }
 
     public function update(Request $request, Event $event, Team $team)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'manager_name' => ['required', 'string', 'max:255'],
-            'manager_phone' => ['required', 'string', 'max:20'],
-            'logo' => ['nullable', 'url', 'max:255'],
-            'status' => ['required', 'in:pending,verified,rejected'],
-        ]);
+        $validated = $this->validated($request, $event, $team);
 
         $team->update($validated);
 
@@ -89,11 +83,43 @@ class TeamController extends Controller
 
     public function show(Event $event, Team $team)
     {
-        $team->load('players');
+        $team->load('players', 'basketballEventCategory');
 
         return Inertia::render('dashboard/events/teams/show', [
             'event' => $event,
             'team' => $team,
+        ]);
+    }
+
+    /**
+     * Categories belonging to this event's basketball tournament that
+     * either have no team yet, or are currently assigned to $team
+     * (so editing a team doesn't lock out its own category).
+     */
+    private function availableCategories(Event $event, ?Team $team = null)
+    {
+        $event->loadMissing('specific');
+
+        if (! $event->specific instanceof BasketballEvent) {
+            return [];
+        }
+
+        return $event->specific->categories()->get();
+    }
+
+    private function validated(Request $request, Event $event, ?Team $team = null): array
+    {
+        return $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'manager_name' => ['required', 'string', 'max:255'],
+            'manager_phone' => ['required', 'string', 'max:20'],
+            'logo' => ['nullable', 'url', 'max:255'],
+            'status' => ['required', 'in:pending,verified,rejected'],
+            'basketball_event_category_id' => [
+                'nullable',
+                Rule::exists('basketball_event_categories', 'id')
+                    ->where('basketball_event_id', $event->specific?->id),
+            ],
         ]);
     }
 }

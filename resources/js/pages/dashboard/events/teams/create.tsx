@@ -4,8 +4,15 @@ import { Button } from '@/components/ui/button';
 import events from '@/routes/events';
 import type { Event } from '@/types/event';
 import TeamForm from './components/team-form';
+import type { BasketballEventCategory } from '@/types/basketball-event-category';
 
-export default function CreateTeam({ event }: { event: Event }) {
+export default function CreateTeam({
+    event,
+    categories,
+}: {
+    event: Event;
+    categories: BasketballEventCategory[];
+}) {
     return (
         <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl px-12 py-4">
             <Head title={`Create New Team - ${event.name}`} />
@@ -31,7 +38,7 @@ export default function CreateTeam({ event }: { event: Event }) {
                 </div>
             </section>
             <section id="form">
-                <TeamForm event={event} />
+                <TeamForm event={event} categories={categories} />
             </section>
         </div>
     );

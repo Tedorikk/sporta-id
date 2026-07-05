@@ -7,16 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { Event } from '@/types/event';
-
-interface Team {
-    id: number;
-    event_id: number;
-    name: string;
-    manager_name: string;
-    manager_phone: string;
-    logo: string | null;
-    status: 'pending' | 'verified' | 'rejected';
-}
+import type { Team } from '@/types/team';
 
 interface TeamsIndexProps {
     event: Event;
@@ -83,6 +74,7 @@ export default function TeamsIndex({ event, teams, filters }: TeamsIndexProps) {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Team Name</TableHead>
+                                <TableHead>Category</TableHead>
                                 <TableHead>Manager</TableHead>
                                 <TableHead>Contact</TableHead>
                                 <TableHead>Status</TableHead>
@@ -110,6 +102,10 @@ export default function TeamsIndex({ event, teams, filters }: TeamsIndexProps) {
                                                 )}
                                                 {team.name}
                                             </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            {team.basketball_event_category
+                                                ?.name ?? '-'}
                                         </TableCell>
                                         <TableCell>{team.manager_name}</TableCell>
                                         <TableCell>{team.manager_phone}</TableCell>

@@ -23,6 +23,7 @@ import {
 
 import { UploadImage } from '@/components/upload-image';
 
+import type { BasketballEventCategory } from '@/types/basketball-event-category';
 import type { Event } from '@/types/event';
 import type { Team } from '@/types/team';
 
@@ -40,6 +41,7 @@ const teamSchema = z.object({
         .regex(/^\+[1-9]\d{1,14}$/, 'Invalid E.164 format'),
     logo: z.string().url('Must be a valid URL').or(z.literal('')),
     status: z.enum(['pending', 'verified', 'rejected'] as const),
+    basketball_event_category_id: z.string().optional(),
 });
 
 type TeamFormValues = z.infer<typeof teamSchema>;
@@ -47,6 +49,7 @@ type TeamFormValues = z.infer<typeof teamSchema>;
 type TeamFormProps = {
     event: Event;
     team?: Team;
+    categories?: BasketballEventCategory[];
 };
 
 function toDefaultValues(team?: Team): TeamFormValues {
@@ -56,18 +59,19 @@ function toDefaultValues(team?: Team): TeamFormValues {
         manager_phone: team?.manager_phone ?? '',
         logo: team?.logo ?? '',
         status: (team?.status as TeamFormValues['status']) ?? 'pending',
+        basketball_event_category_id: team?.basketball_event_category_id
+            ? String(team.basketball_event_category_id)
+            : undefined,
     };
 }
 
 function formatE164Input(value: string) {
-    // Force a leading "+", strip everything else that isn't a digit,
-    // and cap at 15 digits (E.164 max length)
     const digits = value.replace(/[^\d]/g, '').slice(0, 15);
 
     return digits ? `+${digits}` : '';
 }
 
-function FormContent({ event, team }: TeamFormProps) {
+function FormContent({ event, team, categories = [] }: TeamFormProps) {
     const isEditing = Boolean(team);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -84,16 +88,22 @@ function FormContent({ event, team }: TeamFormProps) {
             onFinish: () => setIsSaving(false),
         };
 
+        const payload = {
+            ...data,
+            basketball_event_category_id:
+                data.basketball_event_category_id || null,
+        };
+
         if (isEditing && team) {
             router.put(
                 `/dashboard/events/${event.id}/teams/${team.id}`,
-                data,
+                payload,
                 options,
             );
         } else {
             router.post(
                 `/dashboard/events/${event.id}/teams`,
-                data,
+                payload,
                 options,
             );
         }
@@ -230,6 +240,48 @@ function FormContent({ event, team }: TeamFormProps) {
                         />
 
                         <Controller
+                            name="basketball_event_category_id"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <Field data-invalid={fieldState.invalid}>
+                                    <FieldLabel htmlFor="basketball_event_category_id">
+                                        Category
+                                    </FieldLabel>
+                                    <Select
+                                        value={field.value}
+                                        onValueChange={field.onChange}
+                                        disabled={isSaving}
+                                    >
+                                        <SelectTrigger
+                                            id="basketball_event_category_id"
+                                            aria-label="Select Category"
+                                            aria-invalid={fieldState.invalid}
+                                            className="cursor-pointer"
+                                        >
+                                            <SelectValue placeholder="Select Category (optional)" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {categories.map((category) => (
+                                                <SelectItem
+                                                    key={category.id}
+                                                    value={String(category.id)}
+                                                    className="cursor-pointer"
+                                                >
+                                                    {category.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {fieldState.invalid && (
+                                        <FieldError
+                                            errors={[fieldState.error]}
+                                        />
+                                    )}
+                                </Field>
+                            )}
+                        />
+
+                        <Controller
                             name="status"
                             control={control}
                             render={({ field, fieldState }) => (
@@ -294,6 +346,8 @@ function FormContent({ event, team }: TeamFormProps) {
     );
 }
 
-export default function TeamForm({ event, team }: TeamFormProps) {
-    return <FormContent event={event} team={team} />;
+export default function TeamForm({ event, team, categories }: TeamFormProps) {
+    return (
+        <FormContent event={event} team={team} categories={categories} />
+    );
 }

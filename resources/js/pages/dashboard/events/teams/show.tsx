@@ -76,6 +76,14 @@ export default function ShowTeam({
                             <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
                                 {team.name}
                             </h1>
+                            {team.basketball_event_category && (
+                                <Badge
+                                    variant="secondary"
+                                    className="rounded-full px-3 py-1"
+                                >
+                                    {team.basketball_event_category.name}
+                                </Badge>
+                            )}
                             <Badge
                                 variant={
                                     team.status === 'verified'

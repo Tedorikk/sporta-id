@@ -5,13 +5,16 @@ import events from '@/routes/events';
 import type { Event } from '@/types/event';
 import type { Team } from '@/types/team';
 import TeamForm from './components/team-form';
+import type { BasketballEventCategory } from '@/types/basketball-event-category';
 
 export default function EditTeam({
     event,
     team,
+    categories,
 }: {
     event: Event;
     team: Team;
+    categories: BasketballEventCategory[];
 }) {
     return (
         <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl px-12 py-4">
@@ -40,7 +43,11 @@ export default function EditTeam({
                 </div>
             </section>
             <section id="form">
-                <TeamForm event={event} team={team} />
+                <TeamForm
+                    event={event}
+                    team={team}
+                    categories={categories}
+                />
             </section>
         </div>
     );
