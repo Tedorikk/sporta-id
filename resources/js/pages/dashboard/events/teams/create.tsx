@@ -11,7 +11,11 @@ export default function CreateTeam({ event }: { event: Event }) {
             <Head title={`Tambah Tim - ${event.name}`} />
             <section id="title">
                 <div className="flex w-full flex-row items-center justify-start gap-4">
-                    <Button variant={'outline'} className="m-0 h-10 w-10 p-0">
+                    <Button
+                        variant={'outline'}
+                        className="m-0 h-10 w-10 p-0"
+                        asChild
+                    >
                         <Link href={`/dashboard/events/${event.id}/teams`}>
                             <ChevronLeft />
                         </Link>

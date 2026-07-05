@@ -2,12 +2,20 @@ import { Head, Link } from '@inertiajs/react';
 import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import events from '@/routes/events';
-import EventForm from './components/event-form';
+import type { Event } from '@/types/event';
+import type { Team } from '@/types/team';
+import TeamForm from './components/team-form';
 
-export default function CreateEvent() {
+export default function EditTeam({
+    event,
+    team,
+}: {
+    event: Event;
+    team: Team;
+}) {
     return (
         <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl px-12 py-4">
-            <Head title="Create Event" />
+            <Head title={`Edit ${team.name}`} />
             <section id="title">
                 <div className="flex w-full flex-row items-center justify-start gap-4">
                     <Button
@@ -15,36 +23,32 @@ export default function CreateEvent() {
                         className="m-0 h-10 w-10 p-0"
                         asChild
                     >
-                        <Link href="/dashboard/events">
+                        <Link
+                            href={`/dashboard/events/${event.id}/teams/${team.id}`}
+                        >
                             <ChevronLeft />
                         </Link>
                     </Button>
                     <div>
                         <h1 className="scroll-m-20 text-4xl font-bold tracking-tight text-balance">
-                            Create New Event
+                            Edit Tim
                         </h1>
                         <p className="">
-                            Fill out the form below to create a new event.
+                            Update the details for &quot;{team.name}&quot;.
                         </p>
                     </div>
                 </div>
             </section>
             <section id="form">
-                <EventForm />
+                <TeamForm event={event} team={team} />
             </section>
         </div>
     );
 }
 
-CreateEvent.layout = {
+EditTeam.layout = {
     breadcrumbs: [
-        {
-            title: 'Events',
-            href: events.index(),
-        },
-        {
-            title: 'Create Event',
-            href: events.create(),
-        },
+        { title: 'Events', href: events.index() },
+        { title: 'Edit Tim', href: '#' },
     ],
 };
