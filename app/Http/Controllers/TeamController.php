@@ -14,11 +14,13 @@ class TeamController extends Controller
 {
     public function index(Request $request, Event $event)
     {
-        $search = $request->input('search');
+        $filters = $request->only(['search', 'category', 'status']);
 
         $teams = $event->teams()
             ->with('basketballEventCategory')
-            ->when($search, fn ($q) => $q->where('name', 'like', "%{$search}%"))
+            ->when($filters['search'] ?? null, fn ($q, $search) => $q->where('name', 'like', "%{$search}%"))
+            ->when($filters['category'] ?? null, fn ($q, $categoryId) => $q->where('basketball_event_category_id', $categoryId))
+            ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('status', $status))
             ->latest()
             ->paginate(10)
             ->withQueryString();
@@ -26,7 +28,8 @@ class TeamController extends Controller
         return Inertia::render('dashboard/events/teams/index', [
             'event' => $event,
             'teams' => $teams,
-            'filters' => $request->only(['search']),
+            'filters' => $filters,
+            'categories' => $this->availableCategories($event),
         ]);
     }
 

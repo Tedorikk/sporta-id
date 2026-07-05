@@ -5,8 +5,17 @@ import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialo
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import type { BasketballEventCategory } from '@/types/basketball-event-category';
 import type { Event } from '@/types/event';
+import { TEAM_STATUSES } from '@/types/team';
 import type { Team } from '@/types/team';
 
 interface TeamsIndexProps {
@@ -15,16 +24,26 @@ interface TeamsIndexProps {
         data: Team[];
         links: { url: string | null; label: string; active: boolean }[];
     };
-    filters: { search?: string };
+    filters: { search?: string; category?: string; status?: string };
+    categories: BasketballEventCategory[];
 }
 
-export default function TeamsIndex({ event, teams, filters }: TeamsIndexProps) {
+const ALL_VALUE = 'all';
+
+export default function TeamsIndex({ event, teams, filters, categories }: TeamsIndexProps) {
     const [search, setSearch] = useState(filters.search || '');
-    const [deletingTeam, setDeletingTeam] = useState<Team | null>(null);
+
+    const applyFilters = (next: Partial<TeamsIndexProps['filters']>) => {
+        router.get(
+            `/dashboard/events/${event.id}/teams`,
+            { ...filters, ...next, search },
+            { preserveState: true, preserveScroll: true },
+        );
+    };
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get(`/dashboard/events/${event.id}/teams`, { search }, { preserveState: true });
+        applyFilters({ search });
     };
 
     return (
@@ -56,7 +75,7 @@ export default function TeamsIndex({ event, teams, filters }: TeamsIndexProps) {
             </section>
 
             <section className="flex flex-col gap-4 rounded-xl border bg-card p-6 shadow-sm">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <form onSubmit={handleSearch} className="relative w-full max-w-sm">
                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground ml-2" />
                         <Input
@@ -67,6 +86,58 @@ export default function TeamsIndex({ event, teams, filters }: TeamsIndexProps) {
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </form>
+
+                    <div className="flex gap-2">
+                        <Select
+                            value={filters.category || ALL_VALUE}
+                            onValueChange={(value) =>
+                                applyFilters({ category: value === ALL_VALUE ? undefined : value })
+                            }
+                        >
+                            <SelectTrigger className="w-[180px] cursor-pointer">
+                                <SelectValue placeholder="All Categories" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={ALL_VALUE} className="cursor-pointer">
+                                    All Categories
+                                </SelectItem>
+                                {categories.map((category) => (
+                                    <SelectItem
+                                        key={category.id}
+                                        value={String(category.id)}
+                                        className="cursor-pointer"
+                                    >
+                                        {category.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+
+                        <Select
+                            value={filters.status || ALL_VALUE}
+                            onValueChange={(value) =>
+                                applyFilters({ status: value === ALL_VALUE ? undefined : value })
+                            }
+                        >
+                            <SelectTrigger className="w-[160px] cursor-pointer">
+                                <SelectValue placeholder="All Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={ALL_VALUE} className="cursor-pointer">
+                                    All Status
+                                </SelectItem>
+                                {TEAM_STATUSES.map((option) => (
+                                    <SelectItem
+                                        key={option.value}
+                                        value={option.value}
+                                        className="cursor-pointer"
+                                    >
+                                        {option.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
 
                 <div className="rounded-md border">
@@ -84,7 +155,7 @@ export default function TeamsIndex({ event, teams, filters }: TeamsIndexProps) {
                         <TableBody>
                             {teams.data.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="h-24 text-center">
+                                    <TableCell colSpan={6} className="h-24 text-center">
                                         No team found.
                                     </TableCell>
                                 </TableRow>
@@ -104,8 +175,7 @@ export default function TeamsIndex({ event, teams, filters }: TeamsIndexProps) {
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            {team.basketball_event_category
-                                                ?.name ?? '-'}
+                                            {team.basketball_event_category?.name ?? '-'}
                                         </TableCell>
                                         <TableCell>{team.manager_name}</TableCell>
                                         <TableCell>{team.manager_phone}</TableCell>
@@ -145,7 +215,6 @@ export default function TeamsIndex({ event, teams, filters }: TeamsIndexProps) {
                                                         </>
                                                     }
                                                     onConfirm={() => {
-                                                        setDeletingTeam(team);
                                                         router.delete(`/dashboard/events/${event.id}/teams/${team.id}`);
                                                     }}
                                                 />

@@ -4,9 +4,9 @@ import type { Player } from './player';
 export type TeamStatus = 'pending' | 'verified' | 'rejected';
 
 export const TEAM_STATUSES: { value: TeamStatus; label: string }[] = [
-    { value: 'pending', label: 'Menunggu' },
-    { value: 'verified', label: 'Terverifikasi' },
-    { value: 'rejected', label: 'Ditolak' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'verified', label: 'Verified' },
+    { value: 'rejected', label: 'Rejected' },
 ];
 
 export interface Team {
