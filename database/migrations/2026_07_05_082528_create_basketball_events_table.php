@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('basketball_events', function (Blueprint $table) {
             $table->id();
-            $table->unsignedInteger('max_players_per_team')->default(15);
             $table->dateTime('pool_drawing_date')->nullable();
             $table->timestamps();
         });

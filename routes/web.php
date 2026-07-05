@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BasketballEventController;
+use App\Http\Controllers\BasketballEventCategoryController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\GameMatchController;
 use App\Http\Controllers\ImageUploadController;
@@ -39,6 +40,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             Route::resource('teams.players', PlayerController::class)
                 ->names('players')
+                ->except(['index', 'create', 'edit', 'show']);
+
+            Route::resource('basketball-categories', BasketballEventCategoryController::class)
+                ->parameters(['basketball-categories' => 'category'])
+                ->names('basketball_categories')
                 ->except(['index', 'create', 'edit', 'show']);
         });
     });

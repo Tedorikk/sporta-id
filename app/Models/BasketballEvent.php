@@ -3,12 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class BasketballEvent extends Model
 {
     protected $fillable = [
-        'max_players_per_team',
         'pool_drawing_date',
     ];
 
@@ -16,8 +16,15 @@ class BasketballEvent extends Model
         'pool_drawing_date' => 'datetime',
     ];
 
+    public function categories()
+    {
+        return $this->hasMany(BasketballEventCategory::class);
+    }
+
     public function event(): MorphOne
     {
         return $this->morphOne(Event::class, 'specific');
     }
+
+    
 }
