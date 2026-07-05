@@ -19,11 +19,6 @@ class BasketballEventController extends Controller
             ]]);
         }
 
-        $basketballEvent = BasketballEvent::create([
-            // default values for max_players_per_team if needed
-            'max_players_per_team' => 12, // example default
-        ]);
-
         $event->specific()->associate($basketballEvent);
         $event->save();
 

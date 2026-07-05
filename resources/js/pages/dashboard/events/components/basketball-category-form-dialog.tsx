@@ -32,9 +32,9 @@ import type { BasketballEventCategory } from '@/types/basketball-event-category'
 import type { Event } from '@/types/event';
 
 const CATEGORY_STATUSES = [
-    { value: 'PENDING', label: 'Menunggu' },
-    { value: 'OPEN', label: 'Dibuka' },
-    { value: 'CLOSED', label: 'Ditutup' },
+    { value: 'PENDING', label: 'Pending' },
+    { value: 'OPEN', label: 'Open' },
+    { value: 'CLOSED', label: 'Closed' },
 ];
 
 const digitsOnly = /^\d+$/;
@@ -46,8 +46,8 @@ const digitsOnly = /^\d+$/;
 function requiredIntField(min: number, minMessage: string) {
     return z
         .string()
-        .min(1, 'Wajib diisi')
-        .refine((v) => digitsOnly.test(v), 'Harus berupa angka')
+        .min(1, 'Required')
+        .refine((v) => digitsOnly.test(v), 'Must be a number')
         .transform((v) => Number(v))
         .refine((v) => v >= min, minMessage);
 }
@@ -56,11 +56,11 @@ function requiredIntField(min: number, minMessage: string) {
 function optionalIntField(min?: number) {
     return z
         .string()
-        .refine((v) => v === '' || digitsOnly.test(v), 'Harus berupa angka')
+        .refine((v) => v === '' || digitsOnly.test(v), 'Must be a number')
         .transform((v) => (v === '' ? null : Number(v)))
         .refine(
             (v) => v === null || min === undefined || v >= min,
-            min !== undefined ? `Minimal ${min}` : undefined,
+            min !== undefined ? `Minimum ${min}` : undefined,
         );
 }
 
@@ -70,18 +70,18 @@ function optionalDecimalField() {
         .string()
         .refine(
             (v) => v === '' || !Number.isNaN(Number(v)),
-            'Harus berupa angka',
+            'Must be a number',
         )
         .transform((v) => (v === '' ? null : Number(v)))
-        .refine((v) => v === null || v >= 0, 'Tidak boleh negatif');
+        .refine((v) => v === null || v >= 0, 'Cannot be negative');
 }
 
 const categorySchema = z
     .object({
-        name: z.string().min(1, 'Nama kategori wajib diisi').max(255),
-        min_team: requiredIntField(2, 'Minimal 2 tim'),
+        name: z.string().min(1, 'Category name is required').max(255),
+        min_team: requiredIntField(2, 'Minimum 2 teams'),
         max_team: optionalIntField(2),
-        min_player_per_team: requiredIntField(1, 'Minimal 1 pemain'),
+        min_player_per_team: requiredIntField(1, 'Minimum 1 player'),
         max_player_per_team: optionalIntField(1),
         max_player_per_coach: optionalIntField(1),
         price: optionalDecimalField(),
@@ -91,7 +91,7 @@ const categorySchema = z
     .refine(
         (data) => data.max_team === null || data.max_team >= data.min_team,
         {
-            message: 'Maks. tim harus ≥ min. tim',
+            message: 'Max teams must be ≥ min teams',
             path: ['max_team'],
         },
     )
@@ -100,7 +100,7 @@ const categorySchema = z
             data.max_player_per_team === null ||
             data.max_player_per_team >= data.min_player_per_team,
         {
-            message: 'Maks. pemain harus ≥ min. pemain',
+            message: 'Max players must be ≥ min players',
             path: ['max_player_per_team'],
         },
     );
@@ -195,12 +195,12 @@ export function BasketballCategoryFormDialog({
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <DialogHeader>
                         <DialogTitle>
-                            {isEditing ? 'Edit Kategori' : 'Tambah Kategori'}
+                            {isEditing ? 'Edit Category' : 'Add Category'}
                         </DialogTitle>
                         <DialogDescription>
                             {isEditing
-                                ? `Perbarui detail kategori "${category?.name}".`
-                                : `Buat kategori baru untuk turnamen ${event.name}.`}
+                                ? `Update the details of the category "${category?.name}".`
+                                : `Create a new category for the ${event.name} tournament.`}
                         </DialogDescription>
                     </DialogHeader>
 
@@ -211,12 +211,12 @@ export function BasketballCategoryFormDialog({
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
                                     <FieldLabel htmlFor="category_name">
-                                        Nama Kategori
+                                        Category Name
                                     </FieldLabel>
                                     <Input
                                         {...field}
                                         id="category_name"
-                                        placeholder="Contoh: U-12 Putra"
+                                        placeholder="Example: U-12 Boys"
                                         aria-invalid={fieldState.invalid}
                                         autoComplete="off"
                                         disabled={isSaving}
@@ -237,7 +237,7 @@ export function BasketballCategoryFormDialog({
                                 render={({ field, fieldState }) => (
                                     <Field data-invalid={fieldState.invalid}>
                                         <FieldLabel htmlFor="min_team">
-                                            Min. Tim
+                                            Min. Teams
                                         </FieldLabel>
                                         <Input
                                             {...field}
@@ -260,9 +260,9 @@ export function BasketballCategoryFormDialog({
                                 render={({ field, fieldState }) => (
                                     <Field data-invalid={fieldState.invalid}>
                                         <FieldLabel htmlFor="max_team">
-                                            Maks. Tim{' '}
+                                            Max. Teams{' '}
                                             <span className="font-normal text-muted-foreground">
-                                                (Opsional)
+                                                (Optional)
                                             </span>
                                         </FieldLabel>
                                         <Input
@@ -289,7 +289,7 @@ export function BasketballCategoryFormDialog({
                                 render={({ field, fieldState }) => (
                                     <Field data-invalid={fieldState.invalid}>
                                         <FieldLabel htmlFor="min_player_per_team">
-                                            Min. Pemain/Tim
+                                            Min. Players/Team
                                         </FieldLabel>
                                         <Input
                                             {...field}
@@ -312,9 +312,9 @@ export function BasketballCategoryFormDialog({
                                 render={({ field, fieldState }) => (
                                     <Field data-invalid={fieldState.invalid}>
                                         <FieldLabel htmlFor="max_player_per_team">
-                                            Maks. Pemain/Tim{' '}
+                                            Max. Players/Team{' '}
                                             <span className="font-normal text-muted-foreground">
-                                                (Opsional)
+                                                (Optional)
                                             </span>
                                         </FieldLabel>
                                         <Input
@@ -341,9 +341,9 @@ export function BasketballCategoryFormDialog({
                                 render={({ field, fieldState }) => (
                                     <Field data-invalid={fieldState.invalid}>
                                         <FieldLabel htmlFor="max_player_per_coach">
-                                            Maks. Pemain/Pelatih{' '}
+                                            Max. Players/Coach{' '}
                                             <span className="font-normal text-muted-foreground">
-                                                (Opsional)
+                                                (Optional)
                                             </span>
                                         </FieldLabel>
                                         <Input
@@ -367,9 +367,9 @@ export function BasketballCategoryFormDialog({
                                 render={({ field, fieldState }) => (
                                     <Field data-invalid={fieldState.invalid}>
                                         <FieldLabel htmlFor="quota">
-                                            Kuota{' '}
+                                            Quota{' '}
                                             <span className="font-normal text-muted-foreground">
-                                                (Opsional)
+                                                (Optional)
                                             </span>
                                         </FieldLabel>
                                         <Input
@@ -396,9 +396,9 @@ export function BasketballCategoryFormDialog({
                                 render={({ field, fieldState }) => (
                                     <Field data-invalid={fieldState.invalid}>
                                         <FieldLabel htmlFor="price">
-                                            Harga (Rp){' '}
+                                            Price (Rp){' '}
                                             <span className="font-normal text-muted-foreground">
-                                                (Opsional)
+                                                (Optional)
                                             </span>
                                         </FieldLabel>
                                         <Input
@@ -473,10 +473,10 @@ export function BasketballCategoryFormDialog({
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             )}
                             {isSaving
-                                ? 'Menyimpan...'
+                                ? 'Saving...'
                                 : isEditing
-                                    ? 'Simpan Perubahan'
-                                    : 'Tambah Kategori'}
+                                    ? 'Save Changes'
+                                    : 'Add Category'}
                         </Button>
                     </DialogFooter>
                 </form>

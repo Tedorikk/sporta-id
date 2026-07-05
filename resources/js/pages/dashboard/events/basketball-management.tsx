@@ -7,7 +7,9 @@ import {
     Pencil,
     Trash2,
     Tag,
+    Icon
 } from 'lucide-react';
+import { basketball } from '@lucide/lab';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -33,7 +35,7 @@ export function BasketballManagement({
             {event.specific_type === 'BasketballEvent' ? (
                 <>
                     <h2 className="border-b pb-4 text-xl font-semibold tracking-tight">
-                        Manajemen Turnamen Basket
+                        Basketball Tournament Management
                     </h2>
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -42,9 +44,9 @@ export function BasketballManagement({
                             className="flex flex-col gap-2 rounded-lg border p-4 transition hover:bg-muted"
                         >
                             <Users className="h-5 w-5 text-primary" />
-                            <span className="font-medium">Tim</span>
+                            <span className="font-medium">Teams</span>
                             <span className="text-sm text-muted-foreground">
-                                {event.teams_count ?? 0} tim terdaftar
+                                {event.teams_count ?? 0} registered teams
                             </span>
                         </Link>
 
@@ -53,9 +55,9 @@ export function BasketballManagement({
                             className="flex flex-col gap-2 rounded-lg border p-4 transition hover:bg-muted"
                         >
                             <LayoutGrid className="h-5 w-5 text-primary" />
-                            <span className="font-medium">Pool</span>
+                            <span className="font-medium">Pools</span>
                             <span className="text-sm text-muted-foreground">
-                                {event.pools_count ?? 0} pool dibuat
+                                {event.pools_count ?? 0} pools created
                             </span>
                         </Link>
 
@@ -64,9 +66,9 @@ export function BasketballManagement({
                             className="flex flex-col gap-2 rounded-lg border p-4 transition hover:bg-muted"
                         >
                             <Swords className="h-5 w-5 text-primary" />
-                            <span className="font-medium">Pertandingan</span>
+                            <span className="font-medium">Matches</span>
                             <span className="text-sm text-muted-foreground">
-                                {event.matches_count ?? 0} match dijadwalkan
+                                {event.matches_count ?? 0} scheduled matches
                             </span>
                         </Link>
                     </div>
@@ -75,11 +77,10 @@ export function BasketballManagement({
                         <div className="flex items-center justify-between">
                             <div>
                                 <h3 className="font-medium">
-                                    Kategori Pertandingan
+                                    Match Categories
                                 </h3>
                                 <p className="text-sm text-muted-foreground">
-                                    Atur kategori seperti kelompok usia atau
-                                    divisi
+                                    Manage categories such as age groups or divisions
                                 </p>
                             </div>
                             <BasketballCategoryFormDialog
@@ -87,7 +88,7 @@ export function BasketballManagement({
                                 trigger={
                                     <Button size="sm">
                                         <Plus className="mr-2 h-4 w-4" />
-                                        Tambah Kategori
+                                        Add Category
                                     </Button>
                                 }
                             />
@@ -95,9 +96,9 @@ export function BasketballManagement({
 
                         {categories.length === 0 ? (
                             <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-8 text-center text-muted-foreground">
-                                <Tag className="h-5 w-5" />
+                                <Icon iconNode={basketball} className="h-5 w-5" />
                                 <p className="text-sm">
-                                    Belum ada kategori yang dibuat.
+                                    No categories have been created yet.
                                 </p>
                             </div>
                         ) : (
@@ -120,12 +121,12 @@ export function BasketballManagement({
                                             {category.max_team
                                                 ? `–${category.max_team}`
                                                 : '+'}{' '}
-                                            tim &middot;{' '}
+                                            teams &middot;{' '}
                                             {category.min_player_per_team}
                                             {category.max_player_per_team
                                                 ? `–${category.max_player_per_team}`
                                                 : '+'}{' '}
-                                            pemain/tim
+                                            players/team
                                         </p>
                                         {category.price && (
                                             <p className="text-sm text-muted-foreground">
@@ -164,12 +165,11 @@ export function BasketballManagement({
                                                 }
                                                 description={
                                                     <>
-                                                        Ini akan menghapus
-                                                        kategori{' '}
+                                                        This will permanently delete the{' '}
                                                         <span className="font-semibold">
                                                             {category.name}
                                                         </span>{' '}
-                                                        secara permanen.
+                                                        category.
                                                     </>
                                                 }
                                                 onConfirm={() =>
@@ -189,11 +189,10 @@ export function BasketballManagement({
                 <div className="flex flex-col items-center justify-center gap-4 py-8 text-center">
                     <div className="space-y-2">
                         <h3 className="text-lg font-medium">
-                            Turnamen Basket
+                            Basketball Tournament
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                            Event ini belum dikonfigurasi sebagai turnamen
-                            basket.
+                            This event has not been configured as a basketball tournament.
                         </p>
                     </div>
                     <Button
@@ -201,7 +200,7 @@ export function BasketballManagement({
                             router.post(`/events/${event.id}/basketball`)
                         }
                     >
-                        Buat Turnamen Basket
+                        Create Basketball Tournament
                     </Button>
                 </div>
             )}

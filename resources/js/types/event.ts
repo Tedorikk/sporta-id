@@ -1,3 +1,5 @@
+import { BasketballEventCategory } from "./basketball-event-category";
+
 export type EventStatus = 'upcoming' | 'ongoing' | 'past';
 
 export interface Event {
@@ -15,7 +17,9 @@ export interface Event {
     teams_count?: number;
     pools_count?: number;
     matches_count?: number;
+    basketball_categories?: BasketballEventCategory[];
 }
+
 
 export const EVENT_CATEGORIES = [{ value: 'BASKETBALL', label: 'Basketball' }];
 
