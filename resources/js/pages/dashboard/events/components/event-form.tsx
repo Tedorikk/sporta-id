@@ -1,7 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from '@inertiajs/react';
 import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Loader2 } from 'lucide-react';
+import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -76,7 +77,7 @@ function toDefaultValues(event?: Event): EventFormValues {
         description: event?.description ?? '',
         contact_person: event?.contact_person ?? '',
         category: event?.category ?? '',
-        is_published: event?.is_published ?? false,
+        is_published: Boolean(event?.is_published ?? false),
         start_date: event?.start_date ?? '',
         end_date: event?.end_date ?? '',
         banner: event?.banner ?? '',
@@ -85,6 +86,7 @@ function toDefaultValues(event?: Event): EventFormValues {
 
 function FormContent({ event }: EventFormProps) {
     const isEditing = Boolean(event);
+    const [isSaving, setIsSaving] = useState(false);
 
     const { control, handleSubmit, setError, clearErrors } =
         useForm<EventFormValues>({
@@ -94,10 +96,15 @@ function FormContent({ event }: EventFormProps) {
         });
 
     const onSubmit = (data: EventFormValues) => {
+        const options = {
+            onStart: () => setIsSaving(true),
+            onFinish: () => setIsSaving(false),
+        };
+
         if (isEditing && event) {
-            router.put(`/events/${event.id}`, data);
+            router.put(`/events/${event.id}`, data, options);
         } else {
-            router.post('/events', data);
+            router.post('/events', data, options);
         }
     };
 
@@ -166,6 +173,7 @@ function FormContent({ event }: EventFormProps) {
                                         aria-label="Event Name"
                                         aria-invalid={fieldState.invalid}
                                         autoComplete="off"
+                                        disabled={isSaving}
                                     />
                                     {fieldState.invalid && (
                                         <FieldError
@@ -191,6 +199,7 @@ function FormContent({ event }: EventFormProps) {
                                         aria-label="Description"
                                         aria-invalid={fieldState.invalid}
                                         rows={5}
+                                        disabled={isSaving}
                                     />
                                     {fieldState.invalid && (
                                         <FieldError
@@ -211,11 +220,13 @@ function FormContent({ event }: EventFormProps) {
                                     <Select
                                         value={field.value}
                                         onValueChange={field.onChange}
+                                        disabled={isSaving}
                                     >
                                         <SelectTrigger
                                             id="category"
                                             aria-label="Category"
                                             aria-invalid={fieldState.invalid}
+                                            className="cursor-pointer"
                                         >
                                             <SelectValue placeholder="Select a category" />
                                         </SelectTrigger>
@@ -224,6 +235,7 @@ function FormContent({ event }: EventFormProps) {
                                                 <SelectItem
                                                     key={option.value}
                                                     value={option.value}
+                                                    className="cursor-pointer"
                                                 >
                                                     {option.label}
                                                 </SelectItem>
@@ -253,6 +265,7 @@ function FormContent({ event }: EventFormProps) {
                                         aria-label="Contact Person"
                                         aria-invalid={fieldState.invalid}
                                         autoComplete="off"
+                                        disabled={isSaving}
                                         onChange={(e) =>
                                             field.onChange(
                                                 formatE164Input(e.target.value),
@@ -289,8 +302,9 @@ function FormContent({ event }: EventFormProps) {
                                                     aria-invalid={
                                                         fieldState.invalid
                                                     }
+                                                    disabled={isSaving}
                                                     className={cn(
-                                                        'w-full justify-start text-left font-normal',
+                                                        'w-full cursor-pointer justify-start text-left font-normal',
                                                         !field.value &&
                                                             'text-muted-foreground',
                                                     )}
@@ -361,8 +375,9 @@ function FormContent({ event }: EventFormProps) {
                                                     aria-invalid={
                                                         fieldState.invalid
                                                     }
+                                                    disabled={isSaving}
                                                     className={cn(
-                                                        'w-full justify-start text-left font-normal',
+                                                        'w-full cursor-pointer justify-start text-left font-normal',
                                                         !field.value &&
                                                             'text-muted-foreground',
                                                     )}
@@ -428,10 +443,12 @@ function FormContent({ event }: EventFormProps) {
                                             checked={field.value}
                                             onCheckedChange={field.onChange}
                                             aria-label="Publish immediately"
+                                            disabled={isSaving}
+                                            className="cursor-pointer"
                                         />
                                         <FieldLabel
                                             htmlFor="is_published"
-                                            className="font-normal"
+                                            className="cursor-pointer font-normal"
                                         >
                                             Publish this event immediately
                                         </FieldLabel>
@@ -445,8 +462,21 @@ function FormContent({ event }: EventFormProps) {
                             />
                         </FieldGroup>
 
-                        <Button type="submit" className="mt-2">
-                            {isEditing ? 'Save Changes' : 'Create Event'}
+                        <Button
+                            type="submit"
+                            className="mt-2 cursor-pointer"
+                            disabled={isSaving}
+                        >
+                            {isSaving && (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            )}
+                            {isSaving
+                                ? isEditing
+                                    ? 'Saving...'
+                                    : 'Creating...'
+                                : isEditing
+                                  ? 'Save Changes'
+                                  : 'Create Event'}
                         </Button>
                     </FieldGroup>
                 </FieldGroup>

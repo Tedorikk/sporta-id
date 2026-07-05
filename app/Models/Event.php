@@ -20,4 +20,10 @@ class Event extends Model
         'end_date',
         'banner',
     ];
+
+    protected $casts = [
+        'is_published' => 'boolean',
+        'start_date' => 'date:Y-m-d',
+        'end_date' => 'date:Y-m-d',
+    ];
 }
