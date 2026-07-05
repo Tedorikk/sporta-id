@@ -36,13 +36,6 @@ export default function TeamsIndex({ event, teams, filters }: TeamsIndexProps) {
         router.get(`/dashboard/events/${event.id}/teams`, { search }, { preserveState: true });
     };
 
-    const handleDelete = () => {
-        if (!deletingTeam) return;
-        router.delete(`/dashboard/events/${event.id}/teams/${deletingTeam.id}`, {
-            onSuccess: () => setDeletingTeam(null),
-        });
-    };
-
     return (
         <div className="mx-auto flex h-full w-full max-w-6xl flex-1 flex-col gap-8 overflow-x-hidden px-4 py-6 md:px-8 md:py-8">
             <Head title={`Tim - ${event.name}`} />
@@ -152,8 +145,6 @@ export default function TeamsIndex({ event, teams, filters }: TeamsIndexProps) {
                                                     }
                                                     onConfirm={() => {
                                                         setDeletingTeam(team);
-                                                        // It sets the deletingTeam but the handleDelete is not triggered directly by DeleteConfirmationDialog like this unless onConfirm just runs it.
-                                                        // Wait, DeleteConfirmationDialog calls onConfirm. So I can just do:
                                                         router.delete(`/dashboard/events/${event.id}/teams/${team.id}`);
                                                     }}
                                                 />
