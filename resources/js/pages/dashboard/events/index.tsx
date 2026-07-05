@@ -59,7 +59,13 @@ export default function EventsIndex({ events }: { events: Event[] }) {
                                 </CardDescription>
                             </CardHeader>
                             <CardFooter>
-                                <Button className="w-full">View Event</Button>
+                                <Button className="w-full" asChild>
+                                    <Link
+                                        href={`/dashboard/events/${event.id}`}
+                                    >
+                                        View Event
+                                    </Link>
+                                </Button>
                             </CardFooter>
                         </Card>
                     ))}

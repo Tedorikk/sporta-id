@@ -2,7 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import events from '@/routes/events';
-import CreateForm from './components/create-form';
+import EventForm from './components/event-form';
 
 export default function CreateEvent() {
     return (
@@ -26,7 +26,7 @@ export default function CreateEvent() {
                 </div>
             </section>
             <section id="form">
-                <CreateForm />
+                <EventForm />
             </section>
         </div>
     );
