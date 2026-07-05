@@ -12,17 +12,7 @@ class PlayerController extends Controller
 {
     public function store(Request $request, Event $event, Team $team)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'jersey_number' => [
-                'required',
-                'string',
-                'max:3',
-                Rule::unique('players', 'jersey_number')
-                    ->where(fn ($query) => $query->where('team_id', $team->id)),
-            ],
-            'position' => ['nullable', 'string', 'max:255'],
-        ]);
+        $validated = $this->validated($request, $team);
 
         $team->players()->create($validated);
 
@@ -36,18 +26,7 @@ class PlayerController extends Controller
 
     public function update(Request $request, Event $event, Team $team, Player $player)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'jersey_number' => [
-                'required',
-                'string',
-                'max:3',
-                Rule::unique('players', 'jersey_number')
-                    ->where(fn ($query) => $query->where('team_id', $team->id))
-                    ->ignore($player->id),
-            ],
-            'position' => ['nullable', 'string', 'max:255'],
-        ]);
+        $validated = $this->validated($request, $team, $player);
 
         $player->update($validated);
 
@@ -69,5 +48,27 @@ class PlayerController extends Controller
                 'title' => 'Success',
                 'description' => 'Player deleted successfully.',
             ]]);
+    }
+
+    private function validated(Request $request, Team $team, ?Player $player = null): array
+    {
+        return $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'jersey_number' => [
+                'required',
+                'string',
+                'max:3',
+                Rule::unique('players', 'jersey_number')
+                    ->where(fn ($query) => $query->where('team_id', $team->id))
+                    ->ignore($player?->id),
+            ],
+            'position' => ['nullable', 'string', 'max:255'],
+            'photo' => ['nullable', 'url', 'max:255'],
+            'phone_number' => ['nullable', 'string', 'regex:/^\+[1-9]\d{1,14}$/'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'dob' => ['nullable', 'date', 'before:today'],
+        ], [
+            'phone_number.regex' => 'Invalid E.164 format',
+        ]);
     }
 }
