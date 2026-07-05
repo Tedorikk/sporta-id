@@ -16,8 +16,8 @@ class TeamService
     public function registerTeam(Event $event, array $teamData, array $playersData): Team
     {
         // 1. Validasi periode pendaftaran
-        if (!$event->isRegistrationOpen()) {
-            throw new Exception("Periode pendaftaran untuk event ini sedang ditutup.");
+        if (! $event->isRegistrationOpen()) {
+            throw new Exception('Periode pendaftaran untuk event ini sedang ditutup.');
         }
 
         // 2. Validasi jumlah pemain
@@ -29,19 +29,19 @@ class TeamService
         return DB::transaction(function () use ($event, $teamData, $playersData) {
             // Buat Tim
             $team = $event->teams()->create([
-                'name'          => $teamData['name'],
-                'manager_name'  => $teamData['manager_name'],
+                'name' => $teamData['name'],
+                'manager_name' => $teamData['manager_name'],
                 'manager_phone' => $teamData['manager_phone'],
-                'logo'          => $teamData['logo'] ?? null,
-                'status'        => 'pending', // Default status
+                'logo' => $teamData['logo'] ?? null,
+                'status' => 'pending', // Default status
             ]);
 
             // Buat Pemain (QR Code otomatis di-generate oleh Model Player)
             foreach ($playersData as $player) {
                 $team->players()->create([
-                    'name'          => $player['name'],
+                    'name' => $player['name'],
                     'jersey_number' => $player['jersey_number'],
-                    'position'      => $player['position'] ?? null,
+                    'position' => $player['position'] ?? null,
                 ]);
             }
 
@@ -55,7 +55,7 @@ class TeamService
     public function verifyTeam(Team $team): bool
     {
         if ($team->status === 'verified') {
-            throw new Exception("Tim ini sudah diverifikasi sebelumnya.");
+            throw new Exception('Tim ini sudah diverifikasi sebelumnya.');
         }
 
         return $team->update(['status' => 'verified']);

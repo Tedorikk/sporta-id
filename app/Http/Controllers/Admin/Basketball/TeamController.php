@@ -22,7 +22,7 @@ class TeamController extends Controller
 
             return back()->with(['toast' => [
                 'title' => 'Sukses',
-                'description' => "Tim {$team->name} berhasil diverifikasi."
+                'description' => "Tim {$team->name} berhasil diverifikasi.",
             ]]);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
@@ -37,7 +37,7 @@ class TeamController extends Controller
 
             return back()->with(['toast' => [
                 'title' => 'Ditolak',
-                'description' => "Tim {$team->name} telah ditolak."
+                'description' => "Tim {$team->name} telah ditolak.",
             ]]);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);

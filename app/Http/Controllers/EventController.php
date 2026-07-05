@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BasketballEvent;
 use App\Models\Event;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -30,7 +31,7 @@ class EventController extends Controller
 
         if ($view === 'calendar') {
             $month = $request->input('month', now()->format('Y-m'));
-            $start = Carbon::parse($month . '-01')->startOfMonth();
+            $start = Carbon::parse($month.'-01')->startOfMonth();
             $end = $start->copy()->endOfMonth();
 
             $events = (clone $base)
@@ -39,7 +40,7 @@ class EventController extends Controller
                         ->orWhereBetween('end_date', [$start, $end])
                         ->orWhere(function ($q2) use ($start, $end) {
                             $q2->where('start_date', '<=', $start)
-                               ->where('end_date', '>=', $end);
+                                ->where('end_date', '>=', $end);
                         });
                 })
                 ->orderBy('start_date')
@@ -94,8 +95,25 @@ class EventController extends Controller
 
     public function show(Event $event)
     {
+        $event->load('specific');
+
+        $extra = [];
+
+        if ($event->specific instanceof BasketballEvent) {
+            $extra = [
+                'teams_count' => $event->teams()->count(),
+                'pools_count' => $event->pools()->count(),
+                'matches_count' => $event->matches()->count(),
+            ];
+        }
+
         return Inertia::render('dashboard/events/show', [
-            'event' => $event,
+            'event' => [
+                ...$event->toArray(),
+                'specific_type' => $event->eventable_type
+                    ? class_basename($event->eventable_type)
+                    : null,
+            ] + $extra,
         ]);
     }
 

@@ -15,7 +15,7 @@ class MatchService
     public function scheduleMatch(Event $event, array $data): GameMatch
     {
         if ($data['team_a_id'] === $data['team_b_id']) {
-            throw new Exception("Tim A dan Tim B tidak boleh tim yang sama.");
+            throw new Exception('Tim A dan Tim B tidak boleh tim yang sama.');
         }
 
         $scheduledAt = Carbon::parse($data['scheduled_at']);
@@ -39,23 +39,23 @@ class MatchService
             ->whereBetween('scheduled_at', [$timeWindowStart, $timeWindowEnd])
             ->where(function ($query) use ($data) {
                 $query->whereIn('team_a_id', [$data['team_a_id'], $data['team_b_id']])
-                      ->orWhereIn('team_b_id', [$data['team_a_id'], $data['team_b_id']]);
+                    ->orWhereIn('team_b_id', [$data['team_a_id'], $data['team_b_id']]);
             })
             ->exists();
 
         if ($teamConflict) {
-            throw new Exception("Salah satu tim sudah memiliki jadwal pertandingan lain pada jam tersebut.");
+            throw new Exception('Salah satu tim sudah memiliki jadwal pertandingan lain pada jam tersebut.');
         }
 
         // Jika aman, buat jadwal pertandingan
         return $event->matches()->create([
-            'pool_id'      => $data['pool_id'] ?? null,
-            'round'        => $data['round'] ?? 'pool',
-            'team_a_id'    => $data['team_a_id'],
-            'team_b_id'    => $data['team_b_id'],
-            'venue'        => $data['venue'],
+            'pool_id' => $data['pool_id'] ?? null,
+            'round' => $data['round'] ?? 'pool',
+            'team_a_id' => $data['team_a_id'],
+            'team_b_id' => $data['team_b_id'],
+            'venue' => $data['venue'],
             'scheduled_at' => $scheduledAt,
-            'status'       => 'scheduled',
+            'status' => 'scheduled',
         ]);
     }
 }

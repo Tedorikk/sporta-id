@@ -24,7 +24,7 @@ class ImageUploadController extends Controller
     {
         $file = $request->file('image');
 
-        $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
+        $filename = Str::uuid().'.'.$file->getClientOriginalExtension();
 
         $path = $file->storeAs($this->directory, $filename, 'public');
 
@@ -47,7 +47,7 @@ class ImageUploadController extends Controller
         $path = $request->string('path')->toString();
 
         // Guard against deleting anything outside the intended directory.
-        if (! Str::startsWith($path, $this->directory . '/')) {
+        if (! Str::startsWith($path, $this->directory.'/')) {
             return response()->json(['message' => 'Invalid path.'], 422);
         }
 

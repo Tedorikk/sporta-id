@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class MatchCheckIn extends Model
 {
     protected $fillable = [
-        'match_id', 'player_id', 'scanned_at'
+        'match_id', 'player_id', 'scanned_at',
     ];
 
     protected $casts = [

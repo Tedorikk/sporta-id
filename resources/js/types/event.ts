@@ -11,6 +11,10 @@ export interface Event {
     end_date: string;
     banner: string | null;
     status: EventStatus;
+    specific_type: 'BasketballEvent' | null;
+    teams_count?: number;
+    pools_count?: number;
+    matches_count?: number;
 }
 
 export interface PaginatedEvents {

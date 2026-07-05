@@ -15,6 +15,7 @@ import { formatDate } from '@/lib/format-date';
 import { formatImageUrl } from '@/lib/image-utils';
 import events from '@/routes/events';
 import type { Event } from '@/types/event';
+import { BasketballManagement } from './basketball-management';
 
 export default function ShowEvent({ event }: { event: Event }) {
     const [isDeleting, setIsDeleting] = useState(false);
@@ -202,6 +203,12 @@ export default function ShowEvent({ event }: { event: Event }) {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-8">
+                {event.category === 'BASKETBALL' && (
+                    <BasketballManagement key={event.id} event={event} />
+                )}
             </div>
         </div>
     );

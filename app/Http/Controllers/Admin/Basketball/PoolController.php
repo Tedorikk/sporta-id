@@ -19,14 +19,14 @@ class PoolController extends Controller
     public function store(Request $request, Event $event)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:50'
+            'name' => 'required|string|max:50',
         ]);
 
         $this->poolService->createPool($event, $validated['name']);
 
         return back()->with(['toast' => [
             'title' => 'Sukses',
-            'description' => "Pool {$validated['name']} berhasil dibuat."
+            'description' => "Pool {$validated['name']} berhasil dibuat.",
         ]]);
     }
 
@@ -34,7 +34,7 @@ class PoolController extends Controller
     public function assignTeam(Request $request, Event $event, Pool $pool)
     {
         $validated = $request->validate([
-            'team_id' => 'required|exists:teams,id'
+            'team_id' => 'required|exists:teams,id',
         ]);
 
         $team = Team::findOrFail($validated['team_id']);
@@ -44,7 +44,7 @@ class PoolController extends Controller
 
             return back()->with(['toast' => [
                 'title' => 'Sukses',
-                'description' => "Tim {$team->name} berhasil ditambahkan ke {$pool->name}."
+                'description' => "Tim {$team->name} berhasil ditambahkan ke {$pool->name}.",
             ]]);
         } catch (\Exception $e) {
             // Error exception dari service (misal: tim sudah di pool lain) akan ditangkap di sini
@@ -56,6 +56,7 @@ class PoolController extends Controller
     public function removeTeam(Request $request, Event $event, Pool $pool, Team $team)
     {
         $this->poolService->removeTeamFromPool($team, $pool);
+
         return back();
     }
 }

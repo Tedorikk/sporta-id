@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 class Player extends Model
 {
     protected $fillable = [
-        'team_id', 'name', 'jersey_number', 'position', 'qr_token'
+        'team_id', 'name', 'jersey_number', 'position', 'qr_token',
     ];
 
     // Generate UUID otomatis saat Player dibuat

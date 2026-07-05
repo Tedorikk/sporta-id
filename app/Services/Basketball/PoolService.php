@@ -16,7 +16,7 @@ class PoolService
     public function createPool(Event $event, string $name): Pool
     {
         return $event->pools()->create([
-            'name' => $name
+            'name' => $name,
         ]);
     }
 
@@ -27,12 +27,12 @@ class PoolService
     {
         // 1. Validasi: Pastikan tim dan pool berada di event yang sama
         if ($team->event_id !== $pool->event_id) {
-            throw new Exception("Tim dan Pool tidak berasal dari event yang sama.");
+            throw new Exception('Tim dan Pool tidak berasal dari event yang sama.');
         }
 
         // 2. Validasi: Pastikan status tim sudah 'verified'
         if ($team->status !== 'verified') {
-            throw new Exception("Hanya tim yang sudah diverifikasi yang dapat dimasukkan ke dalam Pool.");
+            throw new Exception('Hanya tim yang sudah diverifikasi yang dapat dimasukkan ke dalam Pool.');
         }
 
         // 3. Validasi Bisnis: Pastikan tim belum ada di pool mana pun pada event ini
