@@ -3,6 +3,11 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    HoverCard,
+    HoverCardContent,
+    HoverCardTrigger,
+} from '@/components/ui/hover-card';
 import events from '@/routes/events';
 import type { Event, EventFilters } from '@/types/event';
 
@@ -146,17 +151,88 @@ export default function EventsCalendar({
                                     >
                                         {cell.date.getDate()}
                                     </div>
+
                                     <div className="flex flex-col gap-1">
                                         {cell.events.slice(0, 3).map((e) => (
-                                            <Link
+                                            <HoverCard
                                                 key={e.id}
-                                                href={`/dashboard/events/${e.id}`}
-                                                className="block truncate rounded bg-blue-100 px-1.5 py-0.5 text-[11px] text-blue-800 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-200"
-                                                title={e.name}
+                                                openDelay={150}
+                                                closeDelay={100}
                                             >
-                                                {e.name}
-                                            </Link>
+                                                <HoverCardTrigger asChild>
+                                                    <Link
+                                                        href={`/dashboard/events/${e.id}`}
+                                                        className="block truncate rounded bg-blue-100 px-1.5 py-0.5 text-[11px] text-blue-800 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-200 hover:dark:bg-blue-800/40"
+                                                    >
+                                                        {e.name}
+                                                    </Link>
+                                                </HoverCardTrigger>
+                                                <HoverCardContent
+                                                    side="top"
+                                                    align="start"
+                                                    className="w-72 shadow-xl"
+                                                >
+                                                    <div className="flex flex-col gap-2">
+                                                        <div>
+                                                            <h4 className="text-sm font-semibold text-foreground">
+                                                                {e.name}
+                                                            </h4>
+                                                            <p className="mt-0.5 text-[10px] text-muted-foreground">
+                                                                {new Date(
+                                                                    e.start_date,
+                                                                ).toLocaleDateString()}{' '}
+                                                                –{' '}
+                                                                {new Date(
+                                                                    e.end_date,
+                                                                ).toLocaleDateString()}
+                                                            </p>
+                                                        </div>
+
+                                                        <div className="flex flex-wrap gap-1.5">
+                                                            <Badge
+                                                                variant={
+                                                                    e.status ===
+                                                                    'ongoing'
+                                                                        ? 'default'
+                                                                        : 'secondary'
+                                                                }
+                                                                className="text-[10px] capitalize"
+                                                            >
+                                                                {e.status}
+                                                            </Badge>
+                                                            <Badge
+                                                                variant="outline"
+                                                                className="text-[10px]"
+                                                            >
+                                                                {e.category}
+                                                            </Badge>
+                                                            {!e.is_published && (
+                                                                <Badge
+                                                                    variant="destructive"
+                                                                    className="text-[10px]"
+                                                                >
+                                                                    Draft
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+
+                                                        {e.description && (
+                                                            <p className="line-clamp-3 text-xs text-muted-foreground">
+                                                                {e.description}
+                                                            </p>
+                                                        )}
+
+                                                        <div className="mt-1 border-t pt-2 text-[11px] text-muted-foreground">
+                                                            <span className="font-medium text-foreground">
+                                                                Contact:{' '}
+                                                            </span>
+                                                            {e.contact_person}
+                                                        </div>
+                                                    </div>
+                                                </HoverCardContent>
+                                            </HoverCard>
                                         ))}
+
                                         {cell.events.length > 3 && (
                                             <Badge
                                                 variant="outline"
