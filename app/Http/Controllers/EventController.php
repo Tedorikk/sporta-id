@@ -46,7 +46,12 @@ class EventController extends Controller
 
         return redirect()
             ->route('events.index')
-            ->with('success', 'Event created successfully.');
+            ->with([
+                'toast' => [
+                    'title' => 'Success',
+                    'description' => 'Event created successfully.',
+                ],
+            ]);
     }
 
     public function edit(Event $event)
@@ -76,7 +81,12 @@ class EventController extends Controller
 
         return redirect()
             ->route('events.show', $event)
-            ->with('success', 'Event updated successfully.');
+            ->with([
+                'toast' => [
+                    'title' => 'Success',
+                    'description' => 'Event updated successfully.',
+                ],
+            ]);
     }
 
     public function destroy(Event $event)
@@ -85,6 +95,11 @@ class EventController extends Controller
 
         return redirect()
             ->route('events.index')
-            ->with('success', 'Event deleted successfully.');
+            ->with([
+                'toast' => [
+                    'title' => 'Success',
+                    'description' => 'Event deleted successfully.',
+                ],
+            ]);
     }
 }
