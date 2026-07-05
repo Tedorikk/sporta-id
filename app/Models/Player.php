@@ -9,10 +9,14 @@ use Illuminate\Support\Str;
 class Player extends Model
 {
     protected $fillable = [
-        'team_id', 'name', 'jersey_number', 'position', 'qr_token',
+        'team_id', 'name', 'jersey_number', 'position',
+        'photo', 'phone_number', 'email', 'dob', 'qr_token',
     ];
 
-    // Generate UUID otomatis saat Player dibuat
+    protected $casts = [
+        'dob' => 'date:Y-m-d',
+    ];
+
     protected static function boot()
     {
         parent::boot();
