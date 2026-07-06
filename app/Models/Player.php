@@ -4,13 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany; // Added
 use Illuminate\Support\Str;
 
 class Player extends Model
 {
     protected $fillable = [
-        'team_id', 'name', 'jersey_number', 'position',
-        'photo', 'phone_number', 'email', 'dob', 'qr_token',
+        // Removed 'team_id'
+        'name', 'jersey_number', 'position',
+        'photo', 'phone_number', 'email', 'dob', 'qr_token', 'basketball_club_id',
     ];
 
     protected $casts = [
@@ -27,8 +29,14 @@ class Player extends Model
         });
     }
 
-    public function team(): BelongsTo
+    // Changed from team() to teams() and updated relation
+    public function teams(): BelongsToMany
     {
-        return $this->belongsTo(Team::class);
+        return $this->belongsToMany(Team::class);
+    }
+
+    public function basketballClub(): BelongsTo
+    {
+        return $this->belongsTo(BasketballClub::class);
     }
 }

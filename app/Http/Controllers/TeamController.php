@@ -86,6 +86,7 @@ class TeamController extends Controller
 
     public function show(Event $event, Team $team)
     {
+        // Eloquent handles BelongsToMany exactly the same here
         $team->load('players', 'basketballEventCategory');
 
         return Inertia::render('dashboard/events/teams/show', [

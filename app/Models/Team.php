@@ -6,7 +6,7 @@ use App\Models\BasketballEventCategory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+// Removed HasMany import
 
 class Team extends Model
 {
@@ -23,9 +23,10 @@ class Team extends Model
         return $this->belongsTo(Event::class);
     }
 
-    public function players(): HasMany
-    {
-        return $this->hasMany(Player::class);
+    // Changed from HasMany to BelongsToMany
+    public function players(): BelongsToMany
+    {           
+        return $this->belongsToMany(Player::class);
     }
 
     public function pools(): BelongsToMany

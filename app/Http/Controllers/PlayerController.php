@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Event;
 use App\Models\Player;
 use App\Models\Team;
+use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -14,6 +15,8 @@ class PlayerController extends Controller
     {
         $validated = $this->validated($request, $team);
 
+        // create() on a BelongsToMany relationship automatically creates the 
+        // Player record AND inserts the pivot record connecting them to the team.
         $team->players()->create($validated);
 
         return redirect()
@@ -40,13 +43,15 @@ class PlayerController extends Controller
 
     public function destroy(Event $event, Team $team, Player $player)
     {
-        $player->delete();
+        // Detach removes the player from THIS team, but keeps the player in the DB.
+        // If you actually want to delete the player entirely, revert to $player->delete();
+        $team->players()->detach($player->id);
 
         return redirect()
             ->route('teams.show', [$event, $team])
             ->with(['toast' => [
                 'title' => 'Success',
-                'description' => 'Player deleted successfully.',
+                'description' => 'Player removed from team successfully.',
             ]]);
     }
 
@@ -58,9 +63,17 @@ class PlayerController extends Controller
                 'required',
                 'string',
                 'max:3',
-                Rule::unique('players', 'jersey_number')
-                    ->where(fn ($query) => $query->where('team_id', $team->id))
-                    ->ignore($player?->id),
+                // Custom closure to check uniqueness within the Many-to-Many relationship
+                function (string $attribute, mixed $value, Closure $fail) use ($team, $player) {
+                    $exists = $team->players()
+                        ->where('jersey_number', $value)
+                        ->when($player, fn ($q) => $q->where('players.id', '!=', $player->id))
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('The jersey number has already been taken for this team.');
+                    }
+                },
             ],
             'position' => ['nullable', 'string', 'max:255'],
             'photo' => ['nullable', 'url', 'max:255'],

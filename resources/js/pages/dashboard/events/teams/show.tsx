@@ -50,7 +50,7 @@ function PlayerHoverContent({ player }: { player: Player }) {
                 <p className="font-semibold leading-none">{player.name}</p>
                 <p className="text-xs text-muted-foreground">
                     #{player.jersey_number}
-                    {player.position ? ` &middot; ${player.position}` : ''}
+                    {player.position ? ` · ${player.position}` : ''}
                 </p>
 
                 <div className="mt-2 flex flex-col gap-1 text-xs text-muted-foreground">
@@ -142,7 +142,7 @@ export default function ShowTeam({
                             </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                            Manager: {team.manager_name} &middot;{' '}
+                            Manager: {team.manager_name} ·{' '}
                             {team.manager_phone}
                         </p>
                     </div>
@@ -200,7 +200,7 @@ export default function ShowTeam({
                                     >
                                         <div className="flex flex-col items-center gap-2 text-muted-foreground">
                                             <UserPlus className="h-6 w-6" />
-                                            No players has been added.
+                                            No players have been added.
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -256,22 +256,15 @@ export default function ShowTeam({
                                                             }
                                                             description={
                                                                 <>
-                                                                    Ini akan
-                                                                    menghapus
-                                                                    pemain{' '}
+                                                                    This will remove the player{' '}
                                                                     <span className="font-semibold">
-                                                                        {
-                                                                            player.name
-                                                                        }
+                                                                        {player.name}
                                                                     </span>{' '}
-                                                                    secara
-                                                                    permanen.
+                                                                    from this team.
                                                                 </>
                                                             }
                                                             onConfirm={() =>
-                                                                handleDeletePlayer(
-                                                                    player,
-                                                                )
+                                                                handleDeletePlayer(player)
                                                             }
                                                         />
                                                     </div>
