@@ -11,18 +11,19 @@ class GameMatch extends Model
     protected $table = 'matches';
 
     protected $fillable = [
-        'event_id', 'pool_id', 'round', 'team_a_id', 'team_b_id',
-        'team_a_score', 'team_b_score', 'venue', 'scheduled_at',
-        'status', 'winner_team_id',
+        'basketball_event_category_id', 'pool_id', 'round', 'match_number',
+        'home_team_id', 'away_team_id',
+        'home_source_match_id', 'away_source_match_id',
+        'home_score', 'away_score', 'status', 'scheduled_at',
     ];
 
     protected $casts = [
         'scheduled_at' => 'datetime',
     ];
 
-    public function event(): BelongsTo
+    public function category(): BelongsTo
     {
-        return $this->belongsTo(Event::class);
+        return $this->belongsTo(BasketballEventCategory::class, 'basketball_event_category_id');
     }
 
     public function pool(): BelongsTo
@@ -30,23 +31,23 @@ class GameMatch extends Model
         return $this->belongsTo(Pool::class);
     }
 
-    public function teamA(): BelongsTo
+    public function homeTeam(): BelongsTo
     {
-        return $this->belongsTo(Team::class, 'team_a_id');
+        return $this->belongsTo(Team::class, 'home_team_id');
     }
 
-    public function teamB(): BelongsTo
+    public function awayTeam(): BelongsTo
     {
-        return $this->belongsTo(Team::class, 'team_b_id');
+        return $this->belongsTo(Team::class, 'away_team_id');
     }
 
-    public function winner(): BelongsTo
+    public function winnerTeamId(): ?int
     {
-        return $this->belongsTo(Team::class, 'winner_team_id');
-    }
+        if ($this->status !== 'completed' || $this->home_score === null) {
+            return null;
+        }
 
-    public function checkIns(): HasMany
-    {
-        return $this->hasMany(MatchCheckIn::class, 'match_id');
+        return $this->home_score > $this->away_score ? $this->home_team_id : $this->away_team_id;
     }
 }
+

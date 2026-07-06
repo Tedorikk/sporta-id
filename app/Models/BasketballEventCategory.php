@@ -13,20 +13,14 @@ class BasketballEventCategory extends Model
     use HasFactory;
 
     protected $fillable = [
-        'basketball_event_id',
-        'name',
-        'slug',
-        'min_team',
-        'max_team',
-        'min_player_per_team',
-        'max_player_per_team',
-        'max_player_per_coach',
-        'price',
-        'quota',
-        'status',
+        'basketball_event_id', 'name', 'slug', 'format', 'win_points', 'loss_points',
+        'min_team', 'max_team', 'min_player_per_team', 'max_player_per_team',
+        'max_player_per_coach', 'price', 'quota', 'status',
     ];
 
     protected $casts = [
+        'win_points' => 'integer',
+        'loss_points' => 'integer',
         'min_team' => 'integer',
         'max_team' => 'integer',
         'min_player_per_team' => 'integer',
@@ -56,5 +50,20 @@ class BasketballEventCategory extends Model
     public function teams(): HasMany
     {
         return $this->hasMany(Team::class);
+    }
+
+    public function pools(): HasMany
+    {
+        return $this->hasMany(Pool::class);
+    }
+
+    public function matches(): HasMany
+    {
+        return $this->hasMany(GameMatch::class);
+    }
+
+    public function isRoundRobin(): bool
+    {
+        return $this->format === 'round_robin';
     }
 }

@@ -2,59 +2,67 @@
 
 namespace App\Services\Basketball;
 
-use App\Models\Event;
+use App\Models\BasketballEventCategory;
 use App\Models\Pool;
 use App\Models\Team;
-use Exception;
-use Illuminate\Support\Facades\DB;
 
 class PoolService
 {
-    /**
-     * Membuat pool/grup baru untuk suatu event.
-     */
-    public function createPool(Event $event, string $name): Pool
+    public function __construct(protected RoundRobinService $roundRobin) {}
+
+    public function createPool(BasketballEventCategory $category, string $name): Pool
     {
-        return $event->pools()->create([
-            'name' => $name,
-        ]);
+        return $category->pools()->create(['name' => $name]);
     }
 
-    /**
-     * Memasukkan tim ke dalam pool.
-     */
     public function assignTeamToPool(Team $team, Pool $pool): void
     {
-        // 1. Validasi: Pastikan tim dan pool berada di event yang sama
-        if ($team->event_id !== $pool->event_id) {
-            throw new Exception('Tim dan Pool tidak berasal dari event yang sama.');
+        if ($team->basketball_event_category_id !== $pool->basketball_event_category_id) {
+            throw new \Exception('Tim dan pool berasal dari kategori yang berbeda.');
         }
 
-        // 2. Validasi: Pastikan status tim sudah 'verified'
-        if ($team->status !== 'verified') {
-            throw new Exception('Hanya tim yang sudah diverifikasi yang dapat dimasukkan ke dalam Pool.');
-        }
-
-        // 3. Validasi Bisnis: Pastikan tim belum ada di pool mana pun pada event ini
-        $isAlreadyInAnyPool = DB::table('pool_team')
-            ->join('pools', 'pool_team.pool_id', '=', 'pools.id')
-            ->where('pools.event_id', $team->event_id)
-            ->where('pool_team.team_id', $team->id)
+        $alreadyInAnotherPool = $team->pools()
+            ->where('basketball_event_category_id', $pool->basketball_event_category_id)
+            ->where('pools.id', '!=', $pool->id)
             ->exists();
 
-        if ($isAlreadyInAnyPool) {
-            throw new Exception("Tim {$team->name} sudah terdaftar di Pool lain pada event ini.");
+        if ($alreadyInAnotherPool) {
+            throw new \Exception('Tim sudah berada di pool lain pada kategori ini.');
         }
 
-        // Jika semua lolos, masukkan ke pivot table
-        $pool->teams()->attach($team->id);
+        $pool->teams()->syncWithoutDetaching($team->id);
     }
 
-    /**
-     * Menghapus tim dari pool jika terjadi kesalahan panitia.
-     */
     public function removeTeamFromPool(Team $team, Pool $pool): void
     {
         $pool->teams()->detach($team->id);
+    }
+
+    public function autoAssign(BasketballEventCategory $category, string $prefix, int $numberOfPools, int $teamsPerPool, string $numberingStyle): int
+    {
+        $availableTeams = $category->teams()->whereDoesntHave('pools')->get();
+        $created = 0;
+
+        for ($i = 1; $i <= $numberOfPools; $i++) {
+            $pool = $this->createPool($category, "{$prefix} ".$this->label($numberingStyle, $i));
+            $slice = $availableTeams->splice(0, $teamsPerPool);
+
+            if ($slice->isNotEmpty()) {
+                $pool->teams()->attach($slice->pluck('id'));
+                $this->roundRobin->generateForPool($pool); // auto-generate fixtures per pool
+                $created++;
+            }
+        }
+
+        return $created;
+    }
+
+    private function label(string $style, int $n): string
+    {
+        return match ($style) {
+            'alpha' => chr(64 + $n),
+            'roman' => ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'][$n] ?? (string) $n,
+            default => (string) $n,
+        };
     }
 }

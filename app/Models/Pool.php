@@ -8,15 +8,20 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Pool extends Model
 {
-    protected $fillable = ['event_id', 'name'];
+    protected $fillable = ['basketball_event_category_id', 'name'];
 
-    public function event(): BelongsTo
+    public function category(): BelongsTo
     {
-        return $this->belongsTo(Event::class);
+        return $this->belongsTo(BasketballEventCategory::class, 'basketball_event_category_id');
     }
 
     public function teams(): BelongsToMany
     {
         return $this->belongsToMany(Team::class);
+    }
+
+    public function matches(): HasMany
+    {
+        return $this->hasMany(GameMatch::class);
     }
 }
