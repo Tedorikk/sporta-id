@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\BasketballEvent;
+use App\Models\BasketballClub;
 use App\Models\BasketballEventCategory;
 use App\Models\Event;
 use App\Models\Team;
@@ -86,12 +87,15 @@ class TeamController extends Controller
 
     public function show(Event $event, Team $team)
     {
-        // Eloquent handles BelongsToMany exactly the same here
         $team->load('players', 'basketballEventCategory');
+        
+        // Fetch all clubs with their players (using your relation name 'player')
+        $clubs = BasketballClub::with('player')->orderBy('name')->get();
 
         return Inertia::render('dashboard/events/teams/show', [
             'event' => $event,
             'team' => $team,
+            'clubs' => $clubs,
         ]);
     }
 

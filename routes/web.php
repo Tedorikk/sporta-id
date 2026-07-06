@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BasketballEventController;
 use App\Http\Controllers\BasketballEventCategoryController;
+use App\Http\Controllers\BasketballClubController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\GameMatchController;
 use App\Http\Controllers\ImageUploadController;
@@ -48,6 +49,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->except(['index', 'create', 'edit', 'show']);
         });
     });
+
+    Route::post('/dashboard/basketball-clubs', [BasketballClubController::class, 'store'])
+        ->name('basketball-clubs.store');
 
     Route::resource('events', EventController::class)->only(['store', 'update', 'destroy']);
     Route::post('events/{event}/basketball', [BasketballEventController::class, 'store'])

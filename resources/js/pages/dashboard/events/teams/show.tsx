@@ -1,6 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { format } from 'date-fns';
-import { ChevronLeft, Mail, Pencil, Phone, Plus, Trash2, UserPlus } from 'lucide-react';
+import { ChevronLeft, Mail, Pencil, Phone, Plus, Trash2, UserPlus, Users } from 'lucide-react'; // Added Users icon
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,7 @@ import type { Event } from '@/types/event';
 import type { Player } from '@/types/player';
 import type { Team } from '@/types/team';
 import { PlayerFormDialog } from './components/player-form-dialog';
+import { AddExistingPlayerDialog, type BasketballClub } from './components/add-existing-player-dialog'; // Import the new dialog
 
 const STATUS_BADGE: Record<Team['status'], { label: string; className: string }> = {
     verified: {
@@ -33,6 +34,7 @@ const STATUS_BADGE: Record<Team['status'], { label: string; className: string }>
 };
 
 function PlayerHoverContent({ player }: { player: Player }) {
+    // ... [Content stays exactly the same as your code] ...
     return (
         <div className="flex gap-3">
             {player.photo ? (
@@ -76,9 +78,11 @@ function PlayerHoverContent({ player }: { player: Player }) {
 export default function ShowTeam({
     event,
     team,
+    clubs, // <-- Add this
 }: {
     event: Event;
     team: Team;
+    clubs: BasketballClub[]; // <-- Add this
 }) {
     const players = team.players ?? [];
 
@@ -92,6 +96,7 @@ export default function ShowTeam({
         <div className="mx-auto flex h-full w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-6 md:px-8 md:py-8">
             <Head title={`${team.name} - ${event.name}`} />
 
+            {/* Header section remains identical... */}
             <section className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex items-start gap-4">
                     <Button
@@ -167,20 +172,37 @@ export default function ShowTeam({
                             Manage players in {team.name}
                         </p>
                     </div>
-                    <PlayerFormDialog
-                        event={event}
-                        team={team}
-                        trigger={
-                            <Button>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Add New Player
-                            </Button>
-                        }
-                    />
+
+                    {/* Replaced single button with a flex group for both buttons */}
+                    <div className="flex items-center gap-2">
+                        <AddExistingPlayerDialog
+                            event={event}
+                            team={team}
+                            clubs={clubs}
+                            trigger={
+                                <Button variant="outline">
+                                    <Users className="mr-2 h-4 w-4" />
+                                    Add Existing Player
+                                </Button>
+                            }
+                        />
+                        <PlayerFormDialog
+                            event={event}
+                            team={team}
+                            trigger={
+                                <Button>
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Add New Player
+                                </Button>
+                            }
+                            clubs={clubs}
+                        />
+                    </div>
                 </div>
 
                 <div className="rounded-md border">
                     <Table>
+                        {/* Table implementation remains identical... */}
                         <TableHeader>
                             <TableRow>
                                 <TableHead className="w-16">No.</TableHead>
@@ -240,6 +262,7 @@ export default function ShowTeam({
                                                                     <Pencil className="h-4 w-4" />
                                                                 </Button>
                                                             }
+                                                            clubs={clubs}
                                                         />
                                                         <DeleteConfirmationDialog
                                                             trigger={

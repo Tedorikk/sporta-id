@@ -55,6 +55,25 @@ class PlayerController extends Controller
             ]]);
     }
 
+    public function attach(Request $request, Event $event, Team $team)
+    {
+        $validated = $request->validate([
+            'player_id' => ['required', 'exists:players,id'],
+        ]);
+
+        // Prevent attaching the same player twice
+        if (! $team->players()->where('players.id', $validated['player_id'])->exists()) {
+            $team->players()->attach($validated['player_id']);
+        }
+
+        return redirect()
+            ->route('teams.show', [$event, $team])
+            ->with(['toast' => [
+                'title' => 'Success',
+                'description' => 'Existing player added to team successfully.',
+            ]]);
+    }
+
     private function validated(Request $request, Team $team, ?Player $player = null): array
     {
         return $request->validate([
