@@ -68,6 +68,7 @@ class PoolController extends Controller
             'prefix' => 'required|string|max:20', // e.g., "Group"
             'number_of_pools' => 'required|integer|min:1|max:10',
             'teams_per_pool' => 'required|integer|min:1',
+            'numbering_style' => 'required|in:numeric,alpha,roman',
         ]);
 
         // Get all available teams not yet in a pool
@@ -78,14 +79,16 @@ class PoolController extends Controller
         $createdPools = 0;
 
         for ($i = 1; $i <= $validated['number_of_pools']; $i++) {
+            $label = $this->numberingLabel($validated['numbering_style'], $i);
+
             // Create the pool
             $pool = $event->pools()->create([
-                'name' => "{$validated['prefix']} {$i}"
+                'name' => "{$validated['prefix']} {$label}"
             ]);
 
             // Pop the required number of teams from the collection
             $teamsToAssign = $availableTeams->splice(0, $validated['teams_per_pool']);
-            
+
             if ($teamsToAssign->isNotEmpty()) {
                 $pool->teams()->attach($teamsToAssign->pluck('id'));
                 $createdPools++;
@@ -96,6 +99,48 @@ class PoolController extends Controller
             'title' => 'Success',
             'description' => "Created {$createdPools} pools automatically."
         ]);
+    }
+
+    private function numberingLabel(string $style, int $n): string
+    {
+        return match ($style) {
+            'alpha' => $this->toAlpha($n),
+            'roman' => $this->toRoman($n),
+            default => (string) $n,
+        };
+    }
+
+    private function toAlpha(int $n): string
+    {
+        $label = '';
+
+        while ($n > 0) {
+            $remainder = ($n - 1) % 26;
+            $label = chr(65 + $remainder).$label;
+            $n = intdiv($n - 1, 26);
+        }
+
+        return $label;
+    }
+
+    private function toRoman(int $n): string
+    {
+        $map = [
+            1000 => 'M', 900 => 'CM', 500 => 'D', 400 => 'CD',
+            100 => 'C', 90 => 'XC', 50 => 'L', 40 => 'XL',
+            10 => 'X', 9 => 'IX', 5 => 'V', 4 => 'IV', 1 => 'I',
+        ];
+
+        $result = '';
+
+        foreach ($map as $value => $symbol) {
+            while ($n >= $value) {
+                $result .= $symbol;
+                $n -= $value;
+            }
+        }
+
+        return $result;
     }
 
     public function destroyAll(Event $event)
