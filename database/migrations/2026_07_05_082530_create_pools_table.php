@@ -10,7 +10,11 @@ return new class extends Migration
     {
         Schema::create('pools', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('event_id')->constrained()->cascadeOnDelete();
+
+            // Scoped to category (not event) — a category is either "pool" or "round_robin" format,
+            // and beda kategori bisa punya pool set yang beda meski dalam satu event
+            $table->foreignId('basketball_event_category_id')->constrained()->cascadeOnDelete();
+
             $table->string('name');
             $table->timestamps();
         });

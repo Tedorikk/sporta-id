@@ -9,9 +9,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('pool_team', function (Blueprint $table) {
+            $table->id();
             $table->foreignId('pool_id')->constrained()->cascadeOnDelete();
             $table->foreignId('team_id')->constrained()->cascadeOnDelete();
-            $table->primary(['pool_id', 'team_id']);
+            $table->timestamps();
+
+            // A team can't be attached to the same pool twice
+            $table->unique(['pool_id', 'team_id']);
         });
     }
 
