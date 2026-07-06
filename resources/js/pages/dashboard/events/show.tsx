@@ -68,7 +68,13 @@ export default function ShowEvent({ event }: { event: Event }) {
 
             <div className="grid grid-cols-1 gap-8">
                 {event.category === 'BASKETBALL' && (
-                    <BasketballManagement key={event.id} event={event} categories={event.basketball_categories ?? []} />
+                    <BasketballManagement
+                        key={event.id}
+                        event={event}
+                        categories={event.basketball_categories ?? []}
+                        pools={event.pools ?? []}
+                        teams={event.teams ?? []}
+                    />
                 )}
             </div>
 

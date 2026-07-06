@@ -107,6 +107,8 @@ class EventController extends Controller
                 'pools_count' => $event->pools()->count(),
                 'matches_count' => $event->matches()->count(),
                 'basketball_categories' => $event->specific->categories,
+                'pools' => $event->pools()->with('teams')->get(),
+                'teams' => $event->teams()->get(),
             ];
         }
 

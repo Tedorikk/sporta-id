@@ -36,6 +36,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Everything scoped to a single event lives here.
         Route::prefix('{event}')->group(function () {
             Route::resource('teams', TeamController::class);
+            Route::post('pools/{pool}/teams', [PoolController::class, 'assignTeam'])->name('pools.teams.assign');
+            Route::delete('pools/{pool}/teams/{team}', [PoolController::class, 'removeTeam'])->name('pools.teams.remove');
+            Route::post('pools/auto-assign', [PoolController::class, 'autoAssign'])->name('pools.auto-assign');
+            Route::delete('pools', [PoolController::class, 'destroyAll'])->name('pools.destroy-all');
             Route::resource('pools', PoolController::class);
             Route::resource('matches', GameMatchController::class);
 
@@ -47,6 +51,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->parameters(['basketball-categories' => 'category'])
                 ->names('basketball_categories')
                 ->except(['index', 'create', 'edit', 'show']);
+
         });
     });
 

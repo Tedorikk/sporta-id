@@ -1,4 +1,6 @@
 import { BasketballEventCategory } from "./basketball-event-category";
+import type { Pool } from './pool';
+import type { Team } from './team';
 
 export type EventStatus = 'upcoming' | 'ongoing' | 'past';
 
@@ -18,6 +20,8 @@ export interface Event {
     pools_count?: number;
     matches_count?: number;
     basketball_categories?: BasketballEventCategory[];
+    pools?: Pool[];
+    teams?: Team[];
 }
 
 
