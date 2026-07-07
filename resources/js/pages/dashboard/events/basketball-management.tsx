@@ -378,16 +378,26 @@ export function BasketballManagement({
                             </span>
                         </Link>
 
-                        <Link
-                            href={`/dashboard/events/${event.id}/matches`}
-                            className="flex flex-col gap-2 rounded-lg border p-4 transition hover:border-primary/50 hover:bg-muted"
-                        >
-                            <Swords className="h-5 w-5 text-primary" />
-                            <span className="font-medium">Matches</span>
-                            <span className="text-sm text-muted-foreground">
-                                {event.matches_count ?? 0} scheduled matches
-                            </span>
-                        </Link>
+                        {categories.length > 0 ? (
+                            <Link
+                                href={`/dashboard/events/${event.id}/basketball-categories/${categories[0].id}/matches`}
+                                className="flex flex-col gap-2 rounded-lg border p-4 transition hover:border-primary/50 hover:bg-muted"
+                            >
+                                <Swords className="h-5 w-5 text-primary" />
+                                <span className="font-medium">Matches</span>
+                                <span className="text-sm text-muted-foreground">
+                                    {event.matches_count ?? 0} scheduled matches
+                                </span>
+                            </Link>
+                        ) : (
+                            <div className="flex flex-col gap-2 rounded-lg border p-4 opacity-50 cursor-not-allowed">
+                                <Swords className="h-5 w-5 text-muted-foreground" />
+                                <span className="font-medium">Matches</span>
+                                <span className="text-sm text-muted-foreground">
+                                    Add a category first
+                                </span>
+                            </div>
+                        )}
                     </div>
 
                     {/* Match Categories — the flow starts here: a category
@@ -475,7 +485,34 @@ export function BasketballManagement({
                                                     ).toLocaleString('id-ID')}
                                                 </p>
                                             )}
-                                            <div className="mt-1 flex justify-end gap-1">
+                                            <div className="mt-1 flex items-center justify-between gap-1">
+                                                <div className="flex items-center gap-1">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-7 px-2 text-xs"
+                                                        asChild
+                                                    >
+                                                        <Link href={`/dashboard/events/${event.id}/basketball-categories/${category.id}/matches`}>
+                                                            <Swords className="h-3.5 w-3.5 mr-1" />
+                                                            Matches
+                                                        </Link>
+                                                    </Button>
+                                                    {category.format !== 'round_robin' && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-7 px-2 text-xs"
+                                                            asChild
+                                                        >
+                                                            <Link href={`/dashboard/events/${event.id}/basketball-categories/${category.id}/bracket`}>
+                                                                <LayoutGrid className="h-3.5 w-3.5 mr-1" />
+                                                                Bracket
+                                                            </Link>
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-1">
                                                 <BasketballCategoryFormDialog
                                                     event={event}
                                                     category={category}
@@ -519,7 +556,9 @@ export function BasketballManagement({
                                                         )
                                                     }
                                                 />
+                                                </div>
                                             </div>
+
 
                                             <CategoryPools
                                                 event={event}
