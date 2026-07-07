@@ -1,8 +1,9 @@
 // resources/js/pages/dashboard/events/teams/index.tsx
 import { Head, Link, router } from '@inertiajs/react';
-import { ChevronLeft, Plus, Pencil, Trash2, Search, Users } from 'lucide-react';
+import { ChevronLeft, Plus, Pencil, Trash2, Search, Users, AlertCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,14 +36,15 @@ const STATUS_VARIANT: Record<TeamStatus, 'default' | 'secondary' | 'destructive'
     rejected: 'destructive',
 };
 
-function EmptyState() {
+function EmptyState({ hasCategories }: { hasCategories: boolean }) {
     return (
         <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-14 text-center">
             <Users className="h-6 w-6 text-muted-foreground" />
             <p className="text-sm font-medium">No teams found</p>
             <p className="max-w-sm text-sm text-muted-foreground">
-                Try adjusting your filters, or register a new team to get
-                started.
+                {hasCategories
+                    ? 'Try adjusting your filters, or register a new team to get started.'
+                    : 'Configure categories first to start adding teams.'}
             </p>
         </div>
     );
@@ -84,6 +86,19 @@ export default function TeamsIndex({ event, teams, categories, filters }: Props)
         <div className="mx-auto flex h-full w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
             <Head title={`Teams · ${event.name}`} />
 
+            {categories.length === 0 && (
+                <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>No Event Categories Found</AlertTitle>
+                    <AlertDescription>
+                        <span className="inline">
+                            You cannot add teams yet because this event has no categories. Please configure categories in the{' '}
+                            <Link href={`/dashboard/events/${event.id}`} className="inline underline font-semibold">event settings</Link> first.
+                        </span>
+                    </AlertDescription>
+                </Alert>
+            )}
+
             {/* Header */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-4">
@@ -98,12 +113,19 @@ export default function TeamsIndex({ event, teams, categories, filters }: Props)
                     </div>
                 </div>
 
-                <Button asChild>
-                    <Link href={`/dashboard/events/${event.id}/teams/create`}>
+                {categories.length > 0 ? (
+                    <Button asChild>
+                        <Link href={`/dashboard/events/${event.id}/teams/create`}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add Team
+                        </Link>
+                    </Button>
+                ) : (
+                    <Button disabled>
                         <Plus className="mr-2 h-4 w-4" />
                         Add Team
-                    </Link>
-                </Button>
+                    </Button>
+                )}
             </div>
 
             {/* Filters */}
@@ -174,7 +196,7 @@ export default function TeamsIndex({ event, teams, categories, filters }: Props)
 
             {/* Team list */}
             {teams.data.length === 0 ? (
-                <EmptyState />
+                <EmptyState hasCategories={categories.length > 0} />
             ) : (
                 <div className="overflow-hidden rounded-xl border bg-card">
                     <table className="w-full text-sm">

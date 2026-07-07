@@ -35,14 +35,32 @@ class TeamController extends Controller
 
     public function create(Event $event)
     {
+        $categories = $this->availableCategories($event);
+
+        if (count($categories) === 0) {
+            return redirect()->route('teams.index', $event)->with(['toast' => [
+                'title' => 'Error',
+                'description' => 'Please create at least one event category first.',
+            ]]);
+        }
+
         return Inertia::render('dashboard/events/teams/create', [
             'event' => $event,
-            'categories' => $this->availableCategories($event),
+            'categories' => $categories,
         ]);
     }
 
     public function store(Request $request, Event $event)
     {
+        $categories = $this->availableCategories($event);
+
+        if (count($categories) === 0) {
+            return redirect()->route('teams.index', $event)->with(['toast' => [
+                'title' => 'Error',
+                'description' => 'Please create at least one event category first.',
+            ]]);
+        }
+
         $validated = $this->validated($request, $event);
 
         $event->teams()->create($validated);
