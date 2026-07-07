@@ -19,6 +19,8 @@ class BasketballEventController extends Controller
             ]]);
         }
 
+        $basketballEvent = BasketballEvent::create();
+
         $event->specific()->associate($basketballEvent);
         $event->save();
 

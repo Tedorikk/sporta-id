@@ -1,8 +1,9 @@
 <?php
 
-use App\Http\Controllers\BasketballEventController;
-use App\Http\Controllers\BasketballEventCategoryController;
 use App\Http\Controllers\BasketballClubController;
+use App\Http\Controllers\BasketballEventCategoryController;
+use App\Http\Controllers\BasketballEventController;
+use App\Http\Controllers\BracketController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\GameMatchController;
 use App\Http\Controllers\ImageUploadController;
@@ -17,16 +18,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard/page')->name('dashboard');
 
     // --- Events -------------------------------------------------------
-    // Pages live under dashboard/events/*, mutations live under events/*.
-    // Kept this split as-is (frontend forms already post to /events),
-    // just grouped it so the split reads as deliberate.
-    //
-    // NOTE: these 4 routes are named individually (events.index, etc.)
-    // rather than via a ->name('events.') group prefix, because a name
-    // prefix on the group would also apply to the nested teams/pools/
-    // matches/players resources below, turning `teams.index` into
-    // `events.teams.index` and breaking every route() call that expects
-    // the flat name.
     Route::prefix('dashboard/events')->group(function () {
         Route::get('/', [EventController::class, 'index'])->name('events.index');
         Route::inertia('create', 'dashboard/events/create')->name('events.create');
@@ -36,12 +27,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Everything scoped to a single event lives here.
         Route::prefix('{event}')->group(function () {
             Route::resource('teams', TeamController::class);
-            Route::post('pools/{pool}/teams', [PoolController::class, 'assignTeam'])->name('pools.teams.assign');
-            Route::delete('pools/{pool}/teams/{team}', [PoolController::class, 'removeTeam'])->name('pools.teams.remove');
-            Route::post('pools/auto-assign', [PoolController::class, 'autoAssign'])->name('pools.auto-assign');
-            Route::delete('pools', [PoolController::class, 'destroyAll'])->name('pools.destroy-all');
-            Route::resource('pools', PoolController::class);
-            Route::resource('matches', GameMatchController::class);
 
             Route::resource('teams.players', PlayerController::class)
                 ->names('players')
@@ -52,6 +37,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->names('basketball_categories')
                 ->except(['index', 'create', 'edit', 'show']);
 
+            // Pools, matches, and the bracket all belong to a category now
+            // (format — round_robin vs pool — is set per category, not per event),
+            // so they're nested under basketball-categories/{category} instead
+            // of sitting flat under {event} like before.
+            Route::prefix('basketball-categories/{category}')->group(function () {
+                Route::post('pools/auto-assign', [PoolController::class, 'autoAssign'])->name('pools.auto-assign');
+                Route::delete('pools', [PoolController::class, 'destroyAll'])->name('pools.destroy-all');
+                Route::post('pools/{pool}/teams', [PoolController::class, 'assignTeam'])->name('pools.teams.assign');
+                Route::delete('pools/{pool}/teams/{team}', [PoolController::class, 'removeTeam'])->name('pools.teams.remove');
+                Route::post('pools/{pool}/generate', [GameMatchController::class, 'generateForPool'])->name('pools.generate');
+                Route::resource('pools', PoolController::class);
+
+                Route::post('matches/generate', [GameMatchController::class, 'generate'])->name('matches.generate');
+                Route::patch('matches/{match}/score', [GameMatchController::class, 'updateScore'])->name('matches.score');
+                Route::resource('matches', GameMatchController::class)->except(['store']);
+
+                Route::get('bracket', [BracketController::class, 'index'])->name('bracket.index');
+                Route::post('bracket/generate', [BracketController::class, 'generate'])->name('bracket.generate');
+            });
         });
     });
 

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Event extends Model
@@ -88,13 +89,35 @@ class Event extends Model
         return $this->hasMany(Team::class);
     }
 
-    public function pools(): HasMany
+    /**
+     * Pools are scoped to BasketballEventCategory, not directly to Event.
+     * Path: events → basketball_events → basketball_event_categories → pools
+     */
+    public function pools(): HasManyThrough
     {
-        return $this->hasMany(Pool::class);
+        return $this->hasManyThrough(
+            Pool::class,
+            BasketballEventCategory::class,
+            'basketball_event_id', // FK on basketball_event_categories → basketball_events
+            'basketball_event_category_id', // FK on pools → basketball_event_categories
+            'eventable_id',         // local key on events (points to basketball_events.id)
+            'id'                    // local key on basketball_event_categories
+        );
     }
 
-    public function matches(): HasMany
+    /**
+     * Matches are also scoped to BasketballEventCategory.
+     * Path: events → basketball_events → basketball_event_categories → matches
+     */
+    public function matches(): HasManyThrough
     {
-        return $this->hasMany(GameMatch::class);
+        return $this->hasManyThrough(
+            GameMatch::class,
+            BasketballEventCategory::class,
+            'basketball_event_id',
+            'basketball_event_category_id',
+            'eventable_id',
+            'id'
+        );
     }
 }

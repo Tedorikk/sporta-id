@@ -23,3 +23,14 @@ export interface Team {
     basketball_event_category_id: number | null;
     basketball_event_category?: BasketballEventCategory;
 }
+
+export interface PaginatedTeams {
+    data: Team[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+    links: { url: string | null; label: string; active: boolean }[];
+}
