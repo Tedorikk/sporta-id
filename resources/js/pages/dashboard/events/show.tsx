@@ -73,7 +73,6 @@ export default function ShowEvent({ event }: { event: Event }) {
                         event={event}
                         categories={event.basketball_categories ?? []}
                         pools={event.pools ?? []}
-                        teams={event.teams ?? []}
                     />
                 )}
             </div>

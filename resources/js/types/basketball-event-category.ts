@@ -3,6 +3,9 @@ export interface BasketballEventCategory {
     basketball_event_id: number;
     name: string;
     slug: string;
+    format: 'round_robin' | 'pool_stage' | string;
+    win_points: number;
+    loss_points: number;
     min_team: number;
     max_team: number | null;
     min_player_per_team: number;

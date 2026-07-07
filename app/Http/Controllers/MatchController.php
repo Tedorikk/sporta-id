@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin\Basketball;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\BasketballEventCategory;

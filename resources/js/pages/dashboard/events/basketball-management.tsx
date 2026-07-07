@@ -9,18 +9,35 @@ import {
     Trash2,
     X,
     UserPlus,
+    Loader2,
     Icon,
 } from 'lucide-react';
 import { basketball } from '@lucide/lab';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import type { BasketballEventCategory } from '@/types/basketball-event-category';
 import type { Event } from '@/types/event';
 import type { Pool } from '@/types/pool';
 import type { Team } from '@/types/team';
 import { BasketballCategoryFormDialog } from './components/basketball-category-form-dialog';
 import { PoolFormDialog } from './teams/components/pool-form-dialog';
+
+// NOTE: Pools are scoped per category (Pool.basketball_event_category_id),
+// and PoolFormDialog only shows teams "already scoped to this category".
+// That means Team needs a category link too. If `Team` doesn't yet carry
+// `basketball_event_category_id`, add it to `types/team.ts` — everything
+// below assumes it exists. Until then this field is optional-chained so
+// the file still compiles, but category-scoped filtering won't do
+// anything useful until the type (and the backend relation) is real.
+type CategoryScopedTeam = Team & { basketball_event_category_id?: number };
 
 function EmptyState({
     icon,
@@ -57,6 +74,8 @@ function PoolCard({
     onDelete: (pool: Pool) => void;
 }) {
     const [selectedTeamId, setSelectedTeamId] = useState('');
+    const [isAssigning, setIsAssigning] = useState(false);
+    const [removingTeamId, setRemovingTeamId] = useState<number | null>(null);
     const assignedTeams = pool.teams ?? [];
 
     const handleAssign = () => {
@@ -67,7 +86,9 @@ function PoolCard({
             { team_id: selectedTeamId },
             {
                 preserveScroll: true,
+                onStart: () => setIsAssigning(true),
                 onSuccess: () => setSelectedTeamId(''),
+                onFinish: () => setIsAssigning(false),
             },
         );
     };
@@ -75,7 +96,11 @@ function PoolCard({
     const handleRemoveTeam = (team: Team) => {
         router.delete(
             `/dashboard/events/${event.id}/pools/${pool.id}/teams/${team.id}`,
-            { preserveScroll: true },
+            {
+                preserveScroll: true,
+                onStart: () => setRemovingTeamId(team.id),
+                onFinish: () => setRemovingTeamId(null),
+            },
         );
     };
 
@@ -132,10 +157,15 @@ function PoolCard({
                             <button
                                 type="button"
                                 onClick={() => handleRemoveTeam(team)}
-                                className="text-muted-foreground transition hover:text-destructive"
+                                disabled={removingTeamId === team.id}
+                                className="text-muted-foreground transition hover:text-destructive disabled:opacity-50"
                                 aria-label={`Remove ${team.name} from ${pool.name}`}
                             >
-                                <X className="h-3 w-3" />
+                                {removingTeamId === team.id ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                    <X className="h-3 w-3" />
+                                )}
                             </button>
                         </span>
                     ))}
@@ -144,27 +174,152 @@ function PoolCard({
 
             {availableTeams.length > 0 && (
                 <div className="mt-1 flex items-center gap-2 border-t pt-3">
-                    <select
+                    <Select
                         value={selectedTeamId}
-                        onChange={(e) => setSelectedTeamId(e.target.value)}
-                        className="h-8 flex-1 rounded-md border bg-background px-2 text-sm"
+                        onValueChange={setSelectedTeamId}
                     >
-                        <option value="">Assign a team&hellip;</option>
-                        {availableTeams.map((team) => (
-                            <option key={team.id} value={team.id}>
-                                {team.name}
-                            </option>
-                        ))}
-                    </select>
+                        <SelectTrigger className="h-8 flex-1 text-sm">
+                            <SelectValue placeholder="Assign a team…" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {availableTeams.map((team) => (
+                                <SelectItem
+                                    key={team.id}
+                                    value={String(team.id)}
+                                >
+                                    {team.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                     <Button
                         size="sm"
                         variant="outline"
-                        disabled={!selectedTeamId}
+                        disabled={!selectedTeamId || isAssigning}
                         onClick={handleAssign}
                     >
-                        <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+                        {isAssigning ? (
+                            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                            <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+                        )}
                         Assign
                     </Button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function CategoryPools({
+    event,
+    category,
+    pools,
+    teams,
+    onDeletePool,
+    onRemoveCategoryPools,
+}: {
+    event: Event;
+    category: BasketballEventCategory;
+    pools: Pool[];
+    teams: CategoryScopedTeam[];
+    onDeletePool: (pool: Pool) => void;
+    onRemoveCategoryPools: (category: BasketballEventCategory) => void;
+}) {
+    // Round robin categories play every team against every other team
+    // directly — pools don't apply, so skip straight to a note instead
+    // of an empty grid with a dangling "Add Pool" button.
+    if (category.format === 'round_robin') {
+        return (
+            <p className="mt-2 border-t pt-3 text-xs text-muted-foreground">
+                This category uses round robin — pools aren't used. Head to
+                Matches to generate the schedule.
+            </p>
+        );
+    }
+
+    const categoryTeams = teams.filter(
+        (t) => t.basketball_event_category_id === category.id,
+    );
+
+    return (
+        <div className="mt-2 flex flex-col gap-3 border-t pt-3">
+            <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-medium text-muted-foreground">
+                    {pools.length} pool{pools.length === 1 ? '' : 's'}
+                </span>
+                <div className="flex items-center gap-1.5">
+                    {pools.length > 0 && (
+                        <DeleteConfirmationDialog
+                            trigger={
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 text-destructive hover:text-destructive"
+                                >
+                                    <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                                    Remove all
+                                </Button>
+                            }
+                            confirmationValue="remove all pools"
+                            description={
+                                <>
+                                    This will permanently delete{' '}
+                                    <span className="font-semibold">
+                                        all {pools.length} pool
+                                        {pools.length === 1 ? '' : 's'}
+                                    </span>{' '}
+                                    in {category.name}. Teams will be
+                                    unassigned, not deleted. Type{' '}
+                                    <span className="font-semibold">
+                                        remove all pools
+                                    </span>{' '}
+                                    below to confirm.
+                                </>
+                            }
+                            onConfirm={() => onRemoveCategoryPools(category)}
+                        />
+                    )}
+                    <PoolFormDialog
+                        event={event}
+                        category={category}
+                        teams={categoryTeams}
+                        existingPoolCount={pools.length}
+                        trigger={
+                            <Button size="sm" variant="outline" className="h-7">
+                                <Plus className="mr-1.5 h-3.5 w-3.5" />
+                                Manage pools
+                            </Button>
+                        }
+                    />
+                </div>
+            </div>
+
+            {pools.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                    No pools yet — create one to start grouping teams for
+                    bracket play.
+                </p>
+            ) : (
+                <div className="grid grid-cols-1 gap-3">
+                    {pools.map((pool) => {
+                        const assignedIds = new Set(
+                            (pool.teams ?? []).map((t) => t.id),
+                        );
+                        const availableTeams = categoryTeams.filter(
+                            (t) => !assignedIds.has(t.id),
+                        );
+
+                        return (
+                            <PoolCard
+                                key={pool.id}
+                                event={event}
+                                pool={pool}
+                                availableTeams={availableTeams}
+                                onDelete={onDeletePool}
+                            />
+                        );
+                    })}
                 </div>
             )}
         </div>
@@ -180,7 +335,7 @@ export function BasketballManagement({
     event: Event;
     categories?: BasketballEventCategory[];
     pools?: Pool[];
-    teams?: Team[];
+    teams?: CategoryScopedTeam[];
 }) {
     const handleDeleteCategory = (category: BasketballEventCategory) => {
         router.delete(
@@ -195,10 +350,11 @@ export function BasketballManagement({
         });
     };
 
-    const handleRemoveAllPools = () => {
-        router.delete(`/dashboard/events/${event.id}/pools`, {
-            preserveScroll: true,
-        });
+    const handleRemoveCategoryPools = (category: BasketballEventCategory) => {
+        router.delete(
+            `/dashboard/events/${event.id}/basketball-categories/${category.id}/pools`,
+            { preserveScroll: true },
+        );
     };
 
     return (
@@ -209,109 +365,8 @@ export function BasketballManagement({
                         Basketball Tournament Management
                     </h2>
 
-                    {/* Pools — full detail, shown above Teams & Matches */}
-                    <div className="flex flex-col gap-4">
-                        <div className="flex items-center justify-between gap-2">
-                            <div>
-                                <h3 className="font-medium">Pools</h3>
-                                <p className="text-sm text-muted-foreground">
-                                    Group teams together for round-robin or
-                                    bracket play
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                {pools.length > 0 && (
-                                    <DeleteConfirmationDialog
-                                        trigger={
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                className="text-destructive hover:text-destructive"
-                                            >
-                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                Remove All
-                                            </Button>
-                                        }
-                                        confirmationValue="remove all pools"
-                                        description={
-                                            <>
-                                                This will permanently delete{' '}
-                                                <span className="font-semibold">
-                                                    all {pools.length} pool
-                                                    {pools.length === 1
-                                                        ? ''
-                                                        : 's'}
-                                                </span>{' '}
-                                                for this event. Teams will be
-                                                unassigned, not deleted. Type{' '}
-                                                <span className="font-semibold">
-                                                    remove all pools
-                                                </span>{' '}
-                                                below to confirm.
-                                            </>
-                                        }
-                                        onConfirm={handleRemoveAllPools}
-                                    />
-                                )}
-                                <PoolFormDialog
-                                    event={event}
-                                    trigger={
-                                        <Button size="sm">
-                                            <Plus className="mr-2 h-4 w-4" />
-                                            Add Pool
-                                        </Button>
-                                    }
-                                />
-                            </div>
-                        </div>
-
-                        {pools.length === 0 ? (
-                            <EmptyState
-                                icon={<LayoutGrid className="h-5 w-5" />}
-                                title="No pools yet"
-                                description="Create a pool and assign teams to start organizing your tournament bracket."
-                                action={
-                                    <PoolFormDialog
-                                        event={event}
-                                        trigger={
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                className="mt-1"
-                                            >
-                                                <Plus className="mr-2 h-4 w-4" />
-                                                Create your first pool
-                                            </Button>
-                                        }
-                                    />
-                                }
-                            />
-                        ) : (
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-                                {pools.map((pool) => {
-                                    const assignedIds = new Set(
-                                        (pool.teams ?? []).map((t) => t.id),
-                                    );
-                                    const availableTeams = teams.filter(
-                                        (t) => !assignedIds.has(t.id),
-                                    );
-
-                                    return (
-                                        <PoolCard
-                                            key={pool.id}
-                                            event={event}
-                                            pool={pool}
-                                            availableTeams={availableTeams}
-                                            onDelete={handleDeletePool}
-                                        />
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Teams & Matches */}
-                    <div className="grid grid-cols-1 gap-4 border-t pt-6 sm:grid-cols-2">
+                    {/* Teams & Matches — event-level overview links */}
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <Link
                             href={`/dashboard/events/${event.id}/teams`}
                             className="flex flex-col gap-2 rounded-lg border p-4 transition hover:border-primary/50 hover:bg-muted"
@@ -335,7 +390,10 @@ export function BasketballManagement({
                         </Link>
                     </div>
 
-                    {/* Match Categories */}
+                    {/* Match Categories — the flow starts here: a category
+                        defines format + team limits, teams register into
+                        it, and (for pool_stage categories) pools are
+                        managed inline right below it. */}
                     <div className="flex flex-col gap-4 border-t pt-6">
                         <div className="flex items-center justify-between gap-2">
                             <div>
@@ -367,89 +425,117 @@ export function BasketballManagement({
                                     />
                                 }
                                 title="No categories yet"
-                                description="Add categories to separate matches by age group, division, or skill level."
+                                description="Add a category to set its format and limits — teams, pools, and matches all build on top of it."
                             />
                         ) : (
-                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                {categories.map((category) => (
-                                    <div
-                                        key={category.id}
-                                        className="flex flex-col gap-2 rounded-lg border p-4"
-                                    >
-                                        <div className="flex items-start justify-between gap-2">
-                                            <span className="font-medium">
-                                                {category.name}
-                                            </span>
-                                            <Badge variant="secondary">
-                                                {category.status}
-                                            </Badge>
-                                        </div>
-                                        <p className="text-sm text-muted-foreground">
-                                            {category.min_team}
-                                            {category.max_team
-                                                ? `–${category.max_team}`
-                                                : '+'}{' '}
-                                            teams &middot;{' '}
-                                            {category.min_player_per_team}
-                                            {category.max_player_per_team
-                                                ? `–${category.max_player_per_team}`
-                                                : '+'}{' '}
-                                            players/team
-                                        </p>
-                                        {category.price && (
+                            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                                {categories.map((category) => {
+                                    const categoryPools = pools.filter(
+                                        (p) =>
+                                            p.basketball_event_category_id ===
+                                            category.id,
+                                    );
+                                    const categoryTeamCount = teams.filter(
+                                        (t) =>
+                                            t.basketball_event_category_id ===
+                                            category.id,
+                                    ).length;
+
+                                    return (
+                                        <div
+                                            key={category.id}
+                                            className="flex flex-col gap-2 rounded-lg border p-4"
+                                        >
+                                            <div className="flex items-start justify-between gap-2">
+                                                <span className="font-medium">
+                                                    {category.name}
+                                                </span>
+                                                <Badge variant="secondary">
+                                                    {category.status}
+                                                </Badge>
+                                            </div>
                                             <p className="text-sm text-muted-foreground">
-                                                Rp
-                                                {Number(
-                                                    category.price,
-                                                ).toLocaleString('id-ID')}
+                                                {categoryTeamCount} of{' '}
+                                                {category.min_team}
+                                                {category.max_team
+                                                    ? `–${category.max_team}`
+                                                    : '+'}{' '}
+                                                teams &middot;{' '}
+                                                {category.min_player_per_team}
+                                                {category.max_player_per_team
+                                                    ? `–${category.max_player_per_team}`
+                                                    : '+'}{' '}
+                                                players/team
                                             </p>
-                                        )}
-                                        <div className="mt-1 flex justify-end gap-1">
-                                            <BasketballCategoryFormDialog
+                                            {category.price && (
+                                                <p className="text-sm text-muted-foreground">
+                                                    Rp
+                                                    {Number(
+                                                        category.price,
+                                                    ).toLocaleString('id-ID')}
+                                                </p>
+                                            )}
+                                            <div className="mt-1 flex justify-end gap-1">
+                                                <BasketballCategoryFormDialog
+                                                    event={event}
+                                                    category={category}
+                                                    trigger={
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8"
+                                                        >
+                                                            <Pencil className="h-4 w-4" />
+                                                        </Button>
+                                                    }
+                                                />
+                                                <DeleteConfirmationDialog
+                                                    trigger={
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-destructive"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    }
+                                                    confirmationValue={
+                                                        category.name
+                                                    }
+                                                    description={
+                                                        <>
+                                                            This will
+                                                            permanently delete
+                                                            the{' '}
+                                                            <span className="font-semibold">
+                                                                {category.name}
+                                                            </span>{' '}
+                                                            category.
+                                                        </>
+                                                    }
+                                                    onConfirm={() =>
+                                                        handleDeleteCategory(
+                                                            category,
+                                                        )
+                                                    }
+                                                />
+                                            </div>
+
+                                            <CategoryPools
                                                 event={event}
                                                 category={category}
-                                                trigger={
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8"
-                                                    >
-                                                        <Pencil className="h-4 w-4" />
-                                                    </Button>
+                                                pools={categoryPools}
+                                                teams={teams}
+                                                onDeletePool={
+                                                    handleDeletePool
                                                 }
-                                            />
-                                            <DeleteConfirmationDialog
-                                                trigger={
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-destructive"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                }
-                                                confirmationValue={
-                                                    category.name
-                                                }
-                                                description={
-                                                    <>
-                                                        This will permanently
-                                                        delete the{' '}
-                                                        <span className="font-semibold">
-                                                            {category.name}
-                                                        </span>{' '}
-                                                        category.
-                                                    </>
-                                                }
-                                                onConfirm={() =>
-                                                    handleDeleteCategory(
-                                                        category,
-                                                    )
+                                                onRemoveCategoryPools={
+                                                    handleRemoveCategoryPools
                                                 }
                                             />
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
