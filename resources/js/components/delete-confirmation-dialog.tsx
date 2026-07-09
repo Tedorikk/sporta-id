@@ -80,6 +80,11 @@ export function DeleteConfirmationDialog({
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         placeholder={confirmationValue}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && isMatch && !isDeleting) {
+                                handleConfirm();
+                            }
+                        }}
                         autoComplete="off"
                         autoFocus
                     />
