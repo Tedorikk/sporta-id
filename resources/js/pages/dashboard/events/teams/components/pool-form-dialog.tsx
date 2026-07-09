@@ -68,7 +68,7 @@ function label(style: NumberingStyle, n: number): string {
 type PoolFormDialogProps = {
     event: Event;
     category: BasketballEventCategory;
-    teams: Team[]; // teams already scoped to this category
+    teams: Team[];
     existingPoolCount?: number;
     trigger: React.ReactNode;
 };

@@ -37,7 +37,7 @@ import { PoolFormDialog } from './teams/components/pool-form-dialog';
 // below assumes it exists. Until then this field is optional-chained so
 // the file still compiles, but category-scoped filtering won't do
 // anything useful until the type (and the backend relation) is real.
-type CategoryScopedTeam = Team & { basketball_event_category_id?: number };
+type CategoryScopedTeam = Team & { basketball_event_category_id?: number | null };
 
 function EmptyState({
     icon,
@@ -513,49 +513,49 @@ export function BasketballManagement({
                                                     )}
                                                 </div>
                                                 <div className="flex items-center gap-1">
-                                                <BasketballCategoryFormDialog
-                                                    event={event}
-                                                    category={category}
-                                                    trigger={
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-8 w-8"
-                                                        >
-                                                            <Pencil className="h-4 w-4" />
-                                                        </Button>
-                                                    }
-                                                />
-                                                <DeleteConfirmationDialog
-                                                    trigger={
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-8 w-8 text-destructive"
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    }
-                                                    confirmationValue={
-                                                        category.name
-                                                    }
-                                                    description={
-                                                        <>
-                                                            This will
-                                                            permanently delete
-                                                            the{' '}
-                                                            <span className="font-semibold">
-                                                                {category.name}
-                                                            </span>{' '}
-                                                            category.
-                                                        </>
-                                                    }
-                                                    onConfirm={() =>
-                                                        handleDeleteCategory(
-                                                            category,
-                                                        )
-                                                    }
-                                                />
+                                                    <BasketballCategoryFormDialog
+                                                        event={event}
+                                                        category={category}
+                                                        trigger={
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8"
+                                                            >
+                                                                <Pencil className="h-4 w-4" />
+                                                            </Button>
+                                                        }
+                                                    />
+                                                    <DeleteConfirmationDialog
+                                                        trigger={
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 text-destructive"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        }
+                                                        confirmationValue={
+                                                            category.name
+                                                        }
+                                                        description={
+                                                            <>
+                                                                This will
+                                                                permanently delete
+                                                                the{' '}
+                                                                <span className="font-semibold">
+                                                                    {category.name}
+                                                                </span>{' '}
+                                                                category.
+                                                            </>
+                                                        }
+                                                        onConfirm={() =>
+                                                            handleDeleteCategory(
+                                                                category,
+                                                            )
+                                                        }
+                                                    />
                                                 </div>
                                             </div>
 
