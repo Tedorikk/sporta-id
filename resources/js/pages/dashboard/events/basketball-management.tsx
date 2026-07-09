@@ -345,9 +345,12 @@ export function BasketballManagement({
     };
 
     const handleDeletePool = (pool: Pool) => {
-        router.delete(`/dashboard/events/${event.id}/pools/${pool.id}`, {
-            preserveScroll: true,
-        });
+        router.delete(
+            `/dashboard/events/${event.id}/basketball-categories/${pool.basketball_event_category_id}/pools/${pool.id}`,
+            {
+                preserveScroll: true,
+            }
+        );
     };
 
     const handleRemoveCategoryPools = (category: BasketballEventCategory) => {
