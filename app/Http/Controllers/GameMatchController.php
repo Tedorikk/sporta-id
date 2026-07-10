@@ -11,6 +11,7 @@ use App\Services\Basketball\RoundRobinService;
 use App\Services\Basketball\StandingsService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Validation\Rule;
 
 class GameMatchController extends Controller
 {
@@ -45,6 +46,7 @@ class GameMatchController extends Controller
             'event' => $event,
             'category' => $category,
             'pools' => $pools,
+            'teams' => $category->teams()->orderBy('name')->get(),
             'groupMatches' => $groupMatches,
             'bracketMatches' => $bracketMatches,
             'standings' => $standings,
@@ -95,13 +97,13 @@ class GameMatchController extends Controller
         $validated = $request->validate([
             'home_score' => 'required|integer|min:0',
             'away_score' => 'required|integer|min:0',
-            'status' => 'required|in:scheduled,ongoing,completed',
+            'status' => 'required|in:scheduled,ongoing,finished',
         ]);
 
         $match->update($validated);
 
         // Advance winner in knockout bracket
-        if ($validated['status'] === 'completed' && $match->round !== 'group') {
+        if ($validated['status'] === 'finished' && $match->round !== 'group') {
             $this->bracket->advanceWinner($match);
         }
 
@@ -136,5 +138,127 @@ class GameMatchController extends Controller
             'title' => 'Sukses',
             'description' => 'Pertandingan berhasil dihapus.',
         ]]);
+    }
+
+    /**
+     * Yes, storing, as the name said 
+     */
+    public function store(
+        Request $request,
+        Event $event,
+        BasketballEventCategory $category
+    ) {
+        $validated = $request->validate([
+            'home_team_id' => [
+                'required',
+                Rule::exists('teams', 'id'),
+            ],
+
+            'away_team_id' => [
+                'required',
+                'different:home_team_id',
+                Rule::exists('teams', 'id'),
+            ],
+
+            'pool_id' => [
+                'nullable',
+                Rule::exists('pools', 'id'),
+            ],
+
+            'round' => [
+                'required',
+                'string',
+            ],
+
+            'match_number' => [
+                'nullable',
+                'integer',
+            ],
+
+            'scheduled_at' => [
+                'nullable',
+                'date',
+            ],
+        ]);
+
+        // Ensure teams belong to this category
+        $teamIds = $category->teams()->pluck('teams.id');
+
+        abort_unless(
+            $teamIds->contains($validated['home_team_id']) &&
+            $teamIds->contains($validated['away_team_id']),
+            422,
+            'Selected teams are not in this category.'
+        );
+
+        if (! empty($validated['pool_id'])) {
+
+            $pool = $category
+                ->pools()
+                ->findOrFail($validated['pool_id']);
+
+            $poolTeamIds = $pool->teams()->pluck('teams.id');
+
+            abort_unless(
+                $poolTeamIds->contains($validated['home_team_id']) &&
+                $poolTeamIds->contains($validated['away_team_id']),
+                422,
+                'Both teams must belong to the selected pool.'
+            );
+        }
+
+        if ($validated['pool_id']) {
+            $pool = $category
+                ->pools()
+                ->findOrFail($validated['pool_id']);
+
+            $poolTeamIds = $pool
+                ->teams()
+                ->pluck('teams.id');
+
+            abort_unless(
+                $poolTeamIds->contains($validated['home_team_id']) &&
+                $poolTeamIds->contains($validated['away_team_id']),
+                422,
+                'Both teams must belong to the selected pool.'
+            );
+        }
+
+        $exists = GameMatch::query()
+            ->where('basketball_event_category_id', $category->id)
+            ->where('round', $validated['round'])
+            ->where('pool_id', $validated['pool_id'])
+            ->where(function ($q) use ($validated) {
+                $q->where(function ($q) use ($validated) {
+                    $q->where('home_team_id', $validated['home_team_id'])
+                    ->where('away_team_id', $validated['away_team_id']);
+                })->orWhere(function ($q) use ($validated) {
+                    $q->where('home_team_id', $validated['away_team_id'])
+                    ->where('away_team_id', $validated['home_team_id']);
+                });
+            })
+            ->exists();
+
+        abort_if(
+            $exists,
+            422,
+            'This match already exists.'
+        );
+
+        GameMatch::create([
+            'basketball_event_category_id' => $category->id,
+            'pool_id' => $validated['pool_id'],
+            'home_team_id' => $validated['home_team_id'],
+            'away_team_id' => $validated['away_team_id'],
+            'round' => $validated['round'],
+            'match_number' => $validated['match_number'],
+            'scheduled_at' => $validated['scheduled_at'],
+            'status' => 'scheduled',
+        ]);
+
+        return back()->with('toast', [
+            'title' => 'Success',
+            'description' => 'Match created successfully.',
+        ]);
     }
 }

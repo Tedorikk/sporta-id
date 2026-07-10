@@ -1,7 +1,7 @@
 import type { Team } from './team';
 import type { Pool } from './pool';
 
-export type MatchStatus = 'scheduled' | 'ongoing' | 'completed';
+export type MatchStatus = 'scheduled' | 'ongoing' | 'finished';
 
 export interface GameMatch {
     id: number;

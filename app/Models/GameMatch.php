@@ -43,7 +43,7 @@ class GameMatch extends Model
 
     public function winnerTeamId(): ?int
     {
-        if ($this->status !== 'completed' || $this->home_score === null) {
+        if ($this->status !== 'finished' || $this->home_score === null) {
             return null;
         }
 

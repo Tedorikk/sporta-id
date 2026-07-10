@@ -47,7 +47,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
                 Route::post('matches/generate', [GameMatchController::class, 'generate'])->name('matches.generate');
                 Route::patch('matches/{match}/score', [GameMatchController::class, 'updateScore'])->name('matches.score');
-                Route::resource('matches', GameMatchController::class)->except(['store']);
+                Route::resource('matches', GameMatchController::class)->except(['create', 'edit']);
 
                 Route::get('bracket', [BracketController::class, 'index'])->name('bracket.index');
                 Route::post('bracket/generate', [BracketController::class, 'generate'])->name('bracket.generate');

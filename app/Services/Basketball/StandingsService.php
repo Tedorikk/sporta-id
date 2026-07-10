@@ -12,7 +12,7 @@ class StandingsService
     public function forCategory(BasketballEventCategory $category): Collection
     {
         return $this->build(
-            $category->matches()->whereNull('pool_id')->where('status', 'completed')->get(),
+            $category->matches()->whereNull('pool_id')->where('status', 'finished')->get(),
             $category
         );
     }
@@ -20,7 +20,7 @@ class StandingsService
     public function forPool(Pool $pool): Collection
     {
         return $this->build(
-            $pool->matches()->where('status', 'completed')->get(),
+            $pool->matches()->where('status', 'finished')->get(),
             $pool->category
         );
     }

@@ -44,7 +44,7 @@ const ROUND_LABELS: Record<string, string> = {
 function MatchSlot({ match }: { match: GameMatch }) {
     const homeName = match.homeTeam?.name ?? 'TBD';
     const awayName = match.awayTeam?.name ?? 'TBD';
-    const isCompleted = match.status === 'completed';
+    const isCompleted = match.status === 'finished';
 
     const homeWon = isCompleted && match.home_score !== null && match.away_score !== null
         && match.home_score > match.away_score;
@@ -77,7 +77,7 @@ function MatchSlot({ match }: { match: GameMatch }) {
                 <span>
                     {match.match_number ? `#${match.match_number}` : ''}
                 </span>
-                {match.status === 'completed' && (
+                {match.status === 'finished' && (
                     <CheckCircle2 className="h-3 w-3 text-emerald-500" />
                 )}
                 {match.status === 'ongoing' && (
@@ -104,9 +104,8 @@ function BracketRound({
 }) {
     return (
         <div className="flex flex-col gap-2 min-w-[200px]">
-            <div className={`text-center text-xs font-semibold uppercase tracking-wider px-2 py-1 rounded-md ${
-                isFinal ? 'bg-amber-500/15 text-amber-600' : 'bg-muted text-muted-foreground'
-            }`}>
+            <div className={`text-center text-xs font-semibold uppercase tracking-wider px-2 py-1 rounded-md ${isFinal ? 'bg-amber-500/15 text-amber-600' : 'bg-muted text-muted-foreground'
+                }`}>
                 {isFinal && <Trophy className="inline h-3 w-3 mr-1" />}
                 {label}
             </div>

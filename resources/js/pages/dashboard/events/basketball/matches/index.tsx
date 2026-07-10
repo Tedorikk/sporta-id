@@ -33,6 +33,7 @@ import type { GameMatch, MatchStatus, StandingRow } from '@/types/game-match';
 import type { Pool } from '@/types/pool';
 import type { Team } from '@/types/team';
 import events from '@/routes/events';
+import { useEffect } from "react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -46,6 +47,7 @@ interface Props {
     bracketMatches: Record<string, GameMatch[]>;
     /** key = pool_id, value = standings array */
     standings: Record<string, StandingRow[]>;
+    teams: Team[];
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -53,9 +55,8 @@ interface Props {
 const STATUS_LABELS: Record<MatchStatus, string> = {
     scheduled: 'Scheduled',
     ongoing: 'Ongoing',
-    completed: 'Completed',
+    finished: 'Finished',
 };
-
 const ROUND_LABELS: Record<string, string> = {
     group: 'Group Stage',
     round_of_16: 'Round of 16',
@@ -65,7 +66,7 @@ const ROUND_LABELS: Record<string, string> = {
 };
 
 function statusBadge(status: MatchStatus) {
-    if (status === 'completed') return <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/25"><CheckCircle2 className="h-3 w-3 mr-1" />Completed</Badge>;
+    if (status === 'finished') return <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/25"><CheckCircle2 className="h-3 w-3 mr-1" />Completed</Badge>;
     if (status === 'ongoing') return <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/25"><Play className="h-3 w-3 mr-1" />Ongoing</Badge>;
     return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Scheduled</Badge>;
 }
@@ -154,7 +155,7 @@ function ScoreDialog({
                         <SelectContent>
                             <SelectItem value="scheduled">Scheduled</SelectItem>
                             <SelectItem value="ongoing">Ongoing</SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
+                            <SelectItem value="finished">Completed</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -184,7 +185,7 @@ function MatchCard({
 }) {
     const homeName = match.homeTeam?.name ?? 'TBD';
     const awayName = match.awayTeam?.name ?? 'TBD';
-    const isCompleted = match.status === 'completed';
+    const isCompleted = match.status === 'finished';
 
     const homeWon = isCompleted && match.home_score !== null && match.away_score !== null
         && match.home_score > match.away_score;
@@ -344,9 +345,278 @@ function GeneratePoolButton({ event, category, pool, hasMatches }: { event: Even
     );
 }
 
+// Create Match Dialog
+
+function CreateMatchDialog({
+    event,
+    category,
+    pools,
+    teams,
+    defaultPool,
+}: {
+    event: Event;
+    category: BasketballEventCategory;
+    pools: Pool[];
+    teams: Team[];
+    defaultPool?: Pool;
+}) {
+    const [open, setOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
+
+    const [poolId, setPoolId] = useState(
+        defaultPool ? String(defaultPool.id) : ""
+    );
+
+    const [homeTeamId, setHomeTeamId] = useState("");
+    const [awayTeamId, setAwayTeamId] = useState("");
+
+    const [round, setRound] = useState(
+        defaultPool ? "group" : "group"
+    );
+
+    const [matchNumber, setMatchNumber] = useState("");
+
+    const [date, setDate] = useState("");
+    const [time, setTime] = useState("");
+
+
+    useEffect(() => {
+        setPoolId(defaultPool ? String(defaultPool.id) : "");
+    }, [defaultPool, open]);
+
+    useEffect(() => {
+        setHomeTeamId("");
+        setAwayTeamId("");
+    }, [poolId]);
+
+    useEffect(() => {
+        if (homeTeamId === awayTeamId) {
+            setAwayTeamId("");
+        }
+    }, [homeTeamId]);
+
+    const availableTeams =
+        poolId === ""
+            ? teams
+            : pools.find((p) => String(p.id) === poolId)?.teams ?? [];
+
+
+    const handleSubmit = () => {
+        setSaving(true);
+
+        router.post(
+            `/dashboard/events/${event.id}/basketball-categories/${category.id}/matches`,
+            {
+                pool_id: poolId || null,
+                home_team_id: homeTeamId,
+                away_team_id: awayTeamId,
+                round,
+                match_number: matchNumber || null,
+                scheduled_at:
+                    date && time
+                        ? `${date} ${time}`
+                        : null,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setHomeTeamId("");
+                    setAwayTeamId("");
+                    setMatchNumber("");
+                    setDate("");
+                    setTime("");
+
+                    if (!defaultPool) {
+                        setPoolId("");
+                    }
+
+                    setOpen(false);
+                },
+                onFinish: () => setSaving(false),
+            }
+        );
+    };
+
+    const canSubmit =
+        homeTeamId &&
+        awayTeamId &&
+        homeTeamId !== awayTeamId &&
+        round;
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button size="sm">
+                    + New Match
+                </Button>
+            </DialogTrigger>
+
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Create Match</DialogTitle>
+                </DialogHeader>
+
+                <div className="space-y-4">
+
+                    {!defaultPool && (
+                        <div>
+                            <Label>Pool</Label>
+
+                            <Select
+                                value={poolId}
+                                onValueChange={setPoolId}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Pool" />
+                                </SelectTrigger>
+
+                                <SelectContent>
+                                    {pools.map(pool => (
+                                        <SelectItem
+                                            key={pool.id}
+                                            value={String(pool.id)}
+                                        >
+                                            {pool.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+
+                    <div>
+                        <Label>Home Team</Label>
+
+                        <Select
+                            value={homeTeamId}
+                            onValueChange={setHomeTeamId}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select Team" />
+                            </SelectTrigger>
+
+                            <SelectContent>
+                                {availableTeams.map(team => (
+                                    <SelectItem
+                                        key={team.id}
+                                        value={String(team.id)}
+                                    >
+                                        {team.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div>
+                        <Label>Away Team</Label>
+
+                        <Select
+                            value={awayTeamId}
+                            onValueChange={setAwayTeamId}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select Team" />
+                            </SelectTrigger>
+
+                            <SelectContent>
+                                {availableTeams
+                                    .filter(team => String(team.id) !== homeTeamId)
+                                    .map(team => (
+                                        <SelectItem
+                                            key={team.id}
+                                            value={String(team.id)}
+                                        >
+                                            {team.name}
+                                        </SelectItem>
+                                    ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div>
+                        <Label>Round</Label>
+
+                        <Select
+                            value={round}
+                            onValueChange={setRound}
+                        >
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+
+                            <SelectContent>
+                                <SelectItem value="group">Group</SelectItem>
+                                <SelectItem value="quarterfinal">Quarter Final</SelectItem>
+                                <SelectItem value="semifinal">Semi Final</SelectItem>
+                                <SelectItem value="final">Final</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div>
+                        <Label>Match Number</Label>
+
+                        <Input
+                            type="number"
+                            value={matchNumber}
+                            onChange={(e) =>
+                                setMatchNumber(e.target.value)
+                            }
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                        <div>
+                            <Label>Date</Label>
+
+                            <Input
+                                type="date"
+                                value={date}
+                                onChange={(e) =>
+                                    setDate(e.target.value)
+                                }
+                            />
+                        </div>
+
+                        <div>
+                            <Label>Time</Label>
+
+                            <Input
+                                type="time"
+                                value={time}
+                                onChange={(e) =>
+                                    setTime(e.target.value)
+                                }
+                            />
+                        </div>
+                    </div>
+
+                </div>
+
+                <DialogFooter>
+                    <Button
+                        variant="outline"
+                        onClick={() => setOpen(false)}
+                    >
+                        Cancel
+                    </Button>
+
+                    <Button
+                        onClick={handleSubmit}
+                        disabled={saving || !canSubmit}
+                    >
+                        Create
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function MatchesIndex({ event, category, pools, groupMatches, bracketMatches, standings }: Props) {
+export default function MatchesIndex({ event, category, pools, groupMatches, bracketMatches, standings, teams }: Props) {
     const allTeams = pools.flatMap((p) => p.teams ?? []);
     const allGroupMatches = Object.values(groupMatches).flat();
     const allBracketMatches = Object.values(bracketMatches).flat();
@@ -375,21 +645,39 @@ export default function MatchesIndex({ event, category, pools, groupMatches, bra
                     </div>
 
                     <div className="flex items-center gap-2">
-                        {/* Bracket link (pool_stage only) */}
                         {!isRoundRobin && (
-                            <Button variant="outline" size="sm" asChild>
-                                <Link href={`/dashboard/events/${event.id}/basketball-categories/${category.id}/bracket`}>
-                                    <LayoutGrid className="h-4 w-4 mr-2" />
-                                    Bracket
-                                </Link>
-                            </Button>
+                            <>
+                                <Button variant="outline" size="sm" asChild>
+                                    <Link href={`/dashboard/events/${event.id}/basketball-categories/${category.id}/bracket`}>
+                                        <LayoutGrid className="h-4 w-4 mr-2" />
+                                        Bracket
+                                    </Link>
+                                </Button>
+
+                                <CreateMatchDialog
+                                    event={event}
+                                    category={category}
+                                    pools={pools}
+                                    teams={teams}
+                                />
+                            </>
                         )}
+
                         {isRoundRobin && (
-                            <GenerateAllButton
-                                event={event}
-                                category={category}
-                                hasMatches={allGroupMatches.length > 0}
-                            />
+                            <>
+                                <GenerateAllButton
+                                    event={event}
+                                    category={category}
+                                    hasMatches={allGroupMatches.length > 0}
+                                />
+
+                                <CreateMatchDialog
+                                    event={event}
+                                    category={category}
+                                    pools={pools}
+                                    teams={teams}
+                                />
+                            </>
                         )}
                     </div>
                 </div>
@@ -398,8 +686,8 @@ export default function MatchesIndex({ event, category, pools, groupMatches, bra
                 <div className="grid grid-cols-3 gap-3">
                     {[
                         { label: 'Total', value: totalMatches, icon: <Swords className="h-4 w-4" /> },
-                        { label: 'Completed', value: [...allGroupMatches, ...allBracketMatches].filter(m => m.status === 'completed').length, icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" /> },
-                        { label: 'Remaining', value: [...allGroupMatches, ...allBracketMatches].filter(m => m.status !== 'completed').length, icon: <Circle className="h-4 w-4 text-muted-foreground" /> },
+                        { label: 'Completed', value: [...allGroupMatches, ...allBracketMatches].filter(m => m.status === 'finished').length, icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" /> },
+                        { label: 'Remaining', value: [...allGroupMatches, ...allBracketMatches].filter(m => m.status !== 'finished').length, icon: <Circle className="h-4 w-4 text-muted-foreground" /> },
                     ].map(({ label, value, icon }) => (
                         <div key={label} className="rounded-lg border bg-card px-4 py-3 shadow-sm flex items-center gap-3">
                             <div className="rounded-md bg-muted p-2 text-muted-foreground">{icon}</div>
@@ -434,7 +722,8 @@ export default function MatchesIndex({ event, category, pools, groupMatches, bra
 
                 {/* Pool Stage — matches per pool + standings */}
                 {!isRoundRobin && pools.map((pool) => {
-                    const pMatches: GameMatch[] = groupMatches[pool.id] ?? [];
+                    const pMatches: GameMatch[] =
+                        groupMatches[String(pool.id)] ?? [];
                     const pStandings: StandingRow[] = standings[pool.id] ?? [];
 
                     return (
@@ -445,12 +734,22 @@ export default function MatchesIndex({ event, category, pools, groupMatches, bra
                                     <h2 className="font-semibold">{pool.name}</h2>
                                     <Badge variant="secondary">{pMatches.length} matches</Badge>
                                 </div>
-                                <GeneratePoolButton
-                                    event={event}
-                                    category={category}
-                                    pool={pool}
-                                    hasMatches={pMatches.length > 0}
-                                />
+                                <div className="flex gap-2">
+                                    <GeneratePoolButton
+                                        event={event}
+                                        category={category}
+                                        pool={pool}
+                                        hasMatches={pMatches.length > 0}
+                                    />
+
+                                    <CreateMatchDialog
+                                        event={event}
+                                        category={category}
+                                        pools={pools}
+                                        teams={teams}
+                                        defaultPool={pool}
+                                    />
+                                </div>
                             </div>
 
                             {pMatches.length === 0 ? (

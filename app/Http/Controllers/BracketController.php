@@ -42,7 +42,7 @@ class BracketController extends Controller
         }
 
         $incomplete = $category->pools->contains(
-            fn ($pool) => $pool->matches()->where('status', '!=', 'completed')->exists()
+            fn ($pool) => $pool->matches()->where('status', '!=', 'finished')->exists()
         );
 
         if ($incomplete) {
