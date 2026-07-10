@@ -1,3 +1,4 @@
+
 export interface BasketballEventCategory {
     id: number;
     basketball_event_id: number;

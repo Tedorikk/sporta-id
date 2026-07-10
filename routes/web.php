@@ -37,10 +37,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->names('basketball_categories')
                 ->except(['index', 'create', 'edit', 'show']);
 
-            // Pools, matches, and the bracket all belong to a category now
-            // (format — round_robin vs pool — is set per category, not per event),
-            // so they're nested under basketball-categories/{category} instead
-            // of sitting flat under {event} like before.
             Route::prefix('basketball-categories/{category}')->group(function () {
                 Route::post('pools/auto-assign', [PoolController::class, 'autoAssign'])->name('pools.auto-assign');
                 Route::delete('pools', [PoolController::class, 'destroyAll'])->name('pools.destroy-all');

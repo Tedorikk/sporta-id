@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from '@inertiajs/react';
 import { Loader2 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import {
@@ -76,6 +76,21 @@ function optionalDecimalField() {
         .refine((v) => v === null || v >= 0, 'Cannot be negative');
 }
 
+const CATEGORY_FORMATS = [
+    {
+        value: 'pool_stage',
+        label: 'Pool Stage → Knockout',
+        description:
+            'Teams are divided into pools before entering an elimination bracket.',
+    },
+    {
+        value: 'round_robin',
+        label: 'Round Robin',
+        description:
+            'Every team plays every other team. No pools are created.',
+    },
+];
+
 const categorySchema = z
     .object({
         name: z.string().min(1, 'Category name is required').max(255),
@@ -87,6 +102,10 @@ const categorySchema = z
         price: optionalDecimalField(),
         quota: optionalIntField(1),
         status: z.string().min(1),
+        format: z.enum([
+            'pool_stage',
+            'round_robin'
+        ])
     })
     .refine(
         (data) => data.max_team === null || data.max_team >= data.min_team,
@@ -128,6 +147,7 @@ function toDefaultValues(category?: BasketballEventCategory): CategoryFormInput 
         price: category?.price != null ? String(category.price) : '',
         quota: category?.quota != null ? String(category.quota) : '',
         status: category?.status ?? 'PENDING',
+        format: category?.format ? (category.format as 'pool_stage' | 'round_robin') : 'pool_stage'
     };
 }
 
@@ -154,6 +174,11 @@ export function BasketballCategoryFormDialog({
         resolver: zodResolver(categorySchema),
         defaultValues: toDefaultValues(category),
         mode: 'onChange',
+    });
+
+    const format = useWatch({
+        control,
+        name: 'format',
     });
 
     const onSubmit = (data: CategoryFormOutput) => {
@@ -225,6 +250,41 @@ export function BasketballCategoryFormDialog({
                                         <FieldError
                                             errors={[fieldState.error]}
                                         />
+                                    )}
+                                </Field>
+                            )}
+                        />
+
+                        <Controller
+                            name="format"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <Field data-invalid={fieldState.invalid}>
+                                    <FieldLabel>Tournament Format</FieldLabel>
+
+                                    <Select
+                                        value={field.value}
+                                        onValueChange={field.onChange}
+                                        disabled={isSaving}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+
+                                        <SelectContent>
+                                            {CATEGORY_FORMATS.map((format) => (
+                                                <SelectItem
+                                                    key={format.value}
+                                                    value={format.value}
+                                                >
+                                                    {format.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+
+                                    {fieldState.invalid && (
+                                        <FieldError errors={[fieldState.error]} />
                                     )}
                                 </Field>
                             )}
@@ -351,7 +411,7 @@ export function BasketballCategoryFormDialog({
                                             id="max_player_per_coach"
                                             type="number"
                                             aria-invalid={fieldState.invalid}
-                                            disabled={isSaving}
+                                            disabled={isSaving || format === 'round_robin'}
                                         />
                                         {fieldState.invalid && (
                                             <FieldError

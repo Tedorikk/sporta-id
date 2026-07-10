@@ -64,6 +64,6 @@ class BasketballEventCategory extends Model
 
     public function isRoundRobin(): bool
     {
-        return $this->format === 'round_robin';
+        return $this->format === self::FORMAT_ROUND_ROBIN;
     }
 }

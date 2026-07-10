@@ -369,7 +369,7 @@ export function BasketballManagement({
                     </h2>
 
                     {/* Teams & Matches — event-level overview links */}
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-1">
                         <Link
                             href={`/dashboard/events/${event.id}/teams`}
                             className="flex flex-col gap-2 rounded-lg border p-4 transition hover:border-primary/50 hover:bg-muted"
@@ -380,27 +380,6 @@ export function BasketballManagement({
                                 {event.teams_count ?? 0} registered teams
                             </span>
                         </Link>
-
-                        {categories.length > 0 ? (
-                            <Link
-                                href={`/dashboard/events/${event.id}/basketball-categories/${categories[0].id}/matches`}
-                                className="flex flex-col gap-2 rounded-lg border p-4 transition hover:border-primary/50 hover:bg-muted"
-                            >
-                                <Swords className="h-5 w-5 text-primary" />
-                                <span className="font-medium">Matches</span>
-                                <span className="text-sm text-muted-foreground">
-                                    {event.matches_count ?? 0} scheduled matches
-                                </span>
-                            </Link>
-                        ) : (
-                            <div className="flex flex-col gap-2 rounded-lg border p-4 opacity-50 cursor-not-allowed">
-                                <Swords className="h-5 w-5 text-muted-foreground" />
-                                <span className="font-medium">Matches</span>
-                                <span className="text-sm text-muted-foreground">
-                                    Add a category first
-                                </span>
-                            </div>
-                        )}
                     </div>
 
                     {/* Match Categories — the flow starts here: a category
@@ -463,9 +442,17 @@ export function BasketballManagement({
                                                 <span className="font-medium">
                                                     {category.name}
                                                 </span>
-                                                <Badge variant="secondary">
-                                                    {category.status}
-                                                </Badge>
+                                                <div className="flex items-center gap-2">
+                                                    <Badge variant="outline">
+                                                        {category.format === 'round_robin'
+                                                            ? 'Round Robin'
+                                                            : 'Pool Stage'}
+                                                    </Badge>
+
+                                                    <Badge variant="secondary">
+                                                        {category.status}
+                                                    </Badge>
+                                                </div>
                                             </div>
                                             <p className="text-sm text-muted-foreground">
                                                 {categoryTeamCount} of{' '}

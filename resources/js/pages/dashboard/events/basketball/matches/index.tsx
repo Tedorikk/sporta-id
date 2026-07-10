@@ -353,6 +353,8 @@ export default function MatchesIndex({ event, category, pools, groupMatches, bra
     const totalMatches = allGroupMatches.length + allBracketMatches.length;
     const isRoundRobin = category.format === 'round_robin';
 
+    console.log(groupMatches)
+
     return (
         <>
             <Head title={`Matches — ${category.name}`} />
