@@ -2,60 +2,89 @@
 
 namespace App\Services\Basketball;
 
-use App\Models\Event;
+use App\Models\BasketballEventCategory;
 use App\Models\GameMatch;
-use Exception;
-use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 
 class MatchService
 {
     /**
-     * Menjadwalkan pertandingan baru dengan validasi bentrok jadwal.
+     * Create a single match within a category, enforcing team/pool membership
+     * and duplicate-fixture rules. Throws ValidationException on any
+     * business-rule violation so the controller stays a thin pass-through.
      */
-    public function scheduleMatch(Event $event, array $data): GameMatch
+    public function create(BasketballEventCategory $category, array $data): GameMatch
     {
-        if ($data['team_a_id'] === $data['team_b_id']) {
-            throw new Exception('Tim A dan Tim B tidak boleh tim yang sama.');
+        $homeTeamId = (int) $data['home_team_id'];
+        $awayTeamId = (int) $data['away_team_id'];
+        $poolId = $data['pool_id'] ?? null;
+        $round = $data['round'];
+
+        $this->assertTeamsInCategory($category, $homeTeamId, $awayTeamId);
+
+        if ($poolId) {
+            $this->assertTeamsInPool($category, (int) $poolId, $homeTeamId, $awayTeamId);
         }
 
-        $scheduledAt = Carbon::parse($data['scheduled_at']);
+        $this->assertNoDuplicateFixture($category, $round, $poolId, $homeTeamId, $awayTeamId);
 
-        // Asumsi 1 pertandingan basket butuh waktu sekitar 2 jam (termasuk pemanasan & jeda)
-        $timeWindowStart = $scheduledAt->copy()->subHours(2);
-        $timeWindowEnd = $scheduledAt->copy()->addHours(2);
+        return GameMatch::create([
+            'basketball_event_category_id' => $category->id,
+            'pool_id' => $poolId,
+            'home_team_id' => $homeTeamId,
+            'away_team_id' => $awayTeamId,
+            'round' => $round,
+            'match_number' => $data['match_number'] ?? $this->nextMatchNumber($category),
+            'scheduled_at' => $data['scheduled_at'] ?? null,
+            'status' => 'scheduled',
+        ]);
+    }
 
-        // 1. Validasi Bentrok Lapangan (Venue)
-        $venueConflict = GameMatch::where('event_id', $event->id)
-            ->where('venue', $data['venue'])
-            ->whereBetween('scheduled_at', [$timeWindowStart, $timeWindowEnd])
-            ->exists();
+    protected function assertTeamsInCategory(BasketballEventCategory $category, int $homeTeamId, int $awayTeamId): void
+    {
+        $teamIds = $category->teams()->pluck('teams.id');
 
-        if ($venueConflict) {
-            throw new Exception("Lapangan '{$data['venue']}' sudah terpakai pada rentang waktu tersebut.");
+        if (! $teamIds->contains($homeTeamId) || ! $teamIds->contains($awayTeamId)) {
+            throw ValidationException::withMessages([
+                'home_team_id' => 'Selected teams are not in this category.',
+            ]);
         }
+    }
 
-        // 2. Validasi Bentrok Tim (Pastikan tim tidak sedang main di lapangan lain di jam yang sama)
-        $teamConflict = GameMatch::where('event_id', $event->id)
-            ->whereBetween('scheduled_at', [$timeWindowStart, $timeWindowEnd])
-            ->where(function ($query) use ($data) {
-                $query->whereIn('team_a_id', [$data['team_a_id'], $data['team_b_id']])
-                    ->orWhereIn('team_b_id', [$data['team_a_id'], $data['team_b_id']]);
+    protected function assertTeamsInPool(BasketballEventCategory $category, int $poolId, int $homeTeamId, int $awayTeamId): void
+    {
+        $pool = $category->pools()->findOrFail($poolId);
+        $poolTeamIds = $pool->teams()->pluck('teams.id');
+
+        if (! $poolTeamIds->contains($homeTeamId) || ! $poolTeamIds->contains($awayTeamId)) {
+            throw ValidationException::withMessages([
+                'home_team_id' => 'Both teams must belong to the selected pool.',
+            ]);
+        }
+    }
+
+    protected function assertNoDuplicateFixture(BasketballEventCategory $category, string $round, ?int $poolId, int $homeTeamId, int $awayTeamId): void
+    {
+        $exists = GameMatch::query()
+            ->where('basketball_event_category_id', $category->id)
+            ->where('round', $round)
+            ->where('pool_id', $poolId)
+            ->where(function ($query) use ($homeTeamId, $awayTeamId) {
+                $query
+                    ->where(fn ($q) => $q->where('home_team_id', $homeTeamId)->where('away_team_id', $awayTeamId))
+                    ->orWhere(fn ($q) => $q->where('home_team_id', $awayTeamId)->where('away_team_id', $homeTeamId));
             })
             ->exists();
 
-        if ($teamConflict) {
-            throw new Exception('Salah satu tim sudah memiliki jadwal pertandingan lain pada jam tersebut.');
+        if ($exists) {
+            throw ValidationException::withMessages([
+                'match' => 'A match between these two teams already exists.',
+            ]);
         }
+    }
 
-        // Jika aman, buat jadwal pertandingan
-        return $event->matches()->create([
-            'pool_id' => $data['pool_id'] ?? null,
-            'round' => $data['round'] ?? 'pool',
-            'team_a_id' => $data['team_a_id'],
-            'team_b_id' => $data['team_b_id'],
-            'venue' => $data['venue'],
-            'scheduled_at' => $scheduledAt,
-            'status' => 'scheduled',
-        ]);
+    protected function nextMatchNumber(BasketballEventCategory $category): int
+    {
+        return (int) GameMatch::where('basketball_event_category_id', $category->id)->max('match_number') + 1;
     }
 }
