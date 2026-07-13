@@ -1,6 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { format } from 'date-fns';
-import { ChevronLeft, Mail, Pencil, Phone, Plus, Trash2, UserPlus, Users } from 'lucide-react'; // Added Users icon
+import { ChevronLeft, Mail, Pencil, Phone, Plus, Trash2, UserPlus, Users } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,7 @@ import type { Event } from '@/types/event';
 import type { Player } from '@/types/player';
 import type { Team } from '@/types/team';
 import { PlayerFormDialog } from './components/player-form-dialog';
-import { AddExistingPlayerDialog, type BasketballClub } from './components/add-existing-player-dialog'; // Import the new dialog
+import { AddExistingPlayerDialog, type BasketballClub } from './components/add-existing-player-dialog';
 
 const STATUS_BADGE: Record<Team['status'], { label: string; className: string }> = {
     verified: {

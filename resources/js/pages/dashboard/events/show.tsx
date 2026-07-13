@@ -15,7 +15,7 @@ import { formatDate } from '@/lib/format-date';
 import { formatImageUrl } from '@/lib/image-utils';
 import events from '@/routes/events';
 import type { Event } from '@/types/event';
-import { BasketballManagement } from './basketball-management';
+import { BasketballManagement } from './basketball/basketball-management';
 
 export default function ShowEvent({ event }: { event: Event }) {
     const [isDeleting, setIsDeleting] = useState(false);

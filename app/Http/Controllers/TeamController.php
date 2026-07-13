@@ -25,7 +25,7 @@ class TeamController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return Inertia::render('dashboard/events/teams/index', [
+        return Inertia::render('dashboard/events/basketball/teams/index', [
             'event' => $event,
             'teams' => $teams,
             'filters' => $filters,
@@ -44,7 +44,7 @@ class TeamController extends Controller
             ]]);
         }
 
-        return Inertia::render('dashboard/events/teams/create', [
+        return Inertia::render('dashboard/events/basketball/teams/create', [
             'event' => $event,
             'categories' => $categories,
         ]);
@@ -73,7 +73,7 @@ class TeamController extends Controller
 
     public function edit(Event $event, Team $team)
     {
-        return Inertia::render('dashboard/events/teams/edit', [
+        return Inertia::render('dashboard/events/basketball/teams/edit', [
             'event' => $event,
             'team' => $team,
             'categories' => $this->availableCategories($event, $team),
