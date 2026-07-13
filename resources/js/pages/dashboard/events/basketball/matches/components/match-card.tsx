@@ -15,8 +15,8 @@ export function MatchCard({
     category: BasketballEventCategory;
     match: GameMatch;
 }) {
-    const homeName = match.homeTeam?.name ?? 'TBD';
-    const awayName = match.awayTeam?.name ?? 'TBD';
+    const homeName = match.home_team?.name ?? 'TBD';
+    const awayName = match.away_team?.name ?? 'TBD';
     const isCompleted = match.status === 'finished';
 
     const homeWon = isCompleted && match.home_score !== null && match.away_score !== null

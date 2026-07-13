@@ -33,8 +33,8 @@ export function ScoreDialog({
     const [status, setStatus] = useState<MatchStatus>(match.status);
     const [saving, setSaving] = useState(false);
 
-    const homeName = match.homeTeam?.name ?? 'TBD';
-    const awayName = match.awayTeam?.name ?? 'TBD';
+    const homeName = match.home_team?.name ?? 'TBD';
+    const awayName = match.away_team?.name ?? 'TBD';
 
     const handleSave = () => {
         setSaving(true);

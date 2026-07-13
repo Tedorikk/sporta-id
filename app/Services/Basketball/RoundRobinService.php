@@ -13,11 +13,13 @@ class RoundRobinService
     public function generateForCategory(BasketballEventCategory $category, Collection $teams): void
     {
         $category->matches()->delete();
+
         $this->generatePairs($teams->pluck('id')->all())
             ->each(fn ($pair) => $category->matches()->create([
-                'team_a_id' => $pair[0], 
-                'team_b_id' => $pair[1],
+                'home_team_id' => $pair[0],
+                'away_team_id' => $pair[1],
                 'round' => 'group',
+                'status' => 'scheduled',
             ]));
     }
 
@@ -25,14 +27,16 @@ class RoundRobinService
     public function generateForPool(Pool $pool): void
     {
         $pool->matches()->delete();
+
         $teamIds = $pool->teams()->pluck('teams.id')->all();
 
         $this->generatePairs($teamIds)->each(fn ($pair) => GameMatch::create([
             'basketball_event_category_id' => $pool->basketball_event_category_id,
             'pool_id' => $pool->id,
-            'team_a_id' => $pair[0],
-            'team_b_id' => $pair[1], 
+            'home_team_id' => $pair[0],
+            'away_team_id' => $pair[1],
             'round' => 'group',
+            'status' => 'scheduled',
         ]));
     }
 

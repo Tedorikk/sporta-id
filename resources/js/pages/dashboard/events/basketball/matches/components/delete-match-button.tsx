@@ -18,8 +18,8 @@ export function DeleteMatchButton({
 }) {
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const homeName = match.homeTeam?.name ?? 'TBD';
-    const awayName = match.awayTeam?.name ?? 'TBD';
+    const homeName = match.home_team?.name ?? 'TBD';
+    const awayName = match.away_team?.name ?? 'TBD';
     const matchLabel = `${homeName} vs ${awayName}`;
 
     const handleDelete = () => {
