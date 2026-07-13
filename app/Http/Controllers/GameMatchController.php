@@ -239,11 +239,20 @@ class GameMatchController extends Controller
             })
             ->exists();
 
-        abort_if(
-            $exists,
-            422,
-            'This match already exists.'
-        );
+        if ($exists) {
+            return back()->withErrors([
+                'match' => 'A match between these two teams already exists.',
+            ])->withInput();
+        }
+
+        $matchNumber = $validated['match_number'];
+
+        if ($matchNumber === null) {
+            $matchNumber = GameMatch::where(
+                'basketball_event_category_id',
+                $category->id
+            )->max('match_number') + 1;
+        }
 
         GameMatch::create([
             'basketball_event_category_id' => $category->id,
@@ -251,7 +260,7 @@ class GameMatchController extends Controller
             'home_team_id' => $validated['home_team_id'],
             'away_team_id' => $validated['away_team_id'],
             'round' => $validated['round'],
-            'match_number' => $validated['match_number'],
+            'match_number' => $matchNumber,
             'scheduled_at' => $validated['scheduled_at'],
             'status' => 'scheduled',
         ]);
