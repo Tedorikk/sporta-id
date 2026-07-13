@@ -46,6 +46,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 Route::resource('pools', PoolController::class);
 
                 Route::post('matches/generate', [GameMatchController::class, 'generate'])->name('matches.generate');
+                Route::delete('matches', [GameMatchController::class, 'destroyAll'])->name('matches.destroy-all');
                 Route::patch('matches/{match}/score', [GameMatchController::class, 'updateScore'])->name('matches.score');
                 Route::resource('matches', GameMatchController::class)->except(['create', 'edit']);
 
@@ -67,4 +68,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('upload/image', [ImageUploadController::class, 'destroy'])->name('upload.image.destroy');
 });
 
-require __DIR__.'/settings.php';
+require __DIR__.'/settings.php';    

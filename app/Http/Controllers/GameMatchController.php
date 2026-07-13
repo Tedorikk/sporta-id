@@ -140,4 +140,17 @@ class GameMatchController extends Controller
             'description' => 'Pertandingan berhasil dihapus.',
         ]);
     }
+
+    /**
+     * Delete every match belonging to this category (all rounds/pools).
+     */
+    public function destroyAll(Event $event, BasketballEventCategory $category)
+    {
+        $category->matches()->delete();
+
+        return back()->with('toast', [
+            'title' => 'Sukses',
+            'description' => 'Semua pertandingan berhasil dihapus.',
+        ]);
+    }
 }
