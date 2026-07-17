@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, CalendarDays, FolderGit2, LayoutGrid } from 'lucide-react';
+import { BookOpen, CalendarDays, FolderGit2, LayoutGrid, QrCode } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -26,6 +26,11 @@ const mainNavItems: NavItem[] = [
         title: 'Events',
         href: '/dashboard/events',
         icon: CalendarDays,
+    },
+    {
+        title: 'QR Scanner',
+        href: '/dashboard/qr-scanner',
+        icon: QrCode,
     },
 ];
 

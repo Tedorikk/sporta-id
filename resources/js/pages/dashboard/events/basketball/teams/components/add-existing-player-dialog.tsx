@@ -52,8 +52,12 @@ export function AddExistingPlayerDialog({ event, team, clubs, trigger }: AddExis
 
     // Filter out players that are already on THIS team
     const availablePlayers = useMemo(() => {
-        if (!selectedClub?.player) return [];
+        if (!selectedClub?.player) {
+return [];
+}
+
         const existingPlayerIds = new Set(team.players?.map((p) => p.id) ?? []);
+
         return selectedClub.player.filter((p) => !existingPlayerIds.has(p.id));
     }, [selectedClub, team.players]);
 

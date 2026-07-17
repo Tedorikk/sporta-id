@@ -1,4 +1,4 @@
-import { BasketballEventCategory } from "./basketball-event-category";
+import type { BasketballEventCategory } from "./basketball-event-category";
 import type { Pool } from './pool';
 import type { Team } from './team';
 

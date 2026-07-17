@@ -109,7 +109,7 @@ class TeamController extends Controller
         $team->load('players', 'basketballEventCategory');
         $clubs = BasketballClub::with('player')->orderBy('name')->get();
 
-        return Inertia::render('dashboard/events/teams/show', [
+        return Inertia::render('dashboard/events/basketball/teams/show', [
             'event' => $event,
             'team' => $team,
             'clubs' => $clubs,

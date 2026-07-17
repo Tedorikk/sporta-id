@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { format } from 'date-fns';
-import { ChevronLeft, Mail, Pencil, Phone, Plus, Trash2, UserPlus, Users } from 'lucide-react';
+import { ChevronLeft, Mail, Pencil, Phone, Plus, Trash2, UserPlus, Users, Copy, Check } from 'lucide-react';
+import { useState } from 'react';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,8 +22,9 @@ import events from '@/routes/events';
 import type { Event } from '@/types/event';
 import type { Player } from '@/types/player';
 import type { Team } from '@/types/team';
+import { AddExistingPlayerDialog  } from './components/add-existing-player-dialog';
+import type {BasketballClub} from './components/add-existing-player-dialog';
 import { PlayerFormDialog } from './components/player-form-dialog';
-import { AddExistingPlayerDialog, type BasketballClub } from './components/add-existing-player-dialog';
 
 const STATUS_BADGE: Record<Team['status'], { label: string; className: string }> = {
     verified: {
@@ -84,6 +86,15 @@ export default function ShowTeam({
     team: Team;
     clubs: BasketballClub[]; // <-- Add this
 }) {
+    const [copied, setCopied] = useState(false);
+    const shareUrl = `${window.location.origin}/teams/${team.id}/id-card`;
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
     const players = team.players ?? [];
 
     const handleDeletePlayer = (player: Player) => {
@@ -160,6 +171,49 @@ export default function ShowTeam({
                         Edit Team
                     </Link>
                 </Button>
+            </section>
+
+            <section className="flex flex-col gap-3 rounded-xl border bg-muted/40 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-1">
+                    <h3 className="text-sm font-semibold tracking-tight">Team ID Card Link</h3>
+                    <p className="text-xs text-muted-foreground">Share this public link with the team manager or players to access their ID card.</p>
+                </div>
+                <div className="flex items-center gap-2 max-w-md w-full sm:w-auto">
+                    <input
+                        type="text"
+                        readOnly
+                        value={shareUrl}
+                        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 font-mono text-xs select-all shrink"
+                    />
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={handleCopy}
+                        className="shrink-0"
+                    >
+                        {copied ? (
+                            <>
+                                <Check className="mr-1.5 h-3.5 w-3.5 text-emerald-600" />
+                                Copied!
+                            </>
+                        ) : (
+                            <>
+                                <Copy className="mr-1.5 h-3.5 w-3.5" />
+                                Copy Link
+                            </>
+                        )}
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        className="shrink-0"
+                    >
+                        <a href={shareUrl} target="_blank" rel="noopener noreferrer">
+                            Open
+                        </a>
+                    </Button>
+                </div>
             </section>
 
             <section className="flex flex-col gap-4 rounded-xl border bg-card p-6 shadow-sm">

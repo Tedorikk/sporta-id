@@ -1,7 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from '@inertiajs/react';
 import { Loader2 } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { useState  } from 'react';
+import type {ReactNode} from 'react';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -188,7 +189,10 @@ export function BasketballCategoryFormDialog({
             onFinish: () => setIsSaving(false),
             onSuccess: () => {
                 setOpen(false);
-                if (!isEditing) reset(toDefaultValues());
+
+                if (!isEditing) {
+reset(toDefaultValues());
+}
             },
         };
 
@@ -212,7 +216,10 @@ export function BasketballCategoryFormDialog({
             open={open}
             onOpenChange={(next) => {
                 setOpen(next);
-                if (!next) reset(toDefaultValues(category));
+
+                if (!next) {
+reset(toDefaultValues(category));
+}
             }}
         >
             <DialogTrigger asChild>{trigger}</DialogTrigger>

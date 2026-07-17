@@ -2,10 +2,10 @@ import { Head, Link } from '@inertiajs/react';
 import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import events from '@/routes/events';
+import type { BasketballEventCategory } from '@/types/basketball-event-category';
 import type { Event } from '@/types/event';
 import type { Team } from '@/types/team';
 import TeamForm from './components/team-form';
-import type { BasketballEventCategory } from '@/types/basketball-event-category';
 
 export default function EditTeam({
     event,

@@ -17,7 +17,9 @@ export function DeleteAllMatchesButton({
 }) {
     const [isDeleting, setIsDeleting] = useState(false);
 
-    if (!hasMatches) return null;
+    if (!hasMatches) {
+return null;
+}
 
     const handleDelete = () => {
         setIsDeleting(true);

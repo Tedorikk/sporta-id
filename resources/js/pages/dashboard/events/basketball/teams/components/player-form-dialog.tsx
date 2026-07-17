@@ -2,7 +2,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from '@inertiajs/react';
 import { format } from 'date-fns';
 import { CalendarIcon, Loader2, Plus } from 'lucide-react';
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect  } from 'react';
+import type {ReactNode} from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -78,6 +79,7 @@ function toDefaultValues(player?: Player): PlayerFormValues {
 
 function formatE164Input(value: string) {
     const digits = value.replace(/[^\d]/g, '').slice(0, 15);
+
     return digits ? `+${digits}` : '';
 }
 
@@ -120,6 +122,7 @@ export function PlayerFormDialog({
             const newlyCreated = clubs.find(
                 (c) => c.name.toLowerCase() === pendingClubName.toLowerCase()
             );
+
             if (newlyCreated) {
                 setValue('basketball_club_id', newlyCreated.id.toString());
                 setPendingClubName('');
@@ -129,7 +132,10 @@ export function PlayerFormDialog({
     }, [clubs, pendingClubName, setValue, clearErrors]);
 
     const handleCreateClub = () => {
-        if (!newClubName.trim()) return;
+        if (!newClubName.trim()) {
+return;
+}
+
         setIsSavingClub(true);
         setClubError('');
 
@@ -147,6 +153,7 @@ export function PlayerFormDialog({
                 },
                 onError: (errors) => {
                     setIsSavingClub(false);
+
                     if (errors.name) {
                         setClubError(errors.name);
                     }
@@ -194,6 +201,7 @@ export function PlayerFormDialog({
             open={open}
             onOpenChange={(next) => {
                 setOpen(next);
+
                 if (!next) {
                     reset(toDefaultValues(player));
                     setIsCreatingClub(false);

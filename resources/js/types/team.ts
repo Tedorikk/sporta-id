@@ -1,4 +1,4 @@
-import { BasketballEventCategory } from './basketball-event-category';
+import type { BasketballEventCategory } from './basketball-event-category';
 import type { Player } from './player';
 
 export type TeamStatus = 'pending' | 'verified' | 'rejected';

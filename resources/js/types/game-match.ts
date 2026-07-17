@@ -1,5 +1,5 @@
-import type { Team } from './team';
 import type { Pool } from './pool';
+import type { Team } from './team';
 
 export type MatchStatus = 'scheduled' | 'ongoing' | 'finished';
 

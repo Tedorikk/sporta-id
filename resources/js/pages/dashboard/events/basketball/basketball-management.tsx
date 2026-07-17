@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { Link, router } from '@inertiajs/react';
+import { basketball } from '@lucide/lab';
 import {
     Users,
     LayoutGrid,
@@ -12,7 +12,7 @@ import {
     Loader2,
     Icon,
 } from 'lucide-react';
-import { basketball } from '@lucide/lab';
+import { useState } from 'react';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -79,7 +79,9 @@ function PoolCard({
     const assignedTeams = pool.teams ?? [];
 
     const handleAssign = () => {
-        if (!selectedTeamId) return;
+        if (!selectedTeamId) {
+return;
+}
 
         router.post(
             `/dashboard/events/${event.id}/pools/${pool.id}/teams`,

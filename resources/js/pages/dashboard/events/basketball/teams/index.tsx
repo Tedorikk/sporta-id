@@ -56,7 +56,10 @@ export default function TeamsIndex({ event, teams, categories, filters }: Props)
     // Debounce search so we're not firing a request on every keystroke
     useEffect(() => {
         const timeout = setTimeout(() => {
-            if (search === (filters.search ?? '')) return;
+            if (search === (filters.search ?? '')) {
+return;
+}
+
             applyFilters({ search: search || undefined });
         }, 400);
 

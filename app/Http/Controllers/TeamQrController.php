@@ -1,0 +1,41 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Team;
+use Inertia\Inertia;
+
+class TeamQrController extends Controller
+{
+    /**
+     * Admin-only QR scanner page.
+     * Renders the camera-based QR reader that resolves team IDs.
+     */
+    public function scan()
+    {
+        return Inertia::render('dashboard/qr-scanner');
+    }
+
+    /**
+     * Public shareable team ID card page.
+     * Renders logo, team name, and QR code — no auth required.
+     */
+    public function idCard(Team $team)
+    {
+        $team->load(['basketballEventCategory', 'event']);
+
+        return Inertia::render('team-id-card', [
+            'team' => $team,
+        ]);
+    }
+
+    /**
+     * API endpoint: resolve a team ID and return full team data for the scanner.
+     */
+    public function show(Team $team)
+    {
+        $team->load(['players', 'basketballEventCategory', 'event']);
+
+        return response()->json($team);
+    }
+}

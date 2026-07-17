@@ -10,9 +10,13 @@ use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\PoolController;
 use App\Http\Controllers\TeamController;
+use App\Http\Controllers\TeamQrController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'landing')->name('home');
+
+// --- Public Team ID Card (shareable, no auth required) --------------------
+Route::get('teams/{team}/id-card', [TeamQrController::class, 'idCard'])->name('teams.id-card');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard/page')->name('dashboard');
@@ -63,9 +67,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('events/{event}/basketball', [BasketballEventController::class, 'store'])
         ->name('events.basketball.store');
 
+    // --- QR Scanner (admin only) ----------------------------------------
+    Route::get('dashboard/qr-scanner', [TeamQrController::class, 'scan'])->name('qr-scanner');
+    Route::get('dashboard/teams/{team}/qr-data', [TeamQrController::class, 'show'])->name('teams.qr-data');
+
     // --- Uploads --------------------------------------------------------
     Route::post('upload/image', [ImageUploadController::class, 'store'])->name('upload.image');
     Route::delete('upload/image', [ImageUploadController::class, 'destroy'])->name('upload.image.destroy');
 });
 
-require __DIR__.'/settings.php';    
+require __DIR__.'/settings.php';

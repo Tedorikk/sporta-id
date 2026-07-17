@@ -11,8 +11,8 @@ import {
     DialogFooter,
 } from '@/components/ui/dialog';
 
-import { getCroppedImageFile } from '@/lib/crop-image';
 import { Slider } from '@/components/ui/slider';
+import { getCroppedImageFile } from '@/lib/crop-image';
 
 interface ImageCropperDialogProps {
     open: boolean;

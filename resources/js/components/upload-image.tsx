@@ -11,9 +11,9 @@ import {
     DialogTitle,
     DialogFooter,
 } from '@/components/ui/dialog';
+import { Slider } from '@/components/ui/slider';
 import { getCroppedImageFile } from '@/lib/crop-image';
 import { cn } from '@/lib/utils';
-import { Slider } from '@/components/ui/slider';
 
 export interface UploadImageProps {
     value?: string | null;

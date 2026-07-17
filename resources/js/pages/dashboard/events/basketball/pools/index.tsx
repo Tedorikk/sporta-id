@@ -1,6 +1,6 @@
-import { FormEventHandler } from 'react';
 import { useForm, router } from '@inertiajs/react';
 import { LayoutGrid, Plus, Trash2, X } from 'lucide-react';
+import type { FormEventHandler } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -46,7 +46,10 @@ export default function PoolIndex({ event, pools, teams }: Props) {
     };
 
     const handleAssignTeam = (poolId: number, teamId: string) => {
-        if (!teamId) return;
+        if (!teamId) {
+return;
+}
+
         router.post(
             `/dashboard/events/${event.id}/pools/${poolId}/teams`,
             { team_id: teamId },

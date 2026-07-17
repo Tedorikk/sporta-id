@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
 import { useForm } from '@inertiajs/react';
+import { Loader2, LayoutGrid, Layers, Info } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -19,9 +20,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, LayoutGrid, Layers, Info } from 'lucide-react';
-import type { Event } from '@/types/event';
 import type { BasketballEventCategory } from '@/types/basketball-event-category';
+import type { Event } from '@/types/event';
 import type { Team } from '@/types/team';
 
 type NumberingStyle = 'numeric' | 'alpha' | 'roman';
@@ -35,11 +35,13 @@ const NUMBERING_STYLES: { value: NumberingStyle; label: string; sample: string }
 // Preview-only helpers — the real names are generated server-side.
 function toAlpha(n: number): string {
     let label = '';
+
     while (n > 0) {
         const rem = (n - 1) % 26;
         label = String.fromCharCode(65 + rem) + label;
         n = Math.floor((n - 1) / 26);
     }
+
     return label;
 }
 
@@ -50,18 +52,26 @@ function toRoman(n: number): string {
         [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I'],
     ];
     let result = '';
+
     for (const [value, symbol] of table) {
         while (n >= value) {
             result += symbol;
             n -= value;
         }
     }
+
     return result;
 }
 
 function label(style: NumberingStyle, n: number): string {
-    if (style === 'alpha') return toAlpha(n);
-    if (style === 'roman') return toRoman(n);
+    if (style === 'alpha') {
+return toAlpha(n);
+}
+
+    if (style === 'roman') {
+return toRoman(n);
+}
+
     return String(n);
 }
 
@@ -168,7 +178,10 @@ export function PoolFormDialog({
             open={open}
             onOpenChange={(next) => {
                 setOpen(next);
-                if (!next) reset();
+
+                if (!next) {
+reset();
+}
             }}
         >
             <DialogTrigger asChild>{trigger}</DialogTrigger>

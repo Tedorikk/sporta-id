@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
-use App\Models\BasketballEventCategory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+
 // Removed HasMany import
 
 class Team extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'event_id', 'name', 'manager_name', 'manager_phone', 'logo', 'status', 'basketball_event_category_id',
     ];
@@ -25,7 +28,7 @@ class Team extends Model
 
     // Changed from HasMany to BelongsToMany
     public function players(): BelongsToMany
-    {           
+    {
         return $this->belongsToMany(Player::class);
     }
 

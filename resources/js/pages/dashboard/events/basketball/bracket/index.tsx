@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import {
     ChevronLeft,
@@ -10,14 +9,15 @@ import {
     Circle,
     Play,
 } from 'lucide-react';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import events from '@/routes/events';
 import type { BasketballEventCategory } from '@/types/basketball-event-category';
 import type { Event } from '@/types/event';
 import type { GameMatch, MatchStatus } from '@/types/game-match';
-import events from '@/routes/events';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -135,7 +135,9 @@ function GenerateBracketSection({
     const handleGenerate = () => {
         if (!confirm(hasBracket
             ? 'This will delete the existing bracket and regenerate. Continue?'
-            : 'Generate the knockout bracket?')) return;
+            : 'Generate the knockout bracket?')) {
+return;
+}
 
         setGenerating(true);
         router.post(
@@ -182,9 +184,19 @@ export default function BracketIndex({ event, category, bracket }: Props) {
     const sortedRounds = Object.keys(bracket).sort((a, b) => {
         const ai = ROUND_ORDER.indexOf(a);
         const bi = ROUND_ORDER.indexOf(b);
-        if (ai === -1 && bi === -1) return a.localeCompare(b);
-        if (ai === -1) return 1;
-        if (bi === -1) return -1;
+
+        if (ai === -1 && bi === -1) {
+return a.localeCompare(b);
+}
+
+        if (ai === -1) {
+return 1;
+}
+
+        if (bi === -1) {
+return -1;
+}
+
         return ai - bi;
     });
 
