@@ -3,6 +3,7 @@ import QRCode from 'qrcode';
 import { useEffect, useRef, useState } from 'react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { IdCardActions } from '@/components/id-card-actions';
+import { playerRoleLabel } from '@/types/player';
 import type { Player } from '@/types/player';
 
 interface Props {
@@ -33,6 +34,7 @@ export default function PlayerIdCard({ player }: Props) {
     }, [idCardUrl]);
 
     const status = team ? STATUS_STYLE[team.status] : null;
+    const isPlayerRole = player.role === 'player';
 
     return (
         <>
@@ -70,7 +72,7 @@ export default function PlayerIdCard({ player }: Props) {
 
                         <div className="absolute top-4 right-5">
                             <span className="rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-white/80">
-                                Player ID
+                                {isPlayerRole ? 'Player ID' : `${playerRoleLabel(player.role)} ID`}
                             </span>
                         </div>
                     </div>
@@ -100,6 +102,11 @@ export default function PlayerIdCard({ player }: Props) {
                                         {status.label}
                                     </span>
                                 )}
+                                {!isPlayerRole && (
+                                    <span className="rounded-full bg-red-600 px-3 py-0.5 text-xs font-semibold text-white">
+                                        {playerRoleLabel(player.role)}
+                                    </span>
+                                )}
                                 {team?.basketball_event_category && (
                                     <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-0.5 text-xs font-medium text-slate-600">
                                         {team.basketball_event_category.name}
@@ -118,8 +125,9 @@ export default function PlayerIdCard({ player }: Props) {
                                 {team?.name ?? 'Unassigned'}
                             </span>
                             <span className="text-xs text-slate-500">
-                                Jersey #{player.jersey_number}
-                                {player.position ? ` · ${player.position}` : ''}
+                                {isPlayerRole
+                                    ? `Jersey #${player.jersey_number}${player.position ? ` · ${player.position}` : ''}`
+                                    : playerRoleLabel(player.role)}
                             </span>
                         </div>
 
@@ -139,13 +147,13 @@ export default function PlayerIdCard({ player }: Props) {
                                 </div>
                             )}
                             <p className="text-center text-[10px] text-slate-400">
-                                Scan to verify this player's identity
+                                Scan to verify this {isPlayerRole ? 'player' : 'member'}'s identity
                             </p>
                         </div>
 
                         <div className="flex flex-col items-center gap-0.5">
                             <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-                                Player ID
+                                {isPlayerRole ? 'Player ID' : `${playerRoleLabel(player.role)} ID`}
                             </span>
                             <span className="font-mono text-sm font-bold text-slate-700">
                                 #{String(player.id).padStart(6, '0')}

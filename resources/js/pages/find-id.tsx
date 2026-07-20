@@ -12,6 +12,8 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { useForceLightMode } from '@/hooks/use-force-light-mode';
+import { playerRoleLabel } from '@/types/player';
+import type { PlayerRole } from '@/types/player';
 
 interface LookupEvent {
     id: number;
@@ -32,7 +34,8 @@ interface LookupCategory {
 interface LookupPlayer {
     id: number;
     name: string;
-    jersey_number: string;
+    jersey_number: string | null;
+    role: PlayerRole;
 }
 
 interface Props {
@@ -208,7 +211,9 @@ export default function FindId({ events }: Props) {
                                 <SelectContent>
                                     {players.map((player) => (
                                         <SelectItem key={player.id} value={String(player.id)} className="cursor-pointer">
-                                            #{player.jersey_number} — {player.name}
+                                            {player.role === 'player'
+                                                ? `#${player.jersey_number} — ${player.name}`
+                                                : `${playerRoleLabel(player.role)} — ${player.name}`}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>

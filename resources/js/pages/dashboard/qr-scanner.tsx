@@ -16,6 +16,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { dashboard } from '@/routes';
+import { playerRoleLabel } from '@/types/player';
 import type { Player } from '@/types/player';
 import type { Team } from '@/types/team';
 
@@ -39,6 +40,8 @@ const STATUS_CONFIG = {
 };
 
 function PlayerCard({ player }: { player: Player }) {
+    const isPlayerRole = player.role === 'player';
+
     return (
         <div className="flex items-start gap-3 rounded-xl border bg-card p-4 shadow-sm transition-shadow hover:shadow-md">
             {player.photo ? (
@@ -49,14 +52,14 @@ function PlayerCard({ player }: { player: Player }) {
                 />
             ) : (
                 <div className="flex h-16 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-lg font-extrabold text-primary">
-                    #{player.jersey_number}
+                    {isPlayerRole ? `#${player.jersey_number}` : player.name.substring(0, 2).toUpperCase()}
                 </div>
             )}
             <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <div className="flex items-center gap-2">
                     <span className="truncate text-sm font-semibold">{player.name}</span>
                     <Badge variant="outline" className="shrink-0 font-mono text-xs">
-                        #{player.jersey_number}
+                        {isPlayerRole ? `#${player.jersey_number}` : playerRoleLabel(player.role)}
                     </Badge>
                 </div>
                 {player.position && (

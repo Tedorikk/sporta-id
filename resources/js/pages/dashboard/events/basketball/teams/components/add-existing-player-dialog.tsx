@@ -20,6 +20,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import type { Event } from '@/types/event';
+import { playerRoleLabel } from '@/types/player';
 import type { Player } from '@/types/player';
 import type { Team } from '@/types/team';
 
@@ -129,7 +130,11 @@ return [];
                                 <SelectContent>
                                     {availablePlayers.map((player) => (
                                         <SelectItem key={player.id} value={player.id.toString()}>
-                                            {player.name} ( #{player.jersey_number} )
+                                            {player.name} (
+                                            {player.role === 'player'
+                                                ? `#${player.jersey_number}`
+                                                : playerRoleLabel(player.role)}
+                                            )
                                         </SelectItem>
                                     ))}
                                 </SelectContent>

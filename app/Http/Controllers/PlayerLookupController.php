@@ -53,7 +53,7 @@ class PlayerLookupController extends Controller
      */
     public function players(Team $team)
     {
-        $players = $team->players()->get(['players.id', 'players.name', 'players.jersey_number']);
+        $players = $team->players()->get(['players.id', 'players.name', 'players.jersey_number', 'players.role']);
 
         return response()->json($players);
     }

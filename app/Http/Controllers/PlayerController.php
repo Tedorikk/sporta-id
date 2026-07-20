@@ -78,12 +78,18 @@ class PlayerController extends Controller
     {
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'role' => ['required', Rule::in(Player::ROLES)],
             'jersey_number' => [
-                'required',
+                Rule::requiredIf(fn () => $request->input('role', Player::ROLE_PLAYER) === Player::ROLE_PLAYER),
+                'nullable',
                 'string',
                 'max:3',
                 // Custom closure to check uniqueness within the Many-to-Many relationship
                 function (string $attribute, mixed $value, Closure $fail) use ($team, $player) {
+                    if ($value === null) {
+                        return;
+                    }
+
                     $exists = $team->players()
                         ->where('jersey_number', $value)
                         ->when($player, fn ($q) => $q->where('players.id', '!=', $player->id))

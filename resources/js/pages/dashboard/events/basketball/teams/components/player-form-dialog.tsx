@@ -40,33 +40,44 @@ import {
 import { UploadImage } from '@/components/upload-image';
 import { cn } from '@/lib/utils';
 import type { Event } from '@/types/event';
+import { PLAYER_ROLES } from '@/types/player';
 import type { Player } from '@/types/player';
 import type { Team } from '@/types/team';
 import type { BasketballClub } from './add-existing-player-dialog';
 
-const playerSchema = z.object({
-    name: z.string().min(1, 'Input player name').max(255),
-    jersey_number: z
-        .string()
-        .min(1, 'Input jersey number')
-        .max(3, 'Max 3 digits')
-        .regex(/^\d+$/, 'Must be a number'),
-    position: z.string().max(255).or(z.literal('')),
-    photo: z.string().url('Must be a valid URL').or(z.literal('')),
-    phone_number: z
-        .string()
-        .regex(/^\+[1-9]\d{1,14}$/, 'Invalid E.164 format')
-        .or(z.literal('')),
-    email: z.string().email('Must be a valid email').or(z.literal('')),
-    dob: z.string().or(z.literal('')),
-    basketball_club_id: z.string().or(z.literal('')),
-});
+const roleValues = PLAYER_ROLES.map((r) => r.value) as [string, ...string[]];
+
+const playerSchema = z
+    .object({
+        name: z.string().min(1, 'Input member name').max(255),
+        role: z.enum(roleValues, { message: 'Please select a role' }),
+        jersey_number: z.string().max(3, 'Max 3 digits').regex(/^\d*$/, 'Must be a number').or(z.literal('')),
+        position: z.string().max(255).or(z.literal('')),
+        photo: z.string().url('Must be a valid URL').or(z.literal('')),
+        phone_number: z
+            .string()
+            .regex(/^\+[1-9]\d{1,14}$/, 'Invalid E.164 format')
+            .or(z.literal('')),
+        email: z.string().email('Must be a valid email').or(z.literal('')),
+        dob: z.string().or(z.literal('')),
+        basketball_club_id: z.string().or(z.literal('')),
+    })
+    .superRefine((data, ctx) => {
+        if (data.role === 'player' && !data.jersey_number) {
+            ctx.addIssue({
+                code: 'custom',
+                path: ['jersey_number'],
+                message: 'Input jersey number',
+            });
+        }
+    });
 
 type PlayerFormValues = z.infer<typeof playerSchema>;
 
 function toDefaultValues(player?: Player): PlayerFormValues {
     return {
         name: player?.name ?? '',
+        role: player?.role ?? 'player',
         jersey_number: player?.jersey_number ?? '',
         position: player?.position ?? '',
         photo: player?.photo ?? '',
@@ -109,12 +120,14 @@ export function PlayerFormDialog({
     const [clubError, setClubError] = useState('');
     const [pendingClubName, setPendingClubName] = useState('');
 
-    const { control, handleSubmit, reset, setError, clearErrors, setValue } =
+    const { control, handleSubmit, reset, setError, clearErrors, setValue, watch, resetField } =
         useForm<PlayerFormValues>({
             resolver: zodResolver(playerSchema),
             defaultValues: toDefaultValues(player),
             mode: 'onChange',
         });
+
+    const isPlayerRole = watch('role') === 'player';
 
     // Auto-select the newly created club once it arrives in props
     useEffect(() => {
@@ -215,12 +228,12 @@ return;
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     <DialogHeader>
                         <DialogTitle>
-                            {isEditing ? 'Edit Player' : 'Add New Player'}
+                            {isEditing ? 'Edit Team Member' : 'Add Team Member'}
                         </DialogTitle>
                         <DialogDescription>
                             {isEditing
-                                ? `Update player data in ${team.name}.`
-                                : `Add new player to ${team.name}.`}
+                                ? `Update member data in ${team.name}.`
+                                : `Add a new team member to ${team.name}.`}
                         </DialogDescription>
                     </DialogHeader>
 
@@ -265,12 +278,48 @@ return;
                         />
 
                         <Controller
+                            name="role"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <Field data-invalid={fieldState.invalid}>
+                                    <FieldLabel htmlFor="role">Role</FieldLabel>
+                                    <Select
+                                        value={field.value}
+                                        onValueChange={(value) => {
+                                            field.onChange(value);
+
+                                            if (value !== 'player') {
+                                                resetField('jersey_number');
+                                                resetField('position');
+                                            }
+                                        }}
+                                        disabled={isSaving}
+                                    >
+                                        <SelectTrigger id="role">
+                                            <SelectValue placeholder="Select a role" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {PLAYER_ROLES.map((role) => (
+                                                <SelectItem key={role.value} value={role.value}>
+                                                    {role.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {fieldState.invalid && (
+                                        <FieldError errors={[fieldState.error]} />
+                                    )}
+                                </Field>
+                            )}
+                        />
+
+                        <Controller
                             name="name"
                             control={control}
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
                                     <FieldLabel htmlFor="player_name">
-                                        Player Name
+                                        Name
                                     </FieldLabel>
                                     <Input
                                         {...field}
@@ -372,68 +421,70 @@ return;
                             )}
                         />
 
-                        <FieldGroup className="grid grid-cols-2 gap-4">
-                            <Controller
-                                name="jersey_number"
-                                control={control}
-                                render={({ field, fieldState }) => (
-                                    <Field data-invalid={fieldState.invalid}>
-                                        <FieldLabel htmlFor="jersey_number">
-                                            Jersey Number
-                                        </FieldLabel>
-                                        <Input
-                                            {...field}
-                                            id="jersey_number"
-                                            placeholder="Input Jersey Number"
-                                            inputMode="numeric"
-                                            aria-invalid={fieldState.invalid}
-                                            autoComplete="off"
-                                            disabled={isSaving}
-                                            onChange={(e) =>
-                                                field.onChange(
-                                                    e.target.value
-                                                        .replace(/\D/g, '')
-                                                        .slice(0, 3),
-                                                )
-                                            }
-                                        />
-                                        {fieldState.invalid && (
-                                            <FieldError
-                                                errors={[fieldState.error]}
+                        {isPlayerRole && (
+                            <FieldGroup className="grid grid-cols-2 gap-4">
+                                <Controller
+                                    name="jersey_number"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <Field data-invalid={fieldState.invalid}>
+                                            <FieldLabel htmlFor="jersey_number">
+                                                Jersey Number
+                                            </FieldLabel>
+                                            <Input
+                                                {...field}
+                                                id="jersey_number"
+                                                placeholder="Input Jersey Number"
+                                                inputMode="numeric"
+                                                aria-invalid={fieldState.invalid}
+                                                autoComplete="off"
+                                                disabled={isSaving}
+                                                onChange={(e) =>
+                                                    field.onChange(
+                                                        e.target.value
+                                                            .replace(/\D/g, '')
+                                                            .slice(0, 3),
+                                                    )
+                                                }
                                             />
-                                        )}
-                                    </Field>
-                                )}
-                            />
+                                            {fieldState.invalid && (
+                                                <FieldError
+                                                    errors={[fieldState.error]}
+                                                />
+                                            )}
+                                        </Field>
+                                    )}
+                                />
 
-                            <Controller
-                                name="position"
-                                control={control}
-                                render={({ field, fieldState }) => (
-                                    <Field data-invalid={fieldState.invalid}>
-                                        <FieldLabel htmlFor="position">
-                                            Position{' '}
-                                            <span className="font-normal text-muted-foreground">
-                                                (Optional)
-                                            </span>
-                                        </FieldLabel>
-                                        <Input
-                                            {...field}
-                                            id="position"
-                                            placeholder="Input Position"
-                                            aria-invalid={fieldState.invalid}
-                                            autoComplete="off"
-                                            disabled={isSaving}
-                                        />
-                                        {fieldState.invalid && (
-                                            <FieldError
-                                                errors={[fieldState.error]}
+                                <Controller
+                                    name="position"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <Field data-invalid={fieldState.invalid}>
+                                            <FieldLabel htmlFor="position">
+                                                Position{' '}
+                                                <span className="font-normal text-muted-foreground">
+                                                    (Optional)
+                                                </span>
+                                            </FieldLabel>
+                                            <Input
+                                                {...field}
+                                                id="position"
+                                                placeholder="Input Position"
+                                                aria-invalid={fieldState.invalid}
+                                                autoComplete="off"
+                                                disabled={isSaving}
                                             />
-                                        )}
-                                    </Field>
-                                )}
-                            />
-                        </FieldGroup>
+                                            {fieldState.invalid && (
+                                                <FieldError
+                                                    errors={[fieldState.error]}
+                                                />
+                                            )}
+                                        </Field>
+                                    )}
+                                />
+                            </FieldGroup>
+                        )}
 
                         <Controller
                             name="phone_number"
@@ -572,8 +623,8 @@ return;
                             {isSaving
                                 ? 'Saving...'
                                 : isEditing
-                                    ? 'Update Player'
-                                    : 'Add New Player'}
+                                    ? 'Update Member'
+                                    : 'Add Team Member'}
                         </Button>
                     </DialogFooter>
                 </form>

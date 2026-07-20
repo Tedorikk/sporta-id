@@ -1,9 +1,25 @@
 import type { Team } from './team';
 
+export type PlayerRole = 'player' | 'coach' | 'assistant_coach' | 'manager' | 'medic' | 'officer';
+
+export const PLAYER_ROLES: { value: PlayerRole; label: string }[] = [
+    { value: 'player', label: 'Player' },
+    { value: 'coach', label: 'Coach' },
+    { value: 'assistant_coach', label: 'Assistant Coach' },
+    { value: 'manager', label: 'Manager' },
+    { value: 'medic', label: 'Medic' },
+    { value: 'officer', label: 'Officer' },
+];
+
+export function playerRoleLabel(role: PlayerRole): string {
+    return PLAYER_ROLES.find((r) => r.value === role)?.label ?? role;
+}
+
 export interface Player {
     id: number;
     name: string;
-    jersey_number: string;
+    role: PlayerRole;
+    jersey_number: string | null;
     position: string | null;
     photo: string | null;
     phone_number: string | null;

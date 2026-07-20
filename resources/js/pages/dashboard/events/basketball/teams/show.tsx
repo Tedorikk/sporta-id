@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/table';
 import events from '@/routes/events';
 import type { Event } from '@/types/event';
+import { playerRoleLabel } from '@/types/player';
 import type { Player } from '@/types/player';
 import type { Team } from '@/types/team';
 import { AddExistingPlayerDialog  } from './components/add-existing-player-dialog';
@@ -53,8 +54,9 @@ function PlayerHoverContent({ player }: { player: Player }) {
             <div className="flex flex-col gap-1">
                 <p className="font-semibold leading-none">{player.name}</p>
                 <p className="text-xs text-muted-foreground">
-                    #{player.jersey_number}
-                    {player.position ? ` · ${player.position}` : ''}
+                    {player.role === 'player'
+                        ? `#${player.jersey_number}${player.position ? ` · ${player.position}` : ''}`
+                        : playerRoleLabel(player.role)}
                 </p>
 
                 <div className="mt-2 flex flex-col gap-1 text-xs text-muted-foreground">
@@ -220,10 +222,10 @@ export default function ShowTeam({
                 <div className="flex items-center justify-between">
                     <div>
                         <h2 className="text-xl font-semibold tracking-tight">
-                            Player List
+                            Roster
                         </h2>
                         <p className="text-sm text-muted-foreground">
-                            Manage players in {team.name}
+                            Manage players and staff in {team.name}
                         </p>
                     </div>
 
@@ -246,7 +248,7 @@ export default function ShowTeam({
                             trigger={
                                 <Button>
                                     <Plus className="mr-2 h-4 w-4" />
-                                    Add New Player
+                                    Add Team Member
                                 </Button>
                             }
                             clubs={clubs}
@@ -261,7 +263,7 @@ export default function ShowTeam({
                             <TableRow>
                                 <TableHead className="w-16">No.</TableHead>
                                 <TableHead>Name</TableHead>
-                                <TableHead>Position</TableHead>
+                                <TableHead>Role / Position</TableHead>
                                 <TableHead className="text-right">
                                     Actions
                                 </TableHead>
@@ -276,7 +278,7 @@ export default function ShowTeam({
                                     >
                                         <div className="flex flex-col items-center gap-2 text-muted-foreground">
                                             <UserPlus className="h-6 w-6" />
-                                            No players have been added.
+                                            No team members have been added.
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -290,16 +292,28 @@ export default function ShowTeam({
                                         <HoverCardTrigger asChild>
                                             <TableRow className="cursor-default">
                                                 <TableCell className="font-bold italic text-xl">
-                                                    {player.jersey_number}
+                                                    {player.role === 'player' ? (
+                                                        player.jersey_number
+                                                    ) : (
+                                                        <span className="text-sm text-muted-foreground">
+                                                            -
+                                                        </span>
+                                                    )}
                                                 </TableCell>
                                                 <TableCell className="font-medium">
                                                     {player.name}
                                                 </TableCell>
                                                 <TableCell>
-                                                    {player.position ?? (
-                                                        <span className="text-muted-foreground">
-                                                            -
-                                                        </span>
+                                                    {player.role === 'player' ? (
+                                                        (player.position ?? (
+                                                            <span className="text-muted-foreground">
+                                                                -
+                                                            </span>
+                                                        ))
+                                                    ) : (
+                                                        <Badge variant="secondary">
+                                                            {playerRoleLabel(player.role)}
+                                                        </Badge>
                                                     )}
                                                 </TableCell>
                                                 <TableCell className="text-right">

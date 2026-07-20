@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BasketballEvent;
 use App\Models\Event;
+use App\Models\Player;
 use App\Models\Team;
 use Closure;
 use Illuminate\Http\Request;
@@ -68,11 +69,17 @@ class PlayerRegistrationController extends Controller
     {
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'role' => ['required', Rule::in(Player::ROLES)],
             'jersey_number' => [
-                'required',
+                Rule::requiredIf(fn () => $request->input('role', Player::ROLE_PLAYER) === Player::ROLE_PLAYER),
+                'nullable',
                 'string',
                 'max:3',
                 function (string $attribute, mixed $value, Closure $fail) use ($team) {
+                    if ($value === null) {
+                        return;
+                    }
+
                     $exists = $team->players()
                         ->where('jersey_number', $value)
                         ->exists();

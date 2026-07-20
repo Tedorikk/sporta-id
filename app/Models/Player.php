@@ -9,9 +9,30 @@ use Illuminate\Support\Str;
 
 class Player extends Model
 {
+    public const ROLE_PLAYER = 'player';
+
+    public const ROLE_COACH = 'coach';
+
+    public const ROLE_ASSISTANT_COACH = 'assistant_coach';
+
+    public const ROLE_MANAGER = 'manager';
+
+    public const ROLE_MEDIC = 'medic';
+
+    public const ROLE_OFFICER = 'officer';
+
+    public const ROLES = [
+        self::ROLE_PLAYER,
+        self::ROLE_COACH,
+        self::ROLE_ASSISTANT_COACH,
+        self::ROLE_MANAGER,
+        self::ROLE_MEDIC,
+        self::ROLE_OFFICER,
+    ];
+
     protected $fillable = [
         // Removed 'team_id'
-        'name', 'jersey_number', 'position',
+        'name', 'role', 'jersey_number', 'position',
         'photo', 'phone_number', 'email', 'dob', 'qr_token', 'basketball_club_id',
     ];
 
