@@ -24,6 +24,14 @@ type ScannedTeam = Team & {
     event?: { id: number; name: string };
 };
 
+type ScannedPlayer = Player & {
+    teams?: (Team & { event?: { id: number; name: string } })[];
+};
+
+type ScanResult =
+    | { kind: 'team'; data: ScannedTeam }
+    | { kind: 'player'; data: ScannedPlayer };
+
 const STATUS_CONFIG = {
     verified: { label: 'Verified', variant: 'default' as const, className: 'bg-emerald-500 hover:bg-emerald-600' },
     pending: { label: 'Pending', variant: 'secondary' as const, className: '' },
@@ -90,7 +98,7 @@ export default function QrScanner() {
     const [scanning, setScanning] = useState(false);
     const [cameraError, setCameraError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const [team, setTeam] = useState<ScannedTeam | null>(null);
+    const [result, setResult] = useState<ScanResult | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [lastScannedText, setLastScannedText] = useState<string | null>(null);
     const [inputValue, setInputValue] = useState('');
@@ -115,39 +123,52 @@ export default function QrScanner() {
         }
     }, [scanning]);
 
-    const resolveTeamFromUrl = useCallback(async (text: string) => {
+    const resolveScan = useCallback(async (text: string) => {
         if (text === lastScannedText) {
             return;
         }
 
         setLastScannedText(text);
 
-        // Extract team ID from URL pattern: /teams/{id}/id-card
-        const match = text.match(/\/teams\/(\d+)\/id-card/);
+        // Extract an ID from either URL pattern: /teams/{id}/id-card or /players/{id}/id-card
+        const teamMatch = text.match(/\/teams\/(\d+)\/id-card/);
+        const playerMatch = text.match(/\/players\/(\d+)\/id-card/);
 
-        if (!match) {
-            setError('Invalid QR code. Please scan a Sporta ID team QR code.');
+        if (!teamMatch && !playerMatch) {
+            setError('Invalid QR code. Please scan a Sporta ID team or player QR code.');
 
             return;
         }
 
-        const teamId = match[1];
+        const kind: 'team' | 'player' = teamMatch ? 'team' : 'player';
+        const id = teamMatch ? teamMatch[1] : playerMatch![1];
+        const endpoint = kind === 'team' ? `/dashboard/teams/${id}/qr-data` : `/dashboard/players/${id}/qr-data`;
+        const notFoundLabel = kind === 'team' ? 'Team not found.' : 'Player not found.';
+        const disqualifiedLabel = kind === 'team' ? 'Team has been disqualified.' : "Player's team has been disqualified.";
+
         await stopScanner();
         setLoading(true);
         setError(null);
-        setTeam(null);
+        setResult(null);
 
         try {
-            const response = await fetch(`/dashboard/teams/${teamId}/qr-data`, {
+            const response = await fetch(endpoint, {
                 headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             });
 
             if (!response.ok) {
-                throw new Error(response.status === 404 ? 'Team not found.' : 'Failed to load team data.');
+                if (response.status === 403) {
+                    throw new Error(disqualifiedLabel);
+                }
+                throw new Error(response.status === 404 ? notFoundLabel : 'Failed to load data.');
             }
 
-            const data: ScannedTeam = await response.json();
-            setTeam(data);
+            const data = await response.json();
+            setResult(
+                kind === 'team'
+                    ? { kind: 'team', data: data as ScannedTeam }
+                    : { kind: 'player', data: data as ScannedPlayer },
+            );
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Something went wrong.');
         } finally {
@@ -159,18 +180,18 @@ export default function QrScanner() {
         const trimmed = value.trim();
         if (!trimmed) return;
 
-        // If it's just a number, treat it as team ID
+        // If it's just a number, treat it as team ID (hardware scanners always send a full URL)
         if (/^\d+$/.test(trimmed)) {
-            resolveTeamFromUrl(`${window.location.origin}/teams/${trimmed}/id-card`);
+            resolveScan(`${window.location.origin}/teams/${trimmed}/id-card`);
         } else {
-            resolveTeamFromUrl(trimmed);
+            resolveScan(trimmed);
         }
-    }, [resolveTeamFromUrl]);
+    }, [resolveScan]);
 
     const startScanner = useCallback(async () => {
         setCameraError(null);
         setError(null);
-        setTeam(null);
+        setResult(null);
         setLastScannedText(null);
         setScanning(true);
 
@@ -183,7 +204,7 @@ export default function QrScanner() {
                 { facingMode: 'environment' },
                 { fps: 10, qrbox: { width: 250, height: 250 } },
                 (decodedText) => {
-                    resolveTeamFromUrl(decodedText);
+                    resolveScan(decodedText);
                 },
                 undefined,
             );
@@ -191,13 +212,13 @@ export default function QrScanner() {
             setScanning(false);
             setCameraError(err instanceof Error ? err.message : 'Cannot access camera. Please allow camera permission.');
         }
-    }, [resolveTeamFromUrl]);
+    }, [resolveScan]);
 
     // Re-focus the hardware-scanner input any time the result state changes,
     // so the very next scan works with zero clicks.
     useEffect(() => {
         focusHardwareInput();
-    }, [focusHardwareInput, team, loading, error]);
+    }, [focusHardwareInput, result, loading, error]);
 
     // If focus drifts elsewhere on the page (but the camera isn't open),
     // pull it back so a hardware scanner is always "armed".
@@ -220,7 +241,7 @@ export default function QrScanner() {
 
     return (
         <div className="mx-auto flex h-full w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
-            <Head title="QR Scanner — Team Lookup" />
+            <Head title="QR Scanner — Team & Player Lookup" />
 
             {/* Hidden always-listening input for USB/Bluetooth hardware scanners.
                 Hardware scanners act like a keyboard: they type the decoded text
@@ -252,10 +273,10 @@ export default function QrScanner() {
                     <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
                         <QrCode className="h-5 w-5 text-primary" />
                     </div>
-                    <h1 className="text-2xl font-extrabold tracking-tight">Team QR Scanner</h1>
+                    <h1 className="text-2xl font-extrabold tracking-tight">QR Scanner</h1>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                    Ready to scan — point a hardware scanner at a team's QR code, or press{' '}
+                    Ready to scan — point a hardware scanner at a team's or player's QR code, or press{' '}
                     <span className="font-medium text-foreground">Start Scanning</span> to use your camera.
                 </p>
             </div>
@@ -288,13 +309,13 @@ export default function QrScanner() {
                         className={scanning ? 'overflow-hidden rounded-lg' : 'hidden'}
                     />
 
-                    {!scanning && !loading && !team && (
+                    {!scanning && !loading && !result && (
                         <div className="flex flex-col items-center justify-center gap-3 py-12 text-center text-muted-foreground">
                             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
                                 <QrCode className="h-8 w-8" />
                             </div>
                             <p className="text-sm">
-                                Hardware scanners work automatically — just scan a team's QR code.
+                                Hardware scanners work automatically — just scan a team or player QR code.
                                 <br />
                                 No camera? Press{' '}
                                 <span className="font-semibold text-foreground">Start Scanning</span>{' '}
@@ -328,53 +349,53 @@ export default function QrScanner() {
                     {loading && (
                         <div className="flex flex-col items-center gap-3 py-10">
                             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
-                            <p className="text-sm text-muted-foreground">Loading team data…</p>
+                            <p className="text-sm text-muted-foreground">Loading data…</p>
                         </div>
                     )}
                 </div>
             </div>
 
             {/* Team result */}
-            {team && (
+            {result?.kind === 'team' && (
                 <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {/* Team header */}
                     <div className="flex flex-col gap-4 rounded-xl border bg-card p-6 shadow-sm">
                         <div className="flex items-start gap-4">
-                            {team.logo ? (
+                            {result.data.logo ? (
                                 <img
-                                    src={team.logo}
-                                    alt={team.name}
+                                    src={result.data.logo}
+                                    alt={result.data.name}
                                     className="h-16 w-16 shrink-0 rounded-xl object-cover shadow"
                                 />
                             ) : (
                                 <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xl font-extrabold text-primary shadow">
-                                    {team.name.substring(0, 2).toUpperCase()}
+                                    {result.data.name.substring(0, 2).toUpperCase()}
                                 </div>
                             )}
                             <div className="flex flex-1 flex-col gap-1">
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <h2 className="text-xl font-extrabold tracking-tight">{team.name}</h2>
+                                    <h2 className="text-xl font-extrabold tracking-tight">{result.data.name}</h2>
                                     <Badge
-                                        variant={STATUS_CONFIG[team.status].variant}
-                                        className={STATUS_CONFIG[team.status].className}
+                                        variant={STATUS_CONFIG[result.data.status].variant}
+                                        className={STATUS_CONFIG[result.data.status].className}
                                     >
                                         <CheckCircle2 className="mr-1 h-3 w-3" />
-                                        {STATUS_CONFIG[team.status].label}
+                                        {STATUS_CONFIG[result.data.status].label}
                                     </Badge>
-                                    {team.basketball_event_category && (
+                                    {result.data.basketball_event_category && (
                                         <Badge variant="secondary">
-                                            {team.basketball_event_category.name}
+                                            {result.data.basketball_event_category.name}
                                         </Badge>
                                     )}
                                 </div>
                                 <div className="flex flex-col gap-1 text-sm text-muted-foreground">
                                     <span className="flex items-center gap-1.5">
                                         <User className="h-3.5 w-3.5" />
-                                        Manager: <span className="font-medium text-foreground">{team.manager_name}</span>
+                                        Manager: <span className="font-medium text-foreground">{result.data.manager_name}</span>
                                     </span>
                                     <span className="flex items-center gap-1.5">
                                         <Phone className="h-3.5 w-3.5" />
-                                        {team.manager_phone}
+                                        {result.data.manager_phone}
                                     </span>
                                 </div>
                             </div>
@@ -383,7 +404,7 @@ export default function QrScanner() {
                         <div className="flex items-center gap-2 rounded-lg bg-emerald-50 p-3 dark:bg-emerald-950/30">
                             <Shield className="h-4 w-4 shrink-0 text-emerald-600" />
                             <span className="text-xs text-emerald-700 dark:text-emerald-400">
-                                {team.players.length} registered player{team.players.length !== 1 ? 's' : ''}
+                                {result.data.players.length} registered player{result.data.players.length !== 1 ? 's' : ''}
                             </span>
                             <Button
                                 size="sm"
@@ -397,16 +418,63 @@ export default function QrScanner() {
                     </div>
 
                     {/* Players grid */}
-                    {team.players.length > 0 && (
+                    {result.data.players.length > 0 && (
                         <div className="flex flex-col gap-3">
                             <h3 className="text-base font-semibold tracking-tight">Player Roster</h3>
                             <div className="grid gap-3 sm:grid-cols-2">
-                                {team.players.map((player) => (
+                                {result.data.players.map((player) => (
                                     <PlayerCard key={player.id} player={player} />
                                 ))}
                             </div>
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Player result */}
+            {result?.kind === 'player' && (
+                <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="flex flex-col gap-4 rounded-xl border bg-card p-6 shadow-sm">
+                        <div className="flex items-start gap-4">
+                            <PlayerCard player={result.data} />
+                        </div>
+
+                        {(() => {
+                            const team = result.data.teams?.[0];
+
+                            return (
+                                <div className="flex flex-wrap items-center gap-2 rounded-lg bg-slate-50 p-3 dark:bg-slate-900/40">
+                                    {team && (
+                                        <>
+                                            <Badge
+                                                variant={STATUS_CONFIG[team.status].variant}
+                                                className={STATUS_CONFIG[team.status].className}
+                                            >
+                                                <CheckCircle2 className="mr-1 h-3 w-3" />
+                                                {STATUS_CONFIG[team.status].label}
+                                            </Badge>
+                                            <span className="text-xs text-muted-foreground">
+                                                Team: <span className="font-medium text-foreground">{team.name}</span>
+                                            </span>
+                                            {team.basketball_event_category && (
+                                                <Badge variant="secondary">
+                                                    {team.basketball_event_category.name}
+                                                </Badge>
+                                            )}
+                                        </>
+                                    )}
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="ml-auto h-7 text-xs"
+                                        onClick={startScanner}
+                                    >
+                                        Scan another
+                                    </Button>
+                                </div>
+                            );
+                        })()}
+                    </div>
                 </div>
             )}
         </div>

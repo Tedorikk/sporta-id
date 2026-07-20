@@ -7,16 +7,36 @@ use App\Http\Controllers\BracketController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\GameMatchController;
 use App\Http\Controllers\ImageUploadController;
+use App\Http\Controllers\LandingController;
 use App\Http\Controllers\PlayerController;
+use App\Http\Controllers\PlayerLookupController;
+use App\Http\Controllers\PlayerQrController;
+use App\Http\Controllers\PlayerRegistrationController;
 use App\Http\Controllers\PoolController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamQrController;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'landing')->name('home');
+Route::get('/', [LandingController::class, 'index'])->name('home');
 
 // --- Public Team ID Card (shareable, no auth required) --------------------
 Route::get('teams/{team}/id-card', [TeamQrController::class, 'idCard'])->name('teams.id-card');
+
+// --- Public Player Self-Registration & ID Card (shareable, no auth required) --
+Route::get('events/{event}/register', [PlayerRegistrationController::class, 'create'])->name('players.register');
+Route::post('events/{event}/register', [PlayerRegistrationController::class, 'store'])->name('players.register.store');
+Route::get('players/{player}/id-card', [PlayerQrController::class, 'idCard'])->name('players.id-card');
+
+// --- Public "Find My ID Card" lookup (no auth required) --------------------
+Route::get('find-id', [PlayerLookupController::class, 'index'])->name('players.lookup');
+Route::get('find-id/events/{event}/categories', [PlayerLookupController::class, 'categories'])->name('players.lookup.categories');
+Route::get('find-id/teams/{team}/players', [PlayerLookupController::class, 'players'])->name('players.lookup.players');
+
+// --- Public photo upload (rate-limited, used by self-registration) --------
+Route::post('public-upload/image', [ImageUploadController::class, 'store'])
+    ->middleware('throttle:20,1')->name('public-upload.image');
+Route::delete('public-upload/image', [ImageUploadController::class, 'destroy'])
+    ->middleware('throttle:20,1')->name('public-upload.image.destroy');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard/page')->name('dashboard');
@@ -70,6 +90,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // --- QR Scanner (admin only) ----------------------------------------
     Route::get('dashboard/qr-scanner', [TeamQrController::class, 'scan'])->name('qr-scanner');
     Route::get('dashboard/teams/{team}/qr-data', [TeamQrController::class, 'show'])->name('teams.qr-data');
+    Route::get('dashboard/players/{player}/qr-data', [PlayerQrController::class, 'show'])->name('players.qr-data');
 
     // --- Uploads --------------------------------------------------------
     Route::post('upload/image', [ImageUploadController::class, 'store'])->name('upload.image');

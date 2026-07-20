@@ -36,6 +36,12 @@ class TeamQrController extends Controller
     {
         $team->load(['players', 'basketballEventCategory', 'event']);
 
+        if ($team->status == 'pending') {
+            abort(404, 'Tim tidak ditemukan');
+        } else if ($team->status == 'rejected') {
+            abort(403, 'Tim sudah didiskualifikasi dari turnamen');
+        }
+
         return response()->json($team);
     }
 }

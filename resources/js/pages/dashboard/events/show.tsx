@@ -6,8 +6,10 @@ import {
     Phone,
     Trash2,
     Pencil,
+    Link2,
 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,6 +28,12 @@ export default function ShowEvent({ event }: { event: Event }) {
             onSuccess: () => router.visit('/dashboard/events'),
             onFinish: () => setIsDeleting(false),
         });
+    };
+
+    const handleCopyRegistrationLink = () => {
+        const url = `${window.location.origin}/events/${event.id}/register`;
+        navigator.clipboard.writeText(url);
+        toast.success('Registration link copied to clipboard');
     };
 
     return (
@@ -64,6 +72,16 @@ export default function ShowEvent({ event }: { event: Event }) {
                         </div>
                     </div>
                 </div>
+                {event.category === 'BASKETBALL' && (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCopyRegistrationLink}
+                    >
+                        <Link2 className="mr-2 h-4 w-4" />
+                        Copy Registration Link
+                    </Button>
+                )}
             </section>
 
             <div className="grid grid-cols-1 gap-8">

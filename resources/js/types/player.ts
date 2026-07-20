@@ -1,6 +1,7 @@
+import type { Team } from './team';
+
 export interface Player {
     id: number;
-    team_id: number;
     name: string;
     jersey_number: string;
     position: string | null;
@@ -11,6 +12,7 @@ export interface Player {
     qr_token: string;
     basketball_club_id: number;
     basketball_club: BasketballClub;
+    teams?: Team[];
     created_at: string;
     updated_at: string;
 }
