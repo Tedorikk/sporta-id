@@ -10,7 +10,6 @@ import {
     Phone,
     QrCode,
     Shield,
-    User,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -390,16 +389,6 @@ export default function QrScanner() {
                                             {result.data.basketball_event_category.name}
                                         </Badge>
                                     )}
-                                </div>
-                                <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-                                    <span className="flex items-center gap-1.5">
-                                        <User className="h-3.5 w-3.5" />
-                                        Manager: <span className="font-medium text-foreground">{result.data.manager_name}</span>
-                                    </span>
-                                    <span className="flex items-center gap-1.5">
-                                        <Phone className="h-3.5 w-3.5" />
-                                        {result.data.manager_phone}
-                                    </span>
                                 </div>
                             </div>
                         </div>

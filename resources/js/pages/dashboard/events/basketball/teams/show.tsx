@@ -159,10 +159,6 @@ export default function ShowTeam({
                                 {STATUS_BADGE[team.status].label}
                             </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                            Manager: {team.manager_name} ·{' '}
-                            {team.manager_phone}
-                        </p>
                     </div>
                 </div>
                 <Button variant="outline" asChild>

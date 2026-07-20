@@ -21,8 +21,6 @@ class TeamFactory extends Factory
         return [
             'event_id' => Event::factory(),
             'name' => fake()->company().' FC',
-            'manager_name' => fake()->name(),
-            'manager_phone' => fake()->phoneNumber(),
             'logo' => null,
             'status' => fake()->randomElement(['pending', 'verified', 'rejected']),
             'basketball_event_category_id' => null,

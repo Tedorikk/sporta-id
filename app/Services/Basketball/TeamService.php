@@ -30,8 +30,6 @@ class TeamService
             // Buat Tim
             $team = $event->teams()->create([
                 'name' => $teamData['name'],
-                'manager_name' => $teamData['manager_name'],
-                'manager_phone' => $teamData['manager_phone'],
                 'logo' => $teamData['logo'] ?? null,
                 'status' => 'pending', // Default status
             ]);

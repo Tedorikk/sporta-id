@@ -207,7 +207,6 @@ return;
                             <tr>
                                 <th className="px-4 py-3 font-medium">Team</th>
                                 <th className="px-4 py-3 font-medium">Category</th>
-                                <th className="px-4 py-3 font-medium">Manager</th>
                                 <th className="px-4 py-3 font-medium">Status</th>
                                 <th className="px-4 py-3 text-right font-medium">Actions</th>
                             </tr>
@@ -227,14 +226,6 @@ return;
                                         {team.basketball_event_category?.name ?? (
                                             <span className="italic">Unassigned</span>
                                         )}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        <div className="flex flex-col">
-                                            <span>{team.manager_name}</span>
-                                            <span className="text-xs text-muted-foreground">
-                                                {team.manager_phone}
-                                            </span>
-                                        </div>
                                     </td>
                                     <td className="px-4 py-3">
                                         <Badge variant={STATUS_VARIANT[team.status]}>

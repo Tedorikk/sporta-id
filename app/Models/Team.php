@@ -14,7 +14,7 @@ class Team extends Model
     use HasFactory;
 
     protected $fillable = [
-        'event_id', 'name', 'manager_name', 'manager_phone', 'logo', 'status', 'basketball_event_category_id',
+        'event_id', 'name', 'logo', 'status', 'basketball_event_category_id',
     ];
 
     protected $casts = [

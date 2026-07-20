@@ -127,17 +127,6 @@ export default function TeamIdCard({ team }: Props) {
                         {/* Divider */}
                         <div className="w-full border-t border-dashed border-slate-200" />
 
-                        {/* Manager info */}
-                        <div className="flex w-full flex-col gap-1 rounded-xl bg-slate-50 px-4 py-3">
-                            <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-                                Team Manager
-                            </span>
-                            <span className="text-sm font-semibold text-slate-800">
-                                {team.manager_name}
-                            </span>
-                            <span className="text-xs text-slate-500">{team.manager_phone}</span>
-                        </div>
-
                         {/* QR Code */}
                         <div className="flex flex-col items-center gap-2">
                             {qrDataUrl ? (

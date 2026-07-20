@@ -56,8 +56,6 @@ test('cannot store team if no categories exist', function () {
 
     $response = $this->post(route('teams.store', $event), [
         'name' => 'Team Alpha',
-        'manager_name' => 'John Manager',
-        'manager_phone' => '081234567890',
         'status' => 'pending',
     ]);
 
@@ -102,8 +100,6 @@ test('can access team create page and store team if categories exist', function 
 
     $response = $this->post(route('teams.store', $event), [
         'name' => 'Team Alpha',
-        'manager_name' => 'John Manager',
-        'manager_phone' => '081234567890',
         'status' => 'pending',
         'basketball_event_category_id' => $category->id,
     ]);

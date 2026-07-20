@@ -136,8 +136,6 @@ class TeamController extends Controller
     {
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'manager_name' => ['required', 'string', 'max:255'],
-            'manager_phone' => ['required', 'string', 'max:20'],
             'logo' => ['nullable', 'url', 'max:255'],
             'status' => ['required', 'in:pending,verified,rejected'],
             'basketball_event_category_id' => [

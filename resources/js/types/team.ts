@@ -13,8 +13,6 @@ export interface Team {
     id: number;
     event_id: number;
     name: string;
-    manager_name: string;
-    manager_phone: string;
     logo: string | null;
     status: TeamStatus;
     created_at: string;

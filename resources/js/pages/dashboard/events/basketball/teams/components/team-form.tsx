@@ -10,7 +10,6 @@ import {
     FieldError,
     FieldGroup,
     FieldLabel,
-    FieldDescription,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import {
@@ -35,10 +34,6 @@ const TEAM_STATUSES = [
 
 const teamSchema = z.object({
     name: z.string().min(1, 'Team name is required').max(255),
-    manager_name: z.string().min(1, 'Manager name is required').max(255),
-    manager_phone: z
-        .string()
-        .regex(/^\+[1-9]\d{1,14}$/, 'Invalid E.164 format'),
     logo: z.string().url('Must be a valid URL').or(z.literal('')),
     status: z.enum(['pending', 'verified', 'rejected'] as const),
     basketball_event_category_id: z.string().optional(),
@@ -55,20 +50,12 @@ type TeamFormProps = {
 function toDefaultValues(team?: Team): TeamFormValues {
     return {
         name: team?.name ?? '',
-        manager_name: team?.manager_name ?? '',
-        manager_phone: team?.manager_phone ?? '',
         logo: team?.logo ?? '',
         status: (team?.status as TeamFormValues['status']) ?? 'pending',
         basketball_event_category_id: team?.basketball_event_category_id
             ? String(team.basketball_event_category_id)
             : undefined,
     };
-}
-
-function formatE164Input(value: string) {
-    const digits = value.replace(/[^\d]/g, '').slice(0, 15);
-
-    return digits ? `+${digits}` : '';
 }
 
 function FormContent({ event, team, categories = [] }: TeamFormProps) {
@@ -167,69 +154,6 @@ function FormContent({ event, team, categories = [] }: TeamFormProps) {
                                         autoComplete="off"
                                         disabled={isSaving}
                                     />
-                                    {fieldState.invalid && (
-                                        <FieldError
-                                            errors={[fieldState.error]}
-                                        />
-                                    )}
-                                </Field>
-                            )}
-                        />
-
-                        <Controller
-                            name="manager_name"
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel htmlFor="manager_name">
-                                        Manager Name
-                                    </FieldLabel>
-                                    <Input
-                                        {...field}
-                                        id="manager_name"
-                                        placeholder="Input Manager Name"
-                                        aria-label="Manager Name"
-                                        aria-invalid={fieldState.invalid}
-                                        autoComplete="off"
-                                        disabled={isSaving}
-                                    />
-                                    {fieldState.invalid && (
-                                        <FieldError
-                                            errors={[fieldState.error]}
-                                        />
-                                    )}
-                                </Field>
-                            )}
-                        />
-
-                        <Controller
-                            name="manager_phone"
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel htmlFor="manager_phone">
-                                        Manager Contact (WA)
-                                    </FieldLabel>
-                                    <Input
-                                        {...field}
-                                        id="manager_phone"
-                                        placeholder="+628123456789"
-                                        aria-label="Manager Contact (WA)"
-                                        aria-invalid={fieldState.invalid}
-                                        autoComplete="off"
-                                        disabled={isSaving}
-                                        onChange={(e) =>
-                                            field.onChange(
-                                                formatE164Input(
-                                                    e.target.value,
-                                                ),
-                                            )
-                                        }
-                                    />
-                                    <FieldDescription>
-                                        Phone number in E.164 format, e.g.
-                                        +628123456789
-                                    </FieldDescription>
                                     {fieldState.invalid && (
                                         <FieldError
                                             errors={[fieldState.error]}
