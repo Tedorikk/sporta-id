@@ -24,6 +24,7 @@ import {
     FieldLabel,
     FieldDescription,
 } from '@/components/ui/field';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import {
     Popover,
@@ -54,6 +55,8 @@ const playerSchema = z
         jersey_number: z.string().max(3, 'Max 3 digits').regex(/^\d*$/, 'Must be a number').or(z.literal('')),
         position: z.string().max(255).or(z.literal('')),
         photo: z.string().url('Must be a valid URL').or(z.literal('')),
+        certificate: z.string().url('Must be a valid URL').or(z.literal('')),
+        is_certificate_validated: z.boolean(),
         phone_number: z
             .string()
             .regex(/^\+[1-9]\d{1,14}$/, 'Invalid E.164 format')
@@ -70,6 +73,14 @@ const playerSchema = z
                 message: 'Input jersey number',
             });
         }
+
+        if (data.role === 'medic' && !data.certificate) {
+            ctx.addIssue({
+                code: 'custom',
+                path: ['certificate'],
+                message: 'Upload a medic certificate',
+            });
+        }
     });
 
 type PlayerFormValues = z.infer<typeof playerSchema>;
@@ -81,6 +92,8 @@ function toDefaultValues(player?: Player): PlayerFormValues {
         jersey_number: player?.jersey_number ?? '',
         position: player?.position ?? '',
         photo: player?.photo ?? '',
+        certificate: player?.certificate ?? '',
+        is_certificate_validated: player?.is_certificate_validated ?? false,
         phone_number: player?.phone_number ?? '',
         email: player?.email ?? '',
         dob: player?.dob ?? '',
@@ -127,7 +140,9 @@ export function PlayerFormDialog({
             mode: 'onChange',
         });
 
-    const isPlayerRole = watch('role') === 'player';
+    const watchedRole = watch('role');
+    const isPlayerRole = watchedRole === 'player';
+    const isMedicRole = watchedRole === 'medic';
 
     // Auto-select the newly created club once it arrives in props
     useEffect(() => {
@@ -292,6 +307,11 @@ return;
                                                 resetField('jersey_number');
                                                 resetField('position');
                                             }
+
+                                            if (value !== 'medic') {
+                                                resetField('certificate');
+                                                setValue('is_certificate_validated', false);
+                                            }
                                         }}
                                         disabled={isSaving}
                                     >
@@ -337,6 +357,76 @@ return;
                                 </Field>
                             )}
                         />
+
+                        {isMedicRole && (
+                            <>
+                                <Controller
+                                    name="certificate"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <Field data-invalid={fieldState.invalid}>
+                                            <FieldLabel htmlFor="certificate">
+                                                Medic Certificate
+                                            </FieldLabel>
+                                            <UploadImage
+                                                {...field}
+                                                ratio={4 / 3}
+                                                value={field.value}
+                                                onChange={(value) => {
+                                                    clearErrors('certificate');
+                                                    field.onChange(value ?? '');
+                                                }}
+                                                onError={(error) => {
+                                                    setError('certificate', {
+                                                        type: 'manual',
+                                                        message:
+                                                            typeof error === 'string'
+                                                                ? error
+                                                                : 'Upload failed',
+                                                    });
+                                                }}
+                                                enableCrop={true}
+                                            />
+                                            {fieldState.invalid && (
+                                                <FieldError errors={[fieldState.error]} />
+                                            )}
+                                        </Field>
+                                    )}
+                                />
+
+                                <Controller
+                                    name="is_certificate_validated"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <Field
+                                            data-invalid={fieldState.invalid}
+                                            orientation="horizontal"
+                                        >
+                                            <Checkbox
+                                                id="is_certificate_validated"
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                                aria-label="Certificate Validated"
+                                                disabled={isSaving}
+                                                className="cursor-pointer"
+                                            />
+                                            <FieldLabel
+                                                htmlFor="is_certificate_validated"
+                                                className="cursor-pointer font-normal"
+                                            >
+                                                Certificate Validated
+                                            </FieldLabel>
+                                            <FieldDescription>
+                                                Review the certificate above, then tick this once confirmed. Until then, the ID card cannot be scanned.
+                                            </FieldDescription>
+                                            {fieldState.invalid && (
+                                                <FieldError errors={[fieldState.error]} />
+                                            )}
+                                        </Field>
+                                    )}
+                                />
+                            </>
+                        )}
 
                         {/* Basketball Club with Inline Creation */}
                         <Controller

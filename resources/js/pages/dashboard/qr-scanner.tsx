@@ -60,6 +60,11 @@ function PlayerCard({ player }: { player: Player }) {
                     <Badge variant="outline" className="shrink-0 font-mono text-xs">
                         {isPlayerRole ? `#${player.jersey_number}` : playerRoleLabel(player.role)}
                     </Badge>
+                    {player.role === 'medic' && !player.is_certificate_validated && (
+                        <Badge className="shrink-0 bg-amber-400 text-xs text-amber-900 hover:bg-amber-400">
+                            Pending
+                        </Badge>
+                    )}
                 </div>
                 {player.position && (
                     <span className="text-xs text-muted-foreground">{player.position}</span>
@@ -159,10 +164,22 @@ export default function QrScanner() {
             });
 
             if (!response.ok) {
-                if (response.status === 403) {
-                    throw new Error(disqualifiedLabel);
+                const fallback = response.status === 403
+                    ? disqualifiedLabel
+                    : response.status === 404
+                        ? notFoundLabel
+                        : 'Failed to load data.';
+
+                let serverMessage: string | null = null;
+
+                try {
+                    const body = await response.json();
+                    serverMessage = typeof body?.message === 'string' ? body.message : null;
+                } catch {
+                    // Response wasn't JSON — fall back to the generic label below.
                 }
-                throw new Error(response.status === 404 ? notFoundLabel : 'Failed to load data.');
+
+                throw new Error(serverMessage ?? fallback);
             }
 
             const data = await response.json();

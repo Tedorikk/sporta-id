@@ -91,6 +91,12 @@ class PlayerRegistrationController extends Controller
             ],
             'position' => ['nullable', 'string', 'max:255'],
             'photo' => ['nullable', 'url', 'max:255'],
+            'certificate' => [
+                Rule::requiredIf(fn () => $request->input('role') === Player::ROLE_MEDIC),
+                'nullable',
+                'url',
+                'max:255',
+            ],
             'phone_number' => ['nullable', 'string', 'regex:/^\+[1-9]\d{1,14}$/'],
             'email' => ['nullable', 'email', 'max:255'],
             'dob' => ['nullable', 'date', 'before:today'],

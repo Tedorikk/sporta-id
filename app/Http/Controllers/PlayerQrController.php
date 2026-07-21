@@ -27,6 +27,10 @@ class PlayerQrController extends Controller
     {
         $player->load(['teams.basketballEventCategory', 'teams.event']);
 
+        if ($player->role === Player::ROLE_MEDIC && ! $player->is_certificate_validated) {
+            abort(403, 'Medic certificate not validated');
+        }
+
         $team = $player->teams->first();
 
         if ($team) {

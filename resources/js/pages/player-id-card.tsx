@@ -107,6 +107,11 @@ export default function PlayerIdCard({ player }: Props) {
                                         {playerRoleLabel(player.role)}
                                     </span>
                                 )}
+                                {player.role === 'medic' && !player.is_certificate_validated && (
+                                    <span className="rounded-full bg-amber-400 px-3 py-0.5 text-xs font-semibold text-amber-900">
+                                        Pending Validation
+                                    </span>
+                                )}
                                 {team?.basketball_event_category && (
                                     <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-0.5 text-xs font-medium text-slate-600">
                                         {team.basketball_event_category.name}

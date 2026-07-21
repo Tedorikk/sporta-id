@@ -22,6 +22,8 @@ export interface Player {
     jersey_number: string | null;
     position: string | null;
     photo: string | null;
+    certificate: string | null;
+    is_certificate_validated: boolean;
     phone_number: string | null;
     email: string | null;
     dob: string | null;

@@ -46,6 +46,7 @@ const registerSchema = z
         basketball_event_category_id: z.string().min(1, 'Please select a category'),
         team_id: z.string().min(1, 'Please select a team'),
         photo: z.string().url('Must be a valid URL').or(z.literal('')),
+        certificate: z.string().url('Must be a valid URL').or(z.literal('')),
         role: z.enum(roleValues, { message: 'Please select a role' }),
         name: z.string().min(1, 'Input your name').max(255),
         jersey_number: z.string().max(3, 'Max 3 digits').regex(/^\d*$/, 'Must be a number').or(z.literal('')),
@@ -63,6 +64,14 @@ const registerSchema = z
                 code: 'custom',
                 path: ['jersey_number'],
                 message: 'Input jersey number',
+            });
+        }
+
+        if (data.role === 'medic' && !data.certificate) {
+            ctx.addIssue({
+                code: 'custom',
+                path: ['certificate'],
+                message: 'Upload your medic certificate',
             });
         }
     });
@@ -87,6 +96,7 @@ export default function Register({ event, categories }: Props) {
                 basketball_event_category_id: '',
                 team_id: '',
                 photo: '',
+                certificate: '',
                 role: 'player',
                 name: '',
                 jersey_number: '',
@@ -101,6 +111,7 @@ export default function Register({ event, categories }: Props) {
     const selectedCategoryId = watch('basketball_event_category_id');
     const selectedRole = watch('role');
     const isPlayerRole = selectedRole === 'player';
+    const isMedicRole = selectedRole === 'medic';
 
     const teamsForCategory = useMemo(() => {
         const category = categories.find(
@@ -278,6 +289,10 @@ export default function Register({ event, categories }: Props) {
                                                     resetField('jersey_number');
                                                     resetField('position');
                                                 }
+
+                                                if (value !== 'medic') {
+                                                    resetField('certificate');
+                                                }
                                             }}
                                             disabled={isSaving}
                                         >
@@ -328,6 +343,41 @@ export default function Register({ event, categories }: Props) {
                                     </Field>
                                 )}
                             />
+
+                            {isMedicRole && (
+                                <Controller
+                                    name="certificate"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <Field data-invalid={fieldState.invalid}>
+                                            <FieldLabel htmlFor="certificate">
+                                                Medic Certificate
+                                            </FieldLabel>
+                                            <UploadImage
+                                                {...field}
+                                                ratio={4 / 3}
+                                                value={field.value}
+                                                uploadUrl="/public-upload/image"
+                                                deleteUrl="/public-upload/image"
+                                                onChange={(value) => field.onChange(value ?? '')}
+                                                onError={(error) =>
+                                                    setError('certificate', {
+                                                        type: 'manual',
+                                                        message: typeof error === 'string' ? error : 'Upload failed',
+                                                    })
+                                                }
+                                                className="border-2 border-black"
+                                            />
+                                            <FieldDescription>
+                                                An admin will manually review this before your ID card can be scanned.
+                                            </FieldDescription>
+                                            {fieldState.invalid && (
+                                                <FieldError errors={[fieldState.error]} />
+                                            )}
+                                        </Field>
+                                    )}
+                                />
+                            )}
 
                             {isPlayerRole && (
                                 <FieldGroup className="grid grid-cols-2 gap-4">
