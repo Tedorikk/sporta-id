@@ -161,7 +161,7 @@ return [
     */
 
     'features' => [
-        Features::registration(),
+        // Features::registration(), // Disabled: admin accounts are not self-service.
         Features::resetPasswords(),
         Features::emailVerification(),
         Features::twoFactorAuthentication([

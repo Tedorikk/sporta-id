@@ -4,6 +4,8 @@ use App\Http\Controllers\BasketballClubController;
 use App\Http\Controllers\BasketballEventCategoryController;
 use App\Http\Controllers\BasketballEventController;
 use App\Http\Controllers\BracketController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\GameMatchController;
 use App\Http\Controllers\ImageUploadController;
@@ -13,11 +15,21 @@ use App\Http\Controllers\PlayerLookupController;
 use App\Http\Controllers\PlayerQrController;
 use App\Http\Controllers\PlayerRegistrationController;
 use App\Http\Controllers\PoolController;
+use App\Http\Controllers\PublicEventController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamQrController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LandingController::class, 'index'])->name('home');
+
+// --- Public marketing pages -------------------------------------------------
+Route::inertia('about', 'about')->name('about');
+
+Route::get('events', [PublicEventController::class, 'index'])->name('events.public.index');
+Route::get('events/{event}', [PublicEventController::class, 'show'])->name('events.public.show');
+
+Route::get('contact', [ContactController::class, 'create'])->name('contact');
+Route::post('contact', [ContactController::class, 'store'])->name('contact.store');
 
 // --- Public Team ID Card (shareable, no auth required) --------------------
 Route::get('teams/{team}/id-card', [TeamQrController::class, 'idCard'])->name('teams.id-card');
@@ -82,6 +94,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/dashboard/basketball-clubs', [BasketballClubController::class, 'store'])
         ->name('basketball-clubs.store');
+
+    Route::get('dashboard/contact-messages', [ContactMessageController::class, 'index'])
+        ->name('contact-messages.index');
 
     Route::resource('events', EventController::class)->only(['store', 'update', 'destroy']);
     Route::post('events/{event}/basketball', [BasketballEventController::class, 'store'])

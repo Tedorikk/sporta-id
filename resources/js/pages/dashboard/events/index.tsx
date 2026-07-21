@@ -367,7 +367,7 @@ export default function EventsIndex({
                                     key={event.id}
                                     className="relative flex flex-col overflow-hidden pt-0"
                                 >
-                                    <div className="relative aspect-video w-full">
+                                    <div className="relative aspect-4/5 w-full">
                                         <div className="absolute inset-0 z-10 bg-black/35" />
                                         <img
                                             src={

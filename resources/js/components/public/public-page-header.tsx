@@ -1,4 +1,5 @@
 import AppLogoIcon from '@/components/app-logo-icon';
+import { SiteLogo } from '../landing/site-logo';
 
 interface PublicPageHeaderProps {
     eyebrow: string;
@@ -24,8 +25,8 @@ export function PublicPageHeader({ eyebrow, title, subtitle }: PublicPageHeaderP
             </div>
 
             <div className="relative z-10 flex flex-col items-center gap-2">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl border-2 border-white/40 bg-white/15">
-                    <AppLogoIcon className="h-6 w-6 fill-current text-white" />
+                <div className="flex items-center justify-center">
+                    <SiteLogo className="h-16 w-auto" />
                 </div>
                 <span className="text-xs font-bold tracking-[0.3em] text-white/70 uppercase">
                     {eyebrow}
