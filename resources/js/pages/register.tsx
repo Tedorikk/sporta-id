@@ -161,6 +161,9 @@ export default function Register({ event, categories }: Props) {
                                 control={control}
                                 render={({ field, fieldState }) => (
                                     <Field data-invalid={fieldState.invalid} className="mx-auto w-32">
+                                        <FieldLabel htmlFor="photo">
+                                            Photo
+                                        </FieldLabel>
                                         <UploadImage
                                             {...field}
                                             ratio={4 / 5}
