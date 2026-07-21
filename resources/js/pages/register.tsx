@@ -74,6 +74,14 @@ const registerSchema = z
                 message: 'Upload your medic certificate',
             });
         }
+
+        if (!data.photo) {
+            ctx.addIssue({
+                code: 'custom',
+                path: ['photo'],
+                message: 'Please upload a photo',
+            });
+        }
     });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;

@@ -90,7 +90,7 @@ class PlayerRegistrationController extends Controller
                 },
             ],
             'position' => ['nullable', 'string', 'max:255'],
-            'photo' => ['nullable', 'url', 'max:255'],
+            'photo' => ['required', 'url', 'max:255'],
             'certificate' => [
                 Rule::requiredIf(fn () => $request->input('role') === Player::ROLE_MEDIC),
                 'nullable',
