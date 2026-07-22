@@ -1,8 +1,9 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { format } from 'date-fns';
-import { ChevronLeft, Mail, Pencil, Phone, Plus, Trash2, UserPlus, Users, Copy, Check } from 'lucide-react';
+import { ChevronLeft, Mail, Pencil, Phone, Plus, Trash2, UserPlus, Users, Copy, Check, ShieldAlert, Download } from 'lucide-react';
 import { useState } from 'react';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
+import { IssueList, IssueSummaryBadge } from '@/components/review-issues';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,11 +19,12 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 import events from '@/routes/events';
 import type { Event } from '@/types/event';
 import { playerRoleLabel } from '@/types/player';
 import type { Player } from '@/types/player';
-import type { Team } from '@/types/team';
+import type { Team, TeamReview } from '@/types/team';
 import { AddExistingPlayerDialog  } from './components/add-existing-player-dialog';
 import type {BasketballClub} from './components/add-existing-player-dialog';
 import { PlayerFormDialog } from './components/player-form-dialog';
@@ -37,7 +39,6 @@ const STATUS_BADGE: Record<Team['status'], { label: string; className: string }>
 };
 
 function PlayerHoverContent({ player }: { player: Player }) {
-    // ... [Content stays exactly the same as your code] ...
     return (
         <div className="flex gap-3">
             {player.photo ? (
@@ -83,12 +84,15 @@ export default function ShowTeam({
     event,
     team,
     clubs, // <-- Add this
+    review,
 }: {
     event: Event;
     team: Team;
     clubs: BasketballClub[]; // <-- Add this
+    review: TeamReview;
 }) {
     const [copied, setCopied] = useState(false);
+    const [reviewMode, setReviewMode] = useState(false);
     const shareUrl = `${window.location.origin}/teams/${team.id}/id-card`;
 
     const handleCopy = () => {
@@ -161,15 +165,42 @@ export default function ShowTeam({
                         </div>
                     </div>
                 </div>
-                <Button variant="outline" asChild>
-                    <Link
-                        href={`/dashboard/events/${event.id}/teams/${team.id}/edit`}
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                        variant={reviewMode ? 'default' : 'outline'}
+                        onClick={() => setReviewMode((v) => !v)}
                     >
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Edit Team
-                    </Link>
-                </Button>
+                        <ShieldAlert className="mr-2 h-4 w-4" />
+                        Review Mode
+                    </Button>
+                    {reviewMode && (
+                        <Button variant="outline" asChild>
+                            <a href={`/dashboard/events/${event.id}/teams/${team.id}/review-export`}>
+                                <Download className="mr-2 h-4 w-4" />
+                                Export Issues
+                            </a>
+                        </Button>
+                    )}
+                    <Button variant="outline" asChild>
+                        <Link
+                            href={`/dashboard/events/${event.id}/teams/${team.id}/edit`}
+                        >
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit Team
+                        </Link>
+                    </Button>
+                </div>
             </section>
+
+            {reviewMode && review.team_issues.length > 0 && (
+                <section className="flex flex-col gap-2 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+                    <div className="flex items-center gap-2">
+                        <ShieldAlert className="h-4 w-4 text-amber-500" />
+                        <h3 className="text-sm font-semibold">Team-level issues</h3>
+                    </div>
+                    <IssueList issues={review.team_issues} />
+                </section>
+            )}
 
             <section className="flex flex-col gap-3 rounded-xl border bg-muted/40 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-col gap-1">
@@ -260,6 +291,14 @@ export default function ShowTeam({
                                 <TableHead className="w-16">No.</TableHead>
                                 <TableHead>Name</TableHead>
                                 <TableHead>Role / Position</TableHead>
+                                {reviewMode && (
+                                    <>
+                                        <TableHead>Phone</TableHead>
+                                        <TableHead>Email</TableHead>
+                                        <TableHead>DOB</TableHead>
+                                        <TableHead>Issues</TableHead>
+                                    </>
+                                )}
                                 <TableHead className="text-right">
                                     Actions
                                 </TableHead>
@@ -269,7 +308,7 @@ export default function ShowTeam({
                             {players.length === 0 ? (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={4}
+                                        colSpan={reviewMode ? 8 : 4}
                                         className="h-24 text-center"
                                     >
                                         <div className="flex flex-col items-center gap-2 text-muted-foreground">
@@ -279,14 +318,23 @@ export default function ShowTeam({
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                players.map((player) => (
+                                players.map((player) => {
+                                    const playerIssues = review.player_issues[player.id] ?? [];
+                                    const hasErrors = playerIssues.some((i) => i.severity === 'error');
+
+                                    return (
                                     <HoverCard
                                         key={player.id}
                                         openDelay={150}
                                         closeDelay={100}
                                     >
                                         <HoverCardTrigger asChild>
-                                            <TableRow className="cursor-default">
+                                            <TableRow
+                                                className={cn(
+                                                    'cursor-default',
+                                                    reviewMode && hasErrors && 'bg-red-500/5 hover:bg-red-500/10',
+                                                )}
+                                            >
                                                 <TableCell className="font-bold italic text-xl">
                                                     {player.role === 'player' ? (
                                                         player.jersey_number
@@ -312,6 +360,37 @@ export default function ShowTeam({
                                                         </Badge>
                                                     )}
                                                 </TableCell>
+                                                {reviewMode && (
+                                                    <>
+                                                        <TableCell className="text-muted-foreground">
+                                                            {player.phone_number ?? (
+                                                                <span className="italic">Missing</span>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="text-muted-foreground">
+                                                            {player.email ?? (
+                                                                <span className="italic">Missing</span>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="text-muted-foreground">
+                                                            {player.dob ? (
+                                                                format(new Date(player.dob), 'PP')
+                                                            ) : (
+                                                                <span className="italic">Missing</span>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <IssueSummaryBadge
+                                                                summary={{
+                                                                    total: playerIssues.length,
+                                                                    errors: playerIssues.filter((i) => i.severity === 'error').length,
+                                                                    warnings: playerIssues.filter((i) => i.severity === 'warning').length,
+                                                                    info: playerIssues.filter((i) => i.severity === 'info').length,
+                                                                }}
+                                                            />
+                                                        </TableCell>
+                                                    </>
+                                                )}
                                                 <TableCell className="text-right">
                                                     <div className="flex justify-end gap-2">
                                                         <PlayerFormDialog
@@ -362,12 +441,18 @@ export default function ShowTeam({
                                             className="w-72"
                                             align="start"
                                         >
-                                            <PlayerHoverContent
-                                                player={player}
-                                            />
+                                            <PlayerHoverContent player={player} />
                                         </HoverCardContent>
+                                        {reviewMode && playerIssues.length > 0 && (
+                                            <TableRow className={cn('hover:bg-transparent', hasErrors ? 'bg-red-500/5' : 'bg-amber-500/5')}>
+                                                <TableCell colSpan={8} className="whitespace-normal py-3">
+                                                    <IssueList issues={playerIssues} />
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
                                     </HoverCard>
-                                ))
+                                    );
+                                })
                             )}
                         </TableBody>
                     </Table>

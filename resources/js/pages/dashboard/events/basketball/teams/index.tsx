@@ -1,11 +1,13 @@
 // resources/js/pages/dashboard/events/teams/index.tsx
 import { Head, Link, router } from '@inertiajs/react';
-import { ChevronLeft, Plus, Pencil, Trash2, Search, Users, AlertCircle } from 'lucide-react';
+import { ChevronLeft, Plus, Pencil, Trash2, Search, Users, AlertCircle, ShieldAlert, Download } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
+import { IssueSummaryBadge } from '@/components/review-issues';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -52,6 +54,8 @@ function EmptyState({ hasCategories }: { hasCategories: boolean }) {
 
 export default function TeamsIndex({ event, teams, categories, filters }: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
+    const [reviewMode, setReviewMode] = useState(false);
+    const [onlyIssues, setOnlyIssues] = useState(false);
 
     // Debounce search so we're not firing a request on every keystroke
     useEffect(() => {
@@ -116,20 +120,54 @@ return;
                     </div>
                 </div>
 
-                {categories.length > 0 ? (
-                    <Button asChild>
-                        <Link href={`/dashboard/events/${event.id}/teams/create`}>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant={reviewMode ? 'default' : 'outline'}
+                        onClick={() => setReviewMode((v) => !v)}
+                    >
+                        <ShieldAlert className="mr-2 h-4 w-4" />
+                        Review Mode
+                    </Button>
+
+                    {categories.length > 0 ? (
+                        <Button asChild>
+                            <Link href={`/dashboard/events/${event.id}/teams/create`}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Add Team
+                            </Link>
+                        </Button>
+                    ) : (
+                        <Button disabled>
                             <Plus className="mr-2 h-4 w-4" />
                             Add Team
-                        </Link>
-                    </Button>
-                ) : (
-                    <Button disabled>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Team
-                    </Button>
-                )}
+                        </Button>
+                    )}
+                </div>
             </div>
+
+            {reviewMode && (
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-muted/40 p-3">
+                    <div className="flex items-center gap-2">
+                        <Checkbox
+                            id="only-issues"
+                            checked={onlyIssues}
+                            onCheckedChange={(v) => setOnlyIssues(v === true)}
+                        />
+                        <label htmlFor="only-issues" className="text-sm">
+                            Only show teams with issues
+                        </label>
+                        <span className="text-xs text-muted-foreground">
+                            (applies to the current page only)
+                        </span>
+                    </div>
+                    <Button variant="outline" size="sm" asChild>
+                        <a href={`/dashboard/events/${event.id}/teams/review-export`}>
+                            <Download className="mr-2 h-4 w-4" />
+                            Export All Issues (CSV)
+                        </a>
+                    </Button>
+                </div>
+            )}
 
             {/* Filters */}
             <div className="flex flex-col gap-3 rounded-xl border bg-card p-4 sm:flex-row sm:items-center">
@@ -208,11 +246,14 @@ return;
                                 <th className="px-4 py-3 font-medium">Team</th>
                                 <th className="px-4 py-3 font-medium">Category</th>
                                 <th className="px-4 py-3 font-medium">Status</th>
+                                {reviewMode && <th className="px-4 py-3 font-medium">Data Issues</th>}
                                 <th className="px-4 py-3 text-right font-medium">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y">
-                            {teams.data.map((team) => (
+                            {teams.data
+                                .filter((team) => !(reviewMode && onlyIssues) || (team.review_summary?.total ?? 0) > 0)
+                                .map((team) => (
                                 <tr key={team.id} className="transition hover:bg-muted/30">
                                     <td className="px-4 py-3">
                                         <Link
@@ -232,6 +273,13 @@ return;
                                             {team.status}
                                         </Badge>
                                     </td>
+                                    {reviewMode && (
+                                        <td className="px-4 py-3">
+                                            {team.review_summary && (
+                                                <IssueSummaryBadge summary={team.review_summary} />
+                                            )}
+                                        </td>
+                                    )}
                                     <td className="px-4 py-3">
                                         <div className="flex justify-end gap-1">
                                             <Button variant="ghost" size="icon" className="h-8 w-8" asChild>

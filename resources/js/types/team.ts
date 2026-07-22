@@ -9,6 +9,27 @@ export const TEAM_STATUSES: { value: TeamStatus; label: string }[] = [
     { value: 'rejected', label: 'Rejected' },
 ];
 
+export type IssueSeverity = 'error' | 'warning' | 'info';
+
+export interface ReviewIssue {
+    severity: IssueSeverity;
+    code: string;
+    message: string;
+}
+
+export interface ReviewSummary {
+    total: number;
+    errors: number;
+    warnings: number;
+    info: number;
+}
+
+export interface TeamReview {
+    team_issues: ReviewIssue[];
+    player_issues: Record<number, ReviewIssue[]>;
+    summary: ReviewSummary;
+}
+
 export interface Team {
     id: number;
     event_id: number;
@@ -20,6 +41,7 @@ export interface Team {
     players?: Player[];
     basketball_event_category_id: number | null;
     basketball_event_category?: BasketballEventCategory;
+    review_summary?: ReviewSummary;
 }
 
 export interface PaginatedTeams {

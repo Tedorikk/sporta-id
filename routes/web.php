@@ -62,6 +62,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Everything scoped to a single event lives here.
         Route::prefix('{event}')->group(function () {
+            Route::get('teams/review-export', [TeamController::class, 'exportReviewAll'])->name('teams.review-export-all');
+            Route::get('teams/{team}/review-export', [TeamController::class, 'exportReview'])->name('teams.review-export');
             Route::resource('teams', TeamController::class);
 
             Route::resource('teams.players', PlayerController::class)

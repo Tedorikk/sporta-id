@@ -6,24 +6,35 @@ use App\Models\BasketballClub;
 use App\Models\BasketballEvent;
 use App\Models\Event;
 use App\Models\Team;
+use App\Services\TeamReviewService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TeamController extends Controller
 {
+    public function __construct(private readonly TeamReviewService $teamReviewService) {}
+
     public function index(Request $request, Event $event)
     {
         $filters = $request->only(['search', 'category', 'status']);
 
         $teams = $event->teams()
-            ->with('basketballEventCategory')
+            ->with(['basketballEventCategory', 'players'])
             ->when($filters['search'] ?? null, fn ($q, $search) => $q->where('name', 'like', "%{$search}%"))
             ->when($filters['category'] ?? null, fn ($q, $categoryId) => $q->where('basketball_event_category_id', $categoryId))
             ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('status', $status))
             ->latest()
             ->paginate(10)
             ->withQueryString();
+
+        $teams->getCollection()->transform(function (Team $team) {
+            $team->setAttribute('review_summary', $this->teamReviewService->review($team)['summary']);
+
+            return $team;
+        });
 
         return Inertia::render('dashboard/events/basketball/teams/index', [
             'event' => $event,
@@ -113,7 +124,40 @@ class TeamController extends Controller
             'event' => $event,
             'team' => $team,
             'clubs' => $clubs,
+            'review' => $this->teamReviewService->review($team),
         ]);
+    }
+
+    public function exportReview(Event $event, Team $team): StreamedResponse
+    {
+        abort_unless($team->event_id === $event->id, 404);
+
+        $team->load('players');
+        $rows = $this->teamReviewService->exportRows(collect([$team]));
+
+        return $this->streamReviewCsv(Str::slug($team->name).'-review-issues.csv', $rows);
+    }
+
+    public function exportReviewAll(Event $event): StreamedResponse
+    {
+        $teams = $event->teams()->with('players')->get();
+        $rows = $this->teamReviewService->exportRows($teams);
+
+        return $this->streamReviewCsv(Str::slug($event->name).'-review-issues.csv', $rows);
+    }
+
+    private function streamReviewCsv(string $filename, array $rows): StreamedResponse
+    {
+        return response()->streamDownload(function () use ($rows) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['Team', 'Member', 'Role', 'Severity', 'Issue']);
+
+            foreach ($rows as $row) {
+                fputcsv($out, [$row['team'], $row['member'], $row['role'], $row['severity'], $row['issue']]);
+            }
+
+            fclose($out);
+        }, $filename, ['Content-Type' => 'text/csv']);
     }
 
     /**
