@@ -65,7 +65,7 @@ export default function PlayerIdCard({ player }: Props) {
                                 <img
                                     src={formatImageUrl(team.event.logo)}
                                     alt={team.event.name}
-                                    className="h-6 w-auto drop-shadow-sm"
+                                    className="h-15 w-auto drop-shadow-sm"
                                 />
                             </div>
                         )}
