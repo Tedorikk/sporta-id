@@ -109,9 +109,14 @@ export default function PlayerIdCard({ player }: Props) {
                                         {playerRoleLabel(player.role)}
                                     </span>
                                 )}
-                                {team?.basketball_event_category && (
+                                {isPlayerRole && player.jersey_number && (
+                                    <span className="rounded-full bg-red-600 px-3 py-0.5 text-xs font-semibold text-white">
+                                        #{player.jersey_number}
+                                    </span>
+                                )}
+                                {isPlayerRole && player.position && (
                                     <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-0.5 text-xs font-medium text-slate-600">
-                                        {team.basketball_event_category.name}
+                                        {player.position}
                                     </span>
                                 )}
                             </div>
@@ -138,11 +143,11 @@ export default function PlayerIdCard({ player }: Props) {
                                 <span className="truncate text-sm font-semibold text-slate-800">
                                     {team?.name ?? 'Unassigned'}
                                 </span>
-                                <span className="text-xs text-slate-500">
-                                    {isPlayerRole
-                                        ? `Jersey #${player.jersey_number}${player.position ? ` · ${player.position}` : ''}`
-                                        : playerRoleLabel(player.role)}
-                                </span>
+                                {team?.basketball_event_category && (
+                                    <span className="text-xs text-slate-500">
+                                        {team.basketball_event_category.name}
+                                    </span>
+                                )}
                             </div>
                         </div>
 
