@@ -84,7 +84,7 @@ return;
 }
 
         router.post(
-            `/dashboard/events/${event.id}/pools/${pool.id}/teams`,
+            `/dashboard/events/${event.id}/basketball-categories/${pool.basketball_event_category_id}/pools/${pool.id}/teams`,
             { team_id: selectedTeamId },
             {
                 preserveScroll: true,
@@ -97,7 +97,7 @@ return;
 
     const handleRemoveTeam = (team: Team) => {
         router.delete(
-            `/dashboard/events/${event.id}/pools/${pool.id}/teams/${team.id}`,
+            `/dashboard/events/${event.id}/basketball-categories/${pool.basketball_event_category_id}/pools/${pool.id}/teams/${team.id}`,
             {
                 preserveScroll: true,
                 onStart: () => setRemovingTeamId(team.id),
