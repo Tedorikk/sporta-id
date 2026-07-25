@@ -1,14 +1,10 @@
 import { BracketTree } from './bracket-tree';
 import { MatchesCalendar } from './matches-calendar';
-import { MatchRow } from './match-row';
 import { StandingsTable } from './standings-table';
 import { TeamsGrid } from './teams-grid';
 import type { PublicEventCategory } from '@/types/public-event-category';
 
 export function BasketballCategorySection({ category }: { category: PublicEventCategory }) {
-    const groupMatches = category.matches.filter((match) => !match.round || match.round === 'group');
-    const ungroupedMatches = groupMatches.filter((match) => match.pool_id === null);
-
     const hasSchedule = category.pools.length > 0 || category.matches.length > 0;
 
     return (
@@ -25,50 +21,28 @@ export function BasketballCategorySection({ category }: { category: PublicEventC
                 <p className="text-sm text-white/40">Schedule will be posted soon.</p>
             )}
 
-            {category.pools.length > 0
-                ? category.pools.map((pool) => {
-                      const poolMatches = groupMatches.filter((match) => match.pool_id === pool.id);
-                      const standings = category.standings[`pool_${pool.id}`] ?? [];
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                {/* Left: every match for this category, calendar-shaped rather than split per pool */}
+                <MatchesCalendar matches={category.matches} />
 
-                      return (
-                          <div key={pool.id} className="flex flex-col gap-3">
-                              <h4 className="text-sm font-bold tracking-wide text-white/70 uppercase">Pool {pool.name}</h4>
-                              <StandingsTable standings={standings} teams={pool.teams} />
-                              {poolMatches.length > 0 && (
-                                  <div className="flex flex-col gap-2">
-                                      {poolMatches.map((match) => (
-                                          <MatchRow key={match.id} match={match} />
-                                      ))}
-                                  </div>
-                              )}
-                          </div>
-                      );
-                  })
-                : groupMatches.length > 0 && (
-                      <div className="flex flex-col gap-3">
-                          <StandingsTable standings={category.standings.overall ?? []} teams={category.teams} />
-                          <div className="flex flex-col gap-2">
-                              {groupMatches.map((match) => (
-                                  <MatchRow key={match.id} match={match} />
-                              ))}
-                          </div>
-                      </div>
-                  )}
+                {/* Right: category structure — pools/standings and the team roster */}
+                <div className="flex flex-col gap-6">
+                    {category.pools.length > 0
+                        ? category.pools.map((pool) => (
+                              <div key={pool.id} className="flex flex-col gap-3">
+                                  <h4 className="text-sm font-bold tracking-wide text-white/70 uppercase">Pool {pool.name}</h4>
+                                  <StandingsTable standings={category.standings[`pool_${pool.id}`] ?? []} teams={pool.teams} />
+                              </div>
+                          ))
+                        : category.matches.length > 0 && (
+                              <StandingsTable standings={category.standings.overall ?? []} teams={category.teams} />
+                          )}
 
-            {category.pools.length > 0 && ungroupedMatches.length > 0 && (
-                <div className="flex flex-col gap-3">
-                    <h4 className="text-sm font-bold tracking-wide text-white/70 uppercase">Other Matches</h4>
-                    <div className="flex flex-col gap-2">
-                        {ungroupedMatches.map((match) => (
-                            <MatchRow key={match.id} match={match} />
-                        ))}
-                    </div>
+                    <TeamsGrid teams={category.teams} />
                 </div>
-            )}
+            </div>
 
             <BracketTree matches={category.matches} />
-            <MatchesCalendar matches={category.matches} />
-            <TeamsGrid teams={category.teams} />
         </div>
     );
 }
