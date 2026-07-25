@@ -60,18 +60,15 @@ export default function PlayerIdCard({ player }: Props) {
                             className="absolute inset-0 h-full w-full object-cover"
                         />
 
-                        {team?.event?.logo && (
-                            <div className="absolute top-4 right-5">
+                        <div className="absolute inset-x-5 top-4 flex items-center justify-between">
+                            <SiteLogo className="h-6 w-auto drop-shadow-sm" />
+                            {team?.event?.logo && (
                                 <img
                                     src={formatImageUrl(team.event.logo)}
                                     alt={team.event.name}
                                     className="h-15 w-auto drop-shadow-sm"
                                 />
-                            </div>
-                        )}
-
-                        <div className="absolute top-4 left-5">
-                            <SiteLogo className="h-6 w-auto drop-shadow-sm" />
+                            )}
                         </div>
                     </div>
 
@@ -107,19 +104,9 @@ export default function PlayerIdCard({ player }: Props) {
                                 {player.name}
                             </h1>
                             <div className="flex flex-wrap items-center justify-center gap-2">
-                                {status && (
-                                    <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${status.bg} ${status.text}`}>
-                                        {status.label}
-                                    </span>
-                                )}
                                 {!isPlayerRole && (
                                     <span className="rounded-full bg-red-600 px-3 py-0.5 text-xs font-semibold text-white">
                                         {playerRoleLabel(player.role)}
-                                    </span>
-                                )}
-                                {player.role === 'medic' && !player.is_certificate_validated && (
-                                    <span className="rounded-full bg-amber-400 px-3 py-0.5 text-xs font-semibold text-amber-900">
-                                        Pending Validation
                                     </span>
                                 )}
                                 {team?.basketball_event_category && (
