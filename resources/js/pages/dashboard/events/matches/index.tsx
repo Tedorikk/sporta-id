@@ -4,17 +4,11 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import events from '@/routes/events';
-import type { BasketballEventCategory } from '@/types/basketball-event-category';
 import type { Event } from '@/types/event';
 import type { GameMatch, MatchStatus } from '@/types/game-match';
-import type { Pool } from '@/types/pool';
-import type { Team } from '@/types/team';
+import { CreateEventMatchDialog } from './components/create-event-match-dialog';
 import { EventMatchRow } from './components/event-match-row';
-
-interface CategoryWithFixtures extends BasketballEventCategory {
-    pools: Pool[];
-    teams: Team[];
-}
+import type { CategoryWithFixtures } from './types';
 
 interface Props {
     event: Event;
@@ -102,6 +96,8 @@ export default function EventMatchesIndex({ event, matches, categories }: Props)
                         <h1 className="text-2xl font-bold tracking-tight">All Matches</h1>
                         <p className="text-sm text-muted-foreground mt-0.5">{event.name}</p>
                     </div>
+
+                    <CreateEventMatchDialog event={event} categories={categories} />
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">

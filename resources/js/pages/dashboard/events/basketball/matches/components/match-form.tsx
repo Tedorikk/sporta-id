@@ -15,20 +15,22 @@ import { ROUND_OPTIONS } from './constants';
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
-export const matchSchema = z
-    .object({
-        pool_id: z.string(),
-        home_team_id: z.string().min(1, 'Select the home team'),
-        away_team_id: z.string().min(1, 'Select the away team'),
-        round: z.string().min(1, 'Select a round'),
-        match_number: z.string(),
-        date: z.string(),
-        time: z.string(),
-    })
-    .refine((data) => data.home_team_id !== data.away_team_id, {
-        message: 'Home and away teams must be different',
-        path: ['away_team_id'],
-    });
+// Exported unrefined so callers that need extra fields (e.g. a category
+// picker) can .extend() it before applying the same home/away refinement.
+export const matchFieldsSchema = z.object({
+    pool_id: z.string(),
+    home_team_id: z.string().min(1, 'Select the home team'),
+    away_team_id: z.string().min(1, 'Select the away team'),
+    round: z.string().min(1, 'Select a round'),
+    match_number: z.string(),
+    date: z.string(),
+    time: z.string(),
+});
+
+export const matchSchema = matchFieldsSchema.refine((data) => data.home_team_id !== data.away_team_id, {
+    message: 'Home and away teams must be different',
+    path: ['away_team_id'],
+});
 
 export type MatchFormValues = z.infer<typeof matchSchema>;
 
