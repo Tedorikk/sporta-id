@@ -3,17 +3,24 @@ import { formatDateTime } from '@/lib/format-date';
 import type { BasketballEventCategory } from '@/types/basketball-event-category';
 import type { Event } from '@/types/event';
 import type { GameMatch } from '@/types/game-match';
+import type { Pool } from '@/types/pool';
+import type { Team } from '@/types/team';
 import { StatusBadge } from './constants';
 import { DeleteMatchButton } from './delete-match-button';
+import { EditMatchDialog } from './edit-match-dialog';
 import { ScoreDialog } from './score-dialog';
 
 export function MatchCard({
     event,
     category,
+    pools,
+    teams,
     match,
 }: {
     event: Event;
     category: BasketballEventCategory;
+    pools: Pool[];
+    teams: Team[];
     match: GameMatch;
 }) {
     const homeName = match.home_team?.name ?? 'TBD';
@@ -68,6 +75,7 @@ export function MatchCard({
 
             <div className="flex items-center gap-1 shrink-0">
                 <StatusBadge status={match.status} />
+                <EditMatchDialog event={event} category={category} pools={pools} teams={teams} match={match} />
                 <ScoreDialog event={event} category={category} match={match} />
                 <DeleteMatchButton event={event} category={category} match={match} />
             </div>

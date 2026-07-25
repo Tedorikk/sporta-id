@@ -3,11 +3,24 @@ import { Badge } from '@/components/ui/badge';
 import { formatDateTime } from '@/lib/format-date';
 import { StatusBadge, ROUND_LABELS } from '@/pages/dashboard/events/basketball/matches/components/constants';
 import { DeleteMatchButton } from '@/pages/dashboard/events/basketball/matches/components/delete-match-button';
+import { EditMatchDialog } from '@/pages/dashboard/events/basketball/matches/components/edit-match-dialog';
 import { ScoreDialog } from '@/pages/dashboard/events/basketball/matches/components/score-dialog';
 import type { Event } from '@/types/event';
 import type { GameMatch } from '@/types/game-match';
+import type { Pool } from '@/types/pool';
+import type { Team } from '@/types/team';
 
-export function EventMatchRow({ event, match }: { event: Event; match: GameMatch }) {
+export function EventMatchRow({
+    event,
+    match,
+    pools,
+    teams,
+}: {
+    event: Event;
+    match: GameMatch;
+    pools: Pool[];
+    teams: Team[];
+}) {
     const homeName = match.home_team?.name ?? 'TBD';
     const awayName = match.away_team?.name ?? 'TBD';
     const isCompleted = match.status === 'finished';
@@ -68,6 +81,7 @@ export function EventMatchRow({ event, match }: { event: Event; match: GameMatch
 
                 <div className="flex items-center gap-1 shrink-0">
                     <StatusBadge status={match.status} />
+                    <EditMatchDialog event={event} category={category} pools={pools} teams={teams} match={match} />
                     <ScoreDialog event={event} category={category} match={match} />
                     <DeleteMatchButton event={event} category={category} match={match} />
                 </div>

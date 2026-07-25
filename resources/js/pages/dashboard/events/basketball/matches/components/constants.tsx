@@ -12,6 +12,7 @@ export const ROUND_LABELS: Record<string, string> = {
 
 export const ROUND_OPTIONS: { value: string; label: string }[] = [
     { value: 'group', label: 'Group' },
+    { value: 'round_of_16', label: 'Round of 16' },
     { value: 'quarterfinal', label: 'Quarter Final' },
     { value: 'semifinal', label: 'Semi Final' },
     { value: 'final', label: 'Final' },

@@ -40,6 +40,38 @@ class MatchService
         ]);
     }
 
+    /**
+     * Update an existing match's fixture details, enforcing the same
+     * business rules as create() (minus the match colliding with itself).
+     */
+    public function update(GameMatch $match, array $data): GameMatch
+    {
+        $category = $match->category;
+        $homeTeamId = (int) $data['home_team_id'];
+        $awayTeamId = (int) $data['away_team_id'];
+        $poolId = $data['pool_id'] ?? null;
+        $round = $data['round'];
+
+        $this->assertTeamsInCategory($category, $homeTeamId, $awayTeamId);
+
+        if ($poolId) {
+            $this->assertTeamsInPool($category, (int) $poolId, $homeTeamId, $awayTeamId);
+        }
+
+        $this->assertNoDuplicateFixture($category, $round, $poolId, $homeTeamId, $awayTeamId, $match->id);
+
+        $match->update([
+            'pool_id' => $poolId,
+            'home_team_id' => $homeTeamId,
+            'away_team_id' => $awayTeamId,
+            'round' => $round,
+            'match_number' => $data['match_number'] ?? $match->match_number,
+            'scheduled_at' => $data['scheduled_at'] ?? null,
+        ]);
+
+        return $match;
+    }
+
     protected function assertTeamsInCategory(BasketballEventCategory $category, int $homeTeamId, int $awayTeamId): void
     {
         $teamIds = $category->teams()->pluck('teams.id');
@@ -63,12 +95,13 @@ class MatchService
         }
     }
 
-    protected function assertNoDuplicateFixture(BasketballEventCategory $category, string $round, ?int $poolId, int $homeTeamId, int $awayTeamId): void
+    protected function assertNoDuplicateFixture(BasketballEventCategory $category, string $round, ?int $poolId, int $homeTeamId, int $awayTeamId, ?int $excludeMatchId = null): void
     {
         $exists = GameMatch::query()
             ->where('basketball_event_category_id', $category->id)
             ->where('round', $round)
             ->where('pool_id', $poolId)
+            ->when($excludeMatchId, fn ($query) => $query->where('id', '!=', $excludeMatchId))
             ->where(function ($query) use ($homeTeamId, $awayTeamId) {
                 $query
                     ->where(fn ($q) => $q->where('home_team_id', $homeTeamId)->where('away_team_id', $awayTeamId))

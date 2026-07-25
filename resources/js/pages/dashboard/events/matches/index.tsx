@@ -4,13 +4,22 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import events from '@/routes/events';
+import type { BasketballEventCategory } from '@/types/basketball-event-category';
 import type { Event } from '@/types/event';
 import type { GameMatch, MatchStatus } from '@/types/game-match';
+import type { Pool } from '@/types/pool';
+import type { Team } from '@/types/team';
 import { EventMatchRow } from './components/event-match-row';
+
+interface CategoryWithFixtures extends BasketballEventCategory {
+    pools: Pool[];
+    teams: Team[];
+}
 
 interface Props {
     event: Event;
     matches: GameMatch[];
+    categories: CategoryWithFixtures[];
 }
 
 type GroupBy = 'day' | 'none';
@@ -35,20 +44,12 @@ function dayLabel(key: string) {
     });
 }
 
-export default function EventMatchesIndex({ event, matches }: Props) {
+export default function EventMatchesIndex({ event, matches, categories }: Props) {
     const [categoryFilter, setCategoryFilter] = useState('all');
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
     const [groupBy, setGroupBy] = useState<GroupBy>('day');
 
-    const categories = useMemo(() => {
-        const map = new Map<number, string>();
-        matches.forEach((match) => {
-            if (match.category) {
-                map.set(match.category.id, match.category.name);
-            }
-        });
-        return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
-    }, [matches]);
+    const categoryMap = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
 
     const filteredMatches = matches.filter((match) => {
         if (categoryFilter !== 'all' && String(match.category?.id) !== categoryFilter) {
@@ -168,7 +169,13 @@ export default function EventMatchesIndex({ event, matches }: Props) {
                                 <h2 className="text-sm font-semibold text-muted-foreground">{dayLabel(key)}</h2>
                                 <div className="flex flex-col gap-2">
                                     {dayMatches.map((match) => (
-                                        <EventMatchRow key={match.id} event={event} match={match} />
+                                        <EventMatchRow
+                                            key={match.id}
+                                            event={event}
+                                            match={match}
+                                            pools={categoryMap.get(match.category?.id ?? -1)?.pools ?? []}
+                                            teams={categoryMap.get(match.category?.id ?? -1)?.teams ?? []}
+                                        />
                                     ))}
                                 </div>
                             </div>
@@ -177,7 +184,13 @@ export default function EventMatchesIndex({ event, matches }: Props) {
                 ) : (
                     <div className="flex flex-col gap-2">
                         {filteredMatches.map((match) => (
-                            <EventMatchRow key={match.id} event={event} match={match} />
+                            <EventMatchRow
+                                key={match.id}
+                                event={event}
+                                match={match}
+                                pools={categoryMap.get(match.category?.id ?? -1)?.pools ?? []}
+                                teams={categoryMap.get(match.category?.id ?? -1)?.teams ?? []}
+                            />
                         ))}
                     </div>
                 )}

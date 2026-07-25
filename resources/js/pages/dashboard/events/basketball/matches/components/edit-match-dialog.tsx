@@ -1,8 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from '@inertiajs/react';
-import { Loader2 } from 'lucide-react';
+import { format } from 'date-fns';
+import { Loader2, Pencil } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -15,22 +16,37 @@ import {
 import { FieldGroup } from '@/components/ui/field';
 import type { BasketballEventCategory } from '@/types/basketball-event-category';
 import type { Event } from '@/types/event';
+import type { GameMatch } from '@/types/game-match';
 import type { Pool } from '@/types/pool';
 import type { Team } from '@/types/team';
 import { MATCH_SERVER_FIELD_MAP, MatchFormFields, matchDefaultValues, matchSchema, type MatchFormValues } from './match-form';
 
-export function CreateMatchDialog({
+function editDefaultValues(match: GameMatch): MatchFormValues {
+    const scheduled = match.scheduled_at ? new Date(match.scheduled_at) : null;
+
+    return matchDefaultValues({
+        pool_id: match.pool_id ? String(match.pool_id) : '',
+        home_team_id: match.home_team_id ? String(match.home_team_id) : '',
+        away_team_id: match.away_team_id ? String(match.away_team_id) : '',
+        round: match.round ?? 'group',
+        match_number: match.match_number ? String(match.match_number) : '',
+        date: scheduled ? format(scheduled, 'yyyy-MM-dd') : '',
+        time: scheduled ? format(scheduled, 'HH:mm') : '',
+    });
+}
+
+export function EditMatchDialog({
     event,
     category,
     pools,
     teams,
-    defaultPool,
+    match,
 }: {
     event: Event;
     category: BasketballEventCategory;
     pools: Pool[];
     teams: Team[];
-    defaultPool?: Pool;
+    match: GameMatch;
 }) {
     const [open, setOpen] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -40,36 +56,26 @@ export function CreateMatchDialog({
         handleSubmit,
         reset,
         setError,
-        setValue,
         formState: { errors },
     } = useForm<MatchFormValues>({
         resolver: zodResolver(matchSchema),
-        defaultValues: matchDefaultValues(defaultPool ? { pool_id: String(defaultPool.id) } : undefined),
+        defaultValues: editDefaultValues(match),
         mode: 'onChange',
     });
 
-    const poolId = useWatch({ control, name: 'pool_id' });
-
-    // Reset the whole form whenever the dialog is (re)opened, so stale state
-    // from a previous match never leaks into the next one.
+    // Reset to this match's current values whenever the dialog (re)opens.
     useEffect(() => {
         if (open) {
-            reset(matchDefaultValues(defaultPool ? { pool_id: String(defaultPool.id) } : undefined));
+            reset(editDefaultValues(match));
         }
-    }, [open, defaultPool, reset]);
-
-    // Changing the pool invalidates whatever teams were picked from the old one.
-    useEffect(() => {
-        setValue('home_team_id', '');
-        setValue('away_team_id', '');
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [poolId]);
+    }, [open, match, reset]);
 
     const onSubmit = (data: MatchFormValues) => {
         setSaving(true);
 
-        router.post(
-            `/dashboard/events/${event.id}/basketball-categories/${category.id}/matches`,
+        router.put(
+            `/dashboard/events/${event.id}/basketball-categories/${category.id}/matches/${match.id}`,
             {
                 pool_id: data.pool_id || null,
                 home_team_id: data.home_team_id,
@@ -95,12 +101,15 @@ export function CreateMatchDialog({
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button size="sm">+ New Match</Button>
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1">
+                    <Pencil className="h-3 w-3" />
+                    Edit
+                </Button>
             </DialogTrigger>
 
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Create Match</DialogTitle>
+                    <DialogTitle>Edit Match</DialogTitle>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit(onSubmit)}>
@@ -115,7 +124,7 @@ export function CreateMatchDialog({
                             control={control}
                             pools={pools}
                             teams={teams}
-                            showPoolField={!defaultPool && pools.length > 0}
+                            showPoolField={pools.length > 0}
                         />
                     </FieldGroup>
 
@@ -125,7 +134,7 @@ export function CreateMatchDialog({
                         </Button>
                         <Button type="submit" disabled={saving}>
                             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                            {saving ? 'Creating...' : 'Create'}
+                            {saving ? 'Saving...' : 'Save Changes'}
                         </Button>
                     </DialogFooter>
                 </form>

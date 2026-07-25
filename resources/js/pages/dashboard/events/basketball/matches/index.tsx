@@ -110,7 +110,7 @@ export default function MatchesIndex({ event, category, pools, groupMatches, bra
                         ) : (
                             <div className="flex flex-col gap-2">
                                 {allGroupMatches.map((m) => (
-                                    <MatchCard key={m.id} event={event} category={category} match={m} />
+                                    <MatchCard key={m.id} event={event} category={category} pools={pools} teams={teams} match={m} />
                                 ))}
                             </div>
                         )}
@@ -143,7 +143,7 @@ export default function MatchesIndex({ event, category, pools, groupMatches, bra
                             ) : (
                                 <div className="flex flex-col gap-2">
                                     {pMatches.map((m) => (
-                                        <MatchCard key={m.id} event={event} category={category} match={m} />
+                                        <MatchCard key={m.id} event={event} category={category} pools={pools} teams={teams} match={m} />
                                     ))}
                                 </div>
                             )}
@@ -167,7 +167,7 @@ export default function MatchesIndex({ event, category, pools, groupMatches, bra
                         </div>
                         <div className="flex flex-col gap-2">
                             {ungroupedMatches.map((m) => (
-                                <MatchCard key={m.id} event={event} category={category} match={m} />
+                                <MatchCard key={m.id} event={event} category={category} pools={pools} teams={teams} match={m} />
                             ))}
                         </div>
                     </section>
@@ -190,7 +190,7 @@ export default function MatchesIndex({ event, category, pools, groupMatches, bra
                                     {ROUND_LABELS[round] ?? round}
                                 </h3>
                                 {rMatches.map((m) => (
-                                    <MatchCard key={m.id} event={event} category={category} match={m} />
+                                    <MatchCard key={m.id} event={event} category={category} pools={pools} teams={teams} match={m} />
                                 ))}
                             </div>
                         ))}

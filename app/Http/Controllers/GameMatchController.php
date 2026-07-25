@@ -98,6 +98,19 @@ class GameMatchController extends Controller
     }
 
     /**
+     * Update a match's fixture details (teams, pool, round, schedule).
+     */
+    public function update(StoreMatchRequest $request, Event $event, BasketballEventCategory $category, GameMatch $match)
+    {
+        $this->matches->update($match, $request->validated());
+
+        return back()->with('toast', [
+            'title' => 'Sukses',
+            'description' => 'Pertandingan berhasil diperbarui.',
+        ]);
+    }
+
+    /**
      * Update the score of a match and advance the bracket winner if applicable.
      */
     public function updateScore(UpdateMatchScoreRequest $request, Event $event, BasketballEventCategory $category, GameMatch $match)
