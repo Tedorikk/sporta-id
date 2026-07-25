@@ -170,7 +170,7 @@ export function CreateMatchDialog({
                             </p>
                         )}
 
-                        {!defaultPool && (
+                        {!defaultPool && pools.length > 0 && (
                             <Controller
                                 name="pool_id"
                                 control={control}
