@@ -53,44 +53,29 @@ export default function PlayerIdCard({ player }: Props) {
                     ref={cardRef}
                     className="relative z-10 w-full max-w-sm overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl print:shadow-none print:rounded-none print:border-0"
                 >
-                    <div className="relative h-36 overflow-hidden bg-gradient-to-br from-red-600 via-red-700 to-rose-950 print:bg-red-700">
-                        <svg className="absolute inset-0 h-full w-full opacity-10" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                                <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
-                                    <path d="M 24 0 L 0 0 0 24" fill="none" stroke="white" strokeWidth="0.5" />
-                                </pattern>
-                            </defs>
-                            <rect width="100%" height="100%" fill="url(#grid)" />
-                        </svg>
-
-                        {/* Diagonal sheen for a bit of shine instead of a flat gradient */}
-                        <div className="absolute -inset-y-10 -left-1/4 w-2/3 -rotate-12 bg-gradient-to-r from-white/0 via-white/10 to-white/0" />
-
-                        <div className="absolute top-4 left-5">
-                            <SiteLogo className="h-6 w-auto drop-shadow" />
-                        </div>
+                    <div className="relative h-40 overflow-hidden bg-white print:bg-white">
+                        <img
+                            src="/images/swoosh.svg"
+                            alt=""
+                            className="absolute inset-0 h-full w-full object-cover"
+                        />
 
                         {team?.event?.logo && (
                             <div className="absolute top-4 right-5">
                                 <img
                                     src={formatImageUrl(team.event.logo)}
                                     alt={team.event.name}
-                                    className="h-9 w-9 rounded-full border-2 border-white/40 bg-white/10 object-cover shadow"
+                                    className="h-6 w-auto drop-shadow-sm"
                                 />
                             </div>
                         )}
 
-                        {/* Bottom scalloped edge so the header doesn't end in a flat line */}
-                        <svg
-                            className="absolute bottom-0 left-0 h-3 w-full text-white print:text-white"
-                            viewBox="0 0 100 6"
-                            preserveAspectRatio="none"
-                        >
-                            <path d="M0,6 Q2.5,0 5,6 T10,6 T15,6 T20,6 T25,6 T30,6 T35,6 T40,6 T45,6 T50,6 T55,6 T60,6 T65,6 T70,6 T75,6 T80,6 T85,6 T90,6 T95,6 T100,6 V6 H0 Z" fill="currentColor" />
-                        </svg>
+                        <div className="absolute top-4 left-5">
+                            <SiteLogo className="h-6 w-auto drop-shadow-sm" />
+                        </div>
                     </div>
 
-                    <div className="absolute top-[108px] left-1/2 z-20 -translate-x-1/2">
+                    <div className="absolute top-[124px] left-1/2 z-20 -translate-x-1/2">
                         <div className="relative">
                             {player.photo ? (
                                 <img
@@ -113,7 +98,7 @@ export default function PlayerIdCard({ player }: Props) {
 
                     {/* Faint watermark so the white body isn't a flat blank area */}
                     <div
-                        className="pointer-events-none absolute inset-x-0 top-32 bottom-0 opacity-[0.04] print:hidden"
+                        className="pointer-events-none absolute inset-x-0 top-40 bottom-0 opacity-[0.04] print:hidden"
                         style={{
                             backgroundImage: 'radial-gradient(currentColor 1px, transparent 1px)',
                             backgroundSize: '14px 14px',
