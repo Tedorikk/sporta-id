@@ -18,7 +18,7 @@ function createImage(url: string): Promise<HTMLImageElement> {
 export async function getCroppedImageFile(
     imageSrc: string,
     cropPixels: CropArea,
-    fileName = 'banner.jpg',
+    fileName = 'image.png',
 ): Promise<File> {
     const image = await createImage(imageSrc);
     const canvas = document.createElement('canvas');
@@ -30,6 +30,9 @@ export async function getCroppedImageFile(
         throw new Error('Could not get canvas context');
     }
 
+    // Zooming out can push the crop area past the source image's edges —
+    // leave those pixels untouched (canvas is transparent by default) rather
+    // than drawing anything, and export as PNG so that transparency survives.
     ctx.drawImage(
         image,
         cropPixels.x,
@@ -43,18 +46,14 @@ export async function getCroppedImageFile(
     );
 
     return new Promise((resolve, reject) => {
-        canvas.toBlob(
-            (blob) => {
-                if (!blob) {
-                    reject(new Error('Canvas is empty'));
+        canvas.toBlob((blob) => {
+            if (!blob) {
+                reject(new Error('Canvas is empty'));
 
-                    return;
-                }
+                return;
+            }
 
-                resolve(new File([blob], fileName, { type: 'image/jpeg' }));
-            },
-            'image/jpeg',
-            0.92,
-        );
+            resolve(new File([blob], fileName, { type: 'image/png' }));
+        }, 'image/png');
     });
 }

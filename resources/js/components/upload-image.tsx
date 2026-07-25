@@ -15,6 +15,18 @@ import { Slider } from '@/components/ui/slider';
 import { getCroppedImageFile } from '@/lib/crop-image';
 import { cn } from '@/lib/utils';
 
+const MIN_ZOOM = 0.2;
+const MAX_ZOOM = 3;
+
+// Matches the transparent squares convention so the crop preview honestly
+// shows what will be see-through in the exported PNG once zoomed out.
+const CHECKERBOARD_STYLE: React.CSSProperties = {
+    backgroundImage:
+        'linear-gradient(45deg, #80808033 25%, transparent 25%), linear-gradient(-45deg, #80808033 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #80808033 75%), linear-gradient(-45deg, transparent 75%, #80808033 75%)',
+    backgroundSize: '16px 16px',
+    backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px',
+};
+
 export interface UploadImageProps {
     value?: string | null;
     onChange?: (url: string | null) => void;
@@ -377,12 +389,18 @@ export function UploadImage({
                             <DialogTitle>Crop image</DialogTitle>
                         </DialogHeader>
 
-                        <div className="relative h-80 w-full bg-muted">
+                        <div
+                            className="relative h-80 w-full overflow-hidden"
+                            style={CHECKERBOARD_STYLE}
+                        >
                             {cropSrc && (
                                 <Cropper
                                     image={cropSrc}
                                     crop={crop}
                                     zoom={zoom}
+                                    minZoom={MIN_ZOOM}
+                                    maxZoom={MAX_ZOOM}
+                                    restrictPosition={false}
                                     aspect={ratio}
                                     onCropChange={setCrop}
                                     onZoomChange={setZoom}
@@ -398,8 +416,8 @@ export function UploadImage({
                                 Zoom
                             </span>
                             <Slider
-                                min={1}
-                                max={3}
+                                min={MIN_ZOOM}
+                                max={MAX_ZOOM}
                                 step={0.1}
                                 value={[zoom]}
                                 onValueChange={([v]) => setZoom(v)}
