@@ -1,5 +1,5 @@
 import { Calendar, Trophy } from 'lucide-react';
-import { formatDate } from '@/lib/format-date';
+import { formatDateTime } from '@/lib/format-date';
 import type { GameMatch } from '@/types/game-match';
 
 const STATUS_STYLE: Record<string, string> = {
@@ -57,7 +57,7 @@ export function MatchRow({ match }: { match: GameMatch }) {
                 {match.scheduled_at && (
                     <span className="flex items-center gap-1 text-xs text-white/40">
                         <Calendar className="h-3 w-3" />
-                        {formatDate(match.scheduled_at)}
+                        {formatDateTime(match.scheduled_at)}
                     </span>
                 )}
                 <span
