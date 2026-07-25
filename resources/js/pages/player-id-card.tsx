@@ -88,11 +88,6 @@ export default function PlayerIdCard({ player }: Props) {
                                     {player.name.substring(0, 2).toUpperCase()}
                                 </div>
                             )}
-                            {status?.label === 'Verified' && (
-                                <span className="absolute -right-1.5 -bottom-1.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-emerald-500 text-white shadow">
-                                    <CheckCircle2 className="h-3.5 w-3.5" />
-                                </span>
-                            )}
                         </div>
                     </div>
 
@@ -142,7 +137,7 @@ export default function PlayerIdCard({ player }: Props) {
                                 <img
                                     src={formatImageUrl(team.logo)}
                                     alt={team.name}
-                                    className="h-10 w-10 shrink-0 rounded-full border border-slate-200 bg-white object-cover"
+                                    className="h-10 w-10 shrink-0 object-cover"
                                 />
                             ) : (
                                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-300">
@@ -197,8 +192,6 @@ export default function PlayerIdCard({ player }: Props) {
                             {new Date().getFullYear()}
                         </div>
                     </div>
-
-                    <div className="h-1.5 w-full bg-gradient-to-r from-red-700 via-red-500 to-rose-900" />
                 </div>
 
                 <IdCardActions
