@@ -1,10 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from '@inertiajs/react';
-import { Loader2 } from 'lucide-react';
+import { format } from 'date-fns';
+import { CalendarIcon, Clock, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import {
     Dialog,
     DialogContent,
@@ -21,7 +23,9 @@ import {
     FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 import type { BasketballEventCategory } from '@/types/basketball-event-category';
 import type { Event } from '@/types/event';
 import type { Pool } from '@/types/pool';
@@ -292,7 +296,37 @@ export function CreateMatchDialog({
                                 render={({ field, fieldState }) => (
                                     <Field data-invalid={fieldState.invalid}>
                                         <FieldLabel htmlFor="date">Date</FieldLabel>
-                                        <Input {...field} id="date" type="date" aria-invalid={fieldState.invalid} />
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    id="date"
+                                                    variant="outline"
+                                                    aria-label="Date"
+                                                    aria-invalid={fieldState.invalid}
+                                                    className={cn(
+                                                        'w-full cursor-pointer justify-start text-left font-normal',
+                                                        !field.value && 'text-muted-foreground',
+                                                    )}
+                                                >
+                                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                                    {field.value ? (
+                                                        format(new Date(field.value), 'PPP')
+                                                    ) : (
+                                                        <span>Pick a date</span>
+                                                    )}
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={field.value ? new Date(field.value) : undefined}
+                                                    onSelect={(date) =>
+                                                        field.onChange(date ? format(date, 'yyyy-MM-dd') : '')
+                                                    }
+                                                    autoFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
                                         {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                                     </Field>
                                 )}
@@ -303,7 +337,32 @@ export function CreateMatchDialog({
                                 render={({ field, fieldState }) => (
                                     <Field data-invalid={fieldState.invalid}>
                                         <FieldLabel htmlFor="time">Time</FieldLabel>
-                                        <Input {...field} id="time" type="time" aria-invalid={fieldState.invalid} />
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    id="time"
+                                                    variant="outline"
+                                                    aria-label="Time"
+                                                    aria-invalid={fieldState.invalid}
+                                                    className={cn(
+                                                        'w-full cursor-pointer justify-start text-left font-normal',
+                                                        !field.value && 'text-muted-foreground',
+                                                    )}
+                                                >
+                                                    <Clock className="mr-2 h-4 w-4" />
+                                                    {field.value ? field.value : <span>Pick a time</span>}
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-3" align="start">
+                                                <Input
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    type="time"
+                                                    aria-invalid={fieldState.invalid}
+                                                    autoFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
                                         {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                                     </Field>
                                 )}
