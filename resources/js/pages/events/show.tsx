@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { Calendar, Facebook, Instagram, LayoutGrid, MessageCircle, Phone, Swords, Trophy, Users, Youtube } from 'lucide-react';
 import { BasketballCategorySection } from '@/components/public/basketball-category-section';
+import { MatchesCalendar } from '@/components/public/matches-calendar';
 import PublicLayout from '@/layouts/public-layout';
 import { formatDate } from '@/lib/format-date';
 import { formatImageUrl } from '@/lib/image-utils';
@@ -30,6 +31,7 @@ export default function EventShow({ event, categories }: Props) {
     const totalTeams = categories?.reduce((sum, c) => sum + c.teams.length, 0) ?? 0;
     const totalMatches = categories?.reduce((sum, c) => sum + c.matches.length, 0) ?? 0;
     const totalPools = categories?.reduce((sum, c) => sum + c.pools.length, 0) ?? 0;
+    const calendarMatches = categories?.flatMap((c) => c.matches.map((match) => ({ match, categoryName: c.name }))) ?? [];
 
     const stats = [
         { label: 'Categories', value: categories?.length ?? 0, icon: Trophy },
@@ -133,7 +135,14 @@ export default function EventShow({ event, categories }: Props) {
                     </div>
                 </section>
 
-                <section className="mx-auto max-w-5xl px-6 py-14">
+                <section className="mx-auto flex max-w-5xl flex-col gap-10 px-6 py-14">
+                    {calendarMatches.length > 0 && (
+                        <div className="flex flex-col gap-6">
+                            <h2 className="text-2xl font-black tracking-tight uppercase">Match Schedule</h2>
+                            <MatchesCalendar matches={calendarMatches} />
+                        </div>
+                    )}
+
                     {hasCategories ? (
                         <div className="flex flex-col gap-6">
                             <div className="flex flex-wrap items-center justify-between gap-3">

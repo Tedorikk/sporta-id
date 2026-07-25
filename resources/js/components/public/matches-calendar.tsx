@@ -3,8 +3,13 @@ import { useMemo, useState } from 'react';
 import { MatchRow } from './match-row';
 import type { GameMatch } from '@/types/game-match';
 
+export interface CalendarMatch {
+    match: GameMatch;
+    categoryName: string;
+}
+
 interface Props {
-    matches: GameMatch[];
+    matches: CalendarMatch[];
 }
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -21,15 +26,15 @@ export function MatchesCalendar({ matches }: Props) {
     const scheduledMatches = useMemo(
         () =>
             matches
-                .filter((match): match is GameMatch & { scheduled_at: string } => Boolean(match.scheduled_at))
-                .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime()),
+                .filter((item): item is CalendarMatch & { match: GameMatch & { scheduled_at: string } } => Boolean(item.match.scheduled_at))
+                .sort((a, b) => new Date(a.match.scheduled_at).getTime() - new Date(b.match.scheduled_at).getTime()),
         [matches],
     );
-    const unscheduledMatches = useMemo(() => matches.filter((match) => !match.scheduled_at), [matches]);
+    const unscheduledMatches = useMemo(() => matches.filter((item) => !item.match.scheduled_at), [matches]);
 
     const [cursor, setCursor] = useState(() => {
         const first = scheduledMatches[0];
-        const base = first ? new Date(first.scheduled_at) : new Date();
+        const base = first ? new Date(first.match.scheduled_at) : new Date();
         return new Date(base.getFullYear(), base.getMonth(), 1);
     });
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -38,11 +43,11 @@ export function MatchesCalendar({ matches }: Props) {
     const month = cursor.getMonth();
 
     const matchesByDay = useMemo(() => {
-        const map = new Map<string, GameMatch[]>();
-        for (const match of scheduledMatches) {
-            const key = dateKey(new Date(match.scheduled_at as string));
+        const map = new Map<string, CalendarMatch[]>();
+        for (const item of scheduledMatches) {
+            const key = dateKey(new Date(item.match.scheduled_at as string));
             const list = map.get(key) ?? [];
-            list.push(match);
+            list.push(item);
             map.set(key, list);
         }
         return map;
@@ -53,7 +58,7 @@ export function MatchesCalendar({ matches }: Props) {
         const startOffset = firstOfMonth.getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-        const cells: { date: Date | null; matches: GameMatch[] }[] = [];
+        const cells: { date: Date | null; matches: CalendarMatch[] }[] = [];
 
         for (let i = 0; i < startOffset; i++) {
             cells.push({ date: null, matches: [] });
@@ -81,8 +86,6 @@ export function MatchesCalendar({ matches }: Props) {
 
     return (
         <div className="flex flex-col gap-3">
-            <h4 className="text-sm font-bold tracking-wide text-white/70 uppercase">Schedule</h4>
-
             {scheduledMatches.length > 0 && (
                 <div className="rounded-xl border-2 border-white/10 bg-black/20 p-4">
                     <div className="mb-3 flex items-center justify-between">
@@ -152,8 +155,8 @@ export function MatchesCalendar({ matches }: Props) {
 
             {selectedMatches.length > 0 && (
                 <div className="flex flex-col gap-2">
-                    {selectedMatches.map((match) => (
-                        <MatchRow key={match.id} match={match} />
+                    {selectedMatches.map((item) => (
+                        <MatchRow key={item.match.id} match={item.match} categoryLabel={item.categoryName} />
                     ))}
                 </div>
             )}
@@ -163,8 +166,8 @@ export function MatchesCalendar({ matches }: Props) {
                     {scheduledMatches.length > 0 && (
                         <span className="text-xs font-semibold tracking-wide text-white/40 uppercase">Not yet scheduled</span>
                     )}
-                    {unscheduledMatches.map((match) => (
-                        <MatchRow key={match.id} match={match} />
+                    {unscheduledMatches.map((item) => (
+                        <MatchRow key={item.match.id} match={item.match} categoryLabel={item.categoryName} />
                     ))}
                 </div>
             )}

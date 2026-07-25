@@ -14,7 +14,7 @@ const STATUS_LABEL: Record<string, string> = {
     finished: 'Completed',
 };
 
-export function MatchRow({ match }: { match: GameMatch }) {
+export function MatchRow({ match, categoryLabel }: { match: GameMatch; categoryLabel?: string }) {
     const homeName = match.home_team?.name ?? 'TBD';
     const awayName = match.away_team?.name ?? 'TBD';
     const isCompleted = match.status === 'finished';
@@ -23,6 +23,11 @@ export function MatchRow({ match }: { match: GameMatch }) {
 
     return (
         <div className="flex flex-wrap items-center gap-3 rounded-xl border-2 border-white/10 bg-white/5 px-4 py-3">
+            {categoryLabel && (
+                <span className="w-full shrink-0 text-[10px] font-bold tracking-wide text-red-400 uppercase sm:w-auto">
+                    {categoryLabel}
+                </span>
+            )}
             {match.match_number && <span className="w-6 shrink-0 text-xs text-white/40">#{match.match_number}</span>}
 
             <div className="flex min-w-0 flex-1 items-center gap-2">

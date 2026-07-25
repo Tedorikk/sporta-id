@@ -1,5 +1,4 @@
 import { BracketTree } from './bracket-tree';
-import { MatchesCalendar } from './matches-calendar';
 import { StandingsTable } from './standings-table';
 import { TeamsGrid } from './teams-grid';
 import type { PublicEventCategory } from '@/types/public-event-category';
@@ -21,26 +20,18 @@ export function BasketballCategorySection({ category }: { category: PublicEventC
                 <p className="text-sm text-white/40">Schedule will be posted soon.</p>
             )}
 
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                {/* Left: every match for this category, calendar-shaped rather than split per pool */}
-                <MatchesCalendar matches={category.matches} />
+            {category.pools.length > 0
+                ? category.pools.map((pool) => (
+                      <div key={pool.id} className="flex flex-col gap-3">
+                          <h4 className="text-sm font-bold tracking-wide text-white/70 uppercase">Pool {pool.name}</h4>
+                          <StandingsTable standings={category.standings[`pool_${pool.id}`] ?? []} teams={pool.teams} />
+                      </div>
+                  ))
+                : category.matches.length > 0 && (
+                      <StandingsTable standings={category.standings.overall ?? []} teams={category.teams} />
+                  )}
 
-                {/* Right: category structure — pools/standings and the team roster */}
-                <div className="flex flex-col gap-6">
-                    {category.pools.length > 0
-                        ? category.pools.map((pool) => (
-                              <div key={pool.id} className="flex flex-col gap-3">
-                                  <h4 className="text-sm font-bold tracking-wide text-white/70 uppercase">Pool {pool.name}</h4>
-                                  <StandingsTable standings={category.standings[`pool_${pool.id}`] ?? []} teams={pool.teams} />
-                              </div>
-                          ))
-                        : category.matches.length > 0 && (
-                              <StandingsTable standings={category.standings.overall ?? []} teams={category.teams} />
-                          )}
-
-                    <TeamsGrid teams={category.teams} />
-                </div>
-            </div>
+            <TeamsGrid teams={category.teams} />
 
             <BracketTree matches={category.matches} />
         </div>
