@@ -185,6 +185,7 @@ class EventController extends Controller
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'banner' => ['nullable', 'url'],
+            'logo' => ['nullable', 'url'],
             'instagram_url' => ['nullable', 'url'],
             'facebook_url' => ['nullable', 'url'],
             'youtube_url' => ['nullable', 'url'],

@@ -1,5 +1,7 @@
-import { Calendar, Trophy } from 'lucide-react';
+import { Calendar, Shield, Trophy } from 'lucide-react';
 import { formatDateTime } from '@/lib/format-date';
+import { formatImageUrl } from '@/lib/image-utils';
+import type { Team } from '@/types/team';
 import type { GameMatch } from '@/types/game-match';
 
 const STATUS_STYLE: Record<string, string> = {
@@ -13,6 +15,24 @@ const STATUS_LABEL: Record<string, string> = {
     ongoing: 'Ongoing',
     finished: 'Completed',
 };
+
+function TeamLogo({ team }: { team?: Team | null }) {
+    if (team?.logo) {
+        return (
+            <img
+                src={formatImageUrl(team.logo)}
+                alt={team.name}
+                className="h-6 w-6 shrink-0 rounded-full bg-white/10 object-cover"
+            />
+        );
+    }
+
+    return (
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/10 text-white/30">
+            <Shield className="h-3.5 w-3.5" />
+        </span>
+    );
+}
 
 export function MatchRow({ match, categoryLabel }: { match: GameMatch; categoryLabel?: string }) {
     const homeName = match.home_team?.name ?? 'TBD';
@@ -31,10 +51,13 @@ export function MatchRow({ match, categoryLabel }: { match: GameMatch; categoryL
             {match.match_number && <span className="w-6 shrink-0 text-xs text-white/40">#{match.match_number}</span>}
 
             <div className="flex min-w-0 flex-1 items-center gap-2">
-                <span className={`flex-1 truncate text-right text-sm font-semibold ${homeWon ? 'text-red-400' : 'text-white/80'}`}>
-                    {homeWon && <Trophy className="mr-1 inline h-3 w-3 text-amber-400" />}
-                    {homeName}
-                </span>
+                <div className="flex flex-1 min-w-0 items-center justify-end gap-2">
+                    <span className={`truncate text-right text-sm font-semibold ${homeWon ? 'text-red-400' : 'text-white/80'}`}>
+                        {homeWon && <Trophy className="mr-1 inline h-3 w-3 text-amber-400" />}
+                        {homeName}
+                    </span>
+                    <TeamLogo team={match.home_team} />
+                </div>
 
                 <div className="shrink-0">
                     {isCompleted && match.home_score !== null ? (
@@ -52,10 +75,13 @@ export function MatchRow({ match, categoryLabel }: { match: GameMatch; categoryL
                     )}
                 </div>
 
-                <span className={`flex-1 truncate text-sm font-semibold ${awayWon ? 'text-red-400' : 'text-white/80'}`}>
-                    {awayName}
-                    {awayWon && <Trophy className="ml-1 inline h-3 w-3 text-amber-400" />}
-                </span>
+                <div className="flex flex-1 min-w-0 items-center gap-2">
+                    <TeamLogo team={match.away_team} />
+                    <span className={`truncate text-sm font-semibold ${awayWon ? 'text-red-400' : 'text-white/80'}`}>
+                        {awayName}
+                        {awayWon && <Trophy className="ml-1 inline h-3 w-3 text-amber-400" />}
+                    </span>
+                </div>
             </div>
 
             <div className="flex shrink-0 items-center gap-2">

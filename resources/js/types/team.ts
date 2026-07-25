@@ -1,4 +1,5 @@
 import type { BasketballEventCategory } from './basketball-event-category';
+import type { Event } from './event';
 import type { Player } from './player';
 
 export type TeamStatus = 'pending' | 'verified' | 'rejected';
@@ -41,6 +42,7 @@ export interface Team {
     players?: Player[];
     basketball_event_category_id: number | null;
     basketball_event_category?: BasketballEventCategory;
+    event?: Event;
     review_summary?: ReviewSummary;
 }
 

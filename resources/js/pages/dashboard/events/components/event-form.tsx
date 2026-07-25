@@ -53,6 +53,7 @@ const eventSchema = z
         start_date: z.string().min(1, 'Start date is required'),
         end_date: z.string().min(1, 'End date is required'),
         banner: z.string().url('Must be a valid URL').or(z.literal('')),
+        logo: z.string().url('Must be a valid URL').or(z.literal('')),
         instagram_url: z.string().url('Must be a valid URL').or(z.literal('')),
         facebook_url: z.string().url('Must be a valid URL').or(z.literal('')),
         youtube_url: z.string().url('Must be a valid URL').or(z.literal('')),
@@ -85,6 +86,7 @@ function toDefaultValues(event?: Event): EventFormValues {
         start_date: event?.start_date ?? '',
         end_date: event?.end_date ?? '',
         banner: event?.banner ?? '',
+        logo: event?.logo ?? '',
         instagram_url: event?.instagram_url ?? '',
         facebook_url: event?.facebook_url ?? '',
         youtube_url: event?.youtube_url ?? '',
@@ -128,40 +130,75 @@ function FormContent({ event }: EventFormProps) {
         <form onSubmit={handleSubmit(onSubmit)}>
             <FieldGroup>
                 <FieldGroup className="grid grid-cols-2">
-                    <Controller
-                        name="banner"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <Field
-                                data-invalid={fieldState.invalid}
-                                className="columns-1"
-                            >
-                                <FieldLabel htmlFor="banner">Banner</FieldLabel>
-                                <UploadImage
-                                    {...field}
-                                    ratio={4 / 5}
-                                    value={field.value}
-                                    onChange={(value) => {
-                                        clearErrors('banner');
-                                        field.onChange(value);
-                                    }}
-                                    onError={(error) => {
-                                        setError('banner', {
-                                            type: 'manual',
-                                            message:
-                                                typeof error === 'string'
-                                                    ? error
-                                                    : 'Upload failed',
-                                        });
-                                    }}
-                                    enableCrop={true}
-                                />
-                                {fieldState.invalid && (
-                                    <FieldError errors={[fieldState.error]} />
-                                )}
-                            </Field>
-                        )}
-                    />
+                    <FieldGroup className="columns-1">
+                        <Controller
+                            name="banner"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <Field data-invalid={fieldState.invalid}>
+                                    <FieldLabel htmlFor="banner">Banner</FieldLabel>
+                                    <UploadImage
+                                        {...field}
+                                        ratio={4 / 5}
+                                        value={field.value}
+                                        onChange={(value) => {
+                                            clearErrors('banner');
+                                            field.onChange(value);
+                                        }}
+                                        onError={(error) => {
+                                            setError('banner', {
+                                                type: 'manual',
+                                                message:
+                                                    typeof error === 'string'
+                                                        ? error
+                                                        : 'Upload failed',
+                                            });
+                                        }}
+                                        enableCrop={true}
+                                    />
+                                    {fieldState.invalid && (
+                                        <FieldError errors={[fieldState.error]} />
+                                    )}
+                                </Field>
+                            )}
+                        />
+                        <Controller
+                            name="logo"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <Field data-invalid={fieldState.invalid}>
+                                    <FieldLabel htmlFor="logo">Logo</FieldLabel>
+                                    <UploadImage
+                                        {...field}
+                                        ratio={1}
+                                        width={112}
+                                        height={112}
+                                        value={field.value}
+                                        onChange={(value) => {
+                                            clearErrors('logo');
+                                            field.onChange(value);
+                                        }}
+                                        onError={(error) => {
+                                            setError('logo', {
+                                                type: 'manual',
+                                                message:
+                                                    typeof error === 'string'
+                                                        ? error
+                                                        : 'Upload failed',
+                                            });
+                                        }}
+                                        enableCrop={true}
+                                    />
+                                    <FieldDescription>
+                                        Shown on player ID cards for this event.
+                                    </FieldDescription>
+                                    {fieldState.invalid && (
+                                        <FieldError errors={[fieldState.error]} />
+                                    )}
+                                </Field>
+                            )}
+                        />
+                    </FieldGroup>
                     <FieldGroup className="">
                         <Controller
                             name="name"

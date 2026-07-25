@@ -26,6 +26,7 @@ class Event extends Model
         'start_date',
         'end_date',
         'banner',
+        'logo',
         'instagram_url',
         'facebook_url',
         'youtube_url',
