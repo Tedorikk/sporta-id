@@ -53,6 +53,10 @@ const eventSchema = z
         start_date: z.string().min(1, 'Start date is required'),
         end_date: z.string().min(1, 'End date is required'),
         banner: z.string().url('Must be a valid URL').or(z.literal('')),
+        instagram_url: z.string().url('Must be a valid URL').or(z.literal('')),
+        facebook_url: z.string().url('Must be a valid URL').or(z.literal('')),
+        youtube_url: z.string().url('Must be a valid URL').or(z.literal('')),
+        whatsapp_url: z.string().url('Must be a valid URL').or(z.literal('')),
     })
     .refine(
         (data) =>
@@ -81,6 +85,10 @@ function toDefaultValues(event?: Event): EventFormValues {
         start_date: event?.start_date ?? '',
         end_date: event?.end_date ?? '',
         banner: event?.banner ?? '',
+        instagram_url: event?.instagram_url ?? '',
+        facebook_url: event?.facebook_url ?? '',
+        youtube_url: event?.youtube_url ?? '',
+        whatsapp_url: event?.whatsapp_url ?? '',
     };
 }
 
@@ -284,6 +292,108 @@ function FormContent({ event }: EventFormProps) {
                                 </Field>
                             )}
                         />
+                        <FieldGroup className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <Controller
+                                name="instagram_url"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <Field data-invalid={fieldState.invalid}>
+                                        <FieldLabel htmlFor="instagram_url">
+                                            Instagram URL
+                                        </FieldLabel>
+                                        <Input
+                                            {...field}
+                                            id="instagram_url"
+                                            placeholder="https://instagram.com/..."
+                                            aria-label="Instagram URL"
+                                            aria-invalid={fieldState.invalid}
+                                            autoComplete="off"
+                                            disabled={isSaving}
+                                        />
+                                        {fieldState.invalid && (
+                                            <FieldError
+                                                errors={[fieldState.error]}
+                                            />
+                                        )}
+                                    </Field>
+                                )}
+                            />
+                            <Controller
+                                name="facebook_url"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <Field data-invalid={fieldState.invalid}>
+                                        <FieldLabel htmlFor="facebook_url">
+                                            Facebook URL
+                                        </FieldLabel>
+                                        <Input
+                                            {...field}
+                                            id="facebook_url"
+                                            placeholder="https://facebook.com/..."
+                                            aria-label="Facebook URL"
+                                            aria-invalid={fieldState.invalid}
+                                            autoComplete="off"
+                                            disabled={isSaving}
+                                        />
+                                        {fieldState.invalid && (
+                                            <FieldError
+                                                errors={[fieldState.error]}
+                                            />
+                                        )}
+                                    </Field>
+                                )}
+                            />
+                            <Controller
+                                name="youtube_url"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <Field data-invalid={fieldState.invalid}>
+                                        <FieldLabel htmlFor="youtube_url">
+                                            YouTube URL
+                                        </FieldLabel>
+                                        <Input
+                                            {...field}
+                                            id="youtube_url"
+                                            placeholder="https://youtube.com/..."
+                                            aria-label="YouTube URL"
+                                            aria-invalid={fieldState.invalid}
+                                            autoComplete="off"
+                                            disabled={isSaving}
+                                        />
+                                        {fieldState.invalid && (
+                                            <FieldError
+                                                errors={[fieldState.error]}
+                                            />
+                                        )}
+                                    </Field>
+                                )}
+                            />
+                            <Controller
+                                name="whatsapp_url"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <Field data-invalid={fieldState.invalid}>
+                                        <FieldLabel htmlFor="whatsapp_url">
+                                            WhatsApp URL
+                                        </FieldLabel>
+                                        <Input
+                                            {...field}
+                                            id="whatsapp_url"
+                                            placeholder="https://wa.me/..."
+                                            aria-label="WhatsApp URL"
+                                            aria-invalid={fieldState.invalid}
+                                            autoComplete="off"
+                                            disabled={isSaving}
+                                        />
+                                        {fieldState.invalid && (
+                                            <FieldError
+                                                errors={[fieldState.error]}
+                                            />
+                                        )}
+                                    </Field>
+                                )}
+                            />
+                        </FieldGroup>
                         <FieldGroup className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <Controller
                                 name="start_date"

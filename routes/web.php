@@ -7,6 +7,7 @@ use App\Http\Controllers\BracketController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\EventMatchController;
 use App\Http\Controllers\GameMatchController;
 use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\LandingController;
@@ -74,6 +75,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->parameters(['basketball-categories' => 'category'])
                 ->names('basketball_categories')
                 ->except(['index', 'create', 'edit', 'show']);
+
+            Route::get('matches', [EventMatchController::class, 'index'])->name('events.matches.index');
 
             Route::prefix('basketball-categories/{category}')->group(function () {
                 Route::post('pools/auto-assign', [PoolController::class, 'autoAssign'])->name('pools.auto-assign');

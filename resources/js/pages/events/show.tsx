@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowRight, Calendar } from 'lucide-react';
+import { Calendar, Facebook, Instagram, LayoutGrid, MessageCircle, Phone, Swords, Trophy, Users, Youtube } from 'lucide-react';
 import { BasketballCategorySection } from '@/components/public/basketball-category-section';
 import PublicLayout from '@/layouts/public-layout';
 import { formatDate } from '@/lib/format-date';
@@ -18,7 +18,28 @@ const STATUS_STYLE: Record<string, string> = {
     past: 'bg-neutral-400 text-neutral-950',
 };
 
+const SOCIAL_LINKS: { key: keyof Event; label: string; icon: typeof Instagram }[] = [
+    { key: 'instagram_url', label: 'Instagram', icon: Instagram },
+    { key: 'facebook_url', label: 'Facebook', icon: Facebook },
+    { key: 'youtube_url', label: 'YouTube', icon: Youtube },
+    { key: 'whatsapp_url', label: 'WhatsApp', icon: MessageCircle },
+];
+
 export default function EventShow({ event, categories }: Props) {
+    const hasCategories = Boolean(categories && categories.length > 0);
+    const totalTeams = categories?.reduce((sum, c) => sum + c.teams.length, 0) ?? 0;
+    const totalMatches = categories?.reduce((sum, c) => sum + c.matches.length, 0) ?? 0;
+    const totalPools = categories?.reduce((sum, c) => sum + c.pools.length, 0) ?? 0;
+
+    const stats = [
+        { label: 'Categories', value: categories?.length ?? 0, icon: Trophy },
+        { label: 'Teams', value: totalTeams, icon: Users },
+        { label: 'Pools', value: totalPools, icon: LayoutGrid },
+        { label: 'Matches', value: totalMatches, icon: Swords },
+    ].filter((stat) => stat.value > 0);
+
+    const activeSocialLinks = SOCIAL_LINKS.filter((social) => Boolean(event[social.key]));
+
     return (
         <>
             <Head title={`${event.name} — Sporta Indonesia`} />
@@ -32,40 +53,119 @@ export default function EventShow({ event, categories }: Props) {
                             className="absolute inset-0 h-full w-full object-cover opacity-30"
                         />
                     )}
-                    <div className="relative mx-auto flex max-w-5xl flex-col gap-4 px-6 py-20">
-                        <span
-                            className={`w-fit rounded-full px-3 py-1 text-xs font-bold tracking-wide uppercase ${STATUS_STYLE[event.status] ?? 'bg-white text-black'}`}
-                        >
-                            {event.status}
-                        </span>
+                    <div className="relative mx-auto flex max-w-5xl flex-col gap-4 px-6 py-16 sm:py-20">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span
+                                className={`w-fit rounded-full px-3 py-1 text-xs font-bold tracking-wide uppercase ${STATUS_STYLE[event.status] ?? 'bg-white text-black'}`}
+                            >
+                                {event.status}
+                            </span>
+                            {event.category && (
+                                <span className="w-fit rounded-full border-2 border-white/25 px-3 py-1 text-xs font-bold tracking-wide text-white/80 uppercase">
+                                    {event.category}
+                                </span>
+                            )}
+                        </div>
+
                         <h1 className="text-4xl leading-[1.05] font-black tracking-tight uppercase sm:text-5xl">
                             {event.name}
                         </h1>
-                        <div className="flex items-center gap-2 text-white/80">
-                            <Calendar className="h-4 w-4" />
-                            {formatDate(event.start_date)} – {formatDate(event.end_date)}
+
+                        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-white/80">
+                            <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4" />
+                                {formatDate(event.start_date)} – {formatDate(event.end_date)}
+                            </div>
+                            {event.contact_person && (
+                                <a
+                                    href={`tel:${event.contact_person}`}
+                                    className="flex items-center gap-2 transition hover:text-white"
+                                >
+                                    <Phone className="h-4 w-4" />
+                                    {event.contact_person}
+                                </a>
+                            )}
                         </div>
+
+                        {event.description && (
+                            <p className="max-w-2xl text-sm text-white/70 sm:text-base">{event.description}</p>
+                        )}
+
+                        {activeSocialLinks.length > 0 && (
+                            <div className="flex gap-2 pt-1">
+                                {activeSocialLinks.map((social) => {
+                                    const Icon = social.icon;
+
+                                    return (
+                                        <a
+                                            key={social.key}
+                                            href={event[social.key] as string}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            aria-label={social.label}
+                                            className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white/25 text-white/80 transition hover:border-white hover:text-white"
+                                        >
+                                            <Icon className="h-4 w-4" />
+                                        </a>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {stats.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-3">
+                                {stats.map((stat) => {
+                                    const Icon = stat.icon;
+
+                                    return (
+                                        <div
+                                            key={stat.label}
+                                            className="flex items-center gap-2 rounded-xl border-2 border-white/15 bg-white/5 px-3 py-2"
+                                        >
+                                            <Icon className="h-4 w-4 text-white/50" />
+                                            <span className="text-sm font-bold tabular-nums">{stat.value}</span>
+                                            <span className="text-xs text-white/50 uppercase">{stat.label}</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
                 </section>
 
                 <section className="mx-auto max-w-5xl px-6 py-14">
-                    {event.description && <p className="whitespace-pre-line text-white/80">{event.description}</p>}
-
-                    <Link
-                        href={`/events/${event.id}/register`}
-                        className="mt-6 flex w-fit items-center gap-2 rounded-full bg-red-600 px-6 py-3 text-sm font-bold tracking-wide text-white uppercase transition hover:bg-red-700"
-                    >
-                        Register Now
-                        <ArrowRight className="h-4 w-4" />
-                    </Link>
-
-                    {categories && categories.length > 0 && (
-                        <div className="mt-10 flex flex-col gap-6">
-                            <h2 className="text-2xl font-black tracking-tight uppercase">Categories &amp; Matches</h2>
-                            {categories.map((category) => (
-                                <BasketballCategorySection key={category.id} category={category} />
+                    {hasCategories ? (
+                        <div className="flex flex-col gap-6">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <h2 className="text-2xl font-black tracking-tight uppercase">Categories &amp; Matches</h2>
+                                {categories && categories.length > 1 && (
+                                    <div className="flex flex-wrap gap-2">
+                                        {categories.map((category) => (
+                                            <a
+                                                key={category.id}
+                                                href={`#category-${category.id}`}
+                                                className="rounded-full border-2 border-white/15 px-3 py-1 text-xs font-bold tracking-wide text-white/60 uppercase transition hover:border-red-500 hover:text-white"
+                                            >
+                                                {category.name}
+                                            </a>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            {categories?.map((category) => (
+                                <div key={category.id} id={`category-${category.id}`} className="scroll-mt-24">
+                                    <BasketballCategorySection category={category} />
+                                </div>
                             ))}
                         </div>
+                    ) : (
+                        <p className="text-center text-sm text-white/40">
+                            Details for this event will be posted soon.{' '}
+                            <Link href="/events" className="text-red-400 hover:underline">
+                                Browse other events
+                            </Link>
+                            .
+                        </p>
                     )}
                 </section>
             </PublicLayout>

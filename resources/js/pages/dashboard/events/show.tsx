@@ -7,6 +7,7 @@ import {
     Trash2,
     Pencil,
     Link2,
+    Swords,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -73,14 +74,22 @@ export default function ShowEvent({ event }: { event: Event }) {
                     </div>
                 </div>
                 {event.category === 'BASKETBALL' && (
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleCopyRegistrationLink}
-                    >
-                        <Link2 className="mr-2 h-4 w-4" />
-                        Copy Registration Link
-                    </Button>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Button variant="outline" size="sm" asChild>
+                            <Link href={`/dashboard/events/${event.id}/matches`}>
+                                <Swords className="mr-2 h-4 w-4" />
+                                All Matches
+                            </Link>
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleCopyRegistrationLink}
+                        >
+                            <Link2 className="mr-2 h-4 w-4" />
+                            Copy Registration Link
+                        </Button>
+                    </div>
                 )}
             </section>
 

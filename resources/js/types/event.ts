@@ -14,6 +14,10 @@ export interface Event {
     start_date: string;
     end_date: string;
     banner: string | null;
+    instagram_url: string | null;
+    facebook_url: string | null;
+    youtube_url: string | null;
+    whatsapp_url: string | null;
     status: EventStatus;
     specific_type: 'BasketballEvent' | null;
     teams_count?: number;

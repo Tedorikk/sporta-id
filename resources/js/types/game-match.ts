@@ -1,3 +1,4 @@
+import type { BasketballEventCategory } from './basketball-event-category';
 import type { Pool } from './pool';
 import type { Team } from './team';
 
@@ -20,6 +21,7 @@ export interface GameMatch {
     home_team?: Team | null;
     away_team?: Team | null;
     pool?: Pool | null;
+    category?: BasketballEventCategory | null;
     created_at: string;
     updated_at: string;
 }

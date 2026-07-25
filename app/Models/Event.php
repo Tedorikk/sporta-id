@@ -26,6 +26,10 @@ class Event extends Model
         'start_date',
         'end_date',
         'banner',
+        'instagram_url',
+        'facebook_url',
+        'youtube_url',
+        'whatsapp_url',
     ];
 
     protected $casts = [

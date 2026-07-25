@@ -57,8 +57,8 @@ class PublicEventController extends Controller
         if ($event->specific instanceof BasketballEvent) {
             $categories = $event->specific->categories()
                 ->with([
-                    'pools.teams',
-                    'teams',
+                    'pools.teams' => fn ($query) => $query->where('status', 'verified'),
+                    'teams' => fn ($query) => $query->where('status', 'verified'),
                     'matches' => fn ($query) => $query
                         ->with(['homeTeam', 'awayTeam'])
                         ->orderBy('round')

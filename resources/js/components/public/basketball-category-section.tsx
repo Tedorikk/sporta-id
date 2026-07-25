@@ -1,24 +1,13 @@
+import { BracketTree } from './bracket-tree';
+import { MatchesCalendar } from './matches-calendar';
 import { MatchRow } from './match-row';
 import { StandingsTable } from './standings-table';
+import { TeamsGrid } from './teams-grid';
 import type { PublicEventCategory } from '@/types/public-event-category';
-
-const ROUND_ORDER = ['round_of_16', 'quarterfinal', 'semifinal', 'final'];
-
-const ROUND_LABELS: Record<string, string> = {
-    round_of_16: 'Round of 16',
-    quarterfinal: 'Quarterfinal',
-    semifinal: 'Semifinal',
-    final: 'Final',
-};
 
 export function BasketballCategorySection({ category }: { category: PublicEventCategory }) {
     const groupMatches = category.matches.filter((match) => !match.round || match.round === 'group');
-    const knockoutMatches = category.matches.filter((match) => match.round && match.round !== 'group');
-
-    const knockoutByRound = ROUND_ORDER.map((round) => ({
-        round,
-        matches: knockoutMatches.filter((match) => match.round === round),
-    })).filter((group) => group.matches.length > 0);
+    const ungroupedMatches = groupMatches.filter((match) => match.pool_id === null);
 
     const hasSchedule = category.pools.length > 0 || category.matches.length > 0;
 
@@ -32,7 +21,9 @@ export function BasketballCategorySection({ category }: { category: PublicEventC
                 </div>
             </div>
 
-            {!hasSchedule && <p className="text-sm text-white/40">Schedule will be posted soon.</p>}
+            {!hasSchedule && category.teams.length === 0 && (
+                <p className="text-sm text-white/40">Schedule will be posted soon.</p>
+            )}
 
             {category.pools.length > 0
                 ? category.pools.map((pool) => {
@@ -64,18 +55,20 @@ export function BasketballCategorySection({ category }: { category: PublicEventC
                       </div>
                   )}
 
-            {knockoutByRound.length > 0 && (
-                <div className="flex flex-col gap-4">
-                    {knockoutByRound.map(({ round, matches }) => (
-                        <div key={round} className="flex flex-col gap-2">
-                            <h4 className="text-sm font-bold tracking-wide text-white/70 uppercase">{ROUND_LABELS[round]}</h4>
-                            {matches.map((match) => (
-                                <MatchRow key={match.id} match={match} />
-                            ))}
-                        </div>
-                    ))}
+            {category.pools.length > 0 && ungroupedMatches.length > 0 && (
+                <div className="flex flex-col gap-3">
+                    <h4 className="text-sm font-bold tracking-wide text-white/70 uppercase">Other Matches</h4>
+                    <div className="flex flex-col gap-2">
+                        {ungroupedMatches.map((match) => (
+                            <MatchRow key={match.id} match={match} />
+                        ))}
+                    </div>
                 </div>
             )}
+
+            <BracketTree matches={category.matches} />
+            <MatchesCalendar matches={category.matches} />
+            <TeamsGrid teams={category.teams} />
         </div>
     );
 }
