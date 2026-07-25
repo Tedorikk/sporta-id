@@ -32,6 +32,7 @@ interface Props {
 export default function MatchesIndex({ event, category, pools, groupMatches, bracketMatches, standings, teams }: Props) {
     const allTeams = pools.flatMap((p) => p.teams ?? []);
     const allGroupMatches = Object.values(groupMatches).flat();
+    const ungroupedMatches = groupMatches['ungrouped'] ?? [];
     const allBracketMatches = Object.values(bracketMatches).flat();
     const allMatches = [...allGroupMatches, ...allBracketMatches];
     const totalMatches = allMatches.length;
@@ -156,6 +157,21 @@ export default function MatchesIndex({ event, category, pools, groupMatches, bra
                         </section>
                     );
                 })}
+
+                {/* Pool Stage — matches created without a pool assigned */}
+                {!isRoundRobin && ungroupedMatches.length > 0 && (
+                    <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm">
+                        <div className="flex items-center justify-between">
+                            <h2 className="font-semibold">Ungrouped Matches</h2>
+                            <Badge variant="secondary">{ungroupedMatches.length} matches</Badge>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            {ungroupedMatches.map((m) => (
+                                <MatchCard key={m.id} event={event} category={category} match={m} />
+                            ))}
+                        </div>
+                    </section>
+                )}
 
                 {/* Bracket rounds (knockout) */}
                 {Object.keys(bracketMatches).length > 0 && (
