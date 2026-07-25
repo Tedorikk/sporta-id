@@ -44,6 +44,18 @@ export const MATCH_SERVER_FIELD_MAP: Record<string, keyof MatchFormValues | 'roo
     match: 'root',
 };
 
+// The date/time pickers work in the browser's local wall-clock time, but the
+// server (and its JSON responses) are UTC — send a real UTC instant here so
+// the round-trip through formatDateTime()/toLocaleString() lands on the same
+// local time the admin picked, instead of drifting by the timezone offset.
+export function toScheduledAt(date: string, time: string): string | null {
+    if (!date || !time) {
+        return null;
+    }
+
+    return new Date(`${date}T${time}:00`).toISOString();
+}
+
 export function matchDefaultValues(overrides?: Partial<MatchFormValues>): MatchFormValues {
     return {
         pool_id: '',

@@ -17,7 +17,7 @@ import type { BasketballEventCategory } from '@/types/basketball-event-category'
 import type { Event } from '@/types/event';
 import type { Pool } from '@/types/pool';
 import type { Team } from '@/types/team';
-import { MATCH_SERVER_FIELD_MAP, MatchFormFields, matchDefaultValues, matchSchema, type MatchFormValues } from './match-form';
+import { MATCH_SERVER_FIELD_MAP, MatchFormFields, matchDefaultValues, matchSchema, toScheduledAt, type MatchFormValues } from './match-form';
 
 export function CreateMatchDialog({
     event,
@@ -76,7 +76,7 @@ export function CreateMatchDialog({
                 away_team_id: data.away_team_id,
                 round: data.round,
                 match_number: data.match_number || null,
-                scheduled_at: data.date && data.time ? `${data.date} ${data.time}` : null,
+                scheduled_at: toScheduledAt(data.date, data.time),
             },
             {
                 preserveScroll: true,

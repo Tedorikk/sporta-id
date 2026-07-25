@@ -19,7 +19,7 @@ import type { Event } from '@/types/event';
 import type { GameMatch } from '@/types/game-match';
 import type { Pool } from '@/types/pool';
 import type { Team } from '@/types/team';
-import { MATCH_SERVER_FIELD_MAP, MatchFormFields, matchDefaultValues, matchSchema, type MatchFormValues } from './match-form';
+import { MATCH_SERVER_FIELD_MAP, MatchFormFields, matchDefaultValues, matchSchema, toScheduledAt, type MatchFormValues } from './match-form';
 
 function editDefaultValues(match: GameMatch): MatchFormValues {
     const scheduled = match.scheduled_at ? new Date(match.scheduled_at) : null;
@@ -82,7 +82,7 @@ export function EditMatchDialog({
                 away_team_id: data.away_team_id,
                 round: data.round,
                 match_number: data.match_number || null,
-                scheduled_at: data.date && data.time ? `${data.date} ${data.time}` : null,
+                scheduled_at: toScheduledAt(data.date, data.time),
             },
             {
                 preserveScroll: true,
