@@ -1,4 +1,5 @@
-import { Trophy } from 'lucide-react';
+import { Calendar, Trophy } from 'lucide-react';
+import { formatDateTime } from '@/lib/format-date';
 import type { BasketballEventCategory } from '@/types/basketball-event-category';
 import type { Event } from '@/types/event';
 import type { GameMatch } from '@/types/game-match';
@@ -57,6 +58,13 @@ export function MatchCard({
                     {awayName}
                 </span>
             </div>
+
+            {match.scheduled_at && (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                    <Calendar className="h-3 w-3" />
+                    {formatDateTime(match.scheduled_at)}
+                </span>
+            )}
 
             <div className="flex items-center gap-1 shrink-0">
                 <StatusBadge status={match.status} />
