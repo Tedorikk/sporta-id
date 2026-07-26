@@ -97,6 +97,16 @@ class Event extends Model
         return $this->hasMany(Team::class);
     }
 
+    public function attendees(): HasMany
+    {
+        return $this->hasMany(Attendee::class);
+    }
+
+    public function cardTemplates(): HasMany
+    {
+        return $this->hasMany(CardTemplate::class);
+    }
+
     /**
      * Pools are scoped to BasketballEventCategory, not directly to Event.
      * Path: events → basketball_events → basketball_event_categories → pools

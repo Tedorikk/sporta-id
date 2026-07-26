@@ -7,7 +7,9 @@ import {
     Trash2,
     Pencil,
     Link2,
+    Palette,
     Swords,
+    Users,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -73,24 +75,38 @@ export default function ShowEvent({ event }: { event: Event }) {
                         </div>
                     </div>
                 </div>
-                {event.category === 'BASKETBALL' && (
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Button variant="outline" size="sm" asChild>
-                            <Link href={`/dashboard/events/${event.id}/matches`}>
-                                <Swords className="mr-2 h-4 w-4" />
-                                All Matches
-                            </Link>
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleCopyRegistrationLink}
-                        >
-                            <Link2 className="mr-2 h-4 w-4" />
-                            Copy Registration Link
-                        </Button>
-                    </div>
-                )}
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href={`/dashboard/events/${event.id}/attendees`}>
+                            <Users className="mr-2 h-4 w-4" />
+                            Attendees
+                        </Link>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href={`/dashboard/events/${event.id}/id-card-templates`}>
+                            <Palette className="mr-2 h-4 w-4" />
+                            Card Designer
+                        </Link>
+                    </Button>
+                    {event.category === 'BASKETBALL' && (
+                        <>
+                            <Button variant="outline" size="sm" asChild>
+                                <Link href={`/dashboard/events/${event.id}/matches`}>
+                                    <Swords className="mr-2 h-4 w-4" />
+                                    All Matches
+                                </Link>
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleCopyRegistrationLink}
+                            >
+                                <Link2 className="mr-2 h-4 w-4" />
+                                Copy Registration Link
+                            </Button>
+                        </>
+                    )}
+                </div>
             </section>
 
             <div className="grid grid-cols-1 gap-8">

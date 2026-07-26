@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
+import type { Attendee } from '@/types/attendee';
 import { playerRoleLabel } from '@/types/player';
 import type { Player } from '@/types/player';
 import type { Team } from '@/types/team';
@@ -34,9 +35,33 @@ type ScannedPlayer = Player & {
     teams?: (Team & { event?: { id: number; name: string } })[];
 };
 
+type ScannedAttendee = Attendee & {
+    event?: { id: number; name: string };
+};
+
 type ScanResult =
     | { kind: 'team'; data: ScannedTeam }
-    | { kind: 'player'; data: ScannedPlayer };
+    | { kind: 'player'; data: ScannedPlayer }
+    | { kind: 'attendee'; data: ScannedAttendee };
+
+const ATTENDEE_STATUS_CONFIG = {
+    active: {
+        label: 'Active',
+        badgeVariant: 'default' as const,
+        badgeClassName: 'bg-emerald-500 hover:bg-emerald-600',
+        bannerClassName: 'bg-emerald-500',
+        icon: CheckCircle2,
+        description: 'This pass is valid for entry.',
+    },
+    revoked: {
+        label: 'Revoked',
+        badgeVariant: 'destructive' as const,
+        badgeClassName: '',
+        bannerClassName: 'bg-red-500',
+        icon: XCircle,
+        description: 'This pass has been revoked.',
+    },
+};
 
 type Lightbox = { src: string; alt: string };
 
@@ -338,30 +363,47 @@ export default function QrScanner() {
 
             setLastScannedText(text);
 
-            // Extract an ID from either URL pattern: /teams/{id}/id-card or /players/{id}/id-card
+            // Extract an ID from any of the supported URL patterns.
             const teamMatch = text.match(/\/teams\/(\d+)\/id-card/);
             const playerMatch = text.match(/\/players\/(\d+)\/id-card/);
+            const attendeeMatch = text.match(/\/attendees\/(\d+)\/id-card/);
 
-            if (!teamMatch && !playerMatch) {
+            if (!teamMatch && !playerMatch && !attendeeMatch) {
                 setError(
-                    'Invalid QR code. Please scan a Sporta ID team or player QR code.',
+                    'Invalid QR code. Please scan a Sporta ID team, player, or attendee QR code.',
                 );
 
                 return;
             }
 
-            const kind: 'team' | 'player' = teamMatch ? 'team' : 'player';
-            const id = teamMatch ? teamMatch[1] : playerMatch![1];
+            const kind: 'team' | 'player' | 'attendee' = teamMatch
+                ? 'team'
+                : playerMatch
+                  ? 'player'
+                  : 'attendee';
+            const id = teamMatch
+                ? teamMatch[1]
+                : playerMatch
+                  ? playerMatch[1]
+                  : attendeeMatch![1];
             const endpoint =
                 kind === 'team'
                     ? `/dashboard/teams/${id}/qr-data`
-                    : `/dashboard/players/${id}/qr-data`;
+                    : kind === 'player'
+                      ? `/dashboard/players/${id}/qr-data`
+                      : `/dashboard/attendees/${id}/qr-data`;
             const notFoundLabel =
-                kind === 'team' ? 'Team not found.' : 'Player not found.';
+                kind === 'team'
+                    ? 'Team not found.'
+                    : kind === 'player'
+                      ? 'Player not found.'
+                      : 'Attendee not found.';
             const disqualifiedLabel =
                 kind === 'team'
                     ? 'Team has been disqualified.'
-                    : "Player's team has been disqualified.";
+                    : kind === 'player'
+                      ? "Player's team has been disqualified."
+                      : 'This attendee pass has been revoked.';
 
             await stopScanner();
             setLoading(true);
@@ -403,7 +445,9 @@ export default function QrScanner() {
                 setResult(
                     kind === 'team'
                         ? { kind: 'team', data: data as ScannedTeam }
-                        : { kind: 'player', data: data as ScannedPlayer },
+                        : kind === 'player'
+                          ? { kind: 'player', data: data as ScannedPlayer }
+                          : { kind: 'attendee', data: data as ScannedAttendee },
                 );
             } catch (err) {
                 setError(
@@ -539,8 +583,8 @@ export default function QrScanner() {
                     </h1>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                    Ready to scan — point a hardware scanner at a team's or
-                    player's QR code, or press{' '}
+                    Ready to scan — point a hardware scanner at a team's,
+                    player's, or attendee's QR code, or press{' '}
                     <span className="font-medium text-foreground">
                         Start Scanning
                     </span>{' '}
@@ -593,7 +637,7 @@ export default function QrScanner() {
                             </div>
                             <p className="text-base">
                                 Hardware scanners work automatically — just scan
-                                a team or player QR code.
+                                a team, player, or attendee QR code.
                                 <br />
                                 No camera? Press{' '}
                                 <span className="font-semibold text-foreground">
@@ -799,6 +843,95 @@ export default function QrScanner() {
                                 </div>
                             );
                         })()}
+                    </div>
+                </div>
+            )}
+
+            {/* Attendee result */}
+            {result?.kind === 'attendee' && (
+                <div className="flex animate-in flex-col gap-4 duration-500 fade-in slide-in-from-bottom-4">
+                    {(() => {
+                        const config = ATTENDEE_STATUS_CONFIG[result.data.status];
+                        const Icon = config.icon;
+
+                        return (
+                            <div
+                                className={cn(
+                                    'flex items-center gap-3 rounded-xl p-4 text-white shadow-sm',
+                                    config.bannerClassName,
+                                )}
+                            >
+                                <Icon className="h-9 w-9 shrink-0" />
+                                <div>
+                                    <p className="text-lg font-extrabold tracking-wide uppercase">
+                                        {config.label}
+                                    </p>
+                                    <p className="text-sm opacity-90">{config.description}</p>
+                                </div>
+                            </div>
+                        );
+                    })()}
+
+                    <div className="flex flex-col gap-4 rounded-xl border bg-card p-6 shadow-sm">
+                        <div className="flex items-start gap-5">
+                            <ZoomableImage
+                                src={result.data.photo}
+                                alt={result.data.name}
+                                onOpen={setLightbox}
+                                className="h-24 w-24 shrink-0 rounded-xl shadow"
+                                fallback={
+                                    <div className="flex h-full w-full items-center justify-center rounded-xl bg-primary/10 text-2xl font-extrabold text-primary shadow">
+                                        {result.data.name.substring(0, 2).toUpperCase()}
+                                    </div>
+                                }
+                            />
+                            <div className="flex flex-1 flex-col gap-1.5">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <h2 className="text-2xl font-extrabold tracking-tight">
+                                        {result.data.name}
+                                    </h2>
+                                    {result.data.attendee_type && (
+                                        <Badge variant="secondary">
+                                            {result.data.attendee_type.label}
+                                        </Badge>
+                                    )}
+                                </div>
+                                {result.data.organization && (
+                                    <p className="text-sm text-muted-foreground">
+                                        {result.data.organization}
+                                        {result.data.title ? ` · ${result.data.title}` : ''}
+                                    </p>
+                                )}
+                                {result.data.event && (
+                                    <p className="text-sm text-muted-foreground">
+                                        {result.data.event.name}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 rounded-lg bg-slate-50 p-3 dark:bg-slate-900/40">
+                            {result.data.email && (
+                                <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                    <Mail className="h-4 w-4 shrink-0" />
+                                    {result.data.email}
+                                </span>
+                            )}
+                            {result.data.phone && (
+                                <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                    <Phone className="h-4 w-4 shrink-0" />
+                                    {result.data.phone}
+                                </span>
+                            )}
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="ml-auto text-xs"
+                                onClick={startScanner}
+                            >
+                                Scan another
+                            </Button>
+                        </div>
                     </div>
                 </div>
             )}

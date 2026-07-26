@@ -1,9 +1,13 @@
 <?php
 
+use App\Http\Controllers\AttendeeController;
+use App\Http\Controllers\AttendeeQrController;
+use App\Http\Controllers\AttendeeTypeController;
 use App\Http\Controllers\BasketballClubController;
 use App\Http\Controllers\BasketballEventCategoryController;
 use App\Http\Controllers\BasketballEventController;
 use App\Http\Controllers\BracketController;
+use App\Http\Controllers\CardTemplateController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\EventController;
@@ -34,6 +38,9 @@ Route::post('contact', [ContactController::class, 'store'])->name('contact.store
 
 // --- Public Team ID Card (shareable, no auth required) --------------------
 Route::get('teams/{team}/id-card', [TeamQrController::class, 'idCard'])->name('teams.id-card');
+
+// --- Public Attendee ID Card (guest/tenant/photographer/..., shareable, no auth required) --
+Route::get('attendees/{attendee}/id-card', [AttendeeQrController::class, 'idCard'])->name('attendees.id-card');
 
 // --- Public Player Self-Registration & ID Card (shareable, no auth required) --
 Route::get('events/{event}/register', [PlayerRegistrationController::class, 'create'])->name('players.register');
@@ -76,6 +83,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->names('basketball_categories')
                 ->except(['index', 'create', 'edit', 'show']);
 
+            Route::resource('attendees', AttendeeController::class)
+                ->except(['create', 'edit', 'show']);
+
+            Route::prefix('id-card-templates')->name('id-card-templates.')->group(function () {
+                Route::get('/', [CardTemplateController::class, 'index'])->name('index');
+                Route::get('builder', [CardTemplateController::class, 'builder'])->name('builder');
+                Route::post('/', [CardTemplateController::class, 'store'])->name('store');
+                Route::put('{cardTemplate}', [CardTemplateController::class, 'update'])->name('update');
+                Route::delete('{cardTemplate}', [CardTemplateController::class, 'destroy'])->name('destroy');
+            });
+
             Route::get('matches', [EventMatchController::class, 'index'])->name('events.matches.index');
 
             Route::prefix('basketball-categories/{category}')->group(function () {
@@ -103,6 +121,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard/contact-messages', [ContactMessageController::class, 'index'])
         ->name('contact-messages.index');
 
+    Route::resource('dashboard/attendee-types', AttendeeTypeController::class)
+        ->names('attendee-types')
+        ->except(['create', 'edit', 'show']);
+
     Route::resource('events', EventController::class)->only(['store', 'update', 'destroy']);
     Route::post('events/{event}/basketball', [BasketballEventController::class, 'store'])
         ->name('events.basketball.store');
@@ -111,6 +133,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard/qr-scanner', [TeamQrController::class, 'scan'])->name('qr-scanner');
     Route::get('dashboard/teams/{team}/qr-data', [TeamQrController::class, 'show'])->name('teams.qr-data');
     Route::get('dashboard/players/{player}/qr-data', [PlayerQrController::class, 'show'])->name('players.qr-data');
+    Route::get('dashboard/attendees/{attendee}/qr-data', [AttendeeQrController::class, 'show'])->name('attendees.qr-data');
 
     // --- Uploads --------------------------------------------------------
     Route::post('upload/image', [ImageUploadController::class, 'store'])->name('upload.image');
