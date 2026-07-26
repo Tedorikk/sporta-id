@@ -1,0 +1,220 @@
+<?php
+
+use App\Models\AttendeeType;
+use App\Models\CardTemplate;
+use App\Models\Event;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    $this->user = User::factory()->create();
+    $this->event = Event::factory()->create();
+    $this->type = AttendeeType::create(['key' => 'guest', 'label' => 'Guest', 'is_active' => true]);
+});
+
+function templatePayload(array $overrides = []): array
+{
+    return array_merge([
+        'subject_type' => 'attendee',
+        'attendee_type_id' => null,
+        'name' => 'Guest badge',
+        'canvas' => ['width' => 336, 'height' => 480, 'background' => '#ffffff'],
+        'elements' => [
+            [
+                'id' => 'name',
+                'kind' => 'text',
+                'name' => 'Full name',
+                'binding' => 'name',
+                'x' => 20,
+                'y' => 180,
+                'width' => 296,
+                'height' => 32,
+                'rotation' => 0,
+                'zIndex' => 1,
+                'locked' => false,
+                'hidden' => false,
+                'style' => ['fontSize' => 22, 'fontWeight' => 700, 'textAlign' => 'center'],
+            ],
+        ],
+    ], $overrides);
+}
+
+// ─── Index ────────────────────────────────────────────────────────────────────
+
+test('the index lists templates plus a default layout for every subject type', function () {
+    $this->actingAs($this->user)
+        ->get(route('id-card-templates.index', $this->event))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('dashboard/events/id-card-templates/index')
+            ->has('defaultTemplates.attendee.elements')
+            ->has('defaultTemplates.player')
+            ->has('defaultTemplates.team')
+            ->has('attendeeTypes', 1)
+            ->where('attendeeTypes.0.attendees_count', 0)
+        );
+});
+
+test('guests cannot reach the template index', function () {
+    $this->get(route('id-card-templates.index', $this->event))
+        ->assertRedirect(route('login'));
+});
+
+// ─── Builder ──────────────────────────────────────────────────────────────────
+
+test('the builder seeds the fallback layout when nothing is customized yet', function () {
+    $this->actingAs($this->user)
+        ->get(route('id-card-templates.builder', [$this->event, 'subject_type' => 'attendee']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('dashboard/events/id-card-templates/edit')
+            ->where('template.id', null)
+            ->has('template.elements')
+            ->has('defaultTemplate.elements')
+            ->where('subjectType', 'attendee')
+        );
+});
+
+test('the builder loads the existing template for a specific attendee type', function () {
+    $template = CardTemplate::create(templatePayload([
+        'event_id' => $this->event->id,
+        'attendee_type_id' => $this->type->id,
+        'name' => 'VIP layout',
+    ]));
+
+    $this->actingAs($this->user)
+        ->get(route('id-card-templates.builder', [
+            $this->event,
+            'subject_type' => 'attendee',
+            'attendee_type_id' => $this->type->id,
+        ]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('template.id', $template->id)
+            ->where('template.name', 'VIP layout')
+            ->where('attendeeTypeId', $this->type->id)
+        );
+});
+
+test('the builder rejects an unknown subject type', function () {
+    $this->actingAs($this->user)
+        ->get(route('id-card-templates.builder', [$this->event, 'subject_type' => 'dragon']))
+        ->assertNotFound();
+});
+
+// ─── Store & update ───────────────────────────────────────────────────────────
+
+test('a template can be created', function () {
+    $this->actingAs($this->user)
+        ->post(route('id-card-templates.store', $this->event), templatePayload())
+        ->assertRedirect();
+
+    $template = CardTemplate::first();
+
+    expect($template->event_id)->toBe($this->event->id)
+        ->and($template->canvas['width'])->toBe(336)
+        ->and($template->elements[0]['binding'])->toBe('name')
+        ->and($template->elements[0]['style']['fontSize'])->toBe(22);
+});
+
+test('storing twice for the same subject updates instead of duplicating', function () {
+    $this->actingAs($this->user)->post(route('id-card-templates.store', $this->event), templatePayload());
+    $this->actingAs($this->user)->post(route('id-card-templates.store', $this->event), templatePayload(['name' => 'Renamed']));
+
+    expect(CardTemplate::count())->toBe(1)
+        ->and(CardTemplate::first()->name)->toBe('Renamed');
+});
+
+test('templates for different attendee types coexist', function () {
+    $this->actingAs($this->user)->post(route('id-card-templates.store', $this->event), templatePayload());
+    $this->actingAs($this->user)->post(
+        route('id-card-templates.store', $this->event),
+        templatePayload(['attendee_type_id' => $this->type->id, 'name' => 'Guest only'])
+    );
+
+    expect(CardTemplate::count())->toBe(2);
+});
+
+test('a template can be updated', function () {
+    $template = CardTemplate::create(templatePayload(['event_id' => $this->event->id]));
+
+    $this->actingAs($this->user)
+        ->put(route('id-card-templates.update', [$this->event, $template]), templatePayload(['name' => 'Updated']))
+        ->assertRedirect();
+
+    expect($template->fresh()->name)->toBe('Updated');
+});
+
+test('a template belonging to another event cannot be updated', function () {
+    $other = Event::factory()->create();
+    $template = CardTemplate::create(templatePayload(['event_id' => $other->id]));
+
+    $this->actingAs($this->user)
+        ->put(route('id-card-templates.update', [$this->event, $template]), templatePayload())
+        ->assertNotFound();
+});
+
+test('an empty layout is a valid save', function () {
+    $this->actingAs($this->user)
+        ->post(route('id-card-templates.store', $this->event), templatePayload(['elements' => []]))
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    expect(CardTemplate::first()->elements)->toBe([]);
+});
+
+test('invalid layouts are rejected', function (array $payload, string $field) {
+    $this->actingAs($this->user)
+        ->post(route('id-card-templates.store', $this->event), templatePayload($payload))
+        ->assertSessionHasErrors($field);
+
+    expect(CardTemplate::count())->toBe(0);
+})->with([
+    'unknown subject' => [['subject_type' => 'dragon'], 'subject_type'],
+    'missing name' => [['name' => ''], 'name'],
+    'oversized canvas' => [['canvas' => ['width' => 9000, 'height' => 480]], 'canvas.width'],
+    'unknown element kind' => [
+        [['elements' => [['id' => 'a', 'kind' => 'video', 'x' => 0, 'y' => 0, 'width' => 10, 'height' => 10]]]][0],
+        'elements.0.kind',
+    ],
+]);
+
+// ─── Destroy ──────────────────────────────────────────────────────────────────
+
+test('deleting a template falls the subject back to the built-in layout', function () {
+    $template = CardTemplate::create(templatePayload(['event_id' => $this->event->id]));
+
+    $this->actingAs($this->user)
+        ->delete(route('id-card-templates.destroy', [$this->event, $template]))
+        ->assertRedirect(route('id-card-templates.index', $this->event));
+
+    expect(CardTemplate::count())->toBe(0)
+        ->and(CardTemplate::resolveFor($this->event, 'attendee'))
+        ->toBe(CardTemplate::fallbackTemplate('attendee'));
+});
+
+// ─── Resolution precedence ────────────────────────────────────────────────────
+
+test('a type-specific template wins over the event-wide one', function () {
+    CardTemplate::create(templatePayload(['event_id' => $this->event->id, 'name' => 'Generic']));
+    CardTemplate::create(templatePayload([
+        'event_id' => $this->event->id,
+        'attendee_type_id' => $this->type->id,
+        'name' => 'Type specific',
+        'canvas' => ['width' => 200, 'height' => 300, 'background' => '#000000'],
+    ]));
+
+    $resolved = CardTemplate::resolveFor($this->event, 'attendee', $this->type->id);
+
+    expect($resolved['canvas']['width'])->toBe(200);
+});
+
+test('a type without its own template falls back to the event-wide one', function () {
+    CardTemplate::create(templatePayload(['event_id' => $this->event->id, 'name' => 'Generic']));
+
+    $resolved = CardTemplate::resolveFor($this->event, 'attendee', $this->type->id);
+
+    expect($resolved['canvas']['width'])->toBe(336);
+});

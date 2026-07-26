@@ -1,21 +1,44 @@
 import type { FormDataConvertible } from '@inertiajs/core';
 import { Head, Link, router } from '@inertiajs/react';
-import { ChevronLeft, Image as ImageIcon, Plus, QrCode, Square, Trash2, Type } from 'lucide-react';
+import {
+    ChevronLeft,
+    Grid3x3,
+    Image as ImageIcon,
+    Keyboard,
+    Loader2,
+    Magnet,
+    Maximize2,
+    Minus,
+    Plus,
+    QrCode,
+    Redo2,
+    RotateCcw,
+    Save,
+    Square,
+    Type,
+    Undo2,
+} from 'lucide-react';
 import QRCode from 'qrcode';
-import { useEffect, useMemo, useState } from 'react';
-import { makeDragHandlers, makeResizeHandlers } from '@/components/id-card/canvas-drag';
-import type { Box, ResizeHandle } from '@/components/id-card/canvas-drag';
-import { ElementContent } from '@/components/id-card/id-card-renderer';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { Box } from '@/components/id-card/canvas-geometry';
+import { rescaleElements, SUBJECT_LABEL } from '@/components/id-card/card-presets';
+import { DesignCanvas } from '@/components/id-card/design-canvas';
 import type { IdCardData } from '@/components/id-card/id-card-renderer';
+import { InspectorPanel } from '@/components/id-card/inspector-panel';
+import { LayersPanel } from '@/components/id-card/layers-panel';
+import { normalizeElement, useCardDesigner } from '@/components/id-card/use-card-designer';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatImageUrl } from '@/lib/image-utils';
+import { cn } from '@/lib/utils';
 import type { Attendee } from '@/types/attendee';
 import type { AttendeeType } from '@/types/attendee-type';
-import type { CardElement, CardElementKind, CardSubjectType, CardTemplate } from '@/types/card-template';
+import type { CardElementKind, CardSubjectType, CardTemplate } from '@/types/card-template';
 import { BINDABLE_FIELDS } from '@/types/card-template';
 import type { Event } from '@/types/event';
 
@@ -26,23 +49,32 @@ interface Props {
     attendeeTypeId: number | null;
     attendeeTypes: AttendeeType[];
     sampleAttendee: Attendee | null;
+    defaultTemplate: Pick<CardTemplate, 'canvas' | 'elements'>;
+    errors?: Record<string, string>;
 }
 
-const HANDLES: ResizeHandle[] = ['nw', 'ne', 'sw', 'se'];
+const ZOOM_STEPS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3];
 
-const HANDLE_CURSOR: Record<ResizeHandle, string> = {
-    nw: 'nwse-resize',
-    se: 'nwse-resize',
-    ne: 'nesw-resize',
-    sw: 'nesw-resize',
-};
+const ADD_BUTTONS: { kind: CardElementKind; label: string; icon: typeof Type }[] = [
+    { kind: 'text', label: 'Text', icon: Type },
+    { kind: 'image', label: 'Image', icon: ImageIcon },
+    { kind: 'qr', label: 'QR', icon: QrCode },
+    { kind: 'shape', label: 'Shape', icon: Square },
+];
 
-const HANDLE_POSITION: Record<ResizeHandle, React.CSSProperties> = {
-    nw: { top: -5, left: -5 },
-    ne: { top: -5, right: -5 },
-    sw: { bottom: -5, left: -5 },
-    se: { bottom: -5, right: -5 },
-};
+const SHORTCUTS: [string, string][] = [
+    ['Drag', 'Move layer'],
+    ['Shift + drag handle', 'Resize proportionally'],
+    ['Alt + drag', 'Ignore snapping'],
+    ['Arrows', 'Nudge 1px'],
+    ['Shift + arrows', 'Nudge 10px'],
+    ['Ctrl/⌘ + D', 'Duplicate'],
+    ['Ctrl/⌘ + Z', 'Undo'],
+    ['Ctrl/⌘ + Shift + Z', 'Redo'],
+    ['Ctrl/⌘ + S', 'Save'],
+    ['Delete', 'Remove layer'],
+    ['Esc', 'Deselect'],
+];
 
 function buildPreviewData(subjectType: CardSubjectType, sample: Attendee | null, qrDataUrl: string, event: Event): IdCardData {
     const eventLogo = event.logo ? formatImageUrl(event.logo) : undefined;
@@ -50,7 +82,7 @@ function buildPreviewData(subjectType: CardSubjectType, sample: Attendee | null,
     if (subjectType === 'attendee') {
         return {
             name: sample?.name ?? 'Jane Doe',
-            photo: sample?.photo ?? undefined,
+            photo: sample?.photo ? formatImageUrl(sample.photo) : undefined,
             typeLabel: sample?.attendee_type?.label ?? 'Guest',
             organization: sample?.organization ?? 'Acme Corp',
             title: sample?.title ?? 'Booth 12',
@@ -67,49 +99,57 @@ function buildPreviewData(subjectType: CardSubjectType, sample: Attendee | null,
         typeLabel: subjectType === 'team' ? undefined : 'Player',
         jerseyNumber: '23',
         teamName: 'Sample Team',
+        categoryName: 'Open Division',
         qrDataUrl,
         eventName: event.name,
         eventLogo,
     };
 }
 
-function newElement(kind: CardElementKind, order: number): CardElement {
-    const id = `el_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-    const base = {
-        id,
-        kind,
-        x: 40,
-        y: 40,
-        rotation: 0,
-        zIndex: order + 1,
-    };
-
-    if (kind === 'text') {
-        return { ...base, binding: null, width: 220, height: 32, staticText: 'New text', style: { fontSize: 16, fontWeight: 400, textAlign: 'left', color: '#0f172a' } };
+function contextValue(subjectType: CardSubjectType, attendeeTypeId: number | null): string {
+    if (subjectType !== 'attendee') {
+        return subjectType;
     }
 
-    if (kind === 'qr') {
-        return { ...base, binding: 'qrDataUrl', width: 160, height: 160, style: { borderRadius: 8, objectFit: 'cover' } };
-    }
-
-    if (kind === 'image') {
-        return { ...base, binding: 'photo', width: 120, height: 120, style: { borderRadius: 12, objectFit: 'cover', background: '#e2e8f0' } };
-    }
-
-    return { ...base, binding: null, width: 340, height: 4, style: { background: '#e2e8f0' } };
+    return attendeeTypeId ? `attendee:${attendeeTypeId}` : 'attendee:all';
 }
 
-export default function CardTemplateEdit({ event, template, subjectType, attendeeTypeId, attendeeTypes, sampleAttendee }: Props) {
+export default function CardTemplateEdit({
+    event,
+    template,
+    subjectType,
+    attendeeTypeId,
+    attendeeTypes,
+    sampleAttendee,
+    defaultTemplate,
+    errors,
+}: Props) {
     const [name, setName] = useState(template.name);
-    const [canvas, setCanvas] = useState(template.canvas);
-    const [elements, setElements] = useState<CardElement[]>(template.elements);
-    const [selectedId, setSelectedId] = useState<string | null>(null);
     const [qrPreview, setQrPreview] = useState('');
     const [saving, setSaving] = useState(false);
+    const [zoom, setZoom] = useState(1);
+    const [showGrid, setShowGrid] = useState(false);
+    const [snapEnabled, setSnapEnabled] = useState(true);
+    const viewportRef = useRef<HTMLDivElement>(null);
+
+    const designer = useCardDesigner(
+        useMemo(
+            () => ({
+                canvas: template.canvas,
+                elements: (template.elements ?? []).map(normalizeElement),
+            }),
+            // Re-seeded by a full page visit when the context changes, so a
+            // one-shot initial value is exactly what we want here.
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+            [],
+        ),
+    );
+
+    const { canvas, elements, selectedIds, setSelectedIds, selected, isDirty } = designer;
 
     useEffect(() => {
         QRCode.toDataURL(`${window.location.origin}/attendees/preview/id-card`, {
-            width: 200,
+            width: 320,
             margin: 1,
             errorCorrectionLevel: 'H',
         }).then(setQrPreview);
@@ -120,36 +160,100 @@ export default function CardTemplateEdit({ event, template, subjectType, attende
         [subjectType, sampleAttendee, qrPreview, event],
     );
 
-    const selected = elements.find((el) => el.id === selectedId) ?? null;
-    const bindableFields = BINDABLE_FIELDS[subjectType];
+    /** Fit the card to the visible area, capped at 100% so small cards aren't blown up. */
+    const fitToView = useCallback(() => {
+        const viewport = viewportRef.current;
 
-    function updateElement(id: string, patch: Partial<CardElement>) {
-        setElements((prev) => prev.map((el) => (el.id === id ? { ...el, ...patch } : el)));
-    }
-
-    function addElement(kind: CardElementKind) {
-        const element = newElement(kind, elements.length);
-        setElements((prev) => [...prev, element]);
-        setSelectedId(element.id);
-    }
-
-    function removeElement(id: string) {
-        setElements((prev) => prev.filter((el) => el.id !== id));
-
-        if (selectedId === id) {
-            setSelectedId(null);
+        if (!viewport) {
+            return;
         }
-    }
 
-    function switchContext(nextSubjectType: CardSubjectType, nextAttendeeTypeId: number | null) {
-        router.get(
-            `/dashboard/events/${event.id}/id-card-templates/builder`,
-            { subject_type: nextSubjectType, attendee_type_id: nextAttendeeTypeId ?? undefined },
-            { preserveState: false },
+        const scale = Math.min(
+            (viewport.clientWidth - 80) / canvas.width,
+            (viewport.clientHeight - 80) / canvas.height,
+            1,
         );
-    }
 
-    function handleSave() {
+        setZoom(Math.max(0.1, Math.round(scale * 100) / 100));
+    }, [canvas.width, canvas.height]);
+
+    useEffect(() => {
+        fitToView();
+        // Only on mount / canvas size change — manual zoom must survive re-renders.
+    }, [fitToView]);
+
+    /** Jump to the next preset step above/below the current (possibly fitted) zoom. */
+    const stepZoom = useCallback((direction: 1 | -1) => {
+        setZoom((current) => {
+            const next =
+                direction === 1
+                    ? ZOOM_STEPS.find((step) => step > current + 0.001)
+                    : [...ZOOM_STEPS].reverse().find((step) => step < current - 0.001);
+
+            return next ?? current;
+        });
+    }, []);
+
+    const handleGeometryChange = useCallback(
+        (updates: Record<string, Box>) => {
+            designer.setElements(
+                (prev) => prev.map((el) => (updates[el.id] ? { ...el, ...updates[el.id] } : el)),
+                { history: false },
+            );
+        },
+        [designer],
+    );
+
+    const handleAlign = useCallback(
+        (align: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
+            if (selectedIds.length === 0) {
+                return;
+            }
+
+            designer.setElements((prev) =>
+                prev.map((el) => {
+                    if (!selectedIds.includes(el.id)) {
+                        return el;
+                    }
+
+                    switch (align) {
+                        case 'left':
+                            return { ...el, x: 0 };
+                        case 'center':
+                            return { ...el, x: Math.round((canvas.width - el.width) / 2) };
+                        case 'right':
+                            return { ...el, x: canvas.width - el.width };
+                        case 'top':
+                            return { ...el, y: 0 };
+                        case 'middle':
+                            return { ...el, y: Math.round((canvas.height - el.height) / 2) };
+                        default:
+                            return { ...el, y: canvas.height - el.height };
+                    }
+                }),
+            );
+        },
+        [designer, selectedIds, canvas.width, canvas.height],
+    );
+
+    const handleCanvasResize = useCallback(
+        (width: number, height: number) => {
+            const next = { ...canvas, width: Math.max(80, width), height: Math.max(80, height) };
+
+            designer.replaceAll({ canvas: next, elements: rescaleElements(elements, canvas, next) });
+        },
+        [designer, canvas, elements],
+    );
+
+    /** Drop a pre-bound element straight onto the canvas from the field list. */
+    const addBoundField = useCallback(
+        (field: string, kind: CardElementKind) => {
+            designer.addElement(kind, { binding: field, staticText: undefined });
+        },
+        [designer],
+    );
+
+    const handleSave = useCallback(() => {
         setSaving(true);
 
         // Cast: canvas/elements are plain JSON-serializable objects, but their
@@ -163,348 +267,391 @@ export default function CardTemplateEdit({ event, template, subjectType, attende
             elements,
         } as unknown as Record<string, FormDataConvertible>;
 
-        const onFinish = () => setSaving(false);
+        const options = {
+            preserveScroll: true,
+            preserveState: true as const,
+            onSuccess: () => designer.markSaved(),
+            onFinish: () => setSaving(false),
+        };
 
         if (template.id) {
-            router.put(`/dashboard/events/${event.id}/id-card-templates/${template.id}`, payload, { onFinish, preserveScroll: true });
+            router.put(`/dashboard/events/${event.id}/id-card-templates/${template.id}`, payload, options);
         } else {
-            router.post(`/dashboard/events/${event.id}/id-card-templates`, payload, { onFinish, preserveScroll: true });
+            router.post(`/dashboard/events/${event.id}/id-card-templates`, payload, options);
         }
+    }, [subjectType, attendeeTypeId, name, canvas, elements, template.id, event.id, designer]);
+
+    // Keyboard shortcuts — skipped whenever focus sits in a form control.
+    useEffect(() => {
+        function onKeyDown(e: KeyboardEvent) {
+            const target = e.target as HTMLElement | null;
+
+            if (target?.closest('input, textarea, select, [contenteditable="true"]')) {
+                return;
+            }
+
+            const mod = e.metaKey || e.ctrlKey;
+
+            if (mod && e.key.toLowerCase() === 's') {
+                e.preventDefault();
+                handleSave();
+
+                return;
+            }
+
+            if (mod && e.key.toLowerCase() === 'z') {
+                e.preventDefault();
+
+                if (e.shiftKey) {
+                    designer.redo();
+                } else {
+                    designer.undo();
+                }
+
+                return;
+            }
+
+            if (mod && e.key.toLowerCase() === 'y') {
+                e.preventDefault();
+                designer.redo();
+
+                return;
+            }
+
+            if (mod && e.key.toLowerCase() === 'a') {
+                e.preventDefault();
+                setSelectedIds(elements.filter((el) => !el.locked && !el.hidden).map((el) => el.id));
+
+                return;
+            }
+
+            if (mod && e.key.toLowerCase() === 'd') {
+                e.preventDefault();
+                designer.duplicateElements(selectedIds);
+
+                return;
+            }
+
+            if (e.key === 'Escape') {
+                setSelectedIds([]);
+
+                return;
+            }
+
+            if (selectedIds.length === 0) {
+                return;
+            }
+
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                e.preventDefault();
+                designer.removeElements(selectedIds);
+
+                return;
+            }
+
+            const nudge: Record<string, [number, number]> = {
+                ArrowLeft: [-1, 0],
+                ArrowRight: [1, 0],
+                ArrowUp: [0, -1],
+                ArrowDown: [0, 1],
+            };
+
+            const delta = nudge[e.key];
+
+            if (delta) {
+                e.preventDefault();
+                const step = e.shiftKey ? 10 : 1;
+
+                designer.setElements((prev) =>
+                    prev.map((el) =>
+                        selectedIds.includes(el.id) && !el.locked
+                            ? { ...el, x: el.x + delta[0] * step, y: el.y + delta[1] * step }
+                            : el,
+                    ),
+                );
+            }
+        }
+
+        window.addEventListener('keydown', onKeyDown);
+
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [designer, elements, selectedIds, setSelectedIds, handleSave]);
+
+    // Guard against losing work on reload / tab close.
+    useEffect(() => {
+        if (!isDirty) {
+            return;
+        }
+
+        function onBeforeUnload(e: BeforeUnloadEvent) {
+            e.preventDefault();
+        }
+
+        window.addEventListener('beforeunload', onBeforeUnload);
+
+        return () => window.removeEventListener('beforeunload', onBeforeUnload);
+    }, [isDirty]);
+
+    function switchContext(value: string) {
+        if (isDirty && !window.confirm('You have unsaved changes. Discard them and switch card type?')) {
+            return;
+        }
+
+        const [kind, id] = value.split(':');
+        const params =
+            kind === 'attendee'
+                ? { subject_type: 'attendee', attendee_type_id: id === 'all' ? undefined : Number(id) }
+                : { subject_type: kind };
+
+        router.get(`/dashboard/events/${event.id}/id-card-templates/builder`, params, { preserveState: false });
     }
 
+    function resetToDefault() {
+        if (!window.confirm('Replace the current design with the built-in default layout?')) {
+            return;
+        }
+
+        designer.replaceAll({
+            canvas: defaultTemplate.canvas,
+            elements: (defaultTemplate.elements ?? []).map(normalizeElement),
+        });
+    }
+
+    const errorList = Object.values(errors ?? {});
+    const contextLabel =
+        subjectType === 'attendee'
+            ? attendeeTypes.find((t) => t.id === attendeeTypeId)?.label ?? 'All attendee types'
+            : SUBJECT_LABEL[subjectType];
+
     return (
-        <div className="mx-auto flex h-full w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
+        <div className="flex h-[calc(100svh-4rem)] flex-col">
             <Head title={`Card Designer · ${event.name}`} />
 
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-4">
-                    <Button variant="outline" size="icon" className="h-10 w-10 shrink-0" asChild>
-                        <Link href={`/dashboard/events/${event.id}/id-card-templates`}>
-                            <ChevronLeft className="h-5 w-5" />
-                        </Link>
-                    </Button>
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight">ID Card Designer</h1>
-                        <p className="text-sm text-muted-foreground">{event.name}</p>
-                    </div>
+            {/* Toolbar */}
+            <header className="flex shrink-0 flex-wrap items-center gap-3 border-b bg-background px-4 py-2.5">
+                <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" asChild>
+                    <Link href={`/dashboard/events/${event.id}/id-card-templates`} aria-label="Back to templates">
+                        <ChevronLeft className="h-5 w-5" />
+                    </Link>
+                </Button>
+
+                <div className="flex min-w-0 items-center gap-2">
+                    <Input
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        aria-label="Template name"
+                        className="h-9 w-48 border-transparent bg-transparent text-sm font-semibold shadow-none hover:border-input focus-visible:border-input"
+                    />
+                    {isDirty && (
+                        <Badge variant="outline" className="shrink-0 gap-1.5 text-[11px] font-normal">
+                            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                            Unsaved
+                        </Badge>
+                    )}
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <Select
-                        value={attendeeTypeId ? `attendee:${attendeeTypeId}` : subjectType === 'attendee' ? 'attendee:all' : subjectType}
-                        onValueChange={(value) => {
-                            if (value === 'attendee:all') {
-                                switchContext('attendee', null);
-                            } else if (value.startsWith('attendee:')) {
-                                switchContext('attendee', Number(value.split(':')[1]));
-                            } else {
-                                switchContext(value as CardSubjectType, null);
-                            }
-                        }}
-                    >
-                        <SelectTrigger className="w-56">
-                            <SelectValue placeholder="Card type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="attendee:all">Attendees — all types (default)</SelectItem>
+                <Separator orientation="vertical" className="h-6" />
+
+                <Select value={contextValue(subjectType, attendeeTypeId)} onValueChange={switchContext}>
+                    <SelectTrigger className="h-9 w-56" aria-label="Card type">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectGroup>
+                            <SelectLabel>Attendees</SelectLabel>
+                            <SelectItem value="attendee:all">All types (default)</SelectItem>
                             {attendeeTypes.map((type) => (
                                 <SelectItem key={type.id} value={`attendee:${type.id}`}>
-                                    Attendees — {type.label}
+                                    {type.label}
                                 </SelectItem>
                             ))}
+                        </SelectGroup>
+                        <SelectGroup>
+                            <SelectLabel>Tournament</SelectLabel>
                             <SelectItem value="player">Players</SelectItem>
                             <SelectItem value="team">Teams</SelectItem>
-                        </SelectContent>
-                    </Select>
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
 
-                    <Button onClick={handleSave} disabled={saving}>
-                        {saving ? 'Saving…' : 'Save template'}
+                <div className="ml-auto flex items-center gap-1">
+                    <ToolbarIcon label="Undo (Ctrl+Z)" icon={Undo2} onClick={designer.undo} disabled={!designer.canUndo} />
+                    <ToolbarIcon label="Redo (Ctrl+Shift+Z)" icon={Redo2} onClick={designer.redo} disabled={!designer.canRedo} />
+                    <ToolbarIcon label="Reset to default layout" icon={RotateCcw} onClick={resetToDefault} />
+
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Keyboard shortcuts">
+                                <Keyboard className="h-4 w-4" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent align="end" className="w-72">
+                            <h4 className="mb-2 text-sm font-semibold">Shortcuts</h4>
+                            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-xs">
+                                {SHORTCUTS.map(([keys, description]) => (
+                                    <div key={keys} className="contents">
+                                        <dt className="font-mono text-[11px] text-muted-foreground">{keys}</dt>
+                                        <dd>{description}</dd>
+                                    </div>
+                                ))}
+                            </dl>
+                        </PopoverContent>
+                    </Popover>
+
+                    <Separator orientation="vertical" className="mx-1 h-6" />
+
+                    <Button onClick={handleSave} disabled={saving} className="min-w-28">
+                        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                        {saving ? 'Saving…' : 'Save'}
                     </Button>
                 </div>
-            </div>
+            </header>
 
-            <div className="grid flex-1 grid-cols-1 gap-6 lg:grid-cols-[220px_1fr_300px]">
-                {/* Elements toolbar */}
-                <div className="flex flex-col gap-4">
-                    <FieldGroup>
-                        <Field>
-                            <FieldLabel htmlFor="template-name">Template name</FieldLabel>
-                            <Input id="template-name" value={name} onChange={(e) => setName(e.target.value)} />
-                        </Field>
-                    </FieldGroup>
+            {errorList.length > 0 && (
+                <div className="shrink-0 border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">
+                    <strong className="font-medium">Couldn’t save this template.</strong> {errorList[0]}
+                </div>
+            )}
 
-                    <div className="rounded-lg border p-3">
-                        <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Add element</p>
-                        <div className="grid grid-cols-2 gap-2">
-                            <Button variant="outline" size="sm" onClick={() => addElement('text')}>
-                                <Type className="mr-1 h-4 w-4" /> Text
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => addElement('image')}>
-                                <ImageIcon className="mr-1 h-4 w-4" /> Image
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => addElement('qr')}>
-                                <QrCode className="mr-1 h-4 w-4" /> QR
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => addElement('shape')}>
-                                <Square className="mr-1 h-4 w-4" /> Shape
-                            </Button>
+            <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[240px_1fr_290px]">
+                {/* Left rail: insert + layers */}
+                <aside className="flex min-h-0 flex-col overflow-y-auto border-r">
+                    <div className="border-b px-4 py-3.5">
+                        <h3 className="mb-2.5 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">Add</h3>
+                        <div className="grid grid-cols-2 gap-1.5">
+                            {ADD_BUTTONS.map(({ kind, label, icon: Icon }) => (
+                                <Button key={kind} variant="outline" size="sm" className="h-8 justify-start text-xs" onClick={() => designer.addElement(kind)}>
+                                    <Icon className="h-3.5 w-3.5" /> {label}
+                                </Button>
+                            ))}
                         </div>
                     </div>
 
-                    <div className="rounded-lg border p-3">
-                        <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Layers</p>
-                        <div className="flex flex-col gap-1">
-                            {elements.length === 0 && <p className="text-sm text-muted-foreground">No elements yet.</p>}
-                            {[...elements]
-                                .sort((a, b) => b.zIndex - a.zIndex)
-                                .map((el) => (
-                                    <button
-                                        key={el.id}
-                                        onClick={() => setSelectedId(el.id)}
-                                        className={`flex items-center justify-between rounded-md px-2 py-1.5 text-left text-sm ${
-                                            selectedId === el.id ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-                                        }`}
-                                    >
-                                        <span className="truncate capitalize">
-                                            {el.kind}
-                                            {el.binding ? ` · ${el.binding}` : ''}
-                                        </span>
-                                        <Trash2
-                                            className="h-3.5 w-3.5 shrink-0 text-muted-foreground hover:text-destructive"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                removeElement(el.id);
-                                            }}
-                                        />
-                                    </button>
-                                ))}
+                    <div className="border-b px-4 py-3.5">
+                        <h3 className="mb-1 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                            {contextLabel} fields
+                        </h3>
+                        <p className="mb-2.5 text-[11px] leading-relaxed text-muted-foreground">
+                            Click to place a layer that fills itself from each card&apos;s data.
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                            {BINDABLE_FIELDS[subjectType].map((field) => (
+                                <button
+                                    key={field.value}
+                                    type="button"
+                                    onClick={() => addBoundField(field.value, field.kinds[0])}
+                                    className="rounded-full border bg-background px-2.5 py-1 text-[11px] transition-colors hover:border-primary hover:bg-primary/5 hover:text-primary"
+                                >
+                                    {field.label}
+                                </button>
+                            ))}
                         </div>
                     </div>
-                </div>
 
-                {/* Canvas */}
-                <div className="flex items-start justify-center overflow-auto rounded-lg border bg-muted/30 p-8">
-                    <div
-                        onPointerDown={() => setSelectedId(null)}
-                        style={{
-                            position: 'relative',
-                            width: canvas.width,
-                            height: canvas.height,
-                            background: canvas.background || '#ffffff',
-                            boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
-                        }}
-                    >
-                        {elements.map((el) => {
-                            const drag = makeDragHandlers(
-                                () => ({ x: el.x, y: el.y, width: el.width, height: el.height }),
-                                (box: Box) => updateElement(el.id, box),
-                            );
-
-                            return (
-                                <div
-                                    key={el.id}
-                                    onPointerDown={(e) => {
-                                        setSelectedId(el.id);
-                                        drag.onPointerDown(e);
-                                    }}
-                                    onPointerMove={drag.onPointerMove}
-                                    onPointerUp={drag.onPointerUp}
-                                    style={{
-                                        position: 'absolute',
-                                        left: el.x,
-                                        top: el.y,
-                                        width: el.width,
-                                        height: el.height,
-                                        zIndex: el.zIndex,
-                                        cursor: 'move',
-                                        outline: selectedId === el.id ? '2px solid #2563eb' : '1px dashed transparent',
-                                    }}
-                                >
-                                    <ElementContent element={el} data={previewData} />
-
-                                    {selectedId === el.id &&
-                                        HANDLES.map((handle) => {
-                                            const resize = makeResizeHandlers(
-                                                () => ({ x: el.x, y: el.y, width: el.width, height: el.height }),
-                                                handle,
-                                                (box: Box) => updateElement(el.id, box),
-                                            );
-
-                                            return (
-                                                <div
-                                                    key={handle}
-                                                    onPointerDown={resize.onPointerDown}
-                                                    onPointerMove={resize.onPointerMove}
-                                                    onPointerUp={resize.onPointerUp}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        width: 10,
-                                                        height: 10,
-                                                        borderRadius: 9999,
-                                                        background: '#2563eb',
-                                                        border: '2px solid white',
-                                                        cursor: HANDLE_CURSOR[handle],
-                                                        ...HANDLE_POSITION[handle],
-                                                    }}
-                                                />
-                                            );
-                                        })}
-                                </div>
-                            );
-                        })}
+                    <div className="flex min-h-0 flex-1 flex-col">
+                        <h3 className="px-4 pt-3.5 pb-1 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                            Layers
+                        </h3>
+                        <div className="min-h-0 flex-1 overflow-y-auto">
+                            <LayersPanel
+                                elements={elements}
+                                subjectType={subjectType}
+                                selectedIds={selectedIds}
+                                onSelect={setSelectedIds}
+                                onToggle={(id, patch) => designer.updateElement(id, patch)}
+                                onReorder={designer.reorder}
+                                onDuplicate={designer.duplicateElements}
+                                onDelete={designer.removeElements}
+                            />
+                        </div>
                     </div>
-                </div>
+                </aside>
 
-                {/* Properties panel */}
-                <div className="rounded-lg border p-3">
-                    {!selected ? (
-                        <p className="text-sm text-muted-foreground">Select an element to edit its properties, or add a new one from the left panel.</p>
-                    ) : (
-                        <FieldGroup>
-                            <Field>
-                                <FieldLabel>Bind to data</FieldLabel>
-                                <Select
-                                    value={selected.binding ?? '__static__'}
-                                    onValueChange={(value) => updateElement(selected.id, { binding: value === '__static__' ? null : value })}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="__static__">— Static content —</SelectItem>
-                                        {bindableFields
-                                            .filter((f) => (selected.kind === 'image' || selected.kind === 'qr' ? f.value === 'photo' || f.value === 'qrDataUrl' || f.value === 'eventLogo' : f.value !== 'photo' && f.value !== 'qrDataUrl' && f.value !== 'eventLogo'))
-                                            .map((f) => (
-                                                <SelectItem key={f.value} value={f.value}>
-                                                    {f.label}
-                                                </SelectItem>
-                                            ))}
-                                    </SelectContent>
-                                </Select>
-                            </Field>
+                {/* Canvas viewport */}
+                <div className="flex min-h-0 flex-col bg-muted/40">
+                    <div className="flex shrink-0 items-center gap-1 border-b bg-background/60 px-3 py-1.5 backdrop-blur">
+                        <ToolbarIcon label="Zoom out" icon={Minus} onClick={() => stepZoom(-1)} disabled={zoom <= ZOOM_STEPS[0]} />
+                        <span className="w-12 text-center text-xs tabular-nums text-muted-foreground">{Math.round(zoom * 100)}%</span>
+                        <ToolbarIcon label="Zoom in" icon={Plus} onClick={() => stepZoom(1)} disabled={zoom >= ZOOM_STEPS.at(-1)!} />
+                        <ToolbarIcon label="Fit to screen" icon={Maximize2} onClick={fitToView} />
 
-                            {!selected.binding && selected.kind === 'text' && (
-                                <Field>
-                                    <FieldLabel>Static text</FieldLabel>
-                                    <Textarea
-                                        value={selected.staticText ?? ''}
-                                        onChange={(e) => updateElement(selected.id, { staticText: e.target.value })}
-                                        rows={2}
-                                    />
-                                </Field>
-                            )}
+                        <Separator orientation="vertical" className="mx-1.5 h-5" />
 
-                            {!selected.binding && (selected.kind === 'image' || selected.kind === 'qr') && (
-                                <Field>
-                                    <FieldLabel>Static image URL</FieldLabel>
-                                    <Input
-                                        value={selected.staticImageUrl ?? ''}
-                                        onChange={(e) => updateElement(selected.id, { staticImageUrl: e.target.value })}
-                                    />
-                                </Field>
-                            )}
+                        <ToolbarIcon label="Toggle grid" icon={Grid3x3} active={showGrid} onClick={() => setShowGrid((v) => !v)} />
+                        <ToolbarIcon label="Toggle snapping" icon={Magnet} active={snapEnabled} onClick={() => setSnapEnabled((v) => !v)} />
 
-                            <div className="grid grid-cols-2 gap-2">
-                                <Field>
-                                    <FieldLabel>X</FieldLabel>
-                                    <Input type="number" value={Math.round(selected.x)} onChange={(e) => updateElement(selected.id, { x: Number(e.target.value) })} />
-                                </Field>
-                                <Field>
-                                    <FieldLabel>Y</FieldLabel>
-                                    <Input type="number" value={Math.round(selected.y)} onChange={(e) => updateElement(selected.id, { y: Number(e.target.value) })} />
-                                </Field>
-                                <Field>
-                                    <FieldLabel>Width</FieldLabel>
-                                    <Input type="number" value={Math.round(selected.width)} onChange={(e) => updateElement(selected.id, { width: Number(e.target.value) })} />
-                                </Field>
-                                <Field>
-                                    <FieldLabel>Height</FieldLabel>
-                                    <Input type="number" value={Math.round(selected.height)} onChange={(e) => updateElement(selected.id, { height: Number(e.target.value) })} />
-                                </Field>
-                            </div>
+                        <span className="ml-auto text-xs text-muted-foreground tabular-nums">
+                            {canvas.width} × {canvas.height} px
+                        </span>
+                    </div>
 
-                            {selected.kind === 'text' && (
-                                <>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <Field>
-                                            <FieldLabel>Font size</FieldLabel>
-                                            <Input
-                                                type="number"
-                                                value={selected.style.fontSize ?? 14}
-                                                onChange={(e) => updateElement(selected.id, { style: { ...selected.style, fontSize: Number(e.target.value) } })}
-                                            />
-                                        </Field>
-                                        <Field>
-                                            <FieldLabel>Align</FieldLabel>
-                                            <Select
-                                                value={selected.style.textAlign ?? 'left'}
-                                                onValueChange={(value) => updateElement(selected.id, { style: { ...selected.style, textAlign: value as 'left' | 'center' | 'right' } })}
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="left">Left</SelectItem>
-                                                    <SelectItem value="center">Center</SelectItem>
-                                                    <SelectItem value="right">Right</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </Field>
-                                    </div>
-                                    <Field>
-                                        <FieldLabel>Color</FieldLabel>
-                                        <Input
-                                            type="color"
-                                            value={selected.style.color ?? '#0f172a'}
-                                            onChange={(e) => updateElement(selected.id, { style: { ...selected.style, color: e.target.value } })}
-                                        />
-                                    </Field>
-                                </>
-                            )}
-
-                            {(selected.kind === 'image' || selected.kind === 'qr' || selected.kind === 'shape') && (
-                                <Field>
-                                    <FieldLabel>Border radius</FieldLabel>
-                                    <Input
-                                        type="number"
-                                        value={selected.style.borderRadius ?? 0}
-                                        onChange={(e) => updateElement(selected.id, { style: { ...selected.style, borderRadius: Number(e.target.value) } })}
-                                    />
-                                </Field>
-                            )}
-
-                            {selected.kind === 'shape' && (
-                                <Field>
-                                    <FieldLabel>Background</FieldLabel>
-                                    <Input
-                                        type="color"
-                                        value={selected.style.background ?? '#e2e8f0'}
-                                        onChange={(e) => updateElement(selected.id, { style: { ...selected.style, background: e.target.value } })}
-                                    />
-                                </Field>
-                            )}
-
-                            <Button variant="destructive" size="sm" onClick={() => removeElement(selected.id)}>
-                                <Trash2 className="mr-1 h-4 w-4" /> Delete element
-                            </Button>
-                        </FieldGroup>
-                    )}
-
-                    <div className="mt-4 border-t pt-3">
-                        <FieldLabel>Canvas background</FieldLabel>
-                        <Input
-                            type="color"
-                            value={canvas.background || '#ffffff'}
-                            onChange={(e) => setCanvas({ ...canvas, background: e.target.value })}
+                    <div ref={viewportRef} className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-10">
+                        <DesignCanvas
+                            canvas={canvas}
+                            elements={elements}
+                            data={previewData}
+                            zoom={zoom}
+                            showGrid={showGrid}
+                            snapEnabled={snapEnabled}
+                            selectedIds={selectedIds}
+                            onSelect={setSelectedIds}
+                            onGestureStart={designer.pushHistory}
+                            onGeometryChange={handleGeometryChange}
                         />
                     </div>
                 </div>
-            </div>
 
-            <p className="text-xs text-muted-foreground">
-                <Plus className="mr-1 inline h-3 w-3" />
-                Drag elements to move them, drag the blue corner handles to resize.
-            </p>
+                {/* Inspector */}
+                <aside className="min-h-0 overflow-y-auto border-l">
+                    <InspectorPanel
+                        canvas={canvas}
+                        subjectType={subjectType}
+                        selected={selected}
+                        selectionCount={selectedIds.length}
+                        onCanvasChange={designer.setCanvas}
+                        onCanvasResize={handleCanvasResize}
+                        onElementChange={designer.updateElement}
+                        onStyleChange={designer.updateStyle}
+                        onAlign={handleAlign}
+                        onDuplicate={() => designer.duplicateElements(selectedIds)}
+                        onDelete={() => designer.removeElements(selectedIds)}
+                    />
+                </aside>
+            </div>
         </div>
+    );
+}
+
+
+function ToolbarIcon({
+    label,
+    icon: Icon,
+    onClick,
+    disabled,
+    active,
+}: {
+    label: string;
+    icon: typeof Undo2;
+    onClick: () => void;
+    disabled?: boolean;
+    active?: boolean;
+}) {
+    return (
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={label}
+                    aria-pressed={active}
+                    disabled={disabled}
+                    onClick={onClick}
+                    className={cn('h-8 w-8', active && 'bg-primary/10 text-primary')}
+                >
+                    <Icon className="h-4 w-4" />
+                </Button>
+            </TooltipTrigger>
+            <TooltipContent>{label}</TooltipContent>
+        </Tooltip>
     );
 }

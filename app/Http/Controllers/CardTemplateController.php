@@ -16,7 +16,13 @@ class CardTemplateController extends Controller
         return Inertia::render('dashboard/events/id-card-templates/index', [
             'event' => $event,
             'templates' => $event->cardTemplates()->with('attendeeType')->orderBy('subject_type')->get(),
-            'attendeeTypes' => AttendeeType::where('is_active', true)->orderBy('label')->get(),
+            'attendeeTypes' => AttendeeType::where('is_active', true)
+                ->withCount(['attendees' => fn ($query) => $query->where('event_id', $event->id)])
+                ->orderBy('label')
+                ->get(),
+            // Lets the index draw a real preview for rows that have no custom design yet.
+            'defaultTemplates' => collect(CardTemplate::SUBJECT_TYPES)
+                ->mapWithKeys(fn (string $subject) => [$subject => CardTemplate::fallbackTemplate($subject)]),
         ]);
     }
 
@@ -56,6 +62,8 @@ class CardTemplateController extends Controller
             'attendeeTypeId' => $attendeeTypeId,
             'attendeeTypes' => AttendeeType::where('is_active', true)->orderBy('label')->get(),
             'sampleAttendee' => $sampleAttendee,
+            // Powers the builder's "reset to default layout" action.
+            'defaultTemplate' => CardTemplate::fallbackTemplate($subjectType),
         ]);
     }
 
@@ -63,7 +71,16 @@ class CardTemplateController extends Controller
     {
         $validated = $this->validated($request);
 
-        $template = $event->cardTemplates()->create($validated);
+        // One template per event/subject/type combination — updateOrCreate keeps a
+        // double submit (or a stale builder tab) from producing a shadow duplicate
+        // that resolveFor() would silently ignore.
+        $template = $event->cardTemplates()->updateOrCreate(
+            [
+                'subject_type' => $validated['subject_type'],
+                'attendee_type_id' => $validated['attendee_type_id'] ?? null,
+            ],
+            $validated,
+        );
 
         return redirect()
             ->route('id-card-templates.builder', [$event, 'subject_type' => $template->subject_type, 'attendee_type_id' => $template->attendee_type_id])
@@ -102,22 +119,31 @@ class CardTemplateController extends Controller
             'attendee_type_id' => ['nullable', Rule::exists('attendee_types', 'id')],
             'name' => ['required', 'string', 'max:255'],
             'canvas' => ['required', 'array'],
-            'canvas.width' => ['required', 'numeric'],
-            'canvas.height' => ['required', 'numeric'],
+            'canvas.width' => ['required', 'numeric', 'min:40', 'max:4000'],
+            'canvas.height' => ['required', 'numeric', 'min:40', 'max:4000'],
             'canvas.background' => ['nullable', 'string', 'max:50'],
-            'elements' => ['required', 'array'],
-            'elements.*.id' => ['required', 'string'],
+            // `present` rather than `required`: an empty canvas is a legitimate
+            // save (e.g. clearing a design), and `required` rejects `[]`.
+            'elements' => ['present', 'array', 'max:100'],
+            'elements.*.id' => ['required', 'string', 'max:64'],
             'elements.*.kind' => ['required', Rule::in(['text', 'image', 'qr', 'shape'])],
-            'elements.*.binding' => ['nullable', 'string'],
+            'elements.*.name' => ['nullable', 'string', 'max:100'],
+            'elements.*.binding' => ['nullable', 'string', 'max:60'],
             'elements.*.x' => ['required', 'numeric'],
             'elements.*.y' => ['required', 'numeric'],
-            'elements.*.width' => ['required', 'numeric'],
-            'elements.*.height' => ['required', 'numeric'],
+            'elements.*.width' => ['required', 'numeric', 'min:1'],
+            'elements.*.height' => ['required', 'numeric', 'min:1'],
             'elements.*.rotation' => ['nullable', 'numeric'],
             'elements.*.zIndex' => ['nullable', 'numeric'],
+            'elements.*.locked' => ['nullable', 'boolean'],
+            'elements.*.hidden' => ['nullable', 'boolean'],
             'elements.*.style' => ['nullable', 'array'],
-            'elements.*.staticText' => ['nullable', 'string'],
-            'elements.*.staticImageUrl' => ['nullable', 'string'],
+            'elements.*.staticText' => ['nullable', 'string', 'max:500'],
+            'elements.*.staticImageUrl' => ['nullable', 'string', 'max:2000'],
+        ], [
+            'elements.max' => 'A card template can hold at most 100 layers.',
+            'canvas.width.max' => 'Card width must be between 40 and 4000 pixels.',
+            'canvas.height.max' => 'Card height must be between 40 and 4000 pixels.',
         ]);
     }
 }
