@@ -18,6 +18,7 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import type { AttendeeType } from '@/types/attendee-type';
+import type { Event } from '@/types/event';
 
 const typeSchema = z.object({
     key: z
@@ -44,11 +45,12 @@ function toDefaultValues(type?: AttendeeType): TypeFormValues {
 }
 
 interface AttendeeTypeFormDialogProps {
+    event: Event;
     attendeeType?: AttendeeType;
     trigger: ReactNode;
 }
 
-export function AttendeeTypeFormDialog({ attendeeType, trigger }: AttendeeTypeFormDialogProps) {
+export function AttendeeTypeFormDialog({ event, attendeeType, trigger }: AttendeeTypeFormDialogProps) {
     const isEditing = Boolean(attendeeType);
     const [open, setOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -71,9 +73,9 @@ export function AttendeeTypeFormDialog({ attendeeType, trigger }: AttendeeTypeFo
         };
 
         if (isEditing && attendeeType) {
-            router.put(`/dashboard/attendee-types/${attendeeType.id}`, data, options);
+            router.put(`/dashboard/events/${event.id}/attendee-types/${attendeeType.id}`, data, options);
         } else {
-            router.post('/dashboard/attendee-types', data, options);
+            router.post(`/dashboard/events/${event.id}/attendee-types`, data, options);
         }
     };
 

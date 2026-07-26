@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendee;
-use App\Models\AttendeeType;
 use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -28,13 +27,13 @@ class AttendeeController extends Controller
             'event' => $event,
             'attendees' => $attendees,
             'filters' => $filters,
-            'attendeeTypes' => AttendeeType::where('is_active', true)->orderBy('label')->get(),
+            'attendeeTypes' => $event->attendeeTypes()->where('is_active', true)->orderBy('label')->get(),
         ]);
     }
 
     public function store(Request $request, Event $event)
     {
-        $validated = $this->validated($request);
+        $validated = $this->validated($request, $event);
 
         $event->attendees()->create($validated);
 
@@ -48,7 +47,7 @@ class AttendeeController extends Controller
     {
         abort_unless($attendee->event_id === $event->id, 404);
 
-        $validated = $this->validated($request);
+        $validated = $this->validated($request, $event);
 
         $attendee->update($validated);
 
@@ -70,11 +69,11 @@ class AttendeeController extends Controller
         ]]);
     }
 
-    private function validated(Request $request): array
+    private function validated(Request $request, Event $event): array
     {
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'attendee_type_id' => ['required', Rule::exists('attendee_types', 'id')],
+            'attendee_type_id' => ['required', Rule::exists('attendee_types', 'id')->where('event_id', $event->id)],
             'photo' => ['nullable', 'url', 'max:255'],
             'organization' => ['nullable', 'string', 'max:255'],
             'title' => ['nullable', 'string', 'max:255'],

@@ -86,6 +86,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::resource('attendees', AttendeeController::class)
                 ->except(['create', 'edit', 'show']);
 
+            Route::resource('attendee-types', AttendeeTypeController::class)
+                ->names('attendee-types')
+                ->except(['create', 'edit', 'show']);
+
             Route::prefix('id-card-templates')->name('id-card-templates.')->group(function () {
                 Route::get('/', [CardTemplateController::class, 'index'])->name('index');
                 Route::get('builder', [CardTemplateController::class, 'builder'])->name('builder');
@@ -120,10 +124,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('dashboard/contact-messages', [ContactMessageController::class, 'index'])
         ->name('contact-messages.index');
-
-    Route::resource('dashboard/attendee-types', AttendeeTypeController::class)
-        ->names('attendee-types')
-        ->except(['create', 'edit', 'show']);
 
     Route::resource('events', EventController::class)->only(['store', 'update', 'destroy']);
     Route::post('events/{event}/basketball', [BasketballEventController::class, 'store'])

@@ -1,5 +1,6 @@
 export interface AttendeeType {
     id: number;
+    event_id: number;
     key: string;
     label: string;
     icon: string | null;

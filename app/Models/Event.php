@@ -41,6 +41,15 @@ class Event extends Model
 
     protected $appends = ['status'];
 
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::created(function (Event $event) {
+            AttendeeType::seedDefaultsFor($event);
+        });
+    }
+
     public function getStatusAttribute(): string
     {
         $today = now()->startOfDay();
@@ -100,6 +109,11 @@ class Event extends Model
     public function attendees(): HasMany
     {
         return $this->hasMany(Attendee::class);
+    }
+
+    public function attendeeTypes(): HasMany
+    {
+        return $this->hasMany(AttendeeType::class);
     }
 
     public function cardTemplates(): HasMany

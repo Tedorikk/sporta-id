@@ -3,47 +3,53 @@
 namespace App\Http\Controllers;
 
 use App\Models\AttendeeType;
+use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class AttendeeTypeController extends Controller
 {
-    public function index()
+    public function index(Event $event)
     {
-        return Inertia::render('dashboard/attendee-types/index', [
-            'attendeeTypes' => AttendeeType::withCount('attendees')->orderBy('label')->get(),
+        return Inertia::render('dashboard/events/attendee-types/index', [
+            'event' => $event,
+            'attendeeTypes' => $event->attendeeTypes()->withCount('attendees')->orderBy('label')->get(),
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, Event $event)
     {
-        $validated = $this->validated($request);
+        $validated = $this->validated($request, $event);
 
-        AttendeeType::create($validated);
+        $event->attendeeTypes()->create($validated);
 
-        return redirect()->route('attendee-types.index')->with(['toast' => [
+        return redirect()->route('attendee-types.index', $event)->with(['toast' => [
             'title' => 'Success',
             'description' => 'Attendee type created successfully.',
         ]]);
     }
 
-    public function update(Request $request, AttendeeType $attendeeType)
+    public function update(Request $request, Event $event, AttendeeType $attendeeType)
     {
-        $validated = $this->validated($request, $attendeeType);
+        abort_unless($attendeeType->event_id === $event->id, 404);
+
+        $validated = $this->validated($request, $event, $attendeeType);
 
         $attendeeType->update($validated);
 
-        return redirect()->route('attendee-types.index')->with(['toast' => [
+        return redirect()->route('attendee-types.index', $event)->with(['toast' => [
             'title' => 'Success',
             'description' => 'Attendee type updated successfully.',
         ]]);
     }
 
-    public function destroy(AttendeeType $attendeeType)
+    public function destroy(Event $event, AttendeeType $attendeeType)
     {
+        abort_unless($attendeeType->event_id === $event->id, 404);
+
         if ($attendeeType->attendees()->exists()) {
-            return redirect()->route('attendee-types.index')->with(['toast' => [
+            return redirect()->route('attendee-types.index', $event)->with(['toast' => [
                 'title' => 'Error',
                 'description' => 'This type still has attendees assigned to it and cannot be deleted.',
             ]]);
@@ -51,18 +57,18 @@ class AttendeeTypeController extends Controller
 
         $attendeeType->delete();
 
-        return redirect()->route('attendee-types.index')->with(['toast' => [
+        return redirect()->route('attendee-types.index', $event)->with(['toast' => [
             'title' => 'Success',
             'description' => 'Attendee type deleted successfully.',
         ]]);
     }
 
-    private function validated(Request $request, ?AttendeeType $attendeeType = null): array
+    private function validated(Request $request, Event $event, ?AttendeeType $attendeeType = null): array
     {
         return $request->validate([
             'key' => [
                 'required', 'string', 'max:100', 'regex:/^[a-z0-9_-]+$/',
-                Rule::unique('attendee_types', 'key')->ignore($attendeeType?->id),
+                Rule::unique('attendee_types', 'key')->where('event_id', $event->id)->ignore($attendeeType?->id),
             ],
             'label' => ['required', 'string', 'max:255'],
             'icon' => ['nullable', 'string', 'max:100'],

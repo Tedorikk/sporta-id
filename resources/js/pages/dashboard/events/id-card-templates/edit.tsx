@@ -560,6 +560,7 @@ export default function CardTemplateEdit({
                                 onSelect={setSelectedIds}
                                 onToggle={(id, patch) => designer.updateElement(id, patch)}
                                 onReorder={designer.reorder}
+                                onReorderAll={designer.reorderAll}
                                 onDuplicate={designer.duplicateElements}
                                 onDelete={designer.removeElements}
                             />

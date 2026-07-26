@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\AttendeeType;
 use App\Models\CardTemplate;
 use App\Models\Event;
 use App\Models\User;
@@ -10,8 +9,10 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->user = User::factory()->create();
+    // Event::boot() auto-seeds guest/tenant/photographer for every new event —
+    // reuse that instead of creating a colliding duplicate key.
     $this->event = Event::factory()->create();
-    $this->type = AttendeeType::create(['key' => 'guest', 'label' => 'Guest', 'is_active' => true]);
+    $this->type = $this->event->attendeeTypes()->where('key', 'guest')->firstOrFail();
 });
 
 function templatePayload(array $overrides = []): array
@@ -52,7 +53,7 @@ test('the index lists templates plus a default layout for every subject type', f
             ->has('defaultTemplates.attendee.elements')
             ->has('defaultTemplates.player')
             ->has('defaultTemplates.team')
-            ->has('attendeeTypes', 1)
+            ->has('attendeeTypes', 3)
             ->where('attendeeTypes.0.attendees_count', 0)
         );
 });

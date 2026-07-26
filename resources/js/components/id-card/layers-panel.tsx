@@ -1,4 +1,21 @@
-import { ArrowDown, ArrowUp, Copy, Eye, EyeOff, Image as ImageIcon, Lock, MoreVertical, QrCode, Square, Trash2, Type, Unlock } from 'lucide-react';
+import {
+    ArrowDown,
+    ArrowUp,
+    Copy,
+    Eye,
+    EyeOff,
+    GripVertical,
+    Image as ImageIcon,
+    Lock,
+    MoreVertical,
+    QrCode,
+    Square,
+    Trash2,
+    Type,
+    Unlock,
+} from 'lucide-react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -18,6 +35,10 @@ const KIND_ICON: Record<CardElementKind, typeof Type> = {
     shape: Square,
 };
 
+/** Fixed row height in px — every row is rendered at exactly this height so drag
+ *  math (which slot the pointer is over) never has to measure the DOM. */
+const ROW_HEIGHT = 34;
+
 export function elementDisplayName(element: CardElement, subjectType: CardSubjectType): string {
     if (element.name) {
         return element.name;
@@ -34,6 +55,14 @@ export function elementDisplayName(element: CardElement, subjectType: CardSubjec
     return element.kind === 'qr' ? 'QR code' : element.kind === 'image' ? 'Image' : 'Shape';
 }
 
+function moveItem<T>(list: T[], fromIndex: number, toIndex: number): T[] {
+    const next = [...list];
+    const [item] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, item);
+
+    return next;
+}
+
 interface LayersPanelProps {
     elements: CardElement[];
     subjectType: CardSubjectType;
@@ -41,8 +70,18 @@ interface LayersPanelProps {
     onSelect: (ids: string[]) => void;
     onToggle: (id: string, patch: Partial<CardElement>) => void;
     onReorder: (id: string, direction: 'up' | 'down' | 'front' | 'back') => void;
+    /** Commits a full topmost-first id order, e.g. after a drag gesture ends. */
+    onReorderAll: (orderedIdsTopFirst: string[]) => void;
     onDuplicate: (ids: string[]) => void;
     onDelete: (ids: string[]) => void;
+}
+
+interface DragState {
+    id: string;
+    originIndex: number;
+    /** Distance from the row's top edge to where the pointer grabbed it, so the row doesn't jump under the cursor. */
+    grabOffsetY: number;
+    containerTop: number;
 }
 
 export function LayersPanel({
@@ -52,11 +91,109 @@ export function LayersPanel({
     onSelect,
     onToggle,
     onReorder,
+    onReorderAll,
     onDuplicate,
     onDelete,
 }: LayersPanelProps) {
-    // Topmost first, matching what the eye sees on the canvas.
+    // Topmost first, matching what the eye sees on the canvas — this is the
+    // stable base order a drag gesture starts from and reorders relative to.
     const ordered = [...elements].sort((a, b) => b.zIndex - a.zIndex);
+    const baseIds = ordered.map((el) => el.id);
+
+    const containerRef = useRef<HTMLUListElement>(null);
+    const drag = useRef<DragState | null>(null);
+    const [draggingId, setDraggingId] = useState<string | null>(null);
+    const [visualOrder, setVisualOrder] = useState<string[]>(baseIds);
+    const [followTranslate, setFollowTranslate] = useState(0);
+
+    // Deliberately not a useCallback: it must always see the current render's
+    // `baseIds`, and re-creating a plain pointerdown handler every render is free.
+    function beginDrag(e: ReactPointerEvent, id: string) {
+        if (e.button !== 0) {
+            return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const container = containerRef.current;
+        const row = e.currentTarget.closest('[data-layer-row]') as HTMLElement | null;
+
+        if (!container || !row) {
+            return;
+        }
+
+        drag.current = {
+            id,
+            originIndex: baseIds.indexOf(id),
+            grabOffsetY: e.clientY - row.getBoundingClientRect().top,
+            containerTop: container.getBoundingClientRect().top,
+        };
+
+        setDraggingId(id);
+        setVisualOrder(baseIds);
+        setFollowTranslate(0);
+    }
+
+    useEffect(() => {
+        if (!draggingId) {
+            return;
+        }
+
+        function handleMove(e: PointerEvent) {
+            const state = drag.current;
+
+            if (!state) {
+                return;
+            }
+
+            const maxTop = (baseIds.length - 1) * ROW_HEIGHT;
+            const rawTop = e.clientY - state.containerTop - state.grabOffsetY;
+            const clampedTop = Math.min(maxTop, Math.max(0, rawTop));
+
+            setFollowTranslate(clampedTop - state.originIndex * ROW_HEIGHT);
+
+            const targetIndex = Math.min(baseIds.length - 1, Math.max(0, Math.round(clampedTop / ROW_HEIGHT)));
+
+            setVisualOrder((prev) => {
+                const currentIndex = prev.indexOf(state.id);
+
+                if (currentIndex === targetIndex) {
+                    return prev;
+                }
+
+                return moveItem(baseIds, state.originIndex, targetIndex);
+            });
+        }
+
+        function handleUp() {
+            const state = drag.current;
+
+            if (state) {
+                setVisualOrder((finalOrder) => {
+                    if (finalOrder.join() !== baseIds.join()) {
+                        onReorderAll(finalOrder);
+                    }
+
+                    return finalOrder;
+                });
+            }
+
+            drag.current = null;
+            setDraggingId(null);
+        }
+
+        window.addEventListener('pointermove', handleMove);
+        window.addEventListener('pointerup', handleUp);
+        window.addEventListener('pointercancel', handleUp);
+
+        return () => {
+            window.removeEventListener('pointermove', handleMove);
+            window.removeEventListener('pointerup', handleUp);
+            window.removeEventListener('pointercancel', handleUp);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [draggingId]);
 
     if (ordered.length === 0) {
         return (
@@ -67,13 +204,29 @@ export function LayersPanel({
     }
 
     return (
-        <ul className="flex flex-col gap-0.5 p-1.5">
-            {ordered.map((element) => {
+        <ul ref={containerRef} className="relative p-1.5" style={{ height: ordered.length * ROW_HEIGHT + 12 }}>
+            {ordered.map((element, originalIndex) => {
                 const Icon = KIND_ICON[element.kind];
                 const isSelected = selectedIds.includes(element.id);
+                const isDragging = draggingId === element.id;
+                const visualIndex = visualOrder.indexOf(element.id);
+                const shiftTranslate = (visualIndex - originalIndex) * ROW_HEIGHT;
 
                 return (
-                    <li key={element.id}>
+                    <li
+                        key={element.id}
+                        data-layer-row
+                        style={{
+                            position: 'absolute',
+                            top: 6 + originalIndex * ROW_HEIGHT,
+                            left: 6,
+                            right: 6,
+                            height: ROW_HEIGHT,
+                            transform: `translateY(${isDragging ? followTranslate : shiftTranslate}px)`,
+                            transition: isDragging ? 'none' : 'transform 150ms cubic-bezier(0.2, 0, 0, 1)',
+                            zIndex: isDragging ? 10 : 1,
+                        }}
+                    >
                         <div
                             role="button"
                             tabIndex={0}
@@ -85,11 +238,22 @@ export function LayersPanel({
                                 }
                             }}
                             className={cn(
-                                'group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors',
+                                'group flex h-full w-full items-center gap-1.5 rounded-md pr-2 pl-1 text-left text-sm transition-colors',
                                 isSelected ? 'bg-primary/10 text-primary' : 'hover:bg-muted',
                                 element.hidden && 'opacity-50',
+                                isDragging && 'bg-background shadow-md ring-1 ring-border',
                             )}
                         >
+                            <button
+                                type="button"
+                                aria-label="Drag to reorder"
+                                onPointerDown={(e) => beginDrag(e, element.id)}
+                                className="shrink-0 touch-none rounded p-0.5 text-muted-foreground/50 hover:text-foreground active:cursor-grabbing"
+                                style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+                            >
+                                <GripVertical className="h-3.5 w-3.5" />
+                            </button>
+
                             <Icon className="h-3.5 w-3.5 shrink-0 opacity-70" />
 
                             <span className="min-w-0 flex-1 truncate text-xs">{elementDisplayName(element, subjectType)}</span>

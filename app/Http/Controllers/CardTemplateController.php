@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AttendeeType;
 use App\Models\CardTemplate;
 use App\Models\Event;
 use Illuminate\Http\Request;
@@ -16,10 +15,7 @@ class CardTemplateController extends Controller
         return Inertia::render('dashboard/events/id-card-templates/index', [
             'event' => $event,
             'templates' => $event->cardTemplates()->with('attendeeType')->orderBy('subject_type')->get(),
-            'attendeeTypes' => AttendeeType::where('is_active', true)
-                ->withCount(['attendees' => fn ($query) => $query->where('event_id', $event->id)])
-                ->orderBy('label')
-                ->get(),
+            'attendeeTypes' => $event->attendeeTypes()->where('is_active', true)->withCount('attendees')->orderBy('label')->get(),
             // Lets the index draw a real preview for rows that have no custom design yet.
             'defaultTemplates' => collect(CardTemplate::SUBJECT_TYPES)
                 ->mapWithKeys(fn (string $subject) => [$subject => CardTemplate::fallbackTemplate($subject)]),
@@ -60,7 +56,7 @@ class CardTemplateController extends Controller
             'template' => $template,
             'subjectType' => $subjectType,
             'attendeeTypeId' => $attendeeTypeId,
-            'attendeeTypes' => AttendeeType::where('is_active', true)->orderBy('label')->get(),
+            'attendeeTypes' => $event->attendeeTypes()->where('is_active', true)->orderBy('label')->get(),
             'sampleAttendee' => $sampleAttendee,
             // Powers the builder's "reset to default layout" action.
             'defaultTemplate' => CardTemplate::fallbackTemplate($subjectType),
@@ -69,7 +65,7 @@ class CardTemplateController extends Controller
 
     public function store(Request $request, Event $event)
     {
-        $validated = $this->validated($request);
+        $validated = $this->validated($request, $event);
 
         // One template per event/subject/type combination — updateOrCreate keeps a
         // double submit (or a stale builder tab) from producing a shadow duplicate
@@ -91,7 +87,7 @@ class CardTemplateController extends Controller
     {
         abort_unless($cardTemplate->event_id === $event->id, 404);
 
-        $validated = $this->validated($request);
+        $validated = $this->validated($request, $event);
 
         $cardTemplate->update($validated);
 
@@ -112,11 +108,11 @@ class CardTemplateController extends Controller
         ]]);
     }
 
-    private function validated(Request $request): array
+    private function validated(Request $request, Event $event): array
     {
         return $request->validate([
             'subject_type' => ['required', Rule::in(CardTemplate::SUBJECT_TYPES)],
-            'attendee_type_id' => ['nullable', Rule::exists('attendee_types', 'id')],
+            'attendee_type_id' => ['nullable', Rule::exists('attendee_types', 'id')->where('event_id', $event->id)],
             'name' => ['required', 'string', 'max:255'],
             'canvas' => ['required', 'array'],
             'canvas.width' => ['required', 'numeric', 'min:40', 'max:4000'],

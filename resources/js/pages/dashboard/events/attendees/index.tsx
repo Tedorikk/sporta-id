@@ -1,7 +1,8 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ChevronLeft, ExternalLink, Pencil, Plus, Search, Trash2, Users, Palette } from 'lucide-react';
+import { AlertCircle, ChevronLeft, ExternalLink, Palette, Pencil, Plus, Search, Tags, Trash2, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -80,6 +81,13 @@ export default function AttendeesIndex({ event, attendees, attendeeTypes, filter
 
                 <div className="flex items-center gap-2">
                     <Button variant="outline" asChild>
+                        <Link href={`/dashboard/events/${event.id}/attendee-types`}>
+                            <Tags className="mr-2 h-4 w-4" />
+                            Attendee Types
+                        </Link>
+                    </Button>
+
+                    <Button variant="outline" asChild>
                         <Link href={`/dashboard/events/${event.id}/id-card-templates`}>
                             <Palette className="mr-2 h-4 w-4" />
                             Card Designer
@@ -98,6 +106,22 @@ export default function AttendeesIndex({ event, attendees, attendeeTypes, filter
                     />
                 </div>
             </div>
+
+            {attendeeTypes.length === 0 && (
+                <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>No Attendee Types Configured</AlertTitle>
+                    <AlertDescription>
+                        <span className="inline">
+                            You need at least one attendee type (like Guest, Tenant, or Photographer) before you can add attendees. Set them up on the{' '}
+                            <Link href={`/dashboard/events/${event.id}/attendee-types`} className="inline font-semibold underline">
+                                Attendee Types
+                            </Link>{' '}
+                            page.
+                        </span>
+                    </AlertDescription>
+                </Alert>
+            )}
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <div className="relative flex-1">

@@ -15,7 +15,8 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // User::factory(10)->create();
+        // Attendee types are now seeded per event automatically (see Event::boot()),
+        // so there's nothing global left to seed here.
         $this->call(AdminAccountSeeder::class);
-        $this->call(AttendeeTypeSeeder::class);
     }
 }

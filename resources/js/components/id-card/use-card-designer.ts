@@ -263,6 +263,23 @@ export function useCardDesigner(initial: DesignerState) {
         [setElements],
     );
 
+    /**
+     * Apply a full topmost-first order (as shown in the layers panel) by
+     * rewriting zIndex for exactly those ids — anything not listed keeps its
+     * zIndex untouched. One history entry per call, so a drag-to-reorder
+     * gesture collapses to a single undo step.
+     */
+    const reorderAll = useCallback(
+        (orderedIdsTopFirst: string[]) => {
+            setElements((prev) => {
+                const zByIndex = new Map(orderedIdsTopFirst.map((id, i) => [id, orderedIdsTopFirst.length - i]));
+
+                return prev.map((el) => (zByIndex.has(el.id) ? { ...el, zIndex: zByIndex.get(el.id)! } : el));
+            });
+        },
+        [setElements],
+    );
+
     const undo = useCallback(() => {
         setStore((prev) => {
             const previous = prev.past.at(-1);
@@ -328,6 +345,7 @@ export function useCardDesigner(initial: DesignerState) {
         removeElements,
         duplicateElements,
         reorder,
+        reorderAll,
         pushHistory,
         undo,
         redo,
