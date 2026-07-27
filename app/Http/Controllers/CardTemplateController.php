@@ -117,7 +117,8 @@ class CardTemplateController extends Controller
             'canvas' => ['required', 'array'],
             'canvas.width' => ['required', 'numeric', 'min:40', 'max:4000'],
             'canvas.height' => ['required', 'numeric', 'min:40', 'max:4000'],
-            'canvas.background' => ['nullable', 'string', 'max:50'],
+            // Long enough for a multi-stop CSS gradient, not just a hex color.
+            'canvas.background' => ['nullable', 'string', 'max:1000'],
             // `present` rather than `required`: an empty canvas is a legitimate
             // save (e.g. clearing a design), and `required` rejects `[]`.
             'elements' => ['present', 'array', 'max:100'],
@@ -134,6 +135,10 @@ class CardTemplateController extends Controller
             'elements.*.locked' => ['nullable', 'boolean'],
             'elements.*.hidden' => ['nullable', 'boolean'],
             'elements.*.style' => ['nullable', 'array'],
+            // Long enough for a multi-stop CSS gradient, not just a hex color.
+            'elements.*.style.background' => ['nullable', 'string', 'max:1000'],
+            'elements.*.style.color' => ['nullable', 'string', 'max:100'],
+            'elements.*.style.borderColor' => ['nullable', 'string', 'max:100'],
             'elements.*.staticText' => ['nullable', 'string', 'max:500'],
             'elements.*.staticImageUrl' => ['nullable', 'string', 'max:2000'],
         ], [

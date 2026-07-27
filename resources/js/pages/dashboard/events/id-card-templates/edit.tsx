@@ -182,6 +182,18 @@ export default function CardTemplateEdit({
         // Only on mount / canvas size change — manual zoom must survive re-renders.
     }, [fitToView]);
 
+    // Bring a newly added or newly selected element into view — otherwise a
+    // freshly added layer can render above the fold of a scrolled/zoomed
+    // canvas and look like it never appeared.
+    useEffect(() => {
+        if (selectedIds.length !== 1) {
+            return;
+        }
+
+        const node = viewportRef.current?.querySelector(`[data-element-id="${selectedIds[0]}"]`);
+        node?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    }, [selectedIds]);
+
     /** Jump to the next preset step above/below the current (possibly fitted) zoom. */
     const stepZoom = useCallback((direction: 1 | -1) => {
         setZoom((current) => {

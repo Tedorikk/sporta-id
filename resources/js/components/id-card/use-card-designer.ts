@@ -47,20 +47,40 @@ function makeId(): string {
     return `el_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
 }
 
-export function newElement(kind: CardElementKind, zIndex: number, canvas: CardCanvas): CardElement {
+/** Nudges repeated additions so they don't land exactly on top of one another — wraps every 8 adds. */
+const CASCADE_STEP = 16;
+const CASCADE_WRAP = 8;
+
+function cascadeOffset(addIndex: number): number {
+    return (addIndex % CASCADE_WRAP) * CASCADE_STEP;
+}
+
+/** Centers a new element horizontally, applies the cascade offset, and keeps it fully on-canvas. */
+function place(width: number, height: number, canvas: CardCanvas, offset: number): { x: number; y: number } {
+    const x = Math.round((canvas.width - width) / 2) + offset;
+    const y = 40 + offset;
+
+    return {
+        x: Math.max(0, Math.min(x, canvas.width - width)),
+        y: Math.max(0, Math.min(y, canvas.height - height)),
+    };
+}
+
+export function newElement(kind: CardElementKind, zIndex: number, canvas: CardCanvas, addIndex = 0): CardElement {
     const base = { id: makeId(), zIndex, rotation: 0, locked: false, hidden: false };
+    const offset = cascadeOffset(addIndex);
 
     if (kind === 'text') {
         const width = Math.min(240, canvas.width - 40);
+        const height = 32;
 
         return {
             ...base,
             kind,
             binding: null,
-            x: Math.round((canvas.width - width) / 2),
-            y: 40,
+            ...place(width, height, canvas, offset),
             width,
-            height: 32,
+            height,
             staticText: 'New text',
             style: { fontSize: 16, fontWeight: 500, textAlign: 'center', verticalAlign: 'middle', color: '#0f172a' },
         };
@@ -73,8 +93,7 @@ export function newElement(kind: CardElementKind, zIndex: number, canvas: CardCa
             ...base,
             kind,
             binding: 'qrDataUrl',
-            x: Math.round((canvas.width - size) / 2),
-            y: 40,
+            ...place(size, size, canvas, offset),
             width: size,
             height: size,
             style: { borderRadius: 8, objectFit: 'contain' },
@@ -88,8 +107,7 @@ export function newElement(kind: CardElementKind, zIndex: number, canvas: CardCa
             ...base,
             kind,
             binding: 'photo',
-            x: Math.round((canvas.width - size) / 2),
-            y: 40,
+            ...place(size, size, canvas, offset),
             width: size,
             height: size,
             style: { borderRadius: 12, objectFit: 'cover', background: '#e2e8f0' },
@@ -97,15 +115,15 @@ export function newElement(kind: CardElementKind, zIndex: number, canvas: CardCa
     }
 
     const width = Math.min(canvas.width - 40, 300);
+    const height = 48;
 
     return {
         ...base,
         kind,
         binding: null,
-        x: Math.round((canvas.width - width) / 2),
-        y: 40,
+        ...place(width, height, canvas, offset),
         width,
-        height: 48,
+        height,
         style: { background: '#e2e8f0', borderRadius: 8 },
     };
 }
@@ -187,7 +205,8 @@ export function useCardDesigner(initial: DesignerState) {
 
         setStore((prev) => {
             const maxZ = prev.present.elements.reduce((max, el) => Math.max(max, el.zIndex), 0);
-            const element = { ...newElement(kind, maxZ + 1, prev.present.canvas), ...overrides, id };
+            const sameKindCount = prev.present.elements.filter((el) => el.kind === kind).length;
+            const element = { ...newElement(kind, maxZ + 1, prev.present.canvas, sameKindCount), ...overrides, id };
 
             return pushPast(prev, { ...prev.present, elements: [...prev.present.elements, element] });
         });

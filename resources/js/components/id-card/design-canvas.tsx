@@ -235,6 +235,7 @@ export function DesignCanvas({
                     return (
                         <div
                             key={element.id}
+                            data-element-id={element.id}
                             onPointerDown={(e) => handleElementPointerDown(e, element)}
                             onPointerEnter={() => setHoveredId(element.id)}
                             onPointerLeave={() => setHoveredId((prev) => (prev === element.id ? null : prev))}
@@ -302,6 +303,10 @@ export function DesignCanvas({
                             width: singleSelection.width,
                             height: singleSelection.height,
                             zIndex: 10000,
+                            // The wrapper only exists to anchor the 4 corner handles at
+                            // percentage offsets — it must not itself intercept clicks,
+                            // or it silently blocks dragging the element underneath it.
+                            pointerEvents: 'none',
                         }}
                     >
                         {RESIZE_HANDLES.map((handle) => (
@@ -322,6 +327,7 @@ export function DesignCanvas({
                                     boxShadow: '0 1px 2px rgba(0,0,0,0.25)',
                                     cursor: HANDLE_CURSOR[handle],
                                     touchAction: 'none',
+                                    pointerEvents: 'auto',
                                 }}
                             />
                         ))}

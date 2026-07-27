@@ -1,7 +1,4 @@
-import { useId } from 'react';
-import { COLOR_SWATCHES } from '@/components/id-card/card-presets';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
 export function InspectorSection({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
@@ -58,80 +55,6 @@ export function NumberControl({ value, onChange, min, max, step = 1, suffix, id 
                     {suffix}
                 </span>
             )}
-        </div>
-    );
-}
-
-interface ColorControlProps {
-    value: string;
-    onChange: (value: string) => void;
-    /** Renders a "none" swatch that clears the value. */
-    allowClear?: boolean;
-}
-
-export function ColorControl({ value, onChange, allowClear }: ColorControlProps) {
-    const inputId = useId();
-    const normalized = /^#[0-9a-f]{6}$/i.test(value) ? value : '#ffffff';
-
-    return (
-        <div className="flex items-center gap-1.5">
-            <Popover>
-                <PopoverTrigger asChild>
-                    <button
-                        type="button"
-                        aria-label="Pick colour"
-                        className="h-8 w-8 shrink-0 rounded-md border shadow-sm transition-shadow hover:ring-2 hover:ring-ring/40"
-                        style={{
-                            background: value
-                                ? value
-                                : 'repeating-conic-gradient(#cbd5e1 0% 25%, #ffffff 0% 50%) 50% / 8px 8px',
-                        }}
-                    />
-                </PopoverTrigger>
-                <PopoverContent className="w-56 p-3" align="start">
-                    <div className="grid grid-cols-8 gap-1.5">
-                        {COLOR_SWATCHES.map((swatch) => (
-                            <button
-                                key={swatch}
-                                type="button"
-                                aria-label={swatch}
-                                onClick={() => onChange(swatch)}
-                                className={cn(
-                                    'h-5 w-5 rounded border transition-transform hover:scale-110',
-                                    value?.toLowerCase() === swatch && 'ring-2 ring-ring ring-offset-1',
-                                )}
-                                style={{ background: swatch }}
-                            />
-                        ))}
-                        {allowClear && (
-                            <button
-                                type="button"
-                                aria-label="No fill"
-                                onClick={() => onChange('')}
-                                className="h-5 w-5 rounded border"
-                                style={{ background: 'repeating-conic-gradient(#cbd5e1 0% 25%, #ffffff 0% 50%) 50% / 6px 6px' }}
-                            />
-                        )}
-                    </div>
-                    <label htmlFor={inputId} className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-                        Custom
-                        <input
-                            id={inputId}
-                            type="color"
-                            value={normalized}
-                            onChange={(e) => onChange(e.target.value)}
-                            className="h-7 w-full cursor-pointer rounded border bg-transparent"
-                        />
-                    </label>
-                </PopoverContent>
-            </Popover>
-
-            <Input
-                value={value ?? ''}
-                placeholder="none"
-                onChange={(e) => onChange(e.target.value)}
-                className="h-8 font-mono text-xs uppercase"
-            />
         </div>
     );
 }

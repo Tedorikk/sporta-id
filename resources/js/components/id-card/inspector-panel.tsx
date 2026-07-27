@@ -12,13 +12,15 @@ import {
     Trash2,
 } from 'lucide-react';
 import { CANVAS_PRESETS, FONT_FAMILIES, FONT_WEIGHTS, matchPreset } from '@/components/id-card/card-presets';
+import { ColorPickerControl } from '@/components/id-card/color-picker';
 import { safeStyle } from '@/components/id-card/id-card-renderer';
-import { ColorControl, ControlRow, InspectorSection, NumberControl } from '@/components/id-card/inspector-controls';
+import { ControlRow, InspectorSection, NumberControl } from '@/components/id-card/inspector-controls';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { UploadImage } from '@/components/upload-image';
 import type { CardCanvas, CardElement, CardElementStyle, CardSubjectType } from '@/types/card-template';
 import { bindableFieldsFor } from '@/types/card-template';
 
@@ -137,12 +139,22 @@ export function InspectorPanel({
                 )}
 
                 {!selected.binding && isMedia && (
-                    <Input
-                        value={selected.staticImageUrl ?? ''}
-                        onChange={(e) => onElementChange(selected.id, { staticImageUrl: e.target.value })}
-                        placeholder="https://… image URL"
-                        className="h-8 text-xs"
-                    />
+                    <div className="flex flex-col gap-2">
+                        <UploadImage
+                            value={selected.staticImageUrl ?? null}
+                            onChange={(url) => onElementChange(selected.id, { staticImageUrl: url ?? undefined })}
+                            ratio={selected.width / selected.height}
+                            height={120}
+                            enableCrop={selected.kind === 'image'}
+                            placeholder="Upload or drop an image"
+                        />
+                        <Input
+                            value={selected.staticImageUrl ?? ''}
+                            onChange={(e) => onElementChange(selected.id, { staticImageUrl: e.target.value })}
+                            placeholder="…or paste an image URL"
+                            className="h-8 text-xs"
+                        />
+                    </div>
                 )}
 
                 {selected.binding && (
@@ -294,14 +306,18 @@ export function InspectorPanel({
                     </ControlRow>
 
                     <ControlRow label="Colour">
-                        <ColorControl value={style.color ?? '#0f172a'} onChange={(color) => onStyleChange(selected.id, { color })} />
+                        <ColorPickerControl
+                            allowGradient={false}
+                            value={style.color ?? '#0f172a'}
+                            onChange={(color) => onStyleChange(selected.id, { color })}
+                        />
                     </ControlRow>
                 </InspectorSection>
             )}
 
             <InspectorSection title="Appearance">
                 <ControlRow label={isText ? 'Highlight' : 'Fill'}>
-                    <ColorControl
+                    <ColorPickerControl
                         allowClear
                         value={style.background ?? ''}
                         onChange={(background) => onStyleChange(selected.id, { background: background || undefined })}
@@ -352,7 +368,8 @@ export function InspectorPanel({
 
                 {(style.borderWidth ?? 0) > 0 && (
                     <ControlRow label="Border colour">
-                        <ColorControl
+                        <ColorPickerControl
+                            allowGradient={false}
                             value={style.borderColor ?? '#0f172a'}
                             onChange={(borderColor) => onStyleChange(selected.id, { borderColor })}
                         />
@@ -420,7 +437,7 @@ function CanvasSection({
             </div>
 
             <ControlRow label="Background">
-                <ColorControl value={canvas.background || '#ffffff'} onChange={(background) => onCanvasChange({ background })} />
+                <ColorPickerControl value={canvas.background || '#ffffff'} onChange={(background) => onCanvasChange({ background })} />
             </ControlRow>
         </InspectorSection>
     );
