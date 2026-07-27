@@ -134,11 +134,12 @@ class CardTemplateController extends Controller
             'elements.*.zIndex' => ['nullable', 'numeric'],
             'elements.*.locked' => ['nullable', 'boolean'],
             'elements.*.hidden' => ['nullable', 'boolean'],
+            // Deliberately not validated key-by-key: adding nested `style.*` rules
+            // alongside this wildcard `array` rule makes Laravel's validator
+            // reconstruct `style` from only the explicitly-listed nested paths,
+            // silently dropping every other style property (fontSize, etc.)
+            // from the saved data.
             'elements.*.style' => ['nullable', 'array'],
-            // Long enough for a multi-stop CSS gradient, not just a hex color.
-            'elements.*.style.background' => ['nullable', 'string', 'max:1000'],
-            'elements.*.style.color' => ['nullable', 'string', 'max:100'],
-            'elements.*.style.borderColor' => ['nullable', 'string', 'max:100'],
             'elements.*.staticText' => ['nullable', 'string', 'max:500'],
             'elements.*.staticImageUrl' => ['nullable', 'string', 'max:2000'],
         ], [
