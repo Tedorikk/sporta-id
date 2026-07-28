@@ -140,12 +140,13 @@ export function InspectorPanel({
 
                 {!selected.binding && isMedia && (
                     <div className="flex flex-col gap-2">
+                        {/* No enableCrop/ratio: uploads keep their native aspect ratio —
+                            the element's own Fit setting (cover/contain) handles framing,
+                            since the box on canvas rarely matches the source image. */}
                         <UploadImage
                             value={selected.staticImageUrl ?? null}
                             onChange={(url) => onElementChange(selected.id, { staticImageUrl: url ?? undefined })}
-                            ratio={selected.width / selected.height}
                             height={120}
-                            enableCrop={selected.kind === 'image'}
                             placeholder="Upload or drop an image"
                         />
                         <Input

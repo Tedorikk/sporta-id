@@ -77,6 +77,7 @@ export const BINDABLE_FIELDS: Record<CardSubjectType, BindableField[]> = {
         { value: 'eventName', label: 'Event Name', kinds: ['text'] },
         { value: 'photo', label: 'Photo', kinds: ['image'] },
         { value: 'eventLogo', label: 'Event Logo', kinds: ['image'] },
+        { value: 'appLogo', label: 'App Logo', kinds: ['image'] },
         { value: 'qrDataUrl', label: 'QR Code', kinds: ['qr', 'image'] },
     ],
     player: [
@@ -88,6 +89,7 @@ export const BINDABLE_FIELDS: Record<CardSubjectType, BindableField[]> = {
         { value: 'eventName', label: 'Event Name', kinds: ['text'] },
         { value: 'photo', label: 'Photo', kinds: ['image'] },
         { value: 'eventLogo', label: 'Event Logo', kinds: ['image'] },
+        { value: 'appLogo', label: 'App Logo', kinds: ['image'] },
         { value: 'qrDataUrl', label: 'QR Code', kinds: ['qr', 'image'] },
     ],
     team: [
@@ -96,6 +98,7 @@ export const BINDABLE_FIELDS: Record<CardSubjectType, BindableField[]> = {
         { value: 'eventName', label: 'Event Name', kinds: ['text'] },
         { value: 'photo', label: 'Logo', kinds: ['image'] },
         { value: 'eventLogo', label: 'Event Logo', kinds: ['image'] },
+        { value: 'appLogo', label: 'App Logo', kinds: ['image'] },
         { value: 'qrDataUrl', label: 'QR Code', kinds: ['qr', 'image'] },
     ],
 };

@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import QRCode from 'qrcode';
 import { useEffect, useRef, useState } from 'react';
+import { APP_LOGO_URL } from '@/components/id-card/card-presets';
 import { IdCardRenderer } from '@/components/id-card/id-card-renderer';
 import type { IdCardData } from '@/components/id-card/id-card-renderer';
 import { IdCardActions } from '@/components/id-card-actions';
@@ -40,6 +41,7 @@ export default function AttendeeIdCard({ attendee, template }: Props) {
         qrDataUrl,
         eventName: attendee.event?.name,
         eventLogo: attendee.event?.logo ? formatImageUrl(attendee.event.logo) : undefined,
+        appLogo: APP_LOGO_URL,
     };
 
     return (

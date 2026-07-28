@@ -197,6 +197,11 @@ export function DesignCanvas({
                 flex: '0 0 auto',
             }}
         >
+            {/* Content layer — clipped to the card bounds so what's shown here matches
+                what actually prints/exports. An oversized or off-canvas element (dragged
+                past the edge, rotated, etc.) visibly disappears past this boundary,
+                which is what makes the frame edge read as a real, contrasting border
+                instead of content bleeding into the surrounding canvas. */}
             <div
                 onPointerDown={() => onSelect([])}
                 style={{
@@ -209,6 +214,7 @@ export function DesignCanvas({
                     background: canvas.background || '#ffffff',
                     boxShadow: '0 18px 50px -12px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(15, 23, 42, 0.08)',
                     borderRadius: 2,
+                    overflow: 'hidden',
                     touchAction: 'none',
                     cursor: active ? 'grabbing' : 'default',
                 }}
@@ -256,6 +262,23 @@ export function DesignCanvas({
                         </div>
                     );
                 })}
+            </div>
+
+            {/* UI layer — same coordinate space as the content layer above (identical
+                position/size/transform), but never clipped, so selection handles for an
+                element that overflows the card stay reachable outside the visible frame. */}
+            <div
+                aria-hidden
+                style={{
+                    position: 'absolute',
+                    inset: 0,
+                    width: canvas.width,
+                    height: canvas.height,
+                    transform: `scale(${zoom})`,
+                    transformOrigin: 'top left',
+                    pointerEvents: 'none',
+                }}
+            >
 
                 {/* Snap guides */}
                 {guides.map((guide) => (

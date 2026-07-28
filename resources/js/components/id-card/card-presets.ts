@@ -1,5 +1,8 @@
 import type { CardCanvas, CardElement, CardSubjectType } from '@/types/card-template';
 
+/** Sporta's own platform branding — fixed, not per-event, available to bind as `appLogo`. */
+export const APP_LOGO_URL = '/images/sporta-logo.png';
+
 export interface CanvasPreset {
     key: string;
     label: string;

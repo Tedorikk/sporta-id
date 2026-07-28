@@ -21,7 +21,7 @@ import {
 import QRCode from 'qrcode';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Box } from '@/components/id-card/canvas-geometry';
-import { rescaleElements, SUBJECT_LABEL } from '@/components/id-card/card-presets';
+import { APP_LOGO_URL, rescaleElements, SUBJECT_LABEL } from '@/components/id-card/card-presets';
 import { DesignCanvas } from '@/components/id-card/design-canvas';
 import type { IdCardData } from '@/components/id-card/id-card-renderer';
 import { InspectorPanel } from '@/components/id-card/inspector-panel';
@@ -90,6 +90,7 @@ function buildPreviewData(subjectType: CardSubjectType, sample: Attendee | null,
             qrDataUrl,
             eventName: event.name,
             eventLogo,
+            appLogo: APP_LOGO_URL,
         };
     }
 
@@ -103,6 +104,7 @@ function buildPreviewData(subjectType: CardSubjectType, sample: Attendee | null,
         qrDataUrl,
         eventName: event.name,
         eventLogo,
+        appLogo: APP_LOGO_URL,
     };
 }
 
