@@ -190,8 +190,8 @@ function PlayerCard({
     return (
         <div
             className={cn(
-                'flex flex-col gap-4 rounded-2xl border bg-card p-5 shadow-sm transition-shadow hover:shadow-md sm:flex-row',
-                isLarge && 'p-6',
+                'flex flex-col gap-5 rounded-2xl border bg-card p-6 shadow-sm transition-shadow hover:shadow-md sm:flex-row',
+                isLarge && 'p-7',
             )}
         >
             <ZoomableImage
@@ -201,11 +201,16 @@ function PlayerCard({
                 className={cn(
                     'shrink-0 rounded-xl',
                     isLarge
-                        ? 'h-40 w-32 sm:h-44 sm:w-36'
-                        : 'h-28 w-22 sm:h-32 sm:w-24',
+                        ? 'h-52 w-40 sm:h-60 sm:w-48'
+                        : 'h-36 w-28 sm:h-40 sm:w-32',
                 )}
                 fallback={
-                    <div className="flex h-full w-full items-center justify-center rounded-xl bg-primary/10 text-2xl font-extrabold text-primary">
+                    <div
+                        className={cn(
+                            'flex h-full w-full items-center justify-center rounded-xl bg-primary/10 font-extrabold text-primary',
+                            isLarge ? 'text-4xl' : 'text-3xl',
+                        )}
+                    >
                         {isPlayerRole
                             ? `#${player.jersey_number ?? '-'}`
                             : player.name.substring(0, 2).toUpperCase()}
@@ -213,19 +218,19 @@ function PlayerCard({
                 }
             />
 
-            <div className="flex min-w-0 flex-1 flex-col gap-2">
-                <div className="flex flex-wrap items-center gap-2">
+            <div className="flex min-w-0 flex-1 flex-col gap-2.5">
+                <div className="flex flex-wrap items-center gap-2.5">
                     <span
                         className={cn(
                             'font-bold',
-                            isLarge ? 'text-xl' : 'text-lg',
+                            isLarge ? 'text-3xl' : 'text-2xl',
                         )}
                     >
                         {player.name}
                     </span>
                     <Badge
                         variant="outline"
-                        className="shrink-0 font-mono text-sm"
+                        className="shrink-0 px-2.5 py-1 font-mono text-base"
                     >
                         {isPlayerRole
                             ? `#${player.jersey_number ?? '-'}`
@@ -234,13 +239,13 @@ function PlayerCard({
                     {player.role === 'medic' && (
                         <Badge
                             className={cn(
-                                'shrink-0 gap-1 text-xs',
+                                'shrink-0 gap-1 px-2.5 py-1 text-sm',
                                 player.is_certificate_validated
                                     ? 'bg-emerald-500 hover:bg-emerald-600'
                                     : 'bg-amber-400 text-amber-900 hover:bg-amber-400',
                             )}
                         >
-                            <FileCheck2 className="h-3 w-3" />
+                            <FileCheck2 className="h-3.5 w-3.5" />
                             {player.is_certificate_validated
                                 ? 'Certified'
                                 : 'Pending Cert.'}
@@ -248,14 +253,14 @@ function PlayerCard({
                     )}
                 </div>
                 {isPlayerRole && player.position && (
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-base text-muted-foreground">
                         {player.position}
                     </span>
                 )}
 
-                <div className="mt-1 flex flex-col gap-1.5 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 shrink-0" />
+                <div className="mt-1 flex flex-col gap-2 text-base text-muted-foreground">
+                    <span className="flex items-center gap-2.5">
+                        <Calendar className="h-5 w-5 shrink-0" />
                         {player.dob ? (
                             new Date(player.dob).toLocaleDateString('en-US', {
                                 year: 'numeric',
@@ -266,14 +271,14 @@ function PlayerCard({
                             <span className="italic">DOB not set</span>
                         )}
                     </span>
-                    <span className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 shrink-0" />
+                    <span className="flex items-center gap-2.5">
+                        <Phone className="h-5 w-5 shrink-0" />
                         {player.phone_number ?? (
                             <span className="italic">Missing</span>
                         )}
                     </span>
-                    <span className="flex items-center gap-2 truncate">
-                        <Mail className="h-4 w-4 shrink-0" />
+                    <span className="flex items-center gap-2.5 truncate">
+                        <Mail className="h-5 w-5 shrink-0" />
                         {player.email ?? (
                             <span className="italic">Missing</span>
                         )}
@@ -289,9 +294,9 @@ function PlayerCard({
                                 alt: `${player.name} — Medical Certificate`,
                             })
                         }
-                        className="mt-1 flex w-fit items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted"
+                        className="mt-1 flex w-fit items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted"
                     >
-                        <FileCheck2 className="h-3.5 w-3.5" />
+                        <FileCheck2 className="h-4 w-4" />
                         View Certificate
                     </button>
                 )}
@@ -307,16 +312,16 @@ function StatusBanner({ status }: { status: Team['status'] }) {
     return (
         <div
             className={cn(
-                'flex items-center gap-3 rounded-xl p-4 text-white shadow-sm',
+                'flex items-center gap-4 rounded-xl p-5 text-white shadow-sm',
                 config.bannerClassName,
             )}
         >
-            <Icon className="h-9 w-9 shrink-0" />
+            <Icon className="h-11 w-11 shrink-0" />
             <div>
-                <p className="text-lg font-extrabold tracking-wide uppercase">
+                <p className="text-xl font-extrabold tracking-wide uppercase">
                     {config.label}
                 </p>
-                <p className="text-sm opacity-90">{config.description}</p>
+                <p className="text-base opacity-90">{config.description}</p>
             </div>
         </div>
     );
@@ -538,7 +543,7 @@ export default function QrScanner() {
     }, [stopScanner]);
 
     return (
-        <div className="mx-auto flex h-full w-full max-w-4xl flex-1 flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
+        <div className="mx-auto flex h-full w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
             <Head title="QR Scanner — Team & Player Lookup" />
 
             {lightbox && (
@@ -693,9 +698,9 @@ export default function QrScanner() {
                                 src={result.data.logo}
                                 alt={result.data.name}
                                 onOpen={setLightbox}
-                                className="h-24 w-24 shrink-0 rounded-xl shadow"
+                                className="h-32 w-32 shrink-0 rounded-xl shadow"
                                 fallback={
-                                    <div className="flex h-full w-full items-center justify-center rounded-xl bg-primary/10 text-2xl font-extrabold text-primary shadow">
+                                    <div className="flex h-full w-full items-center justify-center rounded-xl bg-primary/10 text-4xl font-extrabold text-primary shadow">
                                         {result.data.name
                                             .substring(0, 2)
                                             .toUpperCase()}
@@ -704,7 +709,7 @@ export default function QrScanner() {
                             />
                             <div className="flex flex-1 flex-col gap-1.5">
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <h2 className="text-2xl font-extrabold tracking-tight">
+                                    <h2 className="text-3xl font-extrabold tracking-tight">
                                         {result.data.name}
                                     </h2>
                                     <Badge
@@ -734,23 +739,23 @@ export default function QrScanner() {
                                     )}
                                 </div>
                                 {result.data.event && (
-                                    <p className="text-sm text-muted-foreground">
+                                    <p className="text-base text-muted-foreground">
                                         {result.data.event.name}
                                     </p>
                                 )}
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2 rounded-lg bg-emerald-50 p-3 dark:bg-emerald-950/30">
-                            <Shield className="h-4 w-4 shrink-0 text-emerald-600" />
-                            <span className="text-sm text-emerald-700 dark:text-emerald-400">
+                        <div className="flex items-center gap-2.5 rounded-lg bg-emerald-50 p-4 dark:bg-emerald-950/30">
+                            <Shield className="h-5 w-5 shrink-0 text-emerald-600" />
+                            <span className="text-base text-emerald-700 dark:text-emerald-400">
                                 {result.data.players.length} registered player
                                 {result.data.players.length !== 1 ? 's' : ''}
                             </span>
                             <Button
                                 size="sm"
                                 variant="outline"
-                                className="ml-auto text-xs"
+                                className="ml-auto text-sm"
                                 onClick={startScanner}
                             >
                                 Scan another
@@ -761,7 +766,7 @@ export default function QrScanner() {
                     {/* Players grid */}
                     {result.data.players.length > 0 && (
                         <div className="flex flex-col gap-3">
-                            <h3 className="text-lg font-semibold tracking-tight">
+                            <h3 className="text-xl font-semibold tracking-tight">
                                 Player Roster ({result.data.players.length})
                             </h3>
                             <div className="grid gap-4 lg:grid-cols-2">
@@ -796,46 +801,56 @@ export default function QrScanner() {
                             const team = result.data.teams?.[0];
 
                             return (
-                                <div className="flex flex-wrap items-center gap-2 rounded-lg bg-slate-50 p-3 dark:bg-slate-900/40">
+                                <div className="flex flex-col gap-3 rounded-lg bg-slate-50 p-4 dark:bg-slate-900/40">
                                     {team && (
-                                        <>
-                                            <Badge
-                                                variant={
-                                                    STATUS_CONFIG[team.status]
-                                                        .badgeVariant
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            <ZoomableImage
+                                                src={team.logo}
+                                                alt={team.name}
+                                                onOpen={setLightbox}
+                                                className="h-14 w-14 shrink-0 rounded-lg shadow-sm"
+                                                fallback={
+                                                    <div className="flex h-full w-full items-center justify-center rounded-lg bg-primary/10 text-lg font-extrabold text-primary shadow-sm">
+                                                        {team.name.substring(0, 2).toUpperCase()}
+                                                    </div>
                                                 }
-                                                className={
-                                                    STATUS_CONFIG[team.status]
-                                                        .badgeClassName
-                                                }
-                                            >
-                                                <CheckCircle2 className="mr-1 h-3 w-3" />
-                                                {
-                                                    STATUS_CONFIG[team.status]
-                                                        .label
-                                                }
-                                            </Badge>
-                                            <span className="text-sm text-muted-foreground">
-                                                Team:{' '}
-                                                <span className="font-medium text-foreground">
-                                                    {team.name}
-                                                </span>
-                                            </span>
-                                            {team.basketball_event_category && (
-                                                <Badge variant="secondary">
-                                                    {
-                                                        team
-                                                            .basketball_event_category
-                                                            .name
-                                                    }
-                                                </Badge>
-                                            )}
-                                        </>
+                                            />
+                                            <div className="flex min-w-0 flex-1 flex-col gap-1">
+                                                <span className="truncate text-lg font-bold">{team.name}</span>
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <Badge
+                                                        variant={
+                                                            STATUS_CONFIG[team.status]
+                                                                .badgeVariant
+                                                        }
+                                                        className={
+                                                            STATUS_CONFIG[team.status]
+                                                                .badgeClassName
+                                                        }
+                                                    >
+                                                        <CheckCircle2 className="mr-1 h-3 w-3" />
+                                                        {
+                                                            STATUS_CONFIG[team.status]
+                                                                .label
+                                                        }
+                                                    </Badge>
+                                                    {team.basketball_event_category && (
+                                                        <Badge variant="secondary">
+                                                            {
+                                                                team
+                                                                    .basketball_event_category
+                                                                    .name
+                                                            }
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
                                     )}
                                     <Button
                                         size="sm"
                                         variant="outline"
-                                        className="ml-auto text-xs"
+                                        className={cn('text-sm', team && 'self-end')}
                                         onClick={startScanner}
                                     >
                                         Scan another
@@ -878,16 +893,16 @@ export default function QrScanner() {
                                 src={result.data.photo}
                                 alt={result.data.name}
                                 onOpen={setLightbox}
-                                className="h-24 w-24 shrink-0 rounded-xl shadow"
+                                className="h-32 w-32 shrink-0 rounded-xl shadow"
                                 fallback={
-                                    <div className="flex h-full w-full items-center justify-center rounded-xl bg-primary/10 text-2xl font-extrabold text-primary shadow">
+                                    <div className="flex h-full w-full items-center justify-center rounded-xl bg-primary/10 text-4xl font-extrabold text-primary shadow">
                                         {result.data.name.substring(0, 2).toUpperCase()}
                                     </div>
                                 }
                             />
                             <div className="flex flex-1 flex-col gap-1.5">
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <h2 className="text-2xl font-extrabold tracking-tight">
+                                    <h2 className="text-3xl font-extrabold tracking-tight">
                                         {result.data.name}
                                     </h2>
                                     {result.data.attendee_type && (
@@ -897,36 +912,36 @@ export default function QrScanner() {
                                     )}
                                 </div>
                                 {result.data.organization && (
-                                    <p className="text-sm text-muted-foreground">
+                                    <p className="text-base text-muted-foreground">
                                         {result.data.organization}
                                         {result.data.title ? ` · ${result.data.title}` : ''}
                                     </p>
                                 )}
                                 {result.data.event && (
-                                    <p className="text-sm text-muted-foreground">
+                                    <p className="text-base text-muted-foreground">
                                         {result.data.event.name}
                                     </p>
                                 )}
                             </div>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-2 rounded-lg bg-slate-50 p-3 dark:bg-slate-900/40">
+                        <div className="flex flex-wrap items-center gap-3 rounded-lg bg-slate-50 p-4 dark:bg-slate-900/40">
                             {result.data.email && (
-                                <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                                    <Mail className="h-4 w-4 shrink-0" />
+                                <span className="flex items-center gap-2 text-base text-muted-foreground">
+                                    <Mail className="h-5 w-5 shrink-0" />
                                     {result.data.email}
                                 </span>
                             )}
                             {result.data.phone && (
-                                <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                                    <Phone className="h-4 w-4 shrink-0" />
+                                <span className="flex items-center gap-2 text-base text-muted-foreground">
+                                    <Phone className="h-5 w-5 shrink-0" />
                                     {result.data.phone}
                                 </span>
                             )}
                             <Button
                                 size="sm"
                                 variant="outline"
-                                className="ml-auto text-xs"
+                                className="ml-auto text-sm"
                                 onClick={startScanner}
                             >
                                 Scan another
