@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { formatDate } from '@/lib/format-date';
 import { formatImageUrl } from '@/lib/image-utils';
 import events from '@/routes/events';
@@ -24,6 +25,8 @@ import { BasketballManagement } from './basketball/basketball-management';
 
 export default function ShowEvent({ event }: { event: Event }) {
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isTogglingRegistration, setIsTogglingRegistration] = useState(false);
+    const registrationOpen = event.specific?.registration_open ?? true;
 
     const handleDelete = () => {
         setIsDeleting(true);
@@ -37,6 +40,15 @@ export default function ShowEvent({ event }: { event: Event }) {
         const url = `${window.location.origin}/events/${event.id}/register`;
         navigator.clipboard.writeText(url);
         toast.success('Registration link copied to clipboard');
+    };
+
+    const handleToggleRegistration = (checked: boolean) => {
+        setIsTogglingRegistration(true);
+        router.put(
+            `/events/${event.id}/basketball`,
+            { registration_open: checked },
+            { preserveScroll: true, onFinish: () => setIsTogglingRegistration(false) },
+        );
     };
 
     return (
@@ -104,6 +116,20 @@ export default function ShowEvent({ event }: { event: Event }) {
                                 <Link2 className="mr-2 h-4 w-4" />
                                 Copy Registration Link
                             </Button>
+                            <div className="flex items-center gap-2 rounded-md border px-3 py-2">
+                                <Switch
+                                    id="registration-toggle"
+                                    checked={registrationOpen}
+                                    onCheckedChange={handleToggleRegistration}
+                                    disabled={isTogglingRegistration}
+                                />
+                                <label
+                                    htmlFor="registration-toggle"
+                                    className="cursor-pointer text-sm font-medium select-none"
+                                >
+                                    Registration {registrationOpen ? 'Open' : 'Closed'}
+                                </label>
+                            </div>
                         </>
                     )}
                 </div>

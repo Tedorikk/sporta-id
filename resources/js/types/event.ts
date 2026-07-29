@@ -4,6 +4,12 @@ import type { Team } from './team';
 
 export type EventStatus = 'upcoming' | 'ongoing' | 'past';
 
+export interface BasketballEventSpecific {
+    id: number;
+    pool_drawing_date: string | null;
+    registration_open: boolean;
+}
+
 export interface Event {
     id: number;
     name: string;
@@ -21,6 +27,7 @@ export interface Event {
     whatsapp_url: string | null;
     status: EventStatus;
     specific_type: 'BasketballEvent' | null;
+    specific?: BasketballEventSpecific | null;
     teams_count?: number;
     pools_count?: number;
     matches_count?: number;

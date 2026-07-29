@@ -29,4 +29,22 @@ class BasketballEventController extends Controller
             'description' => 'Turnamen Basket berhasil dibuat.',
         ]]);
     }
+
+    public function update(Request $request, Event $event)
+    {
+        abort_unless($event->specific instanceof BasketballEvent, 404);
+
+        $validated = $request->validate([
+            'registration_open' => ['required', 'boolean'],
+        ]);
+
+        $event->specific->update($validated);
+
+        return redirect()->back()->with(['toast' => [
+            'title' => 'Success',
+            'description' => $validated['registration_open']
+                ? 'Registration is now open to players.'
+                : 'Registration is now closed.',
+        ]]);
+    }
 }

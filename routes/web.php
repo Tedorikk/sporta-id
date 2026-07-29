@@ -128,6 +128,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('events', EventController::class)->only(['store', 'update', 'destroy']);
     Route::post('events/{event}/basketball', [BasketballEventController::class, 'store'])
         ->name('events.basketball.store');
+    Route::put('events/{event}/basketball', [BasketballEventController::class, 'update'])
+        ->name('events.basketball.update');
 
     // --- QR Scanner (admin only) ----------------------------------------
     Route::get('dashboard/qr-scanner', [TeamQrController::class, 'scan'])->name('qr-scanner');

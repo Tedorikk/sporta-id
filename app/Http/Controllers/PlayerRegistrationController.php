@@ -24,16 +24,21 @@ class PlayerRegistrationController extends Controller
 
         abort_unless($event->specific instanceof BasketballEvent, 404);
 
-        $categories = $event->specific->categories()
-            ->with(['teams' => function ($query) {
-                $query->where('status', '!=', 'rejected')
-                    ->select('id', 'name', 'status', 'basketball_event_category_id');
-            }])
-            ->get();
+        $registrationOpen = $event->specific->registration_open;
+
+        $categories = $registrationOpen
+            ? $event->specific->categories()
+                ->with(['teams' => function ($query) {
+                    $query->where('status', '!=', 'rejected')
+                        ->select('id', 'name', 'status', 'basketball_event_category_id');
+                }])
+                ->get()
+            : [];
 
         return Inertia::render('register', [
             'event' => $event,
             'categories' => $categories,
+            'registrationClosed' => ! $registrationOpen,
         ]);
     }
 
@@ -42,6 +47,7 @@ class PlayerRegistrationController extends Controller
         $event->loadMissing('specific');
 
         abort_unless($event->specific instanceof BasketballEvent, 404);
+        abort_unless($event->specific->registration_open, 403, 'Registration is closed for this event.');
 
         $validated = $request->validate([
             'basketball_event_category_id' => [

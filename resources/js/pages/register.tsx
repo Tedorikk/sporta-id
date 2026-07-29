@@ -1,10 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Head, router } from '@inertiajs/react';
 import { format } from 'date-fns';
-import { CalendarIcon, CheckCircle2, Loader2 } from 'lucide-react';
+import { CalendarIcon, CheckCircle2, Loader2, Lock } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { PublicPageHeader } from '@/components/public/public-page-header';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -16,7 +17,6 @@ import {
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { PublicPageHeader } from '@/components/public/public-page-header';
 import {
     Select,
     SelectContent,
@@ -37,6 +37,7 @@ type RegisterCategory = BasketballEventCategory & { teams: Team[] };
 interface Props {
     event: Event;
     categories: RegisterCategory[];
+    registrationClosed: boolean;
 }
 
 const roleValues = PLAYER_ROLES.map((r) => r.value) as [string, ...string[]];
@@ -92,7 +93,7 @@ function formatE164Input(value: string) {
     return digits ? `+${digits}` : '';
 }
 
-export default function Register({ event, categories }: Props) {
+export default function Register({ event, categories, registrationClosed }: Props) {
     useForceLightMode();
 
     const [isSaving, setIsSaving] = useState(false);
@@ -144,6 +145,43 @@ export default function Register({ event, categories }: Props) {
             },
         });
     };
+
+    if (registrationClosed) {
+        return (
+            <>
+                <Head title={`Registration Closed — ${event.name}`} />
+
+                <div className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10">
+                    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                        <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-red-600/10 blur-3xl" />
+                        <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-red-900/20 blur-3xl" />
+                    </div>
+
+                    <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
+                        <PublicPageHeader
+                            eyebrow="Team Registration"
+                            title={event.name}
+                            subtitle="Registration is currently closed"
+                        />
+
+                        <div className="flex flex-col items-center gap-4 px-6 py-14 text-center">
+                            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+                                <Lock className="h-8 w-8 text-red-600" />
+                            </div>
+                            <p className="text-neutral-600">
+                                The organizer has closed player registration for this event. Please contact the organizer for more information.
+                            </p>
+                            {event.contact_person && (
+                                <p className="text-sm font-medium text-neutral-500">
+                                    Contact: {event.contact_person}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </>
+        );
+    }
 
     return (
         <>
