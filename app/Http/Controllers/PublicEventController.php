@@ -76,9 +76,12 @@ class PublicEventController extends Controller
                 });
         }
 
+        $meetings = $event->meetings()->with('speaker')->orderBy('scheduled_at')->get();
+
         return Inertia::render('events/show', [
             'event' => $event,
             'categories' => $categories,
+            'meetings' => $meetings,
         ]);
     }
 }

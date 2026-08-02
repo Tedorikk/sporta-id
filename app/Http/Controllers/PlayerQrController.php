@@ -39,6 +39,8 @@ class PlayerQrController extends Controller
             } elseif ($team->status === 'rejected') {
                 abort(403, 'Tim pemain sudah didiskualifikasi dari turnamen');
             }
+
+            $team->next_match_today = $team->nextMatchToday();
         }
 
         return response()->json($player);

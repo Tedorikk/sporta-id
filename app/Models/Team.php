@@ -6,8 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-
-// Removed HasMany import
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Team extends Model
 {
@@ -40,5 +39,36 @@ class Team extends Model
     public function basketballEventCategory(): BelongsTo
     {
         return $this->belongsTo(BasketballEventCategory::class, 'basketball_event_category_id', 'id');
+    }
+
+    public function homeMatches(): HasMany
+    {
+        return $this->hasMany(GameMatch::class, 'home_team_id');
+    }
+
+    public function awayMatches(): HasMany
+    {
+        return $this->hasMany(GameMatch::class, 'away_team_id');
+    }
+
+    /**
+     * The team's earliest not-yet-finished match scheduled for today, or null
+     * if there are no more matches today.
+     */
+    public function nextMatchToday(): ?GameMatch
+    {
+        $today = now()->startOfDay();
+        $tomorrow = $today->copy()->addDay();
+
+        return GameMatch::query()
+            ->where(function ($query) {
+                $query->where('home_team_id', $this->id)
+                    ->orWhere('away_team_id', $this->id);
+            })
+            ->whereBetween('scheduled_at', [$today, $tomorrow])
+            ->where('status', '!=', 'finished')
+            ->with(['homeTeam', 'awayTeam', 'category'])
+            ->orderBy('scheduled_at')
+            ->first();
     }
 }

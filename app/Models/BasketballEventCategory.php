@@ -13,7 +13,7 @@ class BasketballEventCategory extends Model
     use HasFactory;
 
     protected $fillable = [
-        'basketball_event_id', 'name', 'slug', 'format', 'win_points', 'loss_points',
+        'basketball_event_id', 'registration_category_id', 'name', 'slug', 'format', 'win_points', 'loss_points',
         'min_team', 'max_team', 'min_player_per_team', 'max_player_per_team',
         'max_player_per_coach', 'price', 'quota', 'status',
     ];
@@ -34,7 +34,7 @@ class BasketballEventCategory extends Model
     protected static function boot()
     {
         parent::boot();
- 
+
         static::creating(function ($category) {
             if (empty($category->slug)) {
                 $category->slug = Str::slug($category->name).'-'.Str::lower(Str::random(4));
@@ -45,6 +45,11 @@ class BasketballEventCategory extends Model
     public function basketballEvent(): BelongsTo
     {
         return $this->belongsTo(BasketballEvent::class);
+    }
+
+    public function registrationCategory(): BelongsTo
+    {
+        return $this->belongsTo(RegistrationCategory::class);
     }
 
     public function teams(): HasMany

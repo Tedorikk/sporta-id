@@ -1,17 +1,21 @@
 import { Head } from '@inertiajs/react';
+import axios from 'axios';
 import { Html5Qrcode } from 'html5-qrcode';
 import {
     AlertCircle,
     Calendar,
     Camera,
     CameraOff,
+    CalendarX,
     CheckCircle2,
     Clock,
     FileCheck2,
     Mail,
+    MapPin,
     Phone,
     QrCode,
     Shield,
+    UserCheck,
     X,
     XCircle,
     ZoomIn,
@@ -19,11 +23,23 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { formatDateTime } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
+import { StatusBadge, ROUND_LABELS } from '@/pages/dashboard/events/basketball/matches/components/constants';
 import { dashboard } from '@/routes';
 import type { Attendee } from '@/types/attendee';
+import type { GameMatch } from '@/types/game-match';
+import type { Meeting } from '@/types/meeting';
 import { playerRoleLabel } from '@/types/player';
 import type { Player } from '@/types/player';
+import type { Registration } from '@/types/registration';
 import type { Team } from '@/types/team';
 
 type ScannedTeam = Team & {
@@ -39,10 +55,21 @@ type ScannedAttendee = Attendee & {
     event?: { id: number; name: string };
 };
 
+type ScannedRegistration = Registration & {
+    event?: { id: number; name: string };
+};
+
+type CheckInResult = { meetingTitle: string; alreadyCheckedIn: boolean };
+
 type ScanResult =
     | { kind: 'team'; data: ScannedTeam }
     | { kind: 'player'; data: ScannedPlayer }
-    | { kind: 'attendee'; data: ScannedAttendee };
+    | { kind: 'attendee'; data: ScannedAttendee }
+    | { kind: 'registration'; data: ScannedRegistration; checkIn: CheckInResult | null };
+
+interface Props {
+    meetings: Meeting[];
+}
 
 const ATTENDEE_STATUS_CONFIG = {
     active: {
@@ -327,7 +354,76 @@ function StatusBanner({ status }: { status: Team['status'] }) {
     );
 }
 
-export default function QrScanner() {
+function NextMatchCard({
+    match,
+    teamId,
+}: {
+    match: GameMatch | null | undefined;
+    teamId: number;
+}) {
+    if (!match) {
+        return (
+            <div className="flex items-center gap-3 rounded-xl border border-dashed bg-muted/30 p-4">
+                <CalendarX className="h-6 w-6 shrink-0 text-muted-foreground" />
+                <div>
+                    <p className="text-base font-semibold">No more matches today</p>
+                    <p className="text-sm text-muted-foreground">
+                        This team has no further matches scheduled for today.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    const isHome = match.home_team_id === teamId;
+    const opponent = isHome ? match.away_team : match.home_team;
+    const time = match.scheduled_at
+        ? new Date(match.scheduled_at).toLocaleTimeString([], {
+              hour: 'numeric',
+              minute: '2-digit',
+          })
+        : null;
+
+    return (
+        <div className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm">
+            <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-muted-foreground">
+                    Next Match Today
+                </span>
+                <StatusBadge status={match.status} />
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-col gap-1">
+                    <span className="text-xl font-bold">
+                        vs {opponent?.name ?? 'TBD'}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                        {match.round ? (ROUND_LABELS[match.round] ?? match.round) : ''}
+                        {match.pool ? ` · ${match.pool.name}` : ''}
+                    </span>
+                </div>
+                <div className="flex flex-col items-end gap-1.5">
+                    {time && (
+                        <span className="flex items-center gap-1.5 text-lg font-semibold">
+                            <Clock className="h-5 w-5" />
+                            {time}
+                        </span>
+                    )}
+                    {match.venue && (
+                        <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                            <MapPin className="h-4 w-4" />
+                            {match.venue}
+                        </span>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+const NO_MEETING = '__none__';
+
+export default function QrScanner({ meetings }: Props) {
     const scannerRef = useRef<Html5Qrcode | null>(null);
     const hardwareInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -339,6 +435,7 @@ export default function QrScanner() {
     const [lastScannedText, setLastScannedText] = useState<string | null>(null);
     const [inputValue, setInputValue] = useState('');
     const [lightbox, setLightbox] = useState<Lightbox | null>(null);
+    const [selectedMeetingId, setSelectedMeetingId] = useState<string>(NO_MEETING);
 
     const stopScanner = useCallback(async () => {
         if (scannerRef.current?.isScanning) {
@@ -372,43 +469,50 @@ export default function QrScanner() {
             const teamMatch = text.match(/\/teams\/(\d+)\/id-card/);
             const playerMatch = text.match(/\/players\/(\d+)\/id-card/);
             const attendeeMatch = text.match(/\/attendees\/(\d+)\/id-card/);
+            const registrationMatch = text.match(/\/registrations\/(\d+)\/id-card/);
 
-            if (!teamMatch && !playerMatch && !attendeeMatch) {
+            if (!teamMatch && !playerMatch && !attendeeMatch && !registrationMatch) {
                 setError(
-                    'Invalid QR code. Please scan a Sporta ID team, player, or attendee QR code.',
+                    'Invalid QR code. Please scan a Sporta ID team, player, attendee, or registration QR code.',
                 );
 
                 return;
             }
 
-            const kind: 'team' | 'player' | 'attendee' = teamMatch
+            const kind: 'team' | 'player' | 'attendee' | 'registration' = teamMatch
                 ? 'team'
                 : playerMatch
                   ? 'player'
-                  : 'attendee';
+                  : attendeeMatch
+                    ? 'attendee'
+                    : 'registration';
             const id = teamMatch
                 ? teamMatch[1]
                 : playerMatch
                   ? playerMatch[1]
-                  : attendeeMatch![1];
-            const endpoint =
-                kind === 'team'
-                    ? `/dashboard/teams/${id}/qr-data`
-                    : kind === 'player'
-                      ? `/dashboard/players/${id}/qr-data`
-                      : `/dashboard/attendees/${id}/qr-data`;
+                  : attendeeMatch
+                    ? attendeeMatch[1]
+                    : registrationMatch![1];
+
+            const meetingId = selectedMeetingId !== NO_MEETING ? selectedMeetingId : null;
+            const checkingIntoMeeting = kind === 'registration' && meetingId !== null;
+
             const notFoundLabel =
                 kind === 'team'
                     ? 'Team not found.'
                     : kind === 'player'
                       ? 'Player not found.'
-                      : 'Attendee not found.';
+                      : kind === 'attendee'
+                        ? 'Attendee not found.'
+                        : 'Registration not found.';
             const disqualifiedLabel =
                 kind === 'team'
                     ? 'Team has been disqualified.'
                     : kind === 'player'
                       ? "Player's team has been disqualified."
-                      : 'This attendee pass has been revoked.';
+                      : kind === 'attendee'
+                        ? 'This attendee pass has been revoked.'
+                        : 'This registration is not confirmed.';
 
             await stopScanner();
             setLoading(true);
@@ -416,6 +520,33 @@ export default function QrScanner() {
             setResult(null);
 
             try {
+                if (checkingIntoMeeting) {
+                    const { data } = await axios.post(`/dashboard/meetings/${meetingId}/check-ins`, {
+                        registration_id: id,
+                    });
+                    const meeting = meetings.find((m) => String(m.id) === meetingId);
+
+                    setResult({
+                        kind: 'registration',
+                        data: data.registration as ScannedRegistration,
+                        checkIn: {
+                            meetingTitle: meeting?.title ?? data.meeting?.title ?? 'this meeting',
+                            alreadyCheckedIn: Boolean(data.already_checked_in),
+                        },
+                    });
+
+                    return;
+                }
+
+                const endpoint =
+                    kind === 'team'
+                        ? `/dashboard/teams/${id}/qr-data`
+                        : kind === 'player'
+                          ? `/dashboard/players/${id}/qr-data`
+                          : kind === 'attendee'
+                            ? `/dashboard/attendees/${id}/qr-data`
+                            : `/dashboard/registrations/${id}/qr-data`;
+
                 const response = await fetch(endpoint, {
                     headers: {
                         Accept: 'application/json',
@@ -452,19 +583,28 @@ export default function QrScanner() {
                         ? { kind: 'team', data: data as ScannedTeam }
                         : kind === 'player'
                           ? { kind: 'player', data: data as ScannedPlayer }
-                          : { kind: 'attendee', data: data as ScannedAttendee },
+                          : kind === 'attendee'
+                            ? { kind: 'attendee', data: data as ScannedAttendee }
+                            : { kind: 'registration', data: data as ScannedRegistration, checkIn: null },
                 );
             } catch (err) {
-                setError(
-                    err instanceof Error
-                        ? err.message
-                        : 'Something went wrong.',
-                );
+                if (axios.isAxiosError(err)) {
+                    const status = err.response?.status;
+                    const fallback = status === 403 ? disqualifiedLabel : status === 404 ? notFoundLabel : 'Failed to check in.';
+
+                    setError(err.response?.data?.message ?? fallback);
+                } else {
+                    setError(
+                        err instanceof Error
+                            ? err.message
+                            : 'Something went wrong.',
+                    );
+                }
             } finally {
                 setLoading(false);
             }
         },
-        [lastScannedText, stopScanner],
+        [lastScannedText, stopScanner, selectedMeetingId, meetings],
     );
 
     const handleManualInput = useCallback(
@@ -589,13 +729,41 @@ export default function QrScanner() {
                 </div>
                 <p className="text-sm text-muted-foreground">
                     Ready to scan — point a hardware scanner at a team's,
-                    player's, or attendee's QR code, or press{' '}
+                    player's, attendee's, or registration's QR code, or press{' '}
                     <span className="font-medium text-foreground">
                         Start Scanning
                     </span>{' '}
                     to use your camera.
                 </p>
             </div>
+
+            {/* Meeting check-in mode */}
+            {meetings.length > 0 && (
+                <div className="flex items-center gap-3 rounded-xl border bg-card p-4 shadow-sm">
+                    <UserCheck className="h-5 w-5 shrink-0 text-muted-foreground" />
+                    <div className="flex-1">
+                        <p className="text-sm font-medium">Meeting Check-in Mode</p>
+                        <p className="text-xs text-muted-foreground">
+                            {selectedMeetingId === NO_MEETING
+                                ? 'Off — registration QR codes will just show a lookup.'
+                                : "On — scanning a registrant's QR code will mark them present at this meeting."}
+                        </p>
+                    </div>
+                    <Select value={selectedMeetingId} onValueChange={setSelectedMeetingId}>
+                        <SelectTrigger className="w-64">
+                            <SelectValue placeholder="No meeting selected" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value={NO_MEETING}>No meeting (lookup only)</SelectItem>
+                            {meetings.map((meeting) => (
+                                <SelectItem key={meeting.id} value={String(meeting.id)}>
+                                    {meeting.title} — {formatDateTime(meeting.scheduled_at)}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
 
             {/* Scanner card */}
             <div className="rounded-xl border bg-card shadow-sm">
@@ -763,6 +931,11 @@ export default function QrScanner() {
                         </div>
                     </div>
 
+                    <NextMatchCard
+                        match={result.data.next_match_today}
+                        teamId={result.data.id}
+                    />
+
                     {/* Players grid */}
                     {result.data.players.length > 0 && (
                         <div className="flex flex-col gap-3">
@@ -796,6 +969,13 @@ export default function QrScanner() {
                             onImageOpen={setLightbox}
                             size="large"
                         />
+
+                        {result.data.teams?.[0] && (
+                            <NextMatchCard
+                                match={result.data.teams[0].next_match_today}
+                                teamId={result.data.teams[0].id}
+                            />
+                        )}
 
                         {(() => {
                             const team = result.data.teams?.[0];
@@ -921,6 +1101,90 @@ export default function QrScanner() {
                                     <p className="text-base text-muted-foreground">
                                         {result.data.event.name}
                                     </p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3 rounded-lg bg-slate-50 p-4 dark:bg-slate-900/40">
+                            {result.data.email && (
+                                <span className="flex items-center gap-2 text-base text-muted-foreground">
+                                    <Mail className="h-5 w-5 shrink-0" />
+                                    {result.data.email}
+                                </span>
+                            )}
+                            {result.data.phone && (
+                                <span className="flex items-center gap-2 text-base text-muted-foreground">
+                                    <Phone className="h-5 w-5 shrink-0" />
+                                    {result.data.phone}
+                                </span>
+                            )}
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="ml-auto text-sm"
+                                onClick={startScanner}
+                            >
+                                Scan another
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Registration result */}
+            {result?.kind === 'registration' && (
+                <div className="flex animate-in flex-col gap-4 duration-500 fade-in slide-in-from-bottom-4">
+                    {result.checkIn ? (
+                        <div
+                            className={cn(
+                                'flex items-center gap-3 rounded-xl p-4 text-white shadow-sm',
+                                result.checkIn.alreadyCheckedIn ? 'bg-amber-500' : 'bg-emerald-500',
+                            )}
+                        >
+                            <UserCheck className="h-9 w-9 shrink-0" />
+                            <div>
+                                <p className="text-lg font-extrabold tracking-wide uppercase">
+                                    {result.checkIn.alreadyCheckedIn ? 'Already Checked In' : 'Checked In'}
+                                </p>
+                                <p className="text-sm opacity-90">
+                                    {result.data.name} — {result.checkIn.meetingTitle}
+                                </p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-3 rounded-xl bg-emerald-500 p-4 text-white shadow-sm">
+                            <CheckCircle2 className="h-9 w-9 shrink-0" />
+                            <div>
+                                <p className="text-lg font-extrabold tracking-wide uppercase">Confirmed</p>
+                                <p className="text-sm opacity-90">This registration is confirmed.</p>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="flex flex-col gap-4 rounded-xl border bg-card p-6 shadow-sm">
+                        <div className="flex items-start gap-5">
+                            <ZoomableImage
+                                src={result.data.photo}
+                                alt={result.data.name}
+                                onOpen={setLightbox}
+                                className="h-32 w-32 shrink-0 rounded-xl shadow"
+                                fallback={
+                                    <div className="flex h-full w-full items-center justify-center rounded-xl bg-primary/10 text-4xl font-extrabold text-primary shadow">
+                                        {result.data.name.substring(0, 2).toUpperCase()}
+                                    </div>
+                                }
+                            />
+                            <div className="flex flex-1 flex-col gap-1.5">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <h2 className="text-3xl font-extrabold tracking-tight">
+                                        {result.data.name}
+                                    </h2>
+                                    {result.data.registration_category && (
+                                        <Badge variant="secondary">{result.data.registration_category.name}</Badge>
+                                    )}
+                                </div>
+                                {result.data.event && (
+                                    <p className="text-base text-muted-foreground">{result.data.event.name}</p>
                                 )}
                             </div>
                         </div>

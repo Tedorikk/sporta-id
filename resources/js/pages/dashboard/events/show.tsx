@@ -10,6 +10,8 @@ import {
     Palette,
     Swords,
     Users,
+    ClipboardList,
+    Mic,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -92,6 +94,18 @@ export default function ShowEvent({ event }: { event: Event }) {
                         <Link href={`/dashboard/events/${event.id}/attendees`}>
                             <Users className="mr-2 h-4 w-4" />
                             Attendees
+                        </Link>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href={`/dashboard/events/${event.id}/registration-categories`}>
+                            <ClipboardList className="mr-2 h-4 w-4" />
+                            Registration Categories
+                        </Link>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href={`/dashboard/events/${event.id}/meetings`}>
+                            <Mic className="mr-2 h-4 w-4" />
+                            Meetings & Speakers
                         </Link>
                     </Button>
                     <Button variant="outline" size="sm" asChild>

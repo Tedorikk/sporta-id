@@ -1,16 +1,19 @@
 import { Head, Link } from '@inertiajs/react';
-import { Calendar, Facebook, Instagram, LayoutGrid, MessageCircle, Phone, Swords, Trophy, Users, Youtube } from 'lucide-react';
+import { Calendar, Facebook, Instagram, LayoutGrid, Mic, MessageCircle, Phone, Swords, Trophy, Users, Youtube } from 'lucide-react';
 import { BasketballCategorySection } from '@/components/public/basketball-category-section';
 import { MatchesCalendar } from '@/components/public/matches-calendar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import PublicLayout from '@/layouts/public-layout';
-import { formatDate } from '@/lib/format-date';
+import { formatDate, formatDateTime } from '@/lib/format-date';
 import { formatImageUrl } from '@/lib/image-utils';
 import type { Event } from '@/types/event';
+import type { Meeting } from '@/types/meeting';
 import type { PublicEventCategory } from '@/types/public-event-category';
 
 interface Props {
     event: Event;
     categories: PublicEventCategory[] | null;
+    meetings: Meeting[];
 }
 
 const STATUS_STYLE: Record<string, string> = {
@@ -26,8 +29,9 @@ const SOCIAL_LINKS: { key: keyof Event; label: string; icon: typeof Instagram }[
     { key: 'whatsapp_url', label: 'WhatsApp', icon: MessageCircle },
 ];
 
-export default function EventShow({ event, categories }: Props) {
+export default function EventShow({ event, categories, meetings }: Props) {
     const hasCategories = Boolean(categories && categories.length > 0);
+    const hasMeetings = meetings.length > 0;
     const totalTeams = categories?.reduce((sum, c) => sum + c.teams.length, 0) ?? 0;
     const totalMatches = categories?.reduce((sum, c) => sum + c.matches.length, 0) ?? 0;
     const totalPools = categories?.reduce((sum, c) => sum + c.pools.length, 0) ?? 0;
@@ -143,6 +147,50 @@ export default function EventShow({ event, categories }: Props) {
                         </div>
                     )}
 
+                    {hasMeetings && (
+                        <div className="flex flex-col gap-6">
+                            <h2 className="flex items-center gap-2 text-2xl font-black tracking-tight uppercase">
+                                <Mic className="h-5 w-5 text-white/50" />
+                                Schedule
+                            </h2>
+                            <div className="flex flex-col gap-3">
+                                {meetings.map((meeting) => (
+                                    <div
+                                        key={meeting.id}
+                                        className="flex flex-col gap-3 rounded-2xl border-2 border-white/10 bg-white/5 p-5 sm:flex-row sm:items-center sm:justify-between"
+                                    >
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-lg font-bold text-white">{meeting.title}</span>
+                                            <span className="text-sm text-white/50">
+                                                {formatDateTime(meeting.scheduled_at)}
+                                                {meeting.ends_at ? ` – ${formatDateTime(meeting.ends_at)}` : ''}
+                                                {meeting.location ? ` · ${meeting.location}` : ''}
+                                            </span>
+                                            {meeting.description && <p className="max-w-xl text-sm text-white/60">{meeting.description}</p>}
+                                        </div>
+                                        {meeting.speaker && (
+                                            <div className="flex items-center gap-3">
+                                                <Avatar>
+                                                    <AvatarImage
+                                                        src={meeting.speaker.photo ? formatImageUrl(meeting.speaker.photo) : undefined}
+                                                        alt={meeting.speaker.name}
+                                                    />
+                                                    <AvatarFallback>{meeting.speaker.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-semibold text-white">{meeting.speaker.name}</span>
+                                                    {meeting.speaker.title && (
+                                                        <span className="text-xs text-white/50">{meeting.speaker.title}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {hasCategories ? (
                         <div className="flex flex-col gap-6">
                             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -168,13 +216,15 @@ export default function EventShow({ event, categories }: Props) {
                             ))}
                         </div>
                     ) : (
-                        <p className="text-center text-sm text-white/40">
-                            Details for this event will be posted soon.{' '}
-                            <Link href="/events" className="text-red-400 hover:underline">
-                                Browse other events
-                            </Link>
-                            .
-                        </p>
+                        !hasMeetings && (
+                            <p className="text-center text-sm text-white/40">
+                                Details for this event will be posted soon.{' '}
+                                <Link href="/events" className="text-red-400 hover:underline">
+                                    Browse other events
+                                </Link>
+                                .
+                            </p>
+                        )
                     )}
                 </section>
             </PublicLayout>

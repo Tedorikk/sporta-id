@@ -15,12 +15,19 @@ use App\Http\Controllers\EventMatchController;
 use App\Http\Controllers\GameMatchController;
 use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\LandingController;
+use App\Http\Controllers\MeetingAttendanceController;
+use App\Http\Controllers\MeetingCheckInController;
+use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\PlayerLookupController;
 use App\Http\Controllers\PlayerQrController;
 use App\Http\Controllers\PlayerRegistrationController;
 use App\Http\Controllers\PoolController;
 use App\Http\Controllers\PublicEventController;
+use App\Http\Controllers\RegistrationCategoryController;
+use App\Http\Controllers\RegistrationController;
+use App\Http\Controllers\RegistrationQrController;
+use App\Http\Controllers\SpeakerController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamQrController;
 use Illuminate\Support\Facades\Route;
@@ -42,10 +49,18 @@ Route::get('teams/{team}/id-card', [TeamQrController::class, 'idCard'])->name('t
 // --- Public Attendee ID Card (guest/tenant/photographer/..., shareable, no auth required) --
 Route::get('attendees/{attendee}/id-card', [AttendeeQrController::class, 'idCard'])->name('attendees.id-card');
 
+// --- Public Registration ID Card (individual registrants, shareable, no auth required) --
+Route::get('registrations/{registration}/id-card', [RegistrationQrController::class, 'idCard'])->name('registrations.id-card');
+
 // --- Public Player Self-Registration & ID Card (shareable, no auth required) --
 Route::get('events/{event}/register', [PlayerRegistrationController::class, 'create'])->name('players.register');
 Route::post('events/{event}/register', [PlayerRegistrationController::class, 'store'])->name('players.register.store');
 Route::get('players/{player}/id-card', [PlayerQrController::class, 'idCard'])->name('players.id-card');
+
+// --- Public dynamic registration (team or individual, any event type) -----
+Route::get('events/{event}/registration-categories/{registrationCategory}/register', [RegistrationController::class, 'create'])->name('registrations.create');
+Route::post('events/{event}/registration-categories/{registrationCategory}/register', [RegistrationController::class, 'store'])->name('registrations.store');
+Route::get('registrations/{registration}/status', [RegistrationController::class, 'status'])->name('registrations.status');
 
 // --- Public "Find My ID Card" lookup (no auth required) --------------------
 Route::get('find-id', [PlayerLookupController::class, 'index'])->name('players.lookup');
@@ -89,6 +104,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::resource('attendee-types', AttendeeTypeController::class)
                 ->names('attendee-types')
                 ->except(['create', 'edit', 'show']);
+
+            Route::resource('registration-categories', RegistrationCategoryController::class)
+                ->names('registration_categories')
+                ->except(['create', 'edit', 'show']);
+
+            Route::resource('speakers', SpeakerController::class)
+                ->except(['create', 'edit', 'show']);
+
+            Route::resource('meetings', MeetingController::class)
+                ->except(['create', 'edit', 'show']);
+
+            Route::get('meetings/{meeting}/attendance', [MeetingAttendanceController::class, 'index'])->name('meetings.attendance.index');
+            Route::put('meetings/{meeting}/attendance', [MeetingAttendanceController::class, 'update'])->name('meetings.attendance.update');
 
             Route::prefix('id-card-templates')->name('id-card-templates.')->group(function () {
                 Route::get('/', [CardTemplateController::class, 'index'])->name('index');
@@ -136,6 +164,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard/teams/{team}/qr-data', [TeamQrController::class, 'show'])->name('teams.qr-data');
     Route::get('dashboard/players/{player}/qr-data', [PlayerQrController::class, 'show'])->name('players.qr-data');
     Route::get('dashboard/attendees/{attendee}/qr-data', [AttendeeQrController::class, 'show'])->name('attendees.qr-data');
+    Route::get('dashboard/registrations/{registration}/qr-data', [RegistrationQrController::class, 'show'])->name('registrations.qr-data');
+    Route::post('dashboard/meetings/{meeting}/check-ins', [MeetingCheckInController::class, 'store'])->name('meetings.check-ins.store');
 
     // --- Uploads --------------------------------------------------------
     Route::post('upload/image', [ImageUploadController::class, 'store'])->name('upload.image');

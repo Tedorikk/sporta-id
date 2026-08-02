@@ -1,5 +1,6 @@
 import type { BasketballEventCategory } from './basketball-event-category';
 import type { Event } from './event';
+import type { GameMatch } from './game-match';
 import type { Player } from './player';
 
 export type TeamStatus = 'pending' | 'verified' | 'rejected';
@@ -44,6 +45,7 @@ export interface Team {
     basketball_event_category?: BasketballEventCategory;
     event?: Event;
     review_summary?: ReviewSummary;
+    next_match_today?: GameMatch | null;
 }
 
 export interface PaginatedTeams {

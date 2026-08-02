@@ -18,6 +18,7 @@ export interface GameMatch {
     away_score: number | null;
     status: MatchStatus;
     scheduled_at: string | null;
+    venue: string | null;
     home_team?: Team | null;
     away_team?: Team | null;
     pool?: Pool | null;

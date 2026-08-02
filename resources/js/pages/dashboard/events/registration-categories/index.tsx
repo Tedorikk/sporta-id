@@ -1,0 +1,119 @@
+import { Head, Link, router } from '@inertiajs/react';
+import { ChevronLeft, Pencil, Plus, Trash2 } from 'lucide-react';
+import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import type { Event } from '@/types/event';
+import type { RegistrationCategory } from '@/types/registration-category';
+import { RegistrationCategoryFormDialog } from './components/registration-category-form-dialog';
+
+interface Props {
+    event: Event;
+    registrationCategories: RegistrationCategory[];
+}
+
+function formatPrice(price: string | null) {
+    if (!price || Number(price) === 0) {
+        return 'Free';
+    }
+
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(price));
+}
+
+export default function RegistrationCategoriesIndex({ event, registrationCategories }: Props) {
+    function handleDelete(id: number) {
+        router.delete(`/dashboard/events/${event.id}/registration-categories/${id}`, { preserveScroll: true });
+    }
+
+    return (
+        <div className="mx-auto flex h-full w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
+            <Head title={`Registration Categories · ${event.name}`} />
+
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-4">
+                    <Button variant="outline" size="icon" className="h-10 w-10 shrink-0" asChild>
+                        <Link href={`/dashboard/events/${event.id}`} aria-label="Back to event">
+                            <ChevronLeft className="h-5 w-5" />
+                        </Link>
+                    </Button>
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight">Registration Categories</h1>
+                        <p className="text-sm text-muted-foreground">
+                            {event.name} · Define who can register, what it costs, and the questions they answer.
+                        </p>
+                    </div>
+                </div>
+
+                <RegistrationCategoryFormDialog
+                    event={event}
+                    trigger={
+                        <Button>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add Category
+                        </Button>
+                    }
+                />
+            </div>
+
+            <div className="divide-y rounded-lg border">
+                {registrationCategories.length === 0 && (
+                    <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+                        No registration categories yet. Add one to start collecting registrations for this event.
+                    </p>
+                )}
+
+                {registrationCategories.map((category) => (
+                    <div key={category.id} className="flex items-center justify-between gap-4 px-4 py-3">
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <p className="text-sm font-medium">{category.name}</p>
+                                <Badge variant="outline" className="capitalize">
+                                    {category.subject_type}
+                                </Badge>
+                                {!category.registration_open && <Badge variant="outline">Closed</Badge>}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                {formatPrice(category.price)}
+                                {' · '}
+                                {category.registered_count}
+                                {category.quota ? ` / ${category.quota}` : ''} registered
+                                {' · '}
+                                {(category.form_schema ?? []).length} custom field(s)
+                            </p>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">{category.registrations_count ?? 0} registration(s)</span>
+
+                            <RegistrationCategoryFormDialog
+                                event={event}
+                                registrationCategory={category}
+                                trigger={
+                                    <Button variant="ghost" size="icon">
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                }
+                            />
+
+                            <DeleteConfirmationDialog
+                                title="Delete registration category?"
+                                description={
+                                    (category.registrations_count ?? 0) > 0
+                                        ? 'This category already has registrations and cannot be deleted.'
+                                        : undefined
+                                }
+                                confirmationValue={category.slug}
+                                onConfirm={() => handleDelete(category.id)}
+                                trigger={
+                                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                }
+                            />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}

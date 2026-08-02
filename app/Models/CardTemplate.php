@@ -13,10 +13,13 @@ class CardTemplate extends Model
 
     public const SUBJECT_ATTENDEE = 'attendee';
 
+    public const SUBJECT_REGISTRATION = 'registration';
+
     public const SUBJECT_TYPES = [
         self::SUBJECT_PLAYER,
         self::SUBJECT_TEAM,
         self::SUBJECT_ATTENDEE,
+        self::SUBJECT_REGISTRATION,
     ];
 
     protected $fillable = [
