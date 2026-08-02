@@ -49,7 +49,7 @@ test('id card returns 404 for a non-existent team', function () {
 
 test('authenticated users can fetch team qr data', function () {
     $event = Event::factory()->create();
-    $team = Team::factory()->for($event)->create();
+    $team = Team::factory()->for($event)->verified()->create();
 
     $this->actingAs($this->user)
         ->getJson(route('teams.qr-data', $team))
