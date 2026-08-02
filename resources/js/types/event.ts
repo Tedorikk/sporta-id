@@ -37,7 +37,10 @@ export interface Event {
 }
 
 
-export const EVENT_CATEGORIES = [{ value: 'BASKETBALL', label: 'Basketball' }];
+export const EVENT_CATEGORIES = [
+    { value: 'BASKETBALL', label: 'Basketball' },
+    { value: 'CONFERENCE', label: 'Conference' },
+];
 
 export interface PaginatedEvents {
     data: Event[];
