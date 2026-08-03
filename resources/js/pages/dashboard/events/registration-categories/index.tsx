@@ -1,5 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ChevronLeft, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ChevronLeft, Link2, Pencil, Plus, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,12 @@ function formatPrice(price: string | null) {
 export default function RegistrationCategoriesIndex({ event, registrationCategories }: Props) {
     function handleDelete(id: number) {
         router.delete(`/dashboard/events/${event.id}/registration-categories/${id}`, { preserveScroll: true });
+    }
+
+    function handleCopyLink(category: RegistrationCategory) {
+        const url = `${window.location.origin}/events/${event.id}/registration-categories/${category.id}/register`;
+        navigator.clipboard.writeText(url);
+        toast.success('Registration link copied to clipboard');
     }
 
     return (
@@ -84,6 +91,10 @@ export default function RegistrationCategoriesIndex({ event, registrationCategor
 
                         <div className="flex items-center gap-2">
                             <span className="text-xs text-muted-foreground">{category.registrations_count ?? 0} registration(s)</span>
+
+                            <Button variant="ghost" size="icon" onClick={() => handleCopyLink(category)} aria-label="Copy registration link">
+                                <Link2 className="h-4 w-4" />
+                            </Button>
 
                             <RegistrationCategoryFormDialog
                                 event={event}

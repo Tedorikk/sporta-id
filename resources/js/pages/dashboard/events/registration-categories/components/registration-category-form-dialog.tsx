@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from '@inertiajs/react';
-import { GripVertical, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
@@ -27,11 +27,8 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import type { Event } from '@/types/event';
-import {
-    REGISTRATION_FIELD_TYPES,
-    type RegistrationCategory,
-    type RegistrationFieldType,
-} from '@/types/registration-category';
+import { REGISTRATION_FIELD_TYPES } from '@/types/registration-category';
+import type { RegistrationCategory, RegistrationFieldType } from '@/types/registration-category';
 
 const fieldSchema = z.object({
     key: z
@@ -96,7 +93,7 @@ export function RegistrationCategoryFormDialog({ event, registrationCategory, tr
         mode: 'onChange',
     });
 
-    const { fields, append, remove } = useFieldArray({ control, name: 'form_schema' });
+    const { fields, append, remove, move } = useFieldArray({ control, name: 'form_schema' });
 
     const onSubmit = (data: CategoryFormValues) => {
         const payload = {
@@ -260,7 +257,30 @@ export function RegistrationCategoryFormDialog({ event, registrationCategory, tr
                                     return (
                                         <div key={item.id} className="space-y-2 rounded-md border bg-muted/30 p-3">
                                             <div className="flex items-center gap-2">
-                                                <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                                <div className="flex shrink-0 flex-col">
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-4 w-6"
+                                                        disabled={index === 0}
+                                                        onClick={() => move(index, index - 1)}
+                                                        aria-label="Move field up"
+                                                    >
+                                                        <ChevronUp className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-4 w-6"
+                                                        disabled={index === fields.length - 1}
+                                                        onClick={() => move(index, index + 1)}
+                                                        aria-label="Move field down"
+                                                    >
+                                                        <ChevronDown className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </div>
 
                                                 <Controller
                                                     name={`form_schema.${index}.label`}
