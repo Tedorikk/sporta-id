@@ -77,7 +77,10 @@ class RegistrationCategoryController extends Controller
             'opens_at' => ['nullable', 'date'],
             'closes_at' => ['nullable', 'date', 'after_or_equal:opens_at'],
             'form_schema' => ['nullable', 'array'],
-            'form_schema.*.key' => ['required', 'string', 'max:100', 'regex:/^[a-z0-9_]+$/'],
+            'form_schema.*.key' => [
+                'required', 'string', 'max:100', 'regex:/^[a-z0-9_]+$/',
+                Rule::notIn(['name']),
+            ],
             'form_schema.*.label' => ['required', 'string', 'max:255'],
             'form_schema.*.type' => ['required', Rule::in([
                 'text', 'number', 'email', 'phone', 'date', 'select', 'radio', 'checkbox', 'textarea', 'file',
@@ -88,6 +91,10 @@ class RegistrationCategoryController extends Controller
             'form_schema.*.help_text' => ['nullable', 'string', 'max:500'],
         ], [
             'form_schema.*.key.regex' => 'Field key may only contain lowercase letters, numbers and underscores.',
+            // "name" is always collected by the built-in Team/Full Name field and rendered
+            // outside the dynamic field list — a custom field reusing that key would silently
+            // never appear on the public form, so it's blocked here instead.
+            'form_schema.*.key.not_in' => '"name" is reserved for the built-in Name field — choose a different key, e.g. "participant_name".',
         ]);
 
         $keys = collect($validated['form_schema'] ?? [])->pluck('key');

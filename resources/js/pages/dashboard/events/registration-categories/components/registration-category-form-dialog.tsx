@@ -35,7 +35,10 @@ const fieldSchema = z.object({
         .string()
         .min(1, 'Required')
         .max(100)
-        .regex(/^[a-z0-9_]+$/, 'Lowercase letters, numbers, underscores only'),
+        .regex(/^[a-z0-9_]+$/, 'Lowercase letters, numbers, underscores only')
+        .refine((value) => value !== 'name', {
+            message: '"name" is reserved for the built-in Name field — pick a different key',
+        }),
     label: z.string().min(1, 'Required').max(255),
     type: z.enum(REGISTRATION_FIELD_TYPES.map((t) => t.value) as [RegistrationFieldType, ...RegistrationFieldType[]]),
     required: z.boolean(),

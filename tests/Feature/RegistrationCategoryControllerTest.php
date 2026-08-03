@@ -49,6 +49,21 @@ test('an organizer can create a registration category with a dynamic form schema
         ->and($category->slug)->not->toBeEmpty();
 });
 
+test('a custom field cannot reuse the reserved "name" key', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('registration_categories.store', $event), categoryPayload([
+            'form_schema' => [
+                ['key' => 'name', 'label' => 'Participant Name', 'type' => 'text', 'required' => true],
+            ],
+        ]))
+        ->assertSessionHasErrors('form_schema.0.key');
+
+    expect(RegistrationCategory::count())->toBe(0);
+});
+
 test('field keys must be unique within a form schema', function () {
     $user = User::factory()->create();
     $event = Event::factory()->create();
