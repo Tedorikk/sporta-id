@@ -107,7 +107,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             Route::resource('registration-categories', RegistrationCategoryController::class)
                 ->names('registration_categories')
-                ->except(['create', 'edit', 'show']);
+                ->except(['create', 'edit']);
 
             Route::resource('speakers', SpeakerController::class)
                 ->except(['create', 'edit', 'show']);

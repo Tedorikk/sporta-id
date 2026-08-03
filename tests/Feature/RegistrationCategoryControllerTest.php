@@ -22,6 +22,70 @@ function categoryPayload(array $overrides = []): array
     ], $overrides);
 }
 
+test('guests cannot view a registration category\'s registrations', function () {
+    $event = Event::factory()->create();
+    $category = RegistrationCategory::create(array_merge(['event_id' => $event->id], categoryPayload(['form_schema' => []])));
+
+    $this->get(route('registration_categories.show', [$event, $category]))
+        ->assertRedirect(route('login'));
+});
+
+test('an organizer can view submitted registrations, including custom field answers', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->create();
+    $category = RegistrationCategory::create(array_merge(['event_id' => $event->id], categoryPayload([
+        'subject_type' => 'individual',
+        'form_schema' => [
+            ['key' => 'shirt_size', 'label' => 'Shirt Size', 'type' => 'text', 'required' => true],
+        ],
+    ])));
+    $registration = Registration::create([
+        'registration_category_id' => $category->id,
+        'event_id' => $event->id,
+        'name' => 'Jane Doe',
+        'email' => 'jane@example.com',
+        'status' => Registration::STATUS_CONFIRMED,
+        'form_data' => ['shirt_size' => 'M'],
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('registration_categories.show', [$event, $category]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('dashboard/events/registration-categories/show')
+            ->has('registrations.data', 1)
+            ->where('registrations.data.0.id', $registration->id)
+            ->where('registrations.data.0.form_data.shirt_size', 'M')
+        );
+});
+
+test('the registrations list can be filtered by search and status', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->create();
+    $category = RegistrationCategory::create(array_merge(['event_id' => $event->id], categoryPayload(['form_schema' => []])));
+    Registration::create(['registration_category_id' => $category->id, 'event_id' => $event->id, 'name' => 'Jane Doe', 'status' => Registration::STATUS_CONFIRMED]);
+    Registration::create(['registration_category_id' => $category->id, 'event_id' => $event->id, 'name' => 'John Smith', 'status' => Registration::STATUS_PENDING_PAYMENT]);
+
+    $this->actingAs($user)
+        ->get(route('registration_categories.show', [$event, $category]).'?search=Jane')
+        ->assertInertia(fn ($page) => $page->has('registrations.data', 1)->where('registrations.data.0.name', 'Jane Doe'));
+
+    $this->actingAs($user)
+        ->get(route('registration_categories.show', [$event, $category]).'?status=pending_payment')
+        ->assertInertia(fn ($page) => $page->has('registrations.data', 1)->where('registrations.data.0.name', 'John Smith'));
+});
+
+test('a registration category from another event 404s', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->create();
+    $otherEvent = Event::factory()->create();
+    $category = RegistrationCategory::create(array_merge(['event_id' => $otherEvent->id], categoryPayload(['form_schema' => []])));
+
+    $this->actingAs($user)
+        ->get(route('registration_categories.show', [$event, $category]))
+        ->assertNotFound();
+});
+
 test('guests cannot manage registration categories', function () {
     $event = Event::factory()->create();
 

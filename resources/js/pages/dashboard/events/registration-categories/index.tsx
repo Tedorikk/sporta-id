@@ -90,7 +90,12 @@ export default function RegistrationCategoriesIndex({ event, registrationCategor
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">{category.registrations_count ?? 0} registration(s)</span>
+                            <Link
+                                href={`/dashboard/events/${event.id}/registration-categories/${category.id}`}
+                                className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                            >
+                                {category.registrations_count ?? 0} registration(s)
+                            </Link>
 
                             <Button variant="ghost" size="icon" onClick={() => handleCopyLink(category)} aria-label="Copy registration link">
                                 <Link2 className="h-4 w-4" />

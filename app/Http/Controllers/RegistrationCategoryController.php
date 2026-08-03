@@ -21,6 +21,28 @@ class RegistrationCategoryController extends Controller
         ]);
     }
 
+    public function show(Request $request, Event $event, RegistrationCategory $registrationCategory)
+    {
+        abort_unless($registrationCategory->event_id === $event->id, 404);
+
+        $filters = $request->only(['search', 'status']);
+
+        $registrations = $registrationCategory->registrations()
+            ->with('team')
+            ->when($filters['search'] ?? null, fn ($q, $search) => $q->where('name', 'like', "%{$search}%"))
+            ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('status', $status))
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+
+        return Inertia::render('dashboard/events/registration-categories/show', [
+            'event' => $event,
+            'registrationCategory' => $registrationCategory,
+            'registrations' => $registrations,
+            'filters' => $filters,
+        ]);
+    }
+
     public function store(Request $request, Event $event)
     {
         $validated = $this->validated($request);
