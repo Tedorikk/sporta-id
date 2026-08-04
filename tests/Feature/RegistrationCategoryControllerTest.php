@@ -157,6 +157,23 @@ test('field type must be one of the supported types', function () {
         ->assertSessionHasErrors('form_schema.0.type');
 });
 
+test('a document upload field type is accepted', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('registration_categories.store', $event), categoryPayload([
+            'form_schema' => [
+                ['key' => 'id_proof', 'label' => 'ID Proof', 'type' => 'document', 'required' => true],
+            ],
+        ]))
+        ->assertRedirect(route('registration_categories.index', $event));
+
+    $category = RegistrationCategory::firstOrFail();
+
+    expect($category->form_schema[0]['type'])->toBe('document');
+});
+
 test('an organizer can update a registration category', function () {
     $user = User::factory()->create();
     $event = Event::factory()->create();

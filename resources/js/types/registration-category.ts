@@ -10,7 +10,8 @@ export type RegistrationFieldType =
     | 'radio'
     | 'checkbox'
     | 'textarea'
-    | 'file';
+    | 'file'
+    | 'document';
 
 export interface RegistrationField {
     key: string;
@@ -48,5 +49,6 @@ export const REGISTRATION_FIELD_TYPES: { value: RegistrationFieldType; label: st
     { value: 'radio', label: 'Radio buttons' },
     { value: 'checkbox', label: 'Checkbox' },
     { value: 'textarea', label: 'Long text' },
-    { value: 'file', label: 'Photo / file upload' },
+    { value: 'file', label: 'Photo upload' },
+    { value: 'document', label: 'Document upload (PDF, Word)' },
 ];

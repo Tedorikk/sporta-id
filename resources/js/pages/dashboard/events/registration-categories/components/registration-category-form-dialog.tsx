@@ -1,10 +1,16 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from '@inertiajs/react';
-import { ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import axios from 'axios';
+import { ChevronDown, ChevronUp, Eye, EyeOff, Plus, Trash2 } from 'lucide-react';
+import QRCode from 'qrcode';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { APP_LOGO_URL } from '@/components/id-card/card-presets';
+import { IdCardRenderer } from '@/components/id-card/id-card-renderer';
+import type { IdCardData } from '@/components/id-card/id-card-renderer';
+import { TeamIdCardCard } from '@/components/id-card/team-id-card-card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -26,9 +32,12 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { formatImageUrl } from '@/lib/image-utils';
+import type { CardTemplate } from '@/types/card-template';
 import type { Event } from '@/types/event';
 import { REGISTRATION_FIELD_TYPES } from '@/types/registration-category';
-import type { RegistrationCategory, RegistrationFieldType } from '@/types/registration-category';
+import type { RegistrationCategory, RegistrationFieldType, RegistrationSubjectType } from '@/types/registration-category';
+import type { Team } from '@/types/team';
 
 const fieldSchema = z.object({
     key: z
@@ -79,6 +88,107 @@ function emptyField(): CategoryFormValues['form_schema'][number] {
     return { key: '', label: '', type: 'text', required: false, optionsText: '', help_text: '' };
 }
 
+interface IdCardPreviewProps {
+    event: Event;
+    subjectType: RegistrationSubjectType;
+    name: string;
+}
+
+/**
+ * Lets an organizer see how the ID card will actually look before any real
+ * registration exists yet — team cards are a fixed design, so those preview
+ * instantly; individual cards go through the same template resolution
+ * (custom design, or the built-in fallback) real registrants get.
+ */
+function IdCardPreview({ event, subjectType, name }: IdCardPreviewProps) {
+    const [open, setOpen] = useState(false);
+    const [template, setTemplate] = useState<CardTemplate | null>(null);
+    const [qrDataUrl, setQrDataUrl] = useState('');
+
+    // Reset the fetched template whenever the subject type changes, so a
+    // stale team/individual template never flashes before the new fetch
+    // resolves. Adjusting state during render (rather than in an effect)
+    // avoids an extra render pass.
+    const [templateForSubject, setTemplateForSubject] = useState(subjectType);
+
+    if (templateForSubject !== subjectType) {
+        setTemplateForSubject(subjectType);
+        setTemplate(null);
+    }
+
+    useEffect(() => {
+        if (!open) {
+            return;
+        }
+
+        QRCode.toDataURL('PREVIEW', {
+            width: 280,
+            margin: 1,
+            color: { dark: '#1a1a2e', light: '#ffffff' },
+            errorCorrectionLevel: 'H',
+        }).then(setQrDataUrl);
+
+        if (subjectType === 'individual') {
+            axios
+                .get<CardTemplate>(`/dashboard/events/${event.id}/id-card-templates/preview`, { params: { subject_type: 'individual' } })
+                .then(({ data }) => setTemplate(data));
+        }
+    }, [open, subjectType, event.id]);
+
+    if (!open) {
+        return (
+            <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)}>
+                <Eye className="mr-1.5 h-3.5 w-3.5" />
+                Preview ID Card
+            </Button>
+        );
+    }
+
+    const sampleTeam: Team = {
+        id: 0,
+        event_id: event.id,
+        name: name || 'Sample Team',
+        logo: null,
+        status: 'verified',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        basketball_event_category_id: null,
+    };
+
+    const sampleData: IdCardData = {
+        name: name || 'Sample Registrant',
+        typeLabel: 'Sample Category',
+        qrDataUrl,
+        eventName: event.name,
+        eventLogo: event.logo ? formatImageUrl(event.logo) : undefined,
+        appLogo: APP_LOGO_URL,
+    };
+
+    return (
+        <div className="space-y-2 rounded-lg border p-3">
+            <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">ID Card Preview</p>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(false)}>
+                    <EyeOff className="mr-1.5 h-3.5 w-3.5" />
+                    Hide
+                </Button>
+            </div>
+
+            <div className="flex justify-center py-2">
+                {subjectType === 'team' ? (
+                    <TeamIdCardCard team={sampleTeam} qrDataUrl={qrDataUrl} />
+                ) : !template ? (
+                    <div className="flex h-64 w-full items-center justify-center text-sm text-muted-foreground">Loading preview…</div>
+                ) : (
+                    <div className="w-full max-w-[280px] overflow-hidden rounded-2xl border-2 border-black shadow-lg">
+                        <IdCardRenderer template={template} data={sampleData} />
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
 interface RegistrationCategoryFormDialogProps {
     event: Event;
     registrationCategory?: RegistrationCategory;
@@ -97,6 +207,8 @@ export function RegistrationCategoryFormDialog({ event, registrationCategory, tr
     });
 
     const { fields, append, remove, move } = useFieldArray({ control, name: 'form_schema' });
+    const watchedSubjectType = watch('subject_type');
+    const watchedName = watch('name');
 
     const onSubmit = (data: CategoryFormValues) => {
         const payload = {
@@ -371,6 +483,8 @@ export function RegistrationCategoryFormDialog({ event, registrationCategory, tr
                                 })}
                             </div>
                         </div>
+
+                        <IdCardPreview event={event} subjectType={watchedSubjectType} name={watchedName} />
                     </FieldGroup>
 
                     <DialogFooter>

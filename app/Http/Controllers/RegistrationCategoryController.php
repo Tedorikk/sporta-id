@@ -105,7 +105,7 @@ class RegistrationCategoryController extends Controller
             ],
             'form_schema.*.label' => ['required', 'string', 'max:255'],
             'form_schema.*.type' => ['required', Rule::in([
-                'text', 'number', 'email', 'phone', 'date', 'select', 'radio', 'checkbox', 'textarea', 'file',
+                'text', 'number', 'email', 'phone', 'date', 'select', 'radio', 'checkbox', 'textarea', 'file', 'document',
             ])],
             'form_schema.*.required' => ['nullable', 'boolean'],
             'form_schema.*.options' => ['nullable', 'array'],

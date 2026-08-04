@@ -63,6 +63,25 @@ class CardTemplateController extends Controller
         ]);
     }
 
+    /**
+     * JSON preview used by the registration category dialog, so organizers can
+     * see the ID card layout before any real registration exists yet. Team
+     * registrants don't have a customizable template (team-id-card.tsx is a
+     * fixed design), so this only ever returns something for "individual".
+     */
+    public function preview(Request $request, Event $event)
+    {
+        $validated = $request->validate([
+            'subject_type' => ['required', Rule::in(['team', 'individual'])],
+        ]);
+
+        if ($validated['subject_type'] !== 'individual') {
+            return response()->json(null);
+        }
+
+        return response()->json(CardTemplate::resolveFor($event, CardTemplate::SUBJECT_REGISTRATION));
+    }
+
     public function store(Request $request, Event $event)
     {
         $validated = $this->validated($request, $event);

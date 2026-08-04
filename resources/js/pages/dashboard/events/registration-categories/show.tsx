@@ -130,11 +130,26 @@ export default function RegistrationCategoryShow({ event, registrationCategory, 
                                     <TableCell className="font-medium">{registration.name}</TableCell>
                                     <TableCell className="text-muted-foreground">{registration.email ?? '—'}</TableCell>
                                     <TableCell className="text-muted-foreground">{registration.phone ?? '—'}</TableCell>
-                                    {customFields.map((field) => (
-                                        <TableCell key={field.key} className="text-muted-foreground">
-                                            {String(registration.form_data?.[field.key] ?? '—')}
-                                        </TableCell>
-                                    ))}
+                                    {customFields.map((field) => {
+                                        const rawValue = registration.form_data?.[field.key];
+
+                                        return (
+                                            <TableCell key={field.key} className="text-muted-foreground">
+                                                {(field.type === 'file' || field.type === 'document') && rawValue ? (
+                                                    <a
+                                                        href={String(rawValue)}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="text-primary underline underline-offset-2"
+                                                    >
+                                                        View
+                                                    </a>
+                                                ) : (
+                                                    String(rawValue ?? '—')
+                                                )}
+                                            </TableCell>
+                                        );
+                                    })}
                                     {registrationCategory.subject_type === 'team' && (
                                         <TableCell>
                                             {registration.team ? <Badge variant="outline">{registration.team.status}</Badge> : '—'}

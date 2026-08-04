@@ -10,6 +10,7 @@ use App\Http\Controllers\BracketController;
 use App\Http\Controllers\CardTemplateController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ContactMessageController;
+use App\Http\Controllers\DocumentUploadController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventMatchController;
 use App\Http\Controllers\GameMatchController;
@@ -73,6 +74,12 @@ Route::post('public-upload/image', [ImageUploadController::class, 'store'])
 Route::delete('public-upload/image', [ImageUploadController::class, 'destroy'])
     ->middleware('throttle:20,1')->name('public-upload.image.destroy');
 
+// --- Public document upload (rate-limited, used by self-registration) -----
+Route::post('public-upload/document', [DocumentUploadController::class, 'store'])
+    ->middleware('throttle:20,1')->name('public-upload.document');
+Route::delete('public-upload/document', [DocumentUploadController::class, 'destroy'])
+    ->middleware('throttle:20,1')->name('public-upload.document.destroy');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard/page')->name('dashboard');
 
@@ -121,6 +128,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::prefix('id-card-templates')->name('id-card-templates.')->group(function () {
                 Route::get('/', [CardTemplateController::class, 'index'])->name('index');
                 Route::get('builder', [CardTemplateController::class, 'builder'])->name('builder');
+                Route::get('preview', [CardTemplateController::class, 'preview'])->name('preview');
                 Route::post('/', [CardTemplateController::class, 'store'])->name('store');
                 Route::put('{cardTemplate}', [CardTemplateController::class, 'update'])->name('update');
                 Route::delete('{cardTemplate}', [CardTemplateController::class, 'destroy'])->name('destroy');
@@ -171,6 +179,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // --- Uploads --------------------------------------------------------
     Route::post('upload/image', [ImageUploadController::class, 'store'])->name('upload.image');
     Route::delete('upload/image', [ImageUploadController::class, 'destroy'])->name('upload.image.destroy');
+    Route::post('upload/document', [DocumentUploadController::class, 'store'])->name('upload.document');
+    Route::delete('upload/document', [DocumentUploadController::class, 'destroy'])->name('upload.document.destroy');
 });
 
 require __DIR__.'/settings.php';

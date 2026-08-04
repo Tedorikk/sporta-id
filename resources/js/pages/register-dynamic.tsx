@@ -1,10 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Head, router } from '@inertiajs/react';
 import { CheckCircle2, Loader2, Lock } from 'lucide-react';
+import QRCode from 'qrcode';
 import type { CSSProperties } from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { RegistrationIdCardCard } from '@/components/id-card/registration-id-card-card';
+import { TeamIdCardCard } from '@/components/id-card/team-id-card-card';
+import { IdCardActions } from '@/components/id-card-actions';
 import { PublicPageHeader } from '@/components/public/public-page-header';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,16 +27,88 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { UploadDocument } from '@/components/upload-document';
 import { UploadImage } from '@/components/upload-image';
 import { useForceLightMode } from '@/hooks/use-force-light-mode';
 import { accentColors } from '@/lib/color';
+import type { CardTemplate } from '@/types/card-template';
 import type { Event } from '@/types/event';
+import type { Registration } from '@/types/registration';
 import type { RegistrationCategory, RegistrationField } from '@/types/registration-category';
 
 interface Props {
     event: Event;
     registrationCategory: RegistrationCategory;
     registrationClosed: boolean;
+    confirmedRegistration?: Registration | null;
+    cardTemplate?: CardTemplate | null;
+}
+
+function RegistrationSuccessView({
+    event,
+    registrationCategory,
+    registration,
+    cardTemplate,
+    accentStyle,
+}: {
+    event: Event;
+    registrationCategory: RegistrationCategory;
+    registration: Registration;
+    cardTemplate: CardTemplate | null;
+    accentStyle: CSSProperties;
+}) {
+    const cardRef = useRef<HTMLDivElement>(null);
+    const [qrDataUrl, setQrDataUrl] = useState('');
+    const team = registration.team ?? null;
+
+    const idCardUrl = team
+        ? `${window.location.origin}/teams/${team.id}/id-card`
+        : `${window.location.origin}/registrations/${registration.id}/id-card`;
+
+    useEffect(() => {
+        QRCode.toDataURL(idCardUrl, {
+            width: 280,
+            margin: 1,
+            color: { dark: '#1a1a2e', light: '#ffffff' },
+            errorCorrectionLevel: 'H',
+        }).then(setQrDataUrl);
+    }, [idCardUrl]);
+
+    return (
+        <>
+            <Head title={`Registered — ${event.name}`} />
+
+            <div
+                className="relative flex min-h-screen flex-col items-center justify-center gap-6 bg-neutral-950 px-4 py-10"
+                style={accentStyle}
+            >
+                <div className="flex items-center gap-2 text-emerald-400">
+                    <CheckCircle2 className="h-5 w-5" />
+                    <span className="text-sm font-semibold tracking-wide uppercase">Registration confirmed</span>
+                </div>
+
+                {team ? (
+                    <TeamIdCardCard team={team} qrDataUrl={qrDataUrl} cardRef={cardRef} />
+                ) : cardTemplate ? (
+                    <RegistrationIdCardCard registration={registration} template={cardTemplate} qrDataUrl={qrDataUrl} cardRef={cardRef} />
+                ) : null}
+
+                <IdCardActions
+                    targetRef={cardRef}
+                    fileName={`${registration.name}-id-card`}
+                    shareTitle={`${registration.name} — ${registrationCategory.name} ID Card`}
+                    shareUrl={idCardUrl}
+                />
+
+                <a
+                    href={`/events/${event.id}/registration-categories/${registrationCategory.id}/register`}
+                    className="text-sm font-medium text-white/70 underline-offset-2 hover:text-white hover:underline"
+                >
+                    Register another
+                </a>
+            </div>
+        </>
+    );
 }
 
 const RESERVED_KEYS = ['name', 'email', 'phone', 'photo'];
@@ -89,7 +165,7 @@ function defaultValuesFor(fields: RegistrationField[]) {
     return defaults;
 }
 
-export default function RegisterDynamic({ event, registrationCategory, registrationClosed }: Props) {
+export default function RegisterDynamic({ event, registrationCategory, registrationClosed, confirmedRegistration, cardTemplate }: Props) {
     useForceLightMode();
 
     const [isSaving, setIsSaving] = useState(false);
@@ -137,6 +213,18 @@ export default function RegisterDynamic({ event, registrationCategory, registrat
             },
         });
     };
+
+    if (confirmedRegistration) {
+        return (
+            <RegistrationSuccessView
+                event={event}
+                registrationCategory={registrationCategory}
+                registration={confirmedRegistration}
+                cardTemplate={cardTemplate ?? null}
+                accentStyle={accentStyle}
+            />
+        );
+    }
 
     if (registrationClosed) {
         return (
@@ -237,6 +325,20 @@ export default function RegisterDynamic({ event, registrationCategory, registrat
                                                             })
                                                         }
                                                         enableCrop
+                                                        className="rounded-2xl border-2 border-black"
+                                                    />
+                                                ) : f.type === 'document' ? (
+                                                    <UploadDocument
+                                                        value={field.value as string}
+                                                        uploadUrl="/public-upload/document"
+                                                        deleteUrl="/public-upload/document"
+                                                        onChange={(value) => field.onChange(value ?? '')}
+                                                        onError={(error) =>
+                                                            setError(f.key as never, {
+                                                                type: 'manual',
+                                                                message: typeof error === 'string' ? error : 'Upload failed',
+                                                            })
+                                                        }
                                                         className="rounded-2xl border-2 border-black"
                                                     />
                                                 ) : f.type === 'textarea' ? (

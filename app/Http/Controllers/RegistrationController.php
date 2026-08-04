@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CardTemplate;
 use App\Models\Event;
 use App\Models\Registration;
 use App\Models\RegistrationCategory;
@@ -68,7 +69,20 @@ class RegistrationController extends Controller
             return $registration;
         });
 
-        return redirect()->route('registrations.status', $registration);
+        // Land back on the same registration page with the confirmed record
+        // attached, so the form can swap in the real ID card immediately —
+        // no redirect, no separate "thanks" page to navigate to.
+        $registration->loadMissing('team.basketballEventCategory');
+
+        return Inertia::render('register-dynamic', [
+            'event' => $event,
+            'registrationCategory' => $registrationCategory->fresh(),
+            'registrationClosed' => false,
+            'confirmedRegistration' => $registration,
+            'cardTemplate' => $registrationCategory->subject_type === RegistrationCategory::SUBJECT_INDIVIDUAL
+                ? CardTemplate::resolveFor($event, CardTemplate::SUBJECT_REGISTRATION)
+                : null,
+        ]);
     }
 
     public function status(Registration $registration)
@@ -111,7 +125,7 @@ class RegistrationController extends Controller
             'date' => ['date'],
             'select', 'radio' => [Rule::in($field['options'] ?? [])],
             'checkbox' => ['boolean'],
-            'file' => ['url', 'max:255'],
+            'file', 'document' => ['url', 'max:255'],
             'textarea' => ['string', 'max:5000'],
             default => ['string', 'max:255'],
         });

@@ -77,6 +77,35 @@ test('a select field rejects a value outside its options', function () {
     ])->assertSessionHasErrors('form_data.shirt_size');
 });
 
+test('a document field must be a valid url', function () {
+    $category = makeRegistrationCategory([
+        'form_schema' => [
+            ['key' => 'id_proof', 'label' => 'ID Proof', 'type' => 'document', 'required' => true],
+        ],
+    ]);
+
+    $this->post(route('registrations.store', [$category->event, $category]), [
+        'name' => 'Jane Doe',
+        'form_data' => ['id_proof' => 'not-a-url'],
+    ])->assertSessionHasErrors('form_data.id_proof');
+});
+
+test('a document field accepts an uploaded file url', function () {
+    $category = makeRegistrationCategory([
+        'form_schema' => [
+            ['key' => 'id_proof', 'label' => 'ID Proof', 'type' => 'document', 'required' => true],
+        ],
+    ]);
+
+    $this->post(route('registrations.store', [$category->event, $category]), [
+        'name' => 'Jane Doe',
+        'form_data' => ['id_proof' => 'http://localhost/storage/uploads/documents/example.pdf'],
+    ])->assertOk();
+
+    expect(Registration::where('name', 'Jane Doe')->firstOrFail()->form_data)
+        ->toBe(['id_proof' => 'http://localhost/storage/uploads/documents/example.pdf']);
+});
+
 test('an email-typed field rejects an invalid email', function () {
     $category = makeRegistrationCategory();
 
@@ -87,14 +116,20 @@ test('an email-typed field rejects an invalid email', function () {
     ])->assertSessionHasErrors('email');
 });
 
-test('a valid submission creates a confirmed registration and stores form_data', function () {
+test('a valid submission renders the confirmed registration inline with a card template', function () {
     $category = makeRegistrationCategory();
 
     $this->post(route('registrations.store', [$category->event, $category]), [
         'name' => 'Jane Doe',
         'email' => 'jane@example.com',
         'form_data' => ['shirt_size' => 'M'],
-    ])->assertRedirect();
+    ])
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('register-dynamic')
+            ->where('confirmedRegistration.name', 'Jane Doe')
+            ->has('cardTemplate')
+        );
 
     $registration = Registration::where('name', 'Jane Doe')->firstOrFail();
 
@@ -105,7 +140,7 @@ test('a valid submission creates a confirmed registration and stores form_data',
         ->and($category->fresh()->registered_count)->toBe(1);
 });
 
-test('a team-subject category also creates a team', function () {
+test('a team-subject category also creates a team and returns it inline', function () {
     $category = makeRegistrationCategory([
         'subject_type' => RegistrationCategory::SUBJECT_TEAM,
         'form_schema' => [],
@@ -113,7 +148,14 @@ test('a team-subject category also creates a team', function () {
 
     $this->post(route('registrations.store', [$category->event, $category]), [
         'name' => 'Team Alpha',
-    ])->assertRedirect();
+    ])
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('register-dynamic')
+            ->where('confirmedRegistration.name', 'Team Alpha')
+            ->where('confirmedRegistration.team.name', 'Team Alpha')
+            ->where('cardTemplate', null)
+        );
 
     $registration = Registration::where('name', 'Team Alpha')->firstOrFail();
 
@@ -127,7 +169,7 @@ test('registration is rejected once quota is reached', function () {
     $category = makeRegistrationCategory(['quota' => 1, 'form_schema' => []]);
 
     $this->post(route('registrations.store', [$category->event, $category]), ['name' => 'First'])
-        ->assertRedirect();
+        ->assertOk();
 
     $this->post(route('registrations.store', [$category->event, $category]), ['name' => 'Second'])
         ->assertForbidden();
