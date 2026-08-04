@@ -72,7 +72,7 @@ class RegistrationController extends Controller
         // Land back on the same registration page with the confirmed record
         // attached, so the form can swap in the real ID card immediately —
         // no redirect, no separate "thanks" page to navigate to.
-        $registration->loadMissing('team.basketballEventCategory');
+        $registration->loadMissing(['team.basketballEventCategory', 'event']);
 
         return Inertia::render('register-dynamic', [
             'event' => $event,

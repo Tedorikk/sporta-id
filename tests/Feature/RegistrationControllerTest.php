@@ -129,6 +129,10 @@ test('a valid submission renders the confirmed registration inline with a card t
         ->assertInertia(fn ($page) => $page
             ->component('register-dynamic')
             ->where('confirmedRegistration.name', 'Jane Doe')
+            // The `event` relation must be eager-loaded before rendering — the in-place
+            // ID card reads registration.event.logo/name, and a missing relation here
+            // silently renders those bindings blank instead of erroring.
+            ->where('confirmedRegistration.event.name', $category->event->name)
             ->has('cardTemplate')
         );
 
