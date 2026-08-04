@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Head, router } from '@inertiajs/react';
 import { CheckCircle2, Loader2, Lock } from 'lucide-react';
+import type { CSSProperties } from 'react';
 import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -24,6 +25,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { UploadImage } from '@/components/upload-image';
 import { useForceLightMode } from '@/hooks/use-force-light-mode';
+import { accentColors } from '@/lib/color';
 import type { Event } from '@/types/event';
 import type { RegistrationCategory, RegistrationField } from '@/types/registration-category';
 
@@ -103,6 +105,8 @@ export default function RegisterDynamic({ event, registrationCategory, registrat
     });
 
     const isTeam = registrationCategory.subject_type === 'team';
+    const { accent, accentDark } = accentColors(event.accent_color);
+    const accentStyle = { '--accent': accent, '--accent-dark': accentDark } as CSSProperties;
 
     const onSubmit = (data: FormValues) => {
         setIsSaving(true);
@@ -139,12 +143,14 @@ export default function RegisterDynamic({ event, registrationCategory, registrat
             <>
                 <Head title={`Registration Closed — ${event.name}`} />
 
-                <div className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10">
+                <div className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10" style={accentStyle}>
                     <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
                         <PublicPageHeader
                             eyebrow="Registration"
                             title={event.name}
                             subtitle={registrationCategory.name}
+                            logoUrl={event.logo}
+                            accentColor={event.accent_color}
                         />
 
                         <div className="flex flex-col items-center gap-4 px-6 py-14 text-center">
@@ -169,12 +175,14 @@ export default function RegisterDynamic({ event, registrationCategory, registrat
         <>
             <Head title={`${registrationCategory.name} Registration — ${event.name}`} />
 
-            <div className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10">
+            <div className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10" style={accentStyle}>
                 <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
                     <PublicPageHeader
                         eyebrow="Registration"
                         title={event.name}
                         subtitle={registrationCategory.name}
+                        logoUrl={event.logo}
+                        accentColor={event.accent_color}
                     />
 
                     <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-6">
@@ -192,7 +200,7 @@ export default function RegisterDynamic({ event, registrationCategory, registrat
                                             aria-invalid={fieldState.invalid}
                                             autoComplete="off"
                                             disabled={isSaving}
-                                            className="border-2 border-black focus-visible:ring-red-600"
+                                            className="border-2 border-black focus-visible:ring-[var(--accent)]"
                                         />
                                         {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                                     </Field>
@@ -237,13 +245,13 @@ export default function RegisterDynamic({ event, registrationCategory, registrat
                                                         id={f.key}
                                                         value={field.value as string}
                                                         disabled={isSaving}
-                                                        className="border-2 border-black focus-visible:ring-red-600"
+                                                        className="border-2 border-black focus-visible:ring-[var(--accent)]"
                                                     />
                                                 ) : f.type === 'select' ? (
                                                     <Select value={field.value as string} onValueChange={field.onChange} disabled={isSaving}>
                                                         <SelectTrigger
                                                             id={f.key}
-                                                            className="w-full cursor-pointer border-2 border-black font-semibold focus-visible:ring-red-600"
+                                                            className="w-full cursor-pointer border-2 border-black font-semibold focus-visible:ring-[var(--accent)]"
                                                         >
                                                             <SelectValue placeholder="Select an option" />
                                                         </SelectTrigger>
@@ -291,7 +299,7 @@ export default function RegisterDynamic({ event, registrationCategory, registrat
                                                         aria-invalid={fieldState.invalid}
                                                         autoComplete="off"
                                                         disabled={isSaving}
-                                                        className="border-2 border-black focus-visible:ring-red-600"
+                                                        className="border-2 border-black focus-visible:ring-[var(--accent)]"
                                                     />
                                                 )}
 
@@ -304,7 +312,7 @@ export default function RegisterDynamic({ event, registrationCategory, registrat
 
                             <Button
                                 type="submit"
-                                className="mt-2 w-full cursor-pointer bg-red-600 font-bold tracking-wide text-white uppercase hover:bg-red-700"
+                                className="mt-2 w-full cursor-pointer bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
                                 disabled={isSaving}
                             >
                                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}

@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Head, router } from '@inertiajs/react';
 import { format } from 'date-fns';
 import { CalendarIcon, CheckCircle2, Loader2, Lock } from 'lucide-react';
+import type { CSSProperties } from 'react';
 import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -26,6 +27,7 @@ import {
 } from '@/components/ui/select';
 import { UploadImage } from '@/components/upload-image';
 import { useForceLightMode } from '@/hooks/use-force-light-mode';
+import { accentColors } from '@/lib/color';
 import { cn } from '@/lib/utils';
 import type { BasketballEventCategory } from '@/types/basketball-event-category';
 import type { Event } from '@/types/event';
@@ -97,6 +99,8 @@ export default function Register({ event, categories, registrationClosed }: Prop
     useForceLightMode();
 
     const [isSaving, setIsSaving] = useState(false);
+    const { accent, accentDark } = accentColors(event.accent_color);
+    const accentStyle = { '--accent': accent, '--accent-dark': accentDark } as CSSProperties;
 
     const { control, handleSubmit, watch, resetField, setError } =
         useForm<RegisterFormValues>({
@@ -151,10 +155,10 @@ export default function Register({ event, categories, registrationClosed }: Prop
             <>
                 <Head title={`Registration Closed — ${event.name}`} />
 
-                <div className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10">
+                <div className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10" style={accentStyle}>
                     <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                        <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-red-600/10 blur-3xl" />
-                        <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-red-900/20 blur-3xl" />
+                        <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-[var(--accent)]/10 blur-3xl" />
+                        <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-[var(--accent-dark)]/20 blur-3xl" />
                     </div>
 
                     <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
@@ -162,6 +166,8 @@ export default function Register({ event, categories, registrationClosed }: Prop
                             eyebrow="Team Registration"
                             title={event.name}
                             subtitle="Registration is currently closed"
+                            logoUrl={event.logo}
+                            accentColor={event.accent_color}
                         />
 
                         <div className="flex flex-col items-center gap-4 px-6 py-14 text-center">
@@ -187,10 +193,10 @@ export default function Register({ event, categories, registrationClosed }: Prop
         <>
             <Head title={`Team Registration — ${event.name}`} />
 
-            <div className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10">
+            <div className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10" style={accentStyle}>
                 <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                    <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-red-600/10 blur-3xl" />
-                    <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-red-900/20 blur-3xl" />
+                    <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-[var(--accent)]/10 blur-3xl" />
+                    <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-[var(--accent-dark)]/20 blur-3xl" />
                 </div>
 
                 <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
@@ -198,6 +204,8 @@ export default function Register({ event, categories, registrationClosed }: Prop
                         eyebrow="Team Registration"
                         title={event.name}
                         subtitle="Pick your category, team, and role, then fill in your details"
+                        logoUrl={event.logo}
+                        accentColor={event.accent_color}
                     />
 
                     <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-6">
@@ -252,7 +260,7 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                             <SelectTrigger
                                                 id="basketball_event_category_id"
                                                 aria-invalid={fieldState.invalid}
-                                                className="w-full cursor-pointer border-2 border-black font-semibold focus-visible:ring-red-600"
+                                                className="w-full cursor-pointer border-2 border-black font-semibold focus-visible:ring-[var(--accent)]"
                                             >
                                                 <SelectValue placeholder="Select your category" />
                                             </SelectTrigger>
@@ -289,7 +297,7 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                             <SelectTrigger
                                                 id="team_id"
                                                 aria-invalid={fieldState.invalid}
-                                                className="w-full cursor-pointer border-2 border-black font-semibold focus-visible:ring-red-600"
+                                                className="w-full cursor-pointer border-2 border-black font-semibold focus-visible:ring-[var(--accent)]"
                                             >
                                                 <SelectValue
                                                     placeholder={
@@ -348,7 +356,7 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                             <SelectTrigger
                                                 id="role"
                                                 aria-invalid={fieldState.invalid}
-                                                className="w-full cursor-pointer border-2 border-black font-semibold focus-visible:ring-red-600"
+                                                className="w-full cursor-pointer border-2 border-black font-semibold focus-visible:ring-[var(--accent)]"
                                             >
                                                 <SelectValue placeholder="Select your role" />
                                             </SelectTrigger>
@@ -384,7 +392,7 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                             aria-invalid={fieldState.invalid}
                                             autoComplete="off"
                                             disabled={isSaving}
-                                            className="border-2 border-black focus-visible:ring-red-600"
+                                            className="border-2 border-black focus-visible:ring-[var(--accent)]"
                                         />
                                         {fieldState.invalid && (
                                             <FieldError errors={[fieldState.error]} />
@@ -446,7 +454,7 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                                     aria-invalid={fieldState.invalid}
                                                     autoComplete="off"
                                                     disabled={isSaving}
-                                                    className="border-2 border-black focus-visible:ring-red-600"
+                                                    className="border-2 border-black focus-visible:ring-[var(--accent)]"
                                                     onChange={(e) =>
                                                         field.onChange(
                                                             e.target.value.replace(/\D/g, '').slice(0, 3),
@@ -478,7 +486,7 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                                     aria-invalid={fieldState.invalid}
                                                     autoComplete="off"
                                                     disabled={isSaving}
-                                                    className="border-2 border-black focus-visible:ring-red-600"
+                                                    className="border-2 border-black focus-visible:ring-[var(--accent)]"
                                                 />
                                                 {fieldState.invalid && (
                                                     <FieldError errors={[fieldState.error]} />
@@ -507,7 +515,7 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                             aria-invalid={fieldState.invalid}
                                             autoComplete="off"
                                             disabled={isSaving}
-                                            className="border-2 border-black focus-visible:ring-red-600"
+                                            className="border-2 border-black focus-visible:ring-[var(--accent)]"
                                             onChange={(e) =>
                                                 field.onChange(formatE164Input(e.target.value))
                                             }
@@ -541,7 +549,7 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                             aria-invalid={fieldState.invalid}
                                             autoComplete="off"
                                             disabled={isSaving}
-                                            className="border-2 border-black focus-visible:ring-red-600"
+                                            className="border-2 border-black focus-visible:ring-[var(--accent)]"
                                         />
                                         {fieldState.invalid && (
                                             <FieldError errors={[fieldState.error]} />
@@ -608,7 +616,7 @@ export default function Register({ event, categories, registrationClosed }: Prop
 
                             <Button
                                 type="submit"
-                                className="mt-2 w-full cursor-pointer bg-red-600 font-bold tracking-wide text-white uppercase hover:bg-red-700"
+                                className="mt-2 w-full cursor-pointer bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
                                 disabled={isSaving}
                             >
                                 {isSaving ? (

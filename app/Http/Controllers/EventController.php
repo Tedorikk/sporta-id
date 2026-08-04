@@ -186,6 +186,7 @@ class EventController extends Controller
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'banner' => ['nullable', 'url'],
             'logo' => ['nullable', 'url'],
+            'accent_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'instagram_url' => ['nullable', 'url'],
             'facebook_url' => ['nullable', 'url'],
             'youtube_url' => ['nullable', 'url'],
@@ -193,6 +194,7 @@ class EventController extends Controller
         ], [
             'contact_person.regex' => 'Invalid E.164 format',
             'end_date.after_or_equal' => 'End date must be on or after the start date',
+            'accent_color.regex' => 'Must be a hex color, e.g. #dc2626.',
         ]);
     }
 }

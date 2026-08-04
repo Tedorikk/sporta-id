@@ -1,17 +1,32 @@
-import AppLogoIcon from '@/components/app-logo-icon';
+import { isValidHexColor, shadeColor } from '@/lib/color';
+import { formatImageUrl } from '@/lib/image-utils';
 import { SiteLogo } from '../landing/site-logo';
 
 interface PublicPageHeaderProps {
     eyebrow: string;
     title: string;
     subtitle?: string;
+    /** Event-specific branding — falls back to the default Sporta Indonesia logo/red when absent. */
+    logoUrl?: string | null;
+    accentColor?: string | null;
 }
 
-export function PublicPageHeader({ eyebrow, title, subtitle }: PublicPageHeaderProps) {
+export function PublicPageHeader({ eyebrow, title, subtitle, logoUrl, accentColor }: PublicPageHeaderProps) {
+    const accent = isValidHexColor(accentColor) ? accentColor : null;
+
     return (
         <div
-            className="relative flex flex-col items-center gap-2 overflow-hidden bg-gradient-to-br from-red-600 via-red-700 to-rose-950 px-6 py-10 text-center"
-            style={{ clipPath: 'polygon(0 0, 100% 0, 100% 88%, 50% 100%, 0 88%)' }}
+            className={
+                accent
+                    ? 'relative flex flex-col items-center gap-2 overflow-hidden px-6 py-10 text-center'
+                    : 'relative flex flex-col items-center gap-2 overflow-hidden bg-gradient-to-br from-red-600 via-red-700 to-rose-950 px-6 py-10 text-center'
+            }
+            style={{
+                clipPath: 'polygon(0 0, 100% 0, 100% 88%, 50% 100%, 0 88%)',
+                ...(accent && {
+                    backgroundImage: `linear-gradient(to bottom right, ${accent}, ${shadeColor(accent, -10)}, ${shadeColor(accent, -55)})`,
+                }),
+            }}
         >
             <div className="pointer-events-none absolute inset-0 opacity-10">
                 <svg className="h-full w-full" xmlns="http://www.w3.org/2000/svg">
@@ -26,7 +41,11 @@ export function PublicPageHeader({ eyebrow, title, subtitle }: PublicPageHeaderP
 
             <div className="relative z-10 flex flex-col items-center gap-2">
                 <div className="flex items-center justify-center">
-                    <SiteLogo className="h-16 w-auto" />
+                    {logoUrl ? (
+                        <img src={formatImageUrl(logoUrl)} alt="" className="h-16 w-auto object-contain" />
+                    ) : (
+                        <SiteLogo className="h-16 w-auto" />
+                    )}
                 </div>
                 <span className="text-xs font-bold tracking-[0.3em] text-white/70 uppercase">
                     {eyebrow}

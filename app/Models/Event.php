@@ -27,6 +27,7 @@ class Event extends Model
         'end_date',
         'banner',
         'logo',
+        'accent_color',
         'instagram_url',
         'facebook_url',
         'youtube_url',

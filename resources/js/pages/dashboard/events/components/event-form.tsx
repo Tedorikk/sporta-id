@@ -54,6 +54,10 @@ const eventSchema = z
         end_date: z.string().min(1, 'End date is required'),
         banner: z.string().url('Must be a valid URL').or(z.literal('')),
         logo: z.string().url('Must be a valid URL').or(z.literal('')),
+        accent_color: z
+            .string()
+            .regex(/^#[0-9a-fA-F]{6}$/, 'Must be a hex color, e.g. #dc2626')
+            .or(z.literal('')),
         instagram_url: z.string().url('Must be a valid URL').or(z.literal('')),
         facebook_url: z.string().url('Must be a valid URL').or(z.literal('')),
         youtube_url: z.string().url('Must be a valid URL').or(z.literal('')),
@@ -87,6 +91,7 @@ function toDefaultValues(event?: Event): EventFormValues {
         end_date: event?.end_date ?? '',
         banner: event?.banner ?? '',
         logo: event?.logo ?? '',
+        accent_color: event?.accent_color ?? '',
         instagram_url: event?.instagram_url ?? '',
         facebook_url: event?.facebook_url ?? '',
         youtube_url: event?.youtube_url ?? '',
@@ -191,6 +196,46 @@ function FormContent({ event }: EventFormProps) {
                                     />
                                     <FieldDescription>
                                         Shown on player ID cards for this event.
+                                    </FieldDescription>
+                                    {fieldState.invalid && (
+                                        <FieldError errors={[fieldState.error]} />
+                                    )}
+                                </Field>
+                            )}
+                        />
+                        <Controller
+                            name="accent_color"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <Field data-invalid={fieldState.invalid}>
+                                    <FieldLabel htmlFor="accent_color">
+                                        Accent Color{' '}
+                                        <span className="font-normal text-muted-foreground">
+                                            (Optional)
+                                        </span>
+                                    </FieldLabel>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="color"
+                                            value={field.value || '#dc2626'}
+                                            onChange={(e) => field.onChange(e.target.value)}
+                                            disabled={isSaving}
+                                            className="h-10 w-12 shrink-0 cursor-pointer rounded-md border p-1"
+                                            aria-label="Pick accent color"
+                                        />
+                                        <Input
+                                            {...field}
+                                            id="accent_color"
+                                            placeholder="#dc2626"
+                                            aria-label="Accent Color"
+                                            aria-invalid={fieldState.invalid}
+                                            autoComplete="off"
+                                            disabled={isSaving}
+                                            className="flex-1"
+                                        />
+                                    </div>
+                                    <FieldDescription>
+                                        Used on the public registration page. Defaults to red when left blank.
                                     </FieldDescription>
                                     {fieldState.invalid && (
                                         <FieldError errors={[fieldState.error]} />

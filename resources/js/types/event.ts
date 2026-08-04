@@ -21,6 +21,7 @@ export interface Event {
     end_date: string;
     banner: string | null;
     logo: string | null;
+    accent_color: string | null;
     instagram_url: string | null;
     facebook_url: string | null;
     youtube_url: string | null;

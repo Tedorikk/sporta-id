@@ -35,6 +35,8 @@ export default function RegistrationStatus({ registration }: Props) {
                         eyebrow="Registration"
                         title={registration.event.name}
                         subtitle={registration.registration_category.name}
+                        logoUrl={registration.event.logo}
+                        accentColor={registration.event.accent_color}
                     />
 
                     <div className="flex flex-col items-center gap-4 px-6 py-14 text-center">
