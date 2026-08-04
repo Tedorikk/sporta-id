@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import axios from 'axios';
-import { ChevronDown, ChevronUp, Eye, EyeOff, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Eye, EyeOff, Palette, Plus, Trash2 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -92,6 +92,7 @@ interface IdCardPreviewProps {
     event: Event;
     subjectType: RegistrationSubjectType;
     name: string;
+    categoryId: number | null;
 }
 
 /**
@@ -100,7 +101,7 @@ interface IdCardPreviewProps {
  * instantly; individual cards go through the same template resolution
  * (custom design, or the built-in fallback) real registrants get.
  */
-function IdCardPreview({ event, subjectType, name }: IdCardPreviewProps) {
+function IdCardPreview({ event, subjectType, name, categoryId }: IdCardPreviewProps) {
     const [open, setOpen] = useState(false);
     const [template, setTemplate] = useState<CardTemplate | null>(null);
     const [qrDataUrl, setQrDataUrl] = useState('');
@@ -130,10 +131,12 @@ function IdCardPreview({ event, subjectType, name }: IdCardPreviewProps) {
 
         if (subjectType === 'individual') {
             axios
-                .get<CardTemplate>(`/dashboard/events/${event.id}/id-card-templates/preview`, { params: { subject_type: 'individual' } })
+                .get<CardTemplate>(`/dashboard/events/${event.id}/id-card-templates/preview`, {
+                    params: { subject_type: 'individual', registration_category_id: categoryId ?? undefined },
+                })
                 .then(({ data }) => setTemplate(data));
         }
-    }, [open, subjectType, event.id]);
+    }, [open, subjectType, categoryId, event.id]);
 
     if (!open) {
         return (
@@ -185,6 +188,18 @@ function IdCardPreview({ event, subjectType, name }: IdCardPreviewProps) {
                     </div>
                 )}
             </div>
+
+            {subjectType === 'individual' &&
+                (categoryId ? (
+                    <Button type="button" variant="outline" size="sm" className="w-full" asChild>
+                        <Link href={`/dashboard/events/${event.id}/id-card-templates/builder?subject_type=registration&registration_category_id=${categoryId}`}>
+                            <Palette className="mr-1.5 h-3.5 w-3.5" />
+                            Design this card
+                        </Link>
+                    </Button>
+                ) : (
+                    <p className="text-center text-xs text-muted-foreground">Save this category to design a card just for it.</p>
+                ))}
         </div>
     );
 }
@@ -484,7 +499,12 @@ export function RegistrationCategoryFormDialog({ event, registrationCategory, tr
                             </div>
                         </div>
 
-                        <IdCardPreview event={event} subjectType={watchedSubjectType} name={watchedName} />
+                        <IdCardPreview
+                            event={event}
+                            subjectType={watchedSubjectType}
+                            name={watchedName}
+                            categoryId={registrationCategory?.id ?? null}
+                        />
                     </FieldGroup>
 
                     <DialogFooter>

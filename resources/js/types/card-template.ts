@@ -1,6 +1,6 @@
 export type CardElementKind = 'text' | 'image' | 'qr' | 'shape';
 
-export type CardSubjectType = 'player' | 'team' | 'attendee';
+export type CardSubjectType = 'player' | 'team' | 'attendee' | 'registration';
 
 export interface CardElementStyle {
     fontSize?: number;
@@ -53,6 +53,7 @@ export interface CardTemplate {
     event_id?: number;
     subject_type: CardSubjectType;
     attendee_type_id: number | null;
+    registration_category_id: number | null;
     name: string;
     canvas: CardCanvas;
     elements: CardElement[];
@@ -97,6 +98,15 @@ export const BINDABLE_FIELDS: Record<CardSubjectType, BindableField[]> = {
         { value: 'categoryName', label: 'Category', kinds: ['text'] },
         { value: 'eventName', label: 'Event Name', kinds: ['text'] },
         { value: 'photo', label: 'Logo', kinds: ['image'] },
+        { value: 'eventLogo', label: 'Event Logo', kinds: ['image'] },
+        { value: 'appLogo', label: 'App Logo', kinds: ['image'] },
+        { value: 'qrDataUrl', label: 'QR Code', kinds: ['qr', 'image'] },
+    ],
+    registration: [
+        { value: 'name', label: 'Name', kinds: ['text'] },
+        { value: 'typeLabel', label: 'Category', kinds: ['text'] },
+        { value: 'eventName', label: 'Event Name', kinds: ['text'] },
+        { value: 'photo', label: 'Photo', kinds: ['image'] },
         { value: 'eventLogo', label: 'Event Logo', kinds: ['image'] },
         { value: 'appLogo', label: 'App Logo', kinds: ['image'] },
         { value: 'qrDataUrl', label: 'QR Code', kinds: ['qr', 'image'] },

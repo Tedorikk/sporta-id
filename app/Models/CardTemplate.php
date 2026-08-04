@@ -23,7 +23,7 @@ class CardTemplate extends Model
     ];
 
     protected $fillable = [
-        'event_id', 'subject_type', 'attendee_type_id', 'name', 'canvas', 'elements', 'is_default',
+        'event_id', 'subject_type', 'attendee_type_id', 'registration_category_id', 'name', 'canvas', 'elements', 'is_default',
     ];
 
     protected $casts = [
@@ -40,6 +40,11 @@ class CardTemplate extends Model
     public function attendeeType(): BelongsTo
     {
         return $this->belongsTo(AttendeeType::class);
+    }
+
+    public function registrationCategory(): BelongsTo
+    {
+        return $this->belongsTo(RegistrationCategory::class);
     }
 
     /**
@@ -71,7 +76,7 @@ class CardTemplate extends Model
      * Precedence: type-specific template -> event's generic template for
      * that subject -> hardcoded fallback (always present).
      */
-    public static function resolveFor(Event $event, string $subjectType, ?int $attendeeTypeId = null): array
+    public static function resolveFor(Event $event, string $subjectType, ?int $attendeeTypeId = null, ?int $registrationCategoryId = null): array
     {
         $query = static::query()
             ->where('event_id', $event->id)
@@ -81,9 +86,11 @@ class CardTemplate extends Model
 
         if ($attendeeTypeId !== null) {
             $template = (clone $query)->where('attendee_type_id', $attendeeTypeId)->first();
+        } elseif ($registrationCategoryId !== null) {
+            $template = (clone $query)->where('registration_category_id', $registrationCategoryId)->first();
         }
 
-        $template ??= (clone $query)->whereNull('attendee_type_id')->first();
+        $template ??= (clone $query)->whereNull('attendee_type_id')->whereNull('registration_category_id')->first();
 
         if ($template) {
             return [

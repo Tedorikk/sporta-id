@@ -19,7 +19,11 @@ class RegistrationQrController extends Controller
 
         abort_unless($registration->status === Registration::STATUS_CONFIRMED, 404);
 
-        $template = CardTemplate::resolveFor($registration->event, CardTemplate::SUBJECT_REGISTRATION);
+        $template = CardTemplate::resolveFor(
+            $registration->event,
+            CardTemplate::SUBJECT_REGISTRATION,
+            registrationCategoryId: $registration->registration_category_id,
+        );
 
         return Inertia::render('registration-id-card', [
             'registration' => $registration,

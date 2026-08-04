@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\CardTemplate;
 use App\Models\Event;
 use App\Models\Registration;
 use App\Models\RegistrationCategory;
@@ -138,6 +139,26 @@ test('a valid submission renders the confirmed registration inline with a card t
         ->and($registration->form_data)->toBe(['shirt_size' => 'M'])
         ->and($registration->team_id)->toBeNull()
         ->and($category->fresh()->registered_count)->toBe(1);
+});
+
+test('the confirmed registration reflects a category-specific card template when one exists', function () {
+    $category = makeRegistrationCategory();
+    CardTemplate::create([
+        'event_id' => $category->event_id,
+        'subject_type' => CardTemplate::SUBJECT_REGISTRATION,
+        'registration_category_id' => $category->id,
+        'name' => 'Category specific',
+        'canvas' => ['width' => 200, 'height' => 300, 'background' => '#000000'],
+        'elements' => [],
+    ]);
+
+    $this->post(route('registrations.store', [$category->event, $category]), [
+        'name' => 'Jane Doe',
+        'email' => 'jane@example.com',
+        'form_data' => ['shirt_size' => 'M'],
+    ])
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('cardTemplate.canvas.width', 200));
 });
 
 test('a team-subject category also creates a team and returns it inline', function () {

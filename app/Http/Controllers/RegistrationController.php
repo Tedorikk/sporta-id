@@ -80,7 +80,7 @@ class RegistrationController extends Controller
             'registrationClosed' => false,
             'confirmedRegistration' => $registration,
             'cardTemplate' => $registrationCategory->subject_type === RegistrationCategory::SUBJECT_INDIVIDUAL
-                ? CardTemplate::resolveFor($event, CardTemplate::SUBJECT_REGISTRATION)
+                ? CardTemplate::resolveFor($event, CardTemplate::SUBJECT_REGISTRATION, registrationCategoryId: $registrationCategory->id)
                 : null,
         ]);
     }

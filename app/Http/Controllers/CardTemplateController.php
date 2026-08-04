@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\CardTemplate;
 use App\Models\Event;
+use App\Models\Registration;
+use App\Models\RegistrationCategory;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -16,6 +18,11 @@ class CardTemplateController extends Controller
             'event' => $event,
             'templates' => $event->cardTemplates()->with('attendeeType')->orderBy('subject_type')->get(),
             'attendeeTypes' => $event->attendeeTypes()->where('is_active', true)->withCount('attendees')->orderBy('label')->get(),
+            'registrationCategories' => $event->registrationCategories()
+                ->where('subject_type', RegistrationCategory::SUBJECT_INDIVIDUAL)
+                ->withCount('registrations')
+                ->orderBy('name')
+                ->get(),
             // Lets the index draw a real preview for rows that have no custom design yet.
             'defaultTemplates' => collect(CardTemplate::SUBJECT_TYPES)
                 ->mapWithKeys(fn (string $subject) => [$subject => CardTemplate::fallbackTemplate($subject)]),
@@ -33,15 +40,17 @@ class CardTemplateController extends Controller
         abort_unless(in_array($subjectType, CardTemplate::SUBJECT_TYPES, true), 404);
 
         $attendeeTypeId = $request->integer('attendee_type_id') ?: null;
+        $registrationCategoryId = $request->integer('registration_category_id') ?: null;
 
         $existing = $event->cardTemplates()
             ->where('subject_type', $subjectType)
             ->where('attendee_type_id', $attendeeTypeId)
+            ->where('registration_category_id', $registrationCategoryId)
             ->first();
 
         $template = $existing ?? array_merge(
             CardTemplate::fallbackTemplate($subjectType),
-            ['id' => null, 'attendee_type_id' => $attendeeTypeId, 'name' => 'Untitled template']
+            ['id' => null, 'attendee_type_id' => $attendeeTypeId, 'registration_category_id' => $registrationCategoryId, 'name' => 'Untitled template']
         );
 
         $sampleAttendee = $subjectType === CardTemplate::SUBJECT_ATTENDEE
@@ -51,13 +60,27 @@ class CardTemplateController extends Controller
                 ->first()
             : null;
 
+        $sampleRegistration = $subjectType === CardTemplate::SUBJECT_REGISTRATION
+            ? Registration::where('event_id', $event->id)
+                ->with('registrationCategory')
+                ->when($registrationCategoryId, fn ($q) => $q->where('registration_category_id', $registrationCategoryId))
+                ->latest()
+                ->first()
+            : null;
+
         return Inertia::render('dashboard/events/id-card-templates/edit', [
             'event' => $event,
             'template' => $template,
             'subjectType' => $subjectType,
             'attendeeTypeId' => $attendeeTypeId,
+            'registrationCategoryId' => $registrationCategoryId,
             'attendeeTypes' => $event->attendeeTypes()->where('is_active', true)->orderBy('label')->get(),
+            'registrationCategories' => $event->registrationCategories()
+                ->where('subject_type', RegistrationCategory::SUBJECT_INDIVIDUAL)
+                ->orderBy('name')
+                ->get(),
             'sampleAttendee' => $sampleAttendee,
+            'sampleRegistration' => $sampleRegistration,
             // Powers the builder's "reset to default layout" action.
             'defaultTemplate' => CardTemplate::fallbackTemplate($subjectType),
         ]);
@@ -73,13 +96,18 @@ class CardTemplateController extends Controller
     {
         $validated = $request->validate([
             'subject_type' => ['required', Rule::in(['team', 'individual'])],
+            'registration_category_id' => ['nullable', 'integer'],
         ]);
 
         if ($validated['subject_type'] !== 'individual') {
             return response()->json(null);
         }
 
-        return response()->json(CardTemplate::resolveFor($event, CardTemplate::SUBJECT_REGISTRATION));
+        return response()->json(CardTemplate::resolveFor(
+            $event,
+            CardTemplate::SUBJECT_REGISTRATION,
+            registrationCategoryId: $validated['registration_category_id'] ?? null,
+        ));
     }
 
     public function store(Request $request, Event $event)
@@ -93,12 +121,18 @@ class CardTemplateController extends Controller
             [
                 'subject_type' => $validated['subject_type'],
                 'attendee_type_id' => $validated['attendee_type_id'] ?? null,
+                'registration_category_id' => $validated['registration_category_id'] ?? null,
             ],
             $validated,
         );
 
         return redirect()
-            ->route('id-card-templates.builder', [$event, 'subject_type' => $template->subject_type, 'attendee_type_id' => $template->attendee_type_id])
+            ->route('id-card-templates.builder', [
+                $event,
+                'subject_type' => $template->subject_type,
+                'attendee_type_id' => $template->attendee_type_id,
+                'registration_category_id' => $template->registration_category_id,
+            ])
             ->with(['toast' => ['title' => 'Success', 'description' => 'Template saved.']]);
     }
 
@@ -111,7 +145,12 @@ class CardTemplateController extends Controller
         $cardTemplate->update($validated);
 
         return redirect()
-            ->route('id-card-templates.builder', [$event, 'subject_type' => $cardTemplate->subject_type, 'attendee_type_id' => $cardTemplate->attendee_type_id])
+            ->route('id-card-templates.builder', [
+                $event,
+                'subject_type' => $cardTemplate->subject_type,
+                'attendee_type_id' => $cardTemplate->attendee_type_id,
+                'registration_category_id' => $cardTemplate->registration_category_id,
+            ])
             ->with(['toast' => ['title' => 'Success', 'description' => 'Template saved.']]);
     }
 
@@ -132,6 +171,7 @@ class CardTemplateController extends Controller
         return $request->validate([
             'subject_type' => ['required', Rule::in(CardTemplate::SUBJECT_TYPES)],
             'attendee_type_id' => ['nullable', Rule::exists('attendee_types', 'id')->where('event_id', $event->id)],
+            'registration_category_id' => ['nullable', Rule::exists('registration_categories', 'id')->where('event_id', $event->id)],
             'name' => ['required', 'string', 'max:255'],
             'canvas' => ['required', 'array'],
             'canvas.width' => ['required', 'numeric', 'min:40', 'max:4000'],

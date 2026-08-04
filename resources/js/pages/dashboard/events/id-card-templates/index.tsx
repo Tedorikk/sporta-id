@@ -11,6 +11,7 @@ import { formatImageUrl } from '@/lib/image-utils';
 import type { AttendeeType } from '@/types/attendee-type';
 import type { CardSubjectType, CardTemplate } from '@/types/card-template';
 import type { Event } from '@/types/event';
+import type { RegistrationCategory } from '@/types/registration-category';
 
 type DefaultTemplate = Pick<CardTemplate, 'canvas' | 'elements'>;
 
@@ -18,6 +19,7 @@ interface Props {
     event: Event;
     templates: CardTemplate[];
     attendeeTypes: AttendeeType[];
+    registrationCategories: RegistrationCategory[];
     defaultTemplates: Record<CardSubjectType, DefaultTemplate>;
 }
 
@@ -27,12 +29,13 @@ interface Row {
     caption: string;
     subjectType: CardSubjectType;
     attendeeTypeId: number | null;
+    registrationCategoryId: number | null;
     template: CardTemplate | undefined;
 }
 
 const THUMB_HEIGHT = 208;
 
-export default function CardTemplatesIndex({ event, templates, attendeeTypes, defaultTemplates }: Props) {
+export default function CardTemplatesIndex({ event, templates, attendeeTypes, registrationCategories, defaultTemplates }: Props) {
     const [qrDataUrl, setQrDataUrl] = useState('');
 
     useEffect(() => {
@@ -51,6 +54,7 @@ export default function CardTemplatesIndex({ event, templates, attendeeTypes, de
                 caption: 'Used whenever a type has no design of its own',
                 subjectType: 'attendee',
                 attendeeTypeId: null,
+                registrationCategoryId: null,
                 template: templates.find((t) => t.subject_type === 'attendee' && t.attendee_type_id === null),
             },
             ...attendeeTypes.map((type) => ({
@@ -59,6 +63,7 @@ export default function CardTemplatesIndex({ event, templates, attendeeTypes, de
                 caption: `${type.attendees_count ?? 0} attendee${type.attendees_count === 1 ? '' : 's'}`,
                 subjectType: 'attendee' as const,
                 attendeeTypeId: type.id,
+                registrationCategoryId: null,
                 template: templates.find((t) => t.subject_type === 'attendee' && t.attendee_type_id === type.id),
             })),
             {
@@ -67,6 +72,7 @@ export default function CardTemplatesIndex({ event, templates, attendeeTypes, de
                 caption: 'Tournament roster cards',
                 subjectType: 'player',
                 attendeeTypeId: null,
+                registrationCategoryId: null,
                 template: templates.find((t) => t.subject_type === 'player'),
             },
             {
@@ -75,10 +81,29 @@ export default function CardTemplatesIndex({ event, templates, attendeeTypes, de
                 caption: 'Team identity cards',
                 subjectType: 'team',
                 attendeeTypeId: null,
+                registrationCategoryId: null,
                 template: templates.find((t) => t.subject_type === 'team'),
             },
+            {
+                key: 'registration:all',
+                label: 'All registration categories',
+                caption: 'Used whenever a category has no design of its own',
+                subjectType: 'registration',
+                attendeeTypeId: null,
+                registrationCategoryId: null,
+                template: templates.find((t) => t.subject_type === 'registration' && t.registration_category_id === null),
+            },
+            ...registrationCategories.map((category) => ({
+                key: `registration:${category.id}`,
+                label: category.name,
+                caption: `${category.registrations_count ?? 0} registration${category.registrations_count === 1 ? '' : 's'}`,
+                subjectType: 'registration' as const,
+                attendeeTypeId: null,
+                registrationCategoryId: category.id,
+                template: templates.find((t) => t.subject_type === 'registration' && t.registration_category_id === category.id),
+            })),
         ],
-        [templates, attendeeTypes],
+        [templates, attendeeTypes, registrationCategories],
     );
 
     const previewData: IdCardData = useMemo(
@@ -109,6 +134,10 @@ export default function CardTemplatesIndex({ event, templates, attendeeTypes, de
 
         if (row.attendeeTypeId) {
             params.set('attendee_type_id', String(row.attendeeTypeId));
+        }
+
+        if (row.registrationCategoryId) {
+            params.set('registration_category_id', String(row.registrationCategoryId));
         }
 
         return `/dashboard/events/${event.id}/id-card-templates/builder?${params}`;

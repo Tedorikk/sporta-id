@@ -52,6 +52,7 @@ export const SUBJECT_LABEL: Record<CardSubjectType, string> = {
     attendee: 'Attendee',
     player: 'Player',
     team: 'Team',
+    registration: 'Registration',
 };
 
 export const FONT_FAMILIES: { value: string; label: string }[] = [

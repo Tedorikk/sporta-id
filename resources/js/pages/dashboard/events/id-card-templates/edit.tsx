@@ -41,14 +41,19 @@ import type { AttendeeType } from '@/types/attendee-type';
 import type { CardElementKind, CardSubjectType, CardTemplate } from '@/types/card-template';
 import { BINDABLE_FIELDS } from '@/types/card-template';
 import type { Event } from '@/types/event';
+import type { Registration } from '@/types/registration';
+import type { RegistrationCategory } from '@/types/registration-category';
 
 interface Props {
     event: Event;
     template: CardTemplate;
     subjectType: CardSubjectType;
     attendeeTypeId: number | null;
+    registrationCategoryId: number | null;
     attendeeTypes: AttendeeType[];
+    registrationCategories: RegistrationCategory[];
     sampleAttendee: Attendee | null;
+    sampleRegistration: Registration | null;
     defaultTemplate: Pick<CardTemplate, 'canvas' | 'elements'>;
     errors?: Record<string, string>;
 }
@@ -76,7 +81,13 @@ const SHORTCUTS: [string, string][] = [
     ['Esc', 'Deselect'],
 ];
 
-function buildPreviewData(subjectType: CardSubjectType, sample: Attendee | null, qrDataUrl: string, event: Event): IdCardData {
+function buildPreviewData(
+    subjectType: CardSubjectType,
+    sample: Attendee | null,
+    sampleRegistration: Registration | null,
+    qrDataUrl: string,
+    event: Event,
+): IdCardData {
     const eventLogo = event.logo ? formatImageUrl(event.logo) : undefined;
 
     if (subjectType === 'attendee') {
@@ -87,6 +98,18 @@ function buildPreviewData(subjectType: CardSubjectType, sample: Attendee | null,
             organization: sample?.organization ?? 'Acme Corp',
             title: sample?.title ?? 'Booth 12',
             status: sample?.status ?? 'active',
+            qrDataUrl,
+            eventName: event.name,
+            eventLogo,
+            appLogo: APP_LOGO_URL,
+        };
+    }
+
+    if (subjectType === 'registration') {
+        return {
+            name: sampleRegistration?.name ?? 'Jane Doe',
+            photo: sampleRegistration?.photo ? formatImageUrl(sampleRegistration.photo) : undefined,
+            typeLabel: sampleRegistration?.registration_category?.name ?? 'Sample Category',
             qrDataUrl,
             eventName: event.name,
             eventLogo,
@@ -108,12 +131,16 @@ function buildPreviewData(subjectType: CardSubjectType, sample: Attendee | null,
     };
 }
 
-function contextValue(subjectType: CardSubjectType, attendeeTypeId: number | null): string {
-    if (subjectType !== 'attendee') {
-        return subjectType;
+function contextValue(subjectType: CardSubjectType, attendeeTypeId: number | null, registrationCategoryId: number | null): string {
+    if (subjectType === 'attendee') {
+        return attendeeTypeId ? `attendee:${attendeeTypeId}` : 'attendee:all';
     }
 
-    return attendeeTypeId ? `attendee:${attendeeTypeId}` : 'attendee:all';
+    if (subjectType === 'registration') {
+        return registrationCategoryId ? `registration:${registrationCategoryId}` : 'registration:all';
+    }
+
+    return subjectType;
 }
 
 export default function CardTemplateEdit({
@@ -121,8 +148,11 @@ export default function CardTemplateEdit({
     template,
     subjectType,
     attendeeTypeId,
+    registrationCategoryId,
     attendeeTypes,
+    registrationCategories,
     sampleAttendee,
+    sampleRegistration,
     defaultTemplate,
     errors,
 }: Props) {
@@ -158,8 +188,8 @@ export default function CardTemplateEdit({
     }, []);
 
     const previewData = useMemo(
-        () => buildPreviewData(subjectType, sampleAttendee, qrPreview, event),
-        [subjectType, sampleAttendee, qrPreview, event],
+        () => buildPreviewData(subjectType, sampleAttendee, sampleRegistration, qrPreview, event),
+        [subjectType, sampleAttendee, sampleRegistration, qrPreview, event],
     );
 
     /** Fit the card to the visible area, capped at 100% so small cards aren't blown up. */
@@ -276,6 +306,7 @@ export default function CardTemplateEdit({
         const payload = {
             subject_type: subjectType,
             attendee_type_id: attendeeTypeId,
+            registration_category_id: registrationCategoryId,
             name,
             canvas,
             elements,
@@ -293,7 +324,7 @@ export default function CardTemplateEdit({
         } else {
             router.post(`/dashboard/events/${event.id}/id-card-templates`, payload, options);
         }
-    }, [subjectType, attendeeTypeId, name, canvas, elements, template.id, event.id, designer]);
+    }, [subjectType, attendeeTypeId, registrationCategoryId, name, canvas, elements, template.id, event.id, designer]);
 
     // Keyboard shortcuts — skipped whenever focus sits in a form control.
     useEffect(() => {
@@ -415,7 +446,9 @@ export default function CardTemplateEdit({
         const params =
             kind === 'attendee'
                 ? { subject_type: 'attendee', attendee_type_id: id === 'all' ? undefined : Number(id) }
-                : { subject_type: kind };
+                : kind === 'registration'
+                  ? { subject_type: 'registration', registration_category_id: id === 'all' ? undefined : Number(id) }
+                  : { subject_type: kind };
 
         router.get(`/dashboard/events/${event.id}/id-card-templates/builder`, params, { preserveState: false });
     }
@@ -434,8 +467,10 @@ export default function CardTemplateEdit({
     const errorList = Object.values(errors ?? {});
     const contextLabel =
         subjectType === 'attendee'
-            ? attendeeTypes.find((t) => t.id === attendeeTypeId)?.label ?? 'All attendee types'
-            : SUBJECT_LABEL[subjectType];
+            ? (attendeeTypes.find((t) => t.id === attendeeTypeId)?.label ?? 'All attendee types')
+            : subjectType === 'registration'
+              ? (registrationCategories.find((c) => c.id === registrationCategoryId)?.name ?? 'All registration categories')
+              : SUBJECT_LABEL[subjectType];
 
     return (
         <div className="flex h-[calc(100svh-4rem)] flex-col">
@@ -466,7 +501,7 @@ export default function CardTemplateEdit({
 
                 <Separator orientation="vertical" className="h-6" />
 
-                <Select value={contextValue(subjectType, attendeeTypeId)} onValueChange={switchContext}>
+                <Select value={contextValue(subjectType, attendeeTypeId, registrationCategoryId)} onValueChange={switchContext}>
                     <SelectTrigger className="h-9 w-56" aria-label="Card type">
                         <SelectValue />
                     </SelectTrigger>
@@ -477,6 +512,15 @@ export default function CardTemplateEdit({
                             {attendeeTypes.map((type) => (
                                 <SelectItem key={type.id} value={`attendee:${type.id}`}>
                                     {type.label}
+                                </SelectItem>
+                            ))}
+                        </SelectGroup>
+                        <SelectGroup>
+                            <SelectLabel>Registrations</SelectLabel>
+                            <SelectItem value="registration:all">All categories (default)</SelectItem>
+                            {registrationCategories.map((category) => (
+                                <SelectItem key={category.id} value={`registration:${category.id}`}>
+                                    {category.name}
                                 </SelectItem>
                             ))}
                         </SelectGroup>

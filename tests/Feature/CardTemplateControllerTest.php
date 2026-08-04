@@ -2,6 +2,7 @@
 
 use App\Models\CardTemplate;
 use App\Models\Event;
+use App\Models\RegistrationCategory;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -13,6 +14,12 @@ beforeEach(function () {
     // reuse that instead of creating a colliding duplicate key.
     $this->event = Event::factory()->create();
     $this->type = $this->event->attendeeTypes()->where('key', 'guest')->firstOrFail();
+    $this->category = RegistrationCategory::create([
+        'event_id' => $this->event->id,
+        'name' => '5K Fun Run',
+        'subject_type' => RegistrationCategory::SUBJECT_INDIVIDUAL,
+        'form_schema' => [],
+    ]);
 });
 
 function templatePayload(array $overrides = []): array
@@ -53,9 +60,27 @@ test('the index lists templates plus a default layout for every subject type', f
             ->has('defaultTemplates.attendee.elements')
             ->has('defaultTemplates.player')
             ->has('defaultTemplates.team')
+            ->has('defaultTemplates.registration')
             ->has('attendeeTypes', 3)
             ->where('attendeeTypes.0.attendees_count', 0)
+            ->has('registrationCategories', 1)
+            ->where('registrationCategories.0.name', '5K Fun Run')
+            ->where('registrationCategories.0.registrations_count', 0)
         );
+});
+
+test('the index only lists individual-subject registration categories', function () {
+    RegistrationCategory::create([
+        'event_id' => $this->event->id,
+        'name' => 'Team Relay',
+        'subject_type' => RegistrationCategory::SUBJECT_TEAM,
+        'form_schema' => [],
+    ]);
+
+    $this->actingAs($this->user)
+        ->get(route('id-card-templates.index', $this->event))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->has('registrationCategories', 1));
 });
 
 test('guests cannot reach the template index', function () {
@@ -99,6 +124,30 @@ test('the builder loads the existing template for a specific attendee type', fun
         );
 });
 
+test('the builder loads the existing template for a specific registration category', function () {
+    $template = CardTemplate::create(templatePayload([
+        'event_id' => $this->event->id,
+        'subject_type' => 'registration',
+        'attendee_type_id' => null,
+        'registration_category_id' => $this->category->id,
+        'name' => 'Fun Run layout',
+    ]));
+
+    $this->actingAs($this->user)
+        ->get(route('id-card-templates.builder', [
+            $this->event,
+            'subject_type' => 'registration',
+            'registration_category_id' => $this->category->id,
+        ]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('template.id', $template->id)
+            ->where('template.name', 'Fun Run layout')
+            ->where('registrationCategoryId', $this->category->id)
+            ->has('registrationCategories', 1)
+        );
+});
+
 test('the builder rejects an unknown subject type', function () {
     $this->actingAs($this->user)
         ->get(route('id-card-templates.builder', [$this->event, 'subject_type' => 'dragon']))
@@ -136,6 +185,30 @@ test('templates for different attendee types coexist', function () {
     );
 
     expect(CardTemplate::count())->toBe(2);
+});
+
+test('templates for different registration categories coexist', function () {
+    $other = RegistrationCategory::create([
+        'event_id' => $this->event->id,
+        'name' => 'VIP Pass',
+        'subject_type' => RegistrationCategory::SUBJECT_INDIVIDUAL,
+        'form_schema' => [],
+    ]);
+
+    $this->actingAs($this->user)->post(route('id-card-templates.store', $this->event), templatePayload([
+        'subject_type' => 'registration',
+        'attendee_type_id' => null,
+        'registration_category_id' => $this->category->id,
+        'name' => 'Fun Run layout',
+    ]));
+    $this->actingAs($this->user)->post(route('id-card-templates.store', $this->event), templatePayload([
+        'subject_type' => 'registration',
+        'attendee_type_id' => null,
+        'registration_category_id' => $other->id,
+        'name' => 'VIP layout',
+    ]));
+
+    expect(CardTemplate::where('subject_type', 'registration')->count())->toBe(2);
 });
 
 test('a template can be updated', function () {
@@ -196,6 +269,44 @@ test('deleting a template falls the subject back to the built-in layout', functi
         ->toBe(CardTemplate::fallbackTemplate('attendee'));
 });
 
+// ─── Preview endpoint ───────────────────────────────────────────────────────────
+
+test('the preview endpoint returns the category-specific template when one exists', function () {
+    CardTemplate::create(templatePayload([
+        'event_id' => $this->event->id,
+        'subject_type' => 'registration',
+        'attendee_type_id' => null,
+        'registration_category_id' => $this->category->id,
+        'name' => 'Category specific',
+        'canvas' => ['width' => 200, 'height' => 300, 'background' => '#000000'],
+    ]));
+
+    $this->actingAs($this->user)
+        ->get(route('id-card-templates.preview', $this->event).'?'.http_build_query([
+            'subject_type' => 'individual',
+            'registration_category_id' => $this->category->id,
+        ]))
+        ->assertOk()
+        ->assertJsonPath('canvas.width', 200);
+});
+
+test('the preview endpoint falls back to the generic template for a category with no design', function () {
+    $this->actingAs($this->user)
+        ->get(route('id-card-templates.preview', $this->event).'?'.http_build_query([
+            'subject_type' => 'individual',
+            'registration_category_id' => $this->category->id,
+        ]))
+        ->assertOk()
+        ->assertJsonPath('canvas.width', 380);
+});
+
+test('the preview endpoint returns nothing for team-subject categories', function () {
+    $this->actingAs($this->user)
+        ->get(route('id-card-templates.preview', $this->event).'?subject_type=team')
+        ->assertOk()
+        ->assertJson([]);
+});
+
 // ─── Resolution precedence ────────────────────────────────────────────────────
 
 test('a type-specific template wins over the event-wide one', function () {
@@ -218,4 +329,44 @@ test('a type without its own template falls back to the event-wide one', functio
     $resolved = CardTemplate::resolveFor($this->event, 'attendee', $this->type->id);
 
     expect($resolved['canvas']['width'])->toBe(336);
+});
+
+test('a category-specific registration template wins over the event-wide one', function () {
+    CardTemplate::create(templatePayload([
+        'event_id' => $this->event->id,
+        'subject_type' => 'registration',
+        'attendee_type_id' => null,
+        'name' => 'Generic',
+    ]));
+    CardTemplate::create(templatePayload([
+        'event_id' => $this->event->id,
+        'subject_type' => 'registration',
+        'attendee_type_id' => null,
+        'registration_category_id' => $this->category->id,
+        'name' => 'Category specific',
+        'canvas' => ['width' => 200, 'height' => 300, 'background' => '#000000'],
+    ]));
+
+    $resolved = CardTemplate::resolveFor($this->event, 'registration', registrationCategoryId: $this->category->id);
+
+    expect($resolved['canvas']['width'])->toBe(200);
+});
+
+test('a registration category without its own template falls back to the event-wide one', function () {
+    CardTemplate::create(templatePayload([
+        'event_id' => $this->event->id,
+        'subject_type' => 'registration',
+        'attendee_type_id' => null,
+        'name' => 'Generic',
+    ]));
+
+    $resolved = CardTemplate::resolveFor($this->event, 'registration', registrationCategoryId: $this->category->id);
+
+    expect($resolved['canvas']['width'])->toBe(336);
+});
+
+test('a registration category with no template at all falls back to the hardcoded default', function () {
+    $resolved = CardTemplate::resolveFor($this->event, 'registration', registrationCategoryId: $this->category->id);
+
+    expect($resolved)->toBe(CardTemplate::fallbackTemplate('registration'));
 });
