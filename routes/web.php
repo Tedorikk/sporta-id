@@ -166,6 +166,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard/attendees/{attendee}/qr-data', [AttendeeQrController::class, 'show'])->name('attendees.qr-data');
     Route::get('dashboard/registrations/{registration}/qr-data', [RegistrationQrController::class, 'show'])->name('registrations.qr-data');
     Route::post('dashboard/meetings/{meeting}/check-ins', [MeetingCheckInController::class, 'store'])->name('meetings.check-ins.store');
+    Route::get('dashboard/meetings/search', [MeetingController::class, 'search'])->name('meetings.search');
 
     // --- Uploads --------------------------------------------------------
     Route::post('upload/image', [ImageUploadController::class, 'store'])->name('upload.image');

@@ -10,6 +10,23 @@ use Inertia\Inertia;
 
 class MeetingController extends Controller
 {
+    /**
+     * JSON search used by the QR scanner's meeting combobox — the scanner isn't
+     * scoped to a single event, so this searches across all events by title.
+     */
+    public function search(Request $request)
+    {
+        $query = $request->query('q', '');
+
+        $meetings = Meeting::with('event')
+            ->when($query, fn ($q) => $q->where('title', 'like', "%{$query}%"))
+            ->orderByDesc('scheduled_at')
+            ->limit(20)
+            ->get(['id', 'event_id', 'title', 'scheduled_at']);
+
+        return response()->json($meetings);
+    }
+
     public function index(Event $event)
     {
         return Inertia::render('dashboard/events/meetings/index', [

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Meeting;
 use App\Models\Team;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class TeamQrController extends Controller
@@ -12,13 +13,30 @@ class TeamQrController extends Controller
      * Admin-only QR scanner page.
      * Renders the camera-based QR reader that resolves team IDs.
      */
-    public function scan()
+    public function scan(Request $request)
     {
+        // Bounded to a relevant default window (not "every meeting ever") so this
+        // stays fast once an organizer has hundreds/thousands of meetings across
+        // events; the combobox falls back to MeetingController::search() for
+        // anything outside this window.
+        // Event is loaded in full (not a column subset) because its `status`
+        // accessor depends on start_date/end_date; a partial select would
+        // leave those null and crash the accessor when this gets serialized.
+        $meetings = Meeting::with('event')
+            ->where('scheduled_at', '>=', now()->subHours(6))
+            ->orderBy('scheduled_at')
+            ->limit(50)
+            ->get(['id', 'event_id', 'title', 'scheduled_at']);
+
+        $preselectedMeeting = null;
+
+        if ($request->filled('meeting')) {
+            $preselectedMeeting = Meeting::with('event')->find($request->query('meeting'), ['id', 'event_id', 'title', 'scheduled_at']);
+        }
+
         return Inertia::render('dashboard/qr-scanner', [
-            // Event is loaded in full (not a column subset) because its `status`
-            // accessor depends on start_date/end_date; a partial select would
-            // leave those null and crash the accessor when this gets serialized.
-            'meetings' => Meeting::with('event')->orderByDesc('scheduled_at')->get(['id', 'event_id', 'title', 'scheduled_at']),
+            'meetings' => $meetings,
+            'preselectedMeeting' => $preselectedMeeting,
         ]);
     }
 

@@ -1,3 +1,4 @@
+import type { Event } from './event';
 import type { Speaker } from './speaker';
 
 export interface Meeting {
@@ -10,5 +11,6 @@ export interface Meeting {
     scheduled_at: string;
     ends_at: string | null;
     speaker?: Speaker | null;
+    event?: Event;
     check_ins_count?: number;
 }

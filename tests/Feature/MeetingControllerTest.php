@@ -66,6 +66,50 @@ test('ends_at must be after scheduled_at', function () {
         ->assertSessionHasErrors('ends_at');
 });
 
+test('guests cannot use the meeting search endpoint', function () {
+    $this->getJson(route('meetings.search'))->assertUnauthorized();
+});
+
+test('an organizer can search meetings by title across events', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->create();
+    $otherEvent = Event::factory()->create();
+    Meeting::create(['event_id' => $event->id, 'title' => 'Opening Keynote', 'scheduled_at' => now()->addDay()]);
+    Meeting::create(['event_id' => $otherEvent->id, 'title' => 'Closing Ceremony', 'scheduled_at' => now()->addDays(2)]);
+
+    $this->actingAs($user)
+        ->getJson(route('meetings.search', ['q' => 'keynote']))
+        ->assertOk()
+        ->assertJsonCount(1)
+        ->assertJsonPath('0.title', 'Opening Keynote');
+});
+
+test('the meeting search endpoint returns recent meetings when there is no query', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->create();
+    Meeting::create(['event_id' => $event->id, 'title' => 'Session A', 'scheduled_at' => now()->addDay()]);
+    Meeting::create(['event_id' => $event->id, 'title' => 'Session B', 'scheduled_at' => now()->addDays(2)]);
+
+    $this->actingAs($user)
+        ->getJson(route('meetings.search'))
+        ->assertOk()
+        ->assertJsonCount(2);
+});
+
+test('the meeting search endpoint caps results at 20', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->create();
+
+    foreach (range(1, 25) as $i) {
+        Meeting::create(['event_id' => $event->id, 'title' => "Session {$i}", 'scheduled_at' => now()->addHours($i)]);
+    }
+
+    $this->actingAs($user)
+        ->getJson(route('meetings.search'))
+        ->assertOk()
+        ->assertJsonCount(20);
+});
+
 test('an organizer can delete a meeting', function () {
     $user = User::factory()->create();
     $event = Event::factory()->create();

@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ChevronLeft, ClipboardCheck, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ChevronLeft, ClipboardCheck, Pencil, Plus, QrCode, Trash2 } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { Button } from '@/components/ui/button';
 import { formatDateTime } from '@/lib/format-date';
@@ -83,6 +83,13 @@ export default function MeetingsIndex({ event, meetings, speakers }: Props) {
 
                         <div className="flex items-center gap-2">
                             <span className="text-xs text-muted-foreground">{meeting.check_ins_count ?? 0} checked in</span>
+
+                            <Button variant="outline" size="sm" asChild>
+                                <Link href={`/dashboard/qr-scanner?meeting=${meeting.id}`}>
+                                    <QrCode className="mr-2 h-4 w-4" />
+                                    Check-in
+                                </Link>
+                            </Button>
 
                             <Button variant="outline" size="sm" asChild>
                                 <Link href={`/dashboard/events/${event.id}/meetings/${meeting.id}/attendance`}>
