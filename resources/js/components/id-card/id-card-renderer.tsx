@@ -7,6 +7,22 @@ import type { CardElement, CardElementStyle, CardTemplate } from '@/types/card-t
  */
 export type IdCardData = Record<string, string | undefined | null>;
 
+/**
+ * Flattens a registration's custom `form_data` answers into `IdCardData`
+ * entries under `form_data.<key>`, so a card element can bind to them the
+ * same way it binds to any fixed field — see `bindableFieldsFor`'s use of
+ * this same key convention in the builder.
+ */
+export function formDataBindings(formData: Record<string, unknown> | null | undefined): IdCardData {
+    if (!formData) {
+        return {};
+    }
+
+    return Object.fromEntries(
+        Object.entries(formData).map(([key, value]) => [`form_data.${key}`, value == null ? undefined : String(value)]),
+    );
+}
+
 /** JSON from the API can hand back `[]` (empty PHP array) or null instead of an object. */
 export function safeStyle(element: CardElement): CardElementStyle {
     const { style } = element;

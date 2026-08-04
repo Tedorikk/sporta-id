@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { UploadImage } from '@/components/upload-image';
-import type { CardCanvas, CardElement, CardElementStyle, CardSubjectType } from '@/types/card-template';
+import type { BindableField, CardCanvas, CardElement, CardElementStyle, CardSubjectType } from '@/types/card-template';
 import { bindableFieldsFor } from '@/types/card-template';
 
 const STATIC = '__static__';
@@ -40,6 +40,8 @@ const ALIGN_ACTIONS: { key: Align; label: string; icon: typeof AlignLeft }[] = [
 interface InspectorPanelProps {
     canvas: CardCanvas;
     subjectType: CardSubjectType;
+    /** Extra bindable fields on top of the fixed set — e.g. a registration category's custom form fields. */
+    customFields?: BindableField[];
     selected: CardElement | null;
     selectionCount: number;
     onCanvasChange: (patch: Partial<CardCanvas>) => void;
@@ -54,6 +56,7 @@ interface InspectorPanelProps {
 export function InspectorPanel({
     canvas,
     subjectType,
+    customFields = [],
     selected,
     selectionCount,
     onCanvasChange,
@@ -93,7 +96,7 @@ export function InspectorPanel({
     }
 
     const style = safeStyle(selected);
-    const fields = bindableFieldsFor(subjectType, selected.kind);
+    const fields = bindableFieldsFor(subjectType, selected.kind, customFields);
     const isText = selected.kind === 'text';
     const isMedia = selected.kind === 'image' || selected.kind === 'qr';
 

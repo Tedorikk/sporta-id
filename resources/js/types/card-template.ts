@@ -105,6 +105,8 @@ export const BINDABLE_FIELDS: Record<CardSubjectType, BindableField[]> = {
     registration: [
         { value: 'name', label: 'Name', kinds: ['text'] },
         { value: 'typeLabel', label: 'Category', kinds: ['text'] },
+        { value: 'email', label: 'Email', kinds: ['text'] },
+        { value: 'phone', label: 'Phone', kinds: ['text'] },
         { value: 'eventName', label: 'Event Name', kinds: ['text'] },
         { value: 'photo', label: 'Photo', kinds: ['image'] },
         { value: 'eventLogo', label: 'Event Logo', kinds: ['image'] },
@@ -113,10 +115,10 @@ export const BINDABLE_FIELDS: Record<CardSubjectType, BindableField[]> = {
     ],
 };
 
-export function bindableFieldsFor(subjectType: CardSubjectType, kind: CardElementKind): BindableField[] {
-    return BINDABLE_FIELDS[subjectType].filter((field) => field.kinds.includes(kind));
+export function bindableFieldsFor(subjectType: CardSubjectType, kind: CardElementKind, extra: BindableField[] = []): BindableField[] {
+    return [...BINDABLE_FIELDS[subjectType], ...extra].filter((field) => field.kinds.includes(kind));
 }
 
-export function bindingLabel(subjectType: CardSubjectType, binding: string): string {
-    return BINDABLE_FIELDS[subjectType].find((field) => field.value === binding)?.label ?? binding;
+export function bindingLabel(subjectType: CardSubjectType, binding: string, extra: BindableField[] = []): string {
+    return [...BINDABLE_FIELDS[subjectType], ...extra].find((field) => field.value === binding)?.label ?? binding;
 }

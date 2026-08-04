@@ -24,6 +24,7 @@ import type { Box } from '@/components/id-card/canvas-geometry';
 import { APP_LOGO_URL, rescaleElements, SUBJECT_LABEL } from '@/components/id-card/card-presets';
 import { DesignCanvas } from '@/components/id-card/design-canvas';
 import type { IdCardData } from '@/components/id-card/id-card-renderer';
+import { formDataBindings } from '@/components/id-card/id-card-renderer';
 import { InspectorPanel } from '@/components/id-card/inspector-panel';
 import { LayersPanel } from '@/components/id-card/layers-panel';
 import { normalizeElement, useCardDesigner } from '@/components/id-card/use-card-designer';
@@ -38,7 +39,7 @@ import { formatImageUrl } from '@/lib/image-utils';
 import { cn } from '@/lib/utils';
 import type { Attendee } from '@/types/attendee';
 import type { AttendeeType } from '@/types/attendee-type';
-import type { CardElementKind, CardSubjectType, CardTemplate } from '@/types/card-template';
+import type { BindableField, CardElementKind, CardSubjectType, CardTemplate } from '@/types/card-template';
 import { BINDABLE_FIELDS } from '@/types/card-template';
 import type { Event } from '@/types/event';
 import type { Registration } from '@/types/registration';
@@ -59,6 +60,9 @@ interface Props {
 }
 
 const ZOOM_STEPS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3];
+
+/** Mirrors RegistrationController::RESERVED_KEYS — these already have dedicated fixed bindings. */
+const RESERVED_FIELD_KEYS = ['name', 'email', 'phone', 'photo'];
 
 const ADD_BUTTONS: { kind: CardElementKind; label: string; icon: typeof Type }[] = [
     { kind: 'text', label: 'Text', icon: Type },
@@ -110,10 +114,13 @@ function buildPreviewData(
             name: sampleRegistration?.name ?? 'Jane Doe',
             photo: sampleRegistration?.photo ? formatImageUrl(sampleRegistration.photo) : undefined,
             typeLabel: sampleRegistration?.registration_category?.name ?? 'Sample Category',
+            email: sampleRegistration?.email ?? undefined,
+            phone: sampleRegistration?.phone ?? undefined,
             qrDataUrl,
             eventName: event.name,
             eventLogo,
             appLogo: APP_LOGO_URL,
+            ...formDataBindings(sampleRegistration?.form_data),
         };
     }
 
@@ -191,6 +198,26 @@ export default function CardTemplateEdit({
         () => buildPreviewData(subjectType, sampleAttendee, sampleRegistration, qrPreview, event),
         [subjectType, sampleAttendee, sampleRegistration, qrPreview, event],
     );
+
+    // A registration category's custom form fields, exposed as bindable
+    // fields only while that specific category is selected — different
+    // categories can have entirely different schemas, so this can't be
+    // shown for the "All categories" default context.
+    const customFields: BindableField[] = useMemo(() => {
+        if (subjectType !== 'registration' || !registrationCategoryId) {
+            return [];
+        }
+
+        const category = registrationCategories.find((c) => c.id === registrationCategoryId);
+
+        return (category?.form_schema ?? [])
+            .filter((field) => !RESERVED_FIELD_KEYS.includes(field.key))
+            .map((field) => ({
+                value: `form_data.${field.key}`,
+                label: field.label,
+                kinds: field.type === 'file' ? ['image'] : ['text'],
+            }));
+    }, [subjectType, registrationCategoryId, registrationCategories]);
 
     /** Fit the card to the visible area, capped at 100% so small cards aren't blown up. */
     const fitToView = useCallback(() => {
@@ -593,7 +620,7 @@ export default function CardTemplateEdit({
                             Click to place a layer that fills itself from each card&apos;s data.
                         </p>
                         <div className="flex flex-wrap gap-1.5">
-                            {BINDABLE_FIELDS[subjectType].map((field) => (
+                            {[...BINDABLE_FIELDS[subjectType], ...customFields].map((field) => (
                                 <button
                                     key={field.value}
                                     type="button"
@@ -604,6 +631,11 @@ export default function CardTemplateEdit({
                                 </button>
                             ))}
                         </div>
+                        {subjectType === 'registration' && !registrationCategoryId && (
+                            <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground italic">
+                                Select a specific category above to bind its custom fields too.
+                            </p>
+                        )}
                     </div>
 
                     <div className="flex min-h-0 flex-1 flex-col">
@@ -614,6 +646,7 @@ export default function CardTemplateEdit({
                             <LayersPanel
                                 elements={elements}
                                 subjectType={subjectType}
+                                customFields={customFields}
                                 selectedIds={selectedIds}
                                 onSelect={setSelectedIds}
                                 onToggle={(id, patch) => designer.updateElement(id, patch)}
@@ -665,6 +698,7 @@ export default function CardTemplateEdit({
                     <InspectorPanel
                         canvas={canvas}
                         subjectType={subjectType}
+                        customFields={customFields}
                         selected={selected}
                         selectionCount={selectedIds.length}
                         onCanvasChange={designer.setCanvas}

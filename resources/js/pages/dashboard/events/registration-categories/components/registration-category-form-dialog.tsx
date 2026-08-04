@@ -36,7 +36,7 @@ import { formatImageUrl } from '@/lib/image-utils';
 import type { CardTemplate } from '@/types/card-template';
 import type { Event } from '@/types/event';
 import { REGISTRATION_FIELD_TYPES } from '@/types/registration-category';
-import type { RegistrationCategory, RegistrationFieldType, RegistrationSubjectType } from '@/types/registration-category';
+import type { RegistrationCategory, RegistrationField, RegistrationFieldType, RegistrationSubjectType } from '@/types/registration-category';
 import type { Team } from '@/types/team';
 
 const fieldSchema = z.object({
@@ -88,11 +88,15 @@ function emptyField(): CategoryFormValues['form_schema'][number] {
     return { key: '', label: '', type: 'text', required: false, optionsText: '', help_text: '' };
 }
 
+/** Mirrors RegistrationController::RESERVED_KEYS — these already have dedicated fixed bindings. */
+const RESERVED_FIELD_KEYS = ['name', 'email', 'phone', 'photo'];
+
 interface IdCardPreviewProps {
     event: Event;
     subjectType: RegistrationSubjectType;
     name: string;
     categoryId: number | null;
+    formSchema: RegistrationField[];
 }
 
 /**
@@ -101,7 +105,7 @@ interface IdCardPreviewProps {
  * instantly; individual cards go through the same template resolution
  * (custom design, or the built-in fallback) real registrants get.
  */
-function IdCardPreview({ event, subjectType, name, categoryId }: IdCardPreviewProps) {
+function IdCardPreview({ event, subjectType, name, categoryId, formSchema }: IdCardPreviewProps) {
     const [open, setOpen] = useState(false);
     const [template, setTemplate] = useState<CardTemplate | null>(null);
     const [qrDataUrl, setQrDataUrl] = useState('');
@@ -161,10 +165,15 @@ function IdCardPreview({ event, subjectType, name, categoryId }: IdCardPreviewPr
     const sampleData: IdCardData = {
         name: name || 'Sample Registrant',
         typeLabel: 'Sample Category',
+        email: 'jane@example.com',
+        phone: '+62 812-0000-0000',
         qrDataUrl,
         eventName: event.name,
         eventLogo: event.logo ? formatImageUrl(event.logo) : undefined,
         appLogo: APP_LOGO_URL,
+        ...Object.fromEntries(
+            formSchema.filter((field) => !RESERVED_FIELD_KEYS.includes(field.key)).map((field) => [`form_data.${field.key}`, `Sample ${field.label}`]),
+        ),
     };
 
     return (
@@ -504,6 +513,7 @@ export function RegistrationCategoryFormDialog({ event, registrationCategory, tr
                             subjectType={watchedSubjectType}
                             name={watchedName}
                             categoryId={registrationCategory?.id ?? null}
+                            formSchema={registrationCategory?.form_schema ?? []}
                         />
                     </FieldGroup>
 

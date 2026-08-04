@@ -25,7 +25,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import type { CardElement, CardElementKind, CardSubjectType } from '@/types/card-template';
+import type { BindableField, CardElement, CardElementKind, CardSubjectType } from '@/types/card-template';
 import { bindingLabel } from '@/types/card-template';
 
 const KIND_ICON: Record<CardElementKind, typeof Type> = {
@@ -39,13 +39,13 @@ const KIND_ICON: Record<CardElementKind, typeof Type> = {
  *  math (which slot the pointer is over) never has to measure the DOM. */
 const ROW_HEIGHT = 34;
 
-export function elementDisplayName(element: CardElement, subjectType: CardSubjectType): string {
+export function elementDisplayName(element: CardElement, subjectType: CardSubjectType, customFields: BindableField[] = []): string {
     if (element.name) {
         return element.name;
     }
 
     if (element.binding) {
-        return bindingLabel(subjectType, element.binding);
+        return bindingLabel(subjectType, element.binding, customFields);
     }
 
     if (element.kind === 'text') {
@@ -66,6 +66,8 @@ function moveItem<T>(list: T[], fromIndex: number, toIndex: number): T[] {
 interface LayersPanelProps {
     elements: CardElement[];
     subjectType: CardSubjectType;
+    /** Extra bindable fields on top of the fixed set — e.g. a registration category's custom form fields. */
+    customFields?: BindableField[];
     selectedIds: string[];
     onSelect: (ids: string[]) => void;
     onToggle: (id: string, patch: Partial<CardElement>) => void;
@@ -87,6 +89,7 @@ interface DragState {
 export function LayersPanel({
     elements,
     subjectType,
+    customFields = [],
     selectedIds,
     onSelect,
     onToggle,
@@ -256,7 +259,7 @@ export function LayersPanel({
 
                             <Icon className="h-3.5 w-3.5 shrink-0 opacity-70" />
 
-                            <span className="min-w-0 flex-1 truncate text-xs">{elementDisplayName(element, subjectType)}</span>
+                            <span className="min-w-0 flex-1 truncate text-xs">{elementDisplayName(element, subjectType, customFields)}</span>
 
                             <button
                                 type="button"

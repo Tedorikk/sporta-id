@@ -1,6 +1,6 @@
 import type { Ref } from 'react';
 import { APP_LOGO_URL } from '@/components/id-card/card-presets';
-import { IdCardRenderer } from '@/components/id-card/id-card-renderer';
+import { formDataBindings, IdCardRenderer } from '@/components/id-card/id-card-renderer';
 import type { IdCardData } from '@/components/id-card/id-card-renderer';
 import { formatImageUrl } from '@/lib/image-utils';
 import type { CardTemplate } from '@/types/card-template';
@@ -27,10 +27,13 @@ export function RegistrationIdCardCard({ registration, template, qrDataUrl, card
         typeLabel,
         organization: undefined,
         status: registration.status,
+        email: registration.email ?? undefined,
+        phone: registration.phone ?? undefined,
         qrDataUrl,
         eventName: registration.event?.name,
         eventLogo: registration.event?.logo ? formatImageUrl(registration.event.logo) : undefined,
         appLogo: APP_LOGO_URL,
+        ...formDataBindings(registration.form_data),
     };
 
     return (
