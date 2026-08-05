@@ -1,19 +1,22 @@
 import { Head, Link } from '@inertiajs/react';
-import { Calendar, Facebook, Instagram, LayoutGrid, Mic, MessageCircle, Phone, Swords, Trophy, Users, Youtube } from 'lucide-react';
+import { ArrowRight, Calendar, Facebook, Instagram, LayoutGrid, Mic, MessageCircle, Phone, Swords, Ticket, Trophy, Users, Youtube } from 'lucide-react';
 import { BasketballCategorySection } from '@/components/public/basketball-category-section';
 import { MatchesCalendar } from '@/components/public/matches-calendar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import PublicLayout from '@/layouts/public-layout';
+import { formatRupiah } from '@/lib/format-currency';
 import { formatDate, formatDateTime } from '@/lib/format-date';
 import { formatImageUrl } from '@/lib/image-utils';
 import type { Event } from '@/types/event';
 import type { Meeting } from '@/types/meeting';
 import type { PublicEventCategory } from '@/types/public-event-category';
+import type { RegistrationCategory } from '@/types/registration-category';
 
 interface Props {
     event: Event;
     categories: PublicEventCategory[] | null;
     meetings: Meeting[];
+    registrationCategories: RegistrationCategory[];
 }
 
 const STATUS_STYLE: Record<string, string> = {
@@ -29,9 +32,10 @@ const SOCIAL_LINKS: { key: keyof Event; label: string; icon: typeof Instagram }[
     { key: 'whatsapp_url', label: 'WhatsApp', icon: MessageCircle },
 ];
 
-export default function EventShow({ event, categories, meetings }: Props) {
+export default function EventShow({ event, categories, meetings, registrationCategories }: Props) {
     const hasCategories = Boolean(categories && categories.length > 0);
     const hasMeetings = meetings.length > 0;
+    const hasRegistration = registrationCategories.length > 0;
     const totalTeams = categories?.reduce((sum, c) => sum + c.teams.length, 0) ?? 0;
     const totalMatches = categories?.reduce((sum, c) => sum + c.matches.length, 0) ?? 0;
     const totalPools = categories?.reduce((sum, c) => sum + c.pools.length, 0) ?? 0;
@@ -140,6 +144,33 @@ export default function EventShow({ event, categories, meetings }: Props) {
                 </section>
 
                 <section className="mx-auto flex max-w-5xl flex-col gap-10 px-6 py-14">
+                    {hasRegistration && (
+                        <div className="flex flex-col gap-6">
+                            <h2 className="flex items-center gap-2 text-2xl font-black tracking-tight uppercase">
+                                <Ticket className="h-5 w-5 text-white/50" />
+                                Register
+                            </h2>
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                {registrationCategories.map((category) => (
+                                    <Link
+                                        key={category.id}
+                                        href={`/events/${event.id}/registration-categories/${category.id}/register`}
+                                        className="group flex items-center justify-between gap-4 rounded-2xl border-2 border-white/10 bg-white/5 p-5 transition hover:border-red-500 hover:bg-white/10"
+                                    >
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-lg font-bold text-white">{category.name}</span>
+                                            <span className="text-sm text-white/50">{formatRupiah(category.price)}</span>
+                                        </div>
+                                        <span className="flex items-center gap-1.5 rounded-full bg-red-600 px-4 py-2 text-xs font-bold tracking-wide text-white uppercase transition group-hover:bg-red-700">
+                                            Register
+                                            <ArrowRight className="h-3.5 w-3.5" />
+                                        </span>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {calendarMatches.length > 0 && (
                         <div className="flex flex-col gap-6">
                             <h2 className="text-2xl font-black tracking-tight uppercase">Match Schedule</h2>
@@ -216,7 +247,8 @@ export default function EventShow({ event, categories, meetings }: Props) {
                             ))}
                         </div>
                     ) : (
-                        !hasMeetings && (
+                        !hasMeetings &&
+                        !hasRegistration && (
                             <p className="text-center text-sm text-white/40">
                                 Details for this event will be posted soon.{' '}
                                 <Link href="/events" className="text-red-400 hover:underline">

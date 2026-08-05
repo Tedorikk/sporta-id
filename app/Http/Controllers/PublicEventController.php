@@ -78,10 +78,20 @@ class PublicEventController extends Controller
 
         $meetings = $event->meetings()->with('speaker')->orderBy('scheduled_at')->get();
 
+        // Only categories a visitor could actually register for right now —
+        // reuses the same isOpen()/hasAvailableQuota() checks the register
+        // page itself enforces, so this list never promises a slot it can't give.
+        $registrationCategories = $event->registrationCategories()
+            ->orderBy('name')
+            ->get()
+            ->filter(fn ($category) => $category->isOpen() && $category->hasAvailableQuota())
+            ->values();
+
         return Inertia::render('events/show', [
             'event' => $event,
             'categories' => $categories,
             'meetings' => $meetings,
+            'registrationCategories' => $registrationCategories,
         ]);
     }
 }

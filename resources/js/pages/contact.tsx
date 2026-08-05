@@ -74,7 +74,6 @@ export default function Contact() {
                 <section className="mx-auto grid max-w-5xl grid-cols-1 gap-10 px-6 py-14 lg:grid-cols-2">
                     <div className="flex flex-col gap-4">
                         <h2 className="text-xl font-black tracking-tight uppercase">Contact Info</h2>
-                        <p className="text-sm text-white/40">Placeholder details — update with real contact info.</p>
                         {CONTACT_INFO.map(({ icon: Icon, label }) => (
                             <div key={label} className="flex items-center gap-3 text-white/80">
                                 <div className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-red-500 bg-red-600/20">
