@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Head, router } from '@inertiajs/react';
-import { CheckCircle2, Loader2, Lock } from 'lucide-react';
+import { CheckCircle2, Clock, Loader2, Lock } from 'lucide-react';
 import QRCode from 'qrcode';
 import type { CSSProperties } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -31,6 +31,8 @@ import { UploadDocument } from '@/components/upload-document';
 import { UploadImage } from '@/components/upload-image';
 import { useForceLightMode } from '@/hooks/use-force-light-mode';
 import { accentColors } from '@/lib/color';
+import { formatRupiah } from '@/lib/format-currency';
+import { loadSnapScript } from '@/lib/midtrans';
 import type { CardTemplate } from '@/types/card-template';
 import type { Event } from '@/types/event';
 import type { Registration } from '@/types/registration';
@@ -42,6 +44,105 @@ interface Props {
     registrationClosed: boolean;
     confirmedRegistration?: Registration | null;
     cardTemplate?: CardTemplate | null;
+    snapToken?: string | null;
+    midtransClientKey?: string | null;
+    midtransIsProduction?: boolean;
+}
+
+function PaymentPendingView({
+    event,
+    registrationCategory,
+    registration,
+    snapToken,
+    midtransClientKey,
+    midtransIsProduction,
+    accentStyle,
+}: {
+    event: Event;
+    registrationCategory: RegistrationCategory;
+    registration: Registration;
+    snapToken: string | null;
+    midtransClientKey: string | null;
+    midtransIsProduction: boolean;
+    accentStyle: CSSProperties;
+}) {
+    const [isPaying, setIsPaying] = useState(false);
+
+    const payNow = () => {
+        if (!snapToken || !midtransClientKey) {
+            return;
+        }
+
+        setIsPaying(true);
+
+        loadSnapScript(midtransClientKey, midtransIsProduction)
+            .then(() => {
+                window.snap?.pay(snapToken, {
+                    onSuccess: () => router.visit(`/registrations/${registration.id}/status`),
+                    onPending: () => router.visit(`/registrations/${registration.id}/status`),
+                    onError: () => setIsPaying(false),
+                    onClose: () => setIsPaying(false),
+                });
+            })
+            .catch(() => setIsPaying(false));
+    };
+
+    return (
+        <>
+            <Head title={`Complete Payment — ${event.name}`} />
+
+            <div
+                className="relative flex min-h-screen flex-col items-center justify-center gap-6 bg-neutral-950 px-4 py-10"
+                style={accentStyle}
+            >
+                <div className="flex items-center gap-2 text-amber-400">
+                    <Clock className="h-5 w-5" />
+                    <span className="text-sm font-semibold tracking-wide uppercase">Awaiting payment</span>
+                </div>
+
+                <div className="w-full max-w-sm overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
+                    <PublicPageHeader
+                        eyebrow="Registration"
+                        title={event.name}
+                        subtitle={registrationCategory.name}
+                        logoUrl={event.logo}
+                        accentColor={event.accent_color}
+                    />
+
+                    <div className="flex flex-col items-center gap-4 px-6 py-10 text-center">
+                        <p className="text-sm font-medium text-neutral-500">{registration.name}</p>
+                        <p className="text-3xl font-bold text-neutral-900">{formatRupiah(registrationCategory.price)}</p>
+                        <p className="text-sm text-neutral-600">
+                            Your slot is reserved — complete payment to confirm this registration and get your ID card.
+                        </p>
+
+                        {snapToken ? (
+                            <Button
+                                type="button"
+                                onClick={payNow}
+                                disabled={isPaying}
+                                className="mt-2 w-full cursor-pointer bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
+                            >
+                                {isPaying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                {isPaying ? 'Opening payment…' : 'Pay Now'}
+                            </Button>
+                        ) : (
+                            <p className="text-sm text-amber-600">
+                                Couldn&apos;t start payment just now — use &quot;Check registration status&quot; below to try again.
+                            </p>
+                        )}
+                    </div>
+                </div>
+
+                <a
+                    href={`/registrations/${registration.id}/status`}
+                    className="text-sm font-medium text-white/70 underline-offset-2 hover:text-white hover:underline"
+                >
+                    Check registration status
+                </a>
+            </div>
+        </>
+    );
 }
 
 function RegistrationSuccessView({
@@ -165,7 +266,16 @@ function defaultValuesFor(fields: RegistrationField[]) {
     return defaults;
 }
 
-export default function RegisterDynamic({ event, registrationCategory, registrationClosed, confirmedRegistration, cardTemplate }: Props) {
+export default function RegisterDynamic({
+    event,
+    registrationCategory,
+    registrationClosed,
+    confirmedRegistration,
+    cardTemplate,
+    snapToken,
+    midtransClientKey,
+    midtransIsProduction,
+}: Props) {
     useForceLightMode();
 
     const [isSaving, setIsSaving] = useState(false);
@@ -213,6 +323,20 @@ export default function RegisterDynamic({ event, registrationCategory, registrat
             },
         });
     };
+
+    if (confirmedRegistration?.status === 'pending_payment') {
+        return (
+            <PaymentPendingView
+                event={event}
+                registrationCategory={registrationCategory}
+                registration={confirmedRegistration}
+                snapToken={snapToken ?? null}
+                midtransClientKey={midtransClientKey ?? null}
+                midtransIsProduction={midtransIsProduction ?? false}
+                accentStyle={accentStyle}
+            />
+        );
+    }
 
     if (confirmedRegistration) {
         return (

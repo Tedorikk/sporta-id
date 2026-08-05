@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { formatRupiah } from '@/lib/format-currency';
 import type { Event } from '@/types/event';
 import type { RegistrationCategory } from '@/types/registration-category';
 import { RegistrationCategoryFormDialog } from './components/registration-category-form-dialog';
@@ -11,14 +12,6 @@ import { RegistrationCategoryFormDialog } from './components/registration-catego
 interface Props {
     event: Event;
     registrationCategories: RegistrationCategory[];
-}
-
-function formatPrice(price: string | null) {
-    if (!price || Number(price) === 0) {
-        return 'Free';
-    }
-
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(price));
 }
 
 export default function RegistrationCategoriesIndex({ event, registrationCategories }: Props) {
@@ -80,7 +73,7 @@ export default function RegistrationCategoriesIndex({ event, registrationCategor
                                 {!category.registration_open && <Badge variant="outline">Closed</Badge>}
                             </div>
                             <p className="text-xs text-muted-foreground">
-                                {formatPrice(category.price)}
+                                {formatRupiah(category.price)}
                                 {' · '}
                                 {category.registered_count}
                                 {category.quota ? ` / ${category.quota}` : ''} registered

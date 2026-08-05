@@ -17,3 +17,26 @@ declare module '@inertiajs/core' {
         };
     }
 }
+
+declare global {
+    /** Midtrans Snap.js, loaded on-demand — see resources/js/lib/midtrans.ts */
+    interface MidtransSnapResult {
+        order_id: string;
+        transaction_status: string;
+        [key: string]: unknown;
+    }
+
+    interface Window {
+        snap?: {
+            pay: (
+                snapToken: string,
+                callbacks?: {
+                    onSuccess?: (result: MidtransSnapResult) => void;
+                    onPending?: (result: MidtransSnapResult) => void;
+                    onError?: (result: MidtransSnapResult) => void;
+                    onClose?: () => void;
+                },
+            ) => void;
+        };
+    }
+}

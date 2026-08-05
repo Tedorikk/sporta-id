@@ -2,10 +2,12 @@
 
 use App\Models\CardTemplate;
 use App\Models\Event;
+use App\Models\Payment;
 use App\Models\Registration;
 use App\Models\RegistrationCategory;
 use App\Models\Team;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 
 uses(RefreshDatabase::class);
 
@@ -163,6 +165,46 @@ test('the confirmed registration reflects a category-specific card template when
     ])
         ->assertOk()
         ->assertInertia(fn ($page) => $page->where('cardTemplate.canvas.width', 200));
+});
+
+test('a paid category creates a pending-payment registration with a snap token', function () {
+    Http::fake([
+        'app.sandbox.midtrans.com/snap/v1/transactions' => Http::response(['token' => 'snap-token-abc'], 201),
+    ]);
+
+    $category = makeRegistrationCategory(['price' => '150000']);
+
+    $this->post(route('registrations.store', [$category->event, $category]), [
+        'name' => 'Jane Doe',
+        'email' => 'jane@example.com',
+        'form_data' => ['shirt_size' => 'M'],
+    ])
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('register-dynamic')
+            ->where('confirmedRegistration.status', 'pending_payment')
+            ->where('snapToken', 'snap-token-abc')
+            ->where('cardTemplate', null)
+        );
+
+    $registration = Registration::where('name', 'Jane Doe')->firstOrFail();
+
+    expect($registration->status)->toBe(Registration::STATUS_PENDING_PAYMENT)
+        ->and($registration->expires_at)->not->toBeNull()
+        // Quota is reserved immediately, same as a free registration.
+        ->and($category->fresh()->registered_count)->toBe(1);
+
+    $payment = Payment::where('registration_id', $registration->id)->firstOrFail();
+
+    expect($payment->snap_token)->toBe('snap-token-abc')
+        ->and((float) $payment->amount)->toBe(150000.0);
+
+    Http::assertSent(function ($request) use ($payment) {
+        $data = $request->data();
+
+        return ($data['transaction_details']['order_id'] ?? null) === $payment->order_id
+            && ($data['transaction_details']['gross_amount'] ?? null) === 150000;
+    });
 });
 
 test('a team-subject category also creates a team and returns it inline', function () {

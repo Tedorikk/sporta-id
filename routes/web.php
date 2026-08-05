@@ -19,6 +19,7 @@ use App\Http\Controllers\LandingController;
 use App\Http\Controllers\MeetingAttendanceController;
 use App\Http\Controllers\MeetingCheckInController;
 use App\Http\Controllers\MeetingController;
+use App\Http\Controllers\PaymentNotificationController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\PlayerLookupController;
 use App\Http\Controllers\PlayerQrController;
@@ -62,6 +63,11 @@ Route::get('players/{player}/id-card', [PlayerQrController::class, 'idCard'])->n
 Route::get('events/{event}/registration-categories/{registrationCategory}/register', [RegistrationController::class, 'create'])->name('registrations.create');
 Route::post('events/{event}/registration-categories/{registrationCategory}/register', [RegistrationController::class, 'store'])->name('registrations.store');
 Route::get('registrations/{registration}/status', [RegistrationController::class, 'status'])->name('registrations.status');
+Route::post('registrations/{registration}/pay', [RegistrationController::class, 'pay'])
+    ->middleware('throttle:20,1')->name('registrations.pay');
+
+// --- Midtrans payment notification webhook (server-to-server, no session) --
+Route::post('webhooks/midtrans', [PaymentNotificationController::class, 'handle'])->name('webhooks.midtrans');
 
 // --- Public "Find My ID Card" lookup (no auth required) --------------------
 Route::get('find-id', [PlayerLookupController::class, 'index'])->name('players.lookup');
