@@ -53,10 +53,40 @@ class MidtransClient
         return hash_equals($expected, $signatureKey);
     }
 
+    /**
+     * Actively pulls a transaction's current status from Midtrans — the same
+     * shape as a webhook notification, but pulled on demand instead of
+     * waiting for one to arrive. Used to reconcile a registration when the
+     * notification URL was never configured (or a webhook was missed).
+     */
+    public function getStatus(string $orderId): array
+    {
+        $response = Http::withBasicAuth(config('services.midtrans.server_key'), '')
+            ->acceptJson()
+            ->get($this->coreApiBaseUrl()."/v2/{$orderId}/status");
+
+        if ($response->failed()) {
+            throw new RuntimeException("Midtrans status check failed for order {$orderId}: ".$response->body());
+        }
+
+        return $response->json();
+    }
+
     private function baseUrl(): string
     {
         return config('services.midtrans.is_production')
             ? 'https://app.midtrans.com'
             : 'https://app.sandbox.midtrans.com';
+    }
+
+    /**
+     * The Core/Transaction API (status checks, etc.) lives on a different
+     * domain than Snap's transaction-creation endpoint.
+     */
+    private function coreApiBaseUrl(): string
+    {
+        return config('services.midtrans.is_production')
+            ? 'https://api.midtrans.com'
+            : 'https://api.sandbox.midtrans.com';
     }
 }
