@@ -61,7 +61,8 @@ Route::get('players/{player}/id-card', [PlayerQrController::class, 'idCard'])->n
 
 // --- Public dynamic registration (team or individual, any event type) -----
 Route::get('events/{event}/registration-categories/{registrationCategory}/register', [RegistrationController::class, 'create'])->name('registrations.create');
-Route::post('events/{event}/registration-categories/{registrationCategory}/register', [RegistrationController::class, 'store'])->name('registrations.store');
+Route::post('events/{event}/registration-categories/{registrationCategory}/register', [RegistrationController::class, 'store'])
+    ->middleware('throttle:10,1')->name('registrations.store');
 Route::get('registrations/{registration}/status', [RegistrationController::class, 'status'])->name('registrations.status');
 Route::post('registrations/{registration}/pay', [RegistrationController::class, 'pay'])
     ->middleware('throttle:20,1')->name('registrations.pay');
@@ -118,6 +119,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->names('attendee-types')
                 ->except(['create', 'edit', 'show']);
 
+            Route::get('registration-categories/builder', [RegistrationCategoryController::class, 'builder'])
+                ->name('registration_categories.builder');
+            Route::get('registration-categories/{registrationCategory}/responses/export', [RegistrationCategoryController::class, 'exportResponses'])
+                ->name('registration_categories.responses.export');
             Route::resource('registration-categories', RegistrationCategoryController::class)
                 ->names('registration_categories')
                 ->except(['create', 'edit']);

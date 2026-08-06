@@ -18,7 +18,7 @@ function makeCategoryWithRegistration(array $registrationOverrides = []): array
         'price' => '50000',
         'registration_open' => true,
         'registered_count' => 1,
-        'form_schema' => [],
+        'form_pages' => [],
     ]);
 
     $registration = Registration::create(array_merge([

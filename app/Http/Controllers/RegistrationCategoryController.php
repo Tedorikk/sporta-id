@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Event;
 use App\Models\RegistrationCategory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
@@ -19,6 +20,63 @@ class RegistrationCategoryController extends Controller
                 ->latest()
                 ->get(),
         ]);
+    }
+
+    /**
+     * Full-page form builder. With no `registration_category_id` this seeds
+     * a blank category for creation; otherwise it loads the existing one
+     * for editing — same single-action pattern as CardTemplateController::builder().
+     */
+    public function builder(Request $request, Event $event)
+    {
+        $registrationCategoryId = $request->integer('registration_category_id') ?: null;
+
+        $registrationCategory = $registrationCategoryId
+            ? $event->registrationCategories()->findOrFail($registrationCategoryId)
+            : null;
+
+        return Inertia::render('dashboard/events/registration-categories/builder', [
+            'event' => $event,
+            'registrationCategory' => $registrationCategory,
+        ]);
+    }
+
+    /**
+     * Streams every response for this category as CSV — column order mirrors
+     * the fixed registration columns followed by the form's own field order.
+     */
+    public function exportResponses(Event $event, RegistrationCategory $registrationCategory)
+    {
+        abort_unless($registrationCategory->event_id === $event->id, 404);
+
+        $fields = $registrationCategory->allFields();
+        $filename = Str::slug($registrationCategory->name).'-registrations.csv';
+
+        return response()->streamDownload(function () use ($registrationCategory, $fields) {
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, array_merge(
+                ['Name', 'Email', 'Phone', 'Status', 'Registered At'],
+                collect($fields)->pluck('label')->all(),
+            ));
+
+            $registrationCategory->registrations()->orderBy('created_at')
+                ->chunk(200, function ($registrations) use ($handle, $fields) {
+                    foreach ($registrations as $registration) {
+                        fputcsv($handle, array_merge([
+                            $registration->name,
+                            $registration->email,
+                            $registration->phone,
+                            $registration->status,
+                            $registration->created_at?->toDateTimeString(),
+                        ], collect($fields)->map(
+                            fn (array $field) => data_get($registration->form_data, $field['key'])
+                        )->all()));
+                    }
+                });
+
+            fclose($handle);
+        }, $filename, ['Content-Type' => 'text/csv']);
     }
 
     public function show(Request $request, Event $event, RegistrationCategory $registrationCategory)
@@ -98,28 +156,54 @@ class RegistrationCategoryController extends Controller
             'registration_open' => ['nullable', 'boolean'],
             'opens_at' => ['nullable', 'date'],
             'closes_at' => ['nullable', 'date', 'after_or_equal:opens_at'],
-            'form_schema' => ['nullable', 'array'],
-            'form_schema.*.key' => [
+
+            'form_pages' => ['nullable', 'array'],
+            'form_pages.*.key' => ['required', 'string', 'max:100'],
+            'form_pages.*.title' => ['required', 'string', 'max:255'],
+            'form_pages.*.description' => ['nullable', 'string', 'max:1000'],
+            'form_pages.*.fields' => ['nullable', 'array'],
+            'form_pages.*.fields.*.key' => [
                 'required', 'string', 'max:100', 'regex:/^[a-z0-9_]+$/',
                 Rule::notIn(['name']),
             ],
-            'form_schema.*.label' => ['required', 'string', 'max:255'],
-            'form_schema.*.type' => ['required', Rule::in([
-                'text', 'number', 'email', 'phone', 'date', 'select', 'radio', 'checkbox', 'textarea', 'file', 'document',
+            'form_pages.*.fields.*.label' => ['required', 'string', 'max:255'],
+            'form_pages.*.fields.*.type' => ['required', Rule::in([
+                'text', 'number', 'email', 'phone', 'date', 'select', 'radio', 'checkbox',
+                'textarea', 'rating', 'signature', 'file', 'document',
             ])],
-            'form_schema.*.required' => ['nullable', 'boolean'],
-            'form_schema.*.options' => ['nullable', 'array'],
-            'form_schema.*.options.*' => ['string', 'max:255'],
-            'form_schema.*.help_text' => ['nullable', 'string', 'max:500'],
+            'form_pages.*.fields.*.required' => ['nullable', 'boolean'],
+            'form_pages.*.fields.*.options' => ['nullable', 'array'],
+            'form_pages.*.fields.*.options.*' => ['string', 'max:255'],
+            'form_pages.*.fields.*.help_text' => ['nullable', 'string', 'max:500'],
+            'form_pages.*.fields.*.min' => ['nullable', 'numeric'],
+            'form_pages.*.fields.*.max' => ['nullable', 'numeric'],
+            'form_pages.*.fields.*.error_message' => ['nullable', 'string', 'max:255'],
+            'form_pages.*.fields.*.max_rating' => ['nullable', 'integer', 'min:1', 'max:10'],
+
+            'form_branding' => ['nullable', 'array'],
+            'form_branding.primary_color' => ['nullable', 'string', 'max:20'],
+            'form_branding.secondary_color' => ['nullable', 'string', 'max:20'],
+            'form_branding.background_color' => ['nullable', 'string', 'max:20'],
+            'form_branding.text_color' => ['nullable', 'string', 'max:20'],
+            'form_branding.logo_url' => ['nullable', 'string', 'max:2048'],
+            'form_branding.font_family' => ['nullable', 'string', 'max:100'],
+            'form_branding.border_radius' => ['nullable', Rule::in(['sharp', 'rounded', 'pill'])],
+            'form_branding.button_label' => ['nullable', 'string', 'max:50'],
+
+            'form_settings' => ['nullable', 'array'],
+            'form_settings.prevent_duplicate_by' => ['nullable', 'string', 'max:100'],
+            'form_settings.confirmation_message' => ['nullable', 'string', 'max:1000'],
+            'form_settings.notify_emails' => ['nullable', 'array'],
+            'form_settings.notify_emails.*' => ['email', 'max:255'],
         ], [
-            'form_schema.*.key.regex' => 'Field key may only contain lowercase letters, numbers and underscores.',
+            'form_pages.*.fields.*.key.regex' => 'Field key may only contain lowercase letters, numbers and underscores.',
             // "name" is always collected by the built-in Team/Full Name field and rendered
             // outside the dynamic field list — a custom field reusing that key would silently
             // never appear on the public form, so it's blocked here instead.
-            'form_schema.*.key.not_in' => '"name" is reserved for the built-in Name field — choose a different key, e.g. "participant_name".',
+            'form_pages.*.fields.*.key.not_in' => '"name" is reserved for the built-in Name field — choose a different key, e.g. "participant_name".',
         ]);
 
-        $keys = collect($validated['form_schema'] ?? [])->pluck('key');
+        $keys = collect($validated['form_pages'] ?? [])->flatMap(fn (array $page) => $page['fields'] ?? [])->pluck('key');
 
         if ($keys->count() !== $keys->unique()->count()) {
             abort(422, 'Field keys must be unique within a form.');

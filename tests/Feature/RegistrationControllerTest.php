@@ -22,9 +22,11 @@ function makeRegistrationCategory(array $overrides = []): RegistrationCategory
         'price' => null,
         'quota' => null,
         'registration_open' => true,
-        'form_schema' => [
-            ['key' => 'email', 'label' => 'Email', 'type' => 'email', 'required' => true],
-            ['key' => 'shirt_size', 'label' => 'Shirt Size', 'type' => 'select', 'required' => true, 'options' => ['S', 'M', 'L']],
+        'form_pages' => [
+            ['key' => 'page-1', 'title' => 'Details', 'fields' => [
+                ['key' => 'email', 'label' => 'Email', 'type' => 'email', 'required' => true],
+                ['key' => 'shirt_size', 'label' => 'Shirt Size', 'type' => 'select', 'required' => true, 'options' => ['S', 'M', 'L']],
+            ]],
         ],
     ], $overrides));
 }
@@ -82,8 +84,10 @@ test('a select field rejects a value outside its options', function () {
 
 test('a document field must be a valid url', function () {
     $category = makeRegistrationCategory([
-        'form_schema' => [
-            ['key' => 'id_proof', 'label' => 'ID Proof', 'type' => 'document', 'required' => true],
+        'form_pages' => [
+            ['key' => 'page-1', 'title' => 'Details', 'fields' => [
+                ['key' => 'id_proof', 'label' => 'ID Proof', 'type' => 'document', 'required' => true],
+            ]],
         ],
     ]);
 
@@ -95,8 +99,10 @@ test('a document field must be a valid url', function () {
 
 test('a document field accepts an uploaded file url', function () {
     $category = makeRegistrationCategory([
-        'form_schema' => [
-            ['key' => 'id_proof', 'label' => 'ID Proof', 'type' => 'document', 'required' => true],
+        'form_pages' => [
+            ['key' => 'page-1', 'title' => 'Details', 'fields' => [
+                ['key' => 'id_proof', 'label' => 'ID Proof', 'type' => 'document', 'required' => true],
+            ]],
         ],
     ]);
 
@@ -210,7 +216,7 @@ test('a paid category creates a pending-payment registration with a snap token',
 test('a team-subject category also creates a team and returns it inline', function () {
     $category = makeRegistrationCategory([
         'subject_type' => RegistrationCategory::SUBJECT_TEAM,
-        'form_schema' => [],
+        'form_pages' => [],
     ]);
 
     $this->post(route('registrations.store', [$category->event, $category]), [
@@ -233,7 +239,7 @@ test('a team-subject category also creates a team and returns it inline', functi
 // ─── Quota enforcement ───────────────────────────────────────────────────────
 
 test('registration is rejected once quota is reached', function () {
-    $category = makeRegistrationCategory(['quota' => 1, 'form_schema' => []]);
+    $category = makeRegistrationCategory(['quota' => 1, 'form_pages' => []]);
 
     $this->post(route('registrations.store', [$category->event, $category]), ['name' => 'First'])
         ->assertOk();
@@ -245,7 +251,7 @@ test('registration is rejected once quota is reached', function () {
 });
 
 test('registration is rejected once the category is closed', function () {
-    $category = makeRegistrationCategory(['registration_open' => false, 'form_schema' => []]);
+    $category = makeRegistrationCategory(['registration_open' => false, 'form_pages' => []]);
 
     $this->post(route('registrations.store', [$category->event, $category]), ['name' => 'Someone'])
         ->assertForbidden();

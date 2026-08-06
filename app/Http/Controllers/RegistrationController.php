@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\RegistrationReceived;
 use App\Models\CardTemplate;
 use App\Models\Event;
 use App\Models\Payment;
@@ -11,6 +12,7 @@ use App\Models\Team;
 use App\Services\Midtrans\MidtransClient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -38,6 +40,8 @@ class RegistrationController extends Controller
         abort_unless($registrationCategory->event_id === $event->id, 404);
 
         $validated = $this->validated($request, $registrationCategory);
+
+        $this->guardAgainstDuplicate($validated, $registrationCategory);
 
         $registration = DB::transaction(function () use ($validated, $event, $registrationCategory) {
             $category = RegistrationCategory::whereKey($registrationCategory->id)->lockForUpdate()->first();
@@ -81,7 +85,11 @@ class RegistrationController extends Controller
         // Land back on the same registration page with the confirmed record
         // attached, so the form can swap in the real ID card immediately —
         // no redirect, no separate "thanks" page to navigate to.
-        $registration->loadMissing(['team.basketballEventCategory', 'event']);
+        $registration->loadMissing(['team.basketballEventCategory', 'event', 'registrationCategory']);
+
+        if ($registration->status === Registration::STATUS_CONFIRMED) {
+            $this->notifyOrganizers($registration, $registrationCategory);
+        }
 
         $snapToken = null;
 
@@ -157,20 +165,28 @@ class RegistrationController extends Controller
     {
         $rules = [
             'name' => ['required', 'string', 'max:255'],
+            // Hidden honeypot input — real visitors never see or fill it, so any
+            // value here is a strong bot signal. No external CAPTCHA needed.
+            'website' => ['prohibited'],
         ];
+        $messages = [];
 
-        foreach ($registrationCategory->form_schema ?? [] as $field) {
+        foreach ($registrationCategory->allFields() as $field) {
             $key = $field['key'];
-            $attribute = in_array($key, self::RESERVED_KEYS, true) ? $key : "form_data.$key";
 
             if ($key === 'name') {
                 continue;
             }
 
+            $attribute = in_array($key, self::RESERVED_KEYS, true) ? $key : "form_data.$key";
             $rules[$attribute] = $this->fieldRules($field);
+
+            if (! empty($field['error_message'])) {
+                $messages["$attribute.required"] = $field['error_message'];
+            }
         }
 
-        return $request->validate($rules);
+        return $request->validate($rules, $messages);
     }
 
     private function fieldRules(array $field): array
@@ -178,15 +194,57 @@ class RegistrationController extends Controller
         $rules = [($field['required'] ?? false) ? 'required' : 'nullable'];
 
         return array_merge($rules, match ($field['type']) {
-            'number' => ['numeric'],
+            'number' => array_values(array_filter([
+                'numeric',
+                isset($field['min']) ? 'min:'.$field['min'] : null,
+                isset($field['max']) ? 'max:'.$field['max'] : null,
+            ])),
             'email' => ['email', 'max:255'],
-            'phone' => ['string', 'max:50'],
+            // Digits, spaces, and the common +/-/() separators — loose enough for
+            // international formats while still rejecting free-text garbage.
+            'phone' => ['string', 'max:50', 'regex:/^[0-9+\-\s()]{6,25}$/'],
             'date' => ['date'],
             'select', 'radio' => [Rule::in($field['options'] ?? [])],
             'checkbox' => ['boolean'],
-            'file', 'document' => ['url', 'max:255'],
+            'rating' => ['integer', 'between:1,'.($field['max_rating'] ?? 5)],
+            'file', 'document', 'signature' => ['url', 'max:255'],
             'textarea' => ['string', 'max:5000'],
             default => ['string', 'max:255'],
         });
+    }
+
+    /**
+     * When the category has `prevent_duplicate_by` set, blocks a second
+     * submission sharing that same value — checked before the transaction
+     * so a duplicate never touches quota or creates a stray record.
+     */
+    private function guardAgainstDuplicate(array $validated, RegistrationCategory $registrationCategory): void
+    {
+        $duplicateField = $registrationCategory->form_settings['prevent_duplicate_by'] ?? null;
+
+        if (! $duplicateField) {
+            return;
+        }
+
+        $query = $registrationCategory->registrations();
+
+        $exists = in_array($duplicateField, self::RESERVED_KEYS, true)
+            ? $query->where($duplicateField, $validated[$duplicateField] ?? null)->exists()
+            : $query->where("form_data->{$duplicateField}", data_get($validated, "form_data.{$duplicateField}"))->exists();
+
+        abort_if($exists, 422, "You've already registered for this category with that {$duplicateField}.");
+    }
+
+    private function notifyOrganizers(Registration $registration, RegistrationCategory $registrationCategory): void
+    {
+        $recipients = $registrationCategory->form_settings['notify_emails'] ?? [];
+
+        foreach ($recipients as $recipient) {
+            try {
+                Mail::to($recipient)->send(new RegistrationReceived($registration));
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
     }
 }

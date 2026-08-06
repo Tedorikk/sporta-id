@@ -16,15 +16,17 @@ function categoryPayload(array $overrides = []): array
         'price' => '150000',
         'quota' => 16,
         'registration_open' => true,
-        'form_schema' => [
-            ['key' => 'coach_name', 'label' => 'Coach Name', 'type' => 'text', 'required' => true],
+        'form_pages' => [
+            ['key' => 'page-1', 'title' => 'Details', 'fields' => [
+                ['key' => 'coach_name', 'label' => 'Coach Name', 'type' => 'text', 'required' => true],
+            ]],
         ],
     ], $overrides);
 }
 
 test('guests cannot view a registration category\'s registrations', function () {
     $event = Event::factory()->create();
-    $category = RegistrationCategory::create(array_merge(['event_id' => $event->id], categoryPayload(['form_schema' => []])));
+    $category = RegistrationCategory::create(array_merge(['event_id' => $event->id], categoryPayload(['form_pages' => []])));
 
     $this->get(route('registration_categories.show', [$event, $category]))
         ->assertRedirect(route('login'));
@@ -35,8 +37,10 @@ test('an organizer can view submitted registrations, including custom field answ
     $event = Event::factory()->create();
     $category = RegistrationCategory::create(array_merge(['event_id' => $event->id], categoryPayload([
         'subject_type' => 'individual',
-        'form_schema' => [
-            ['key' => 'shirt_size', 'label' => 'Shirt Size', 'type' => 'text', 'required' => true],
+        'form_pages' => [
+            ['key' => 'page-1', 'title' => 'Details', 'fields' => [
+                ['key' => 'shirt_size', 'label' => 'Shirt Size', 'type' => 'text', 'required' => true],
+            ]],
         ],
     ])));
     $registration = Registration::create([
@@ -62,7 +66,7 @@ test('an organizer can view submitted registrations, including custom field answ
 test('the registrations list can be filtered by search and status', function () {
     $user = User::factory()->create();
     $event = Event::factory()->create();
-    $category = RegistrationCategory::create(array_merge(['event_id' => $event->id], categoryPayload(['form_schema' => []])));
+    $category = RegistrationCategory::create(array_merge(['event_id' => $event->id], categoryPayload(['form_pages' => []])));
     Registration::create(['registration_category_id' => $category->id, 'event_id' => $event->id, 'name' => 'Jane Doe', 'status' => Registration::STATUS_CONFIRMED]);
     Registration::create(['registration_category_id' => $category->id, 'event_id' => $event->id, 'name' => 'John Smith', 'status' => Registration::STATUS_PENDING_PAYMENT]);
 
@@ -79,7 +83,7 @@ test('a registration category from another event 404s', function () {
     $user = User::factory()->create();
     $event = Event::factory()->create();
     $otherEvent = Event::factory()->create();
-    $category = RegistrationCategory::create(array_merge(['event_id' => $otherEvent->id], categoryPayload(['form_schema' => []])));
+    $category = RegistrationCategory::create(array_merge(['event_id' => $otherEvent->id], categoryPayload(['form_pages' => []])));
 
     $this->actingAs($user)
         ->get(route('registration_categories.show', [$event, $category]))
@@ -108,8 +112,8 @@ test('an organizer can create a registration category with a dynamic form schema
     expect($category->name)->toBe("Men's Division A")
         ->and($category->subject_type)->toBe('team')
         ->and((float) $category->price)->toBe(150000.0)
-        ->and($category->form_schema)->toHaveCount(1)
-        ->and($category->form_schema[0]['key'])->toBe('coach_name')
+        ->and($category->allFields())->toHaveCount(1)
+        ->and($category->allFields()[0]['key'])->toBe('coach_name')
         ->and($category->slug)->not->toBeEmpty();
 });
 
@@ -119,11 +123,13 @@ test('a custom field cannot reuse the reserved "name" key', function () {
 
     $this->actingAs($user)
         ->post(route('registration_categories.store', $event), categoryPayload([
-            'form_schema' => [
-                ['key' => 'name', 'label' => 'Participant Name', 'type' => 'text', 'required' => true],
+            'form_pages' => [
+                ['key' => 'page-1', 'title' => 'Details', 'fields' => [
+                    ['key' => 'name', 'label' => 'Participant Name', 'type' => 'text', 'required' => true],
+                ]],
             ],
         ]))
-        ->assertSessionHasErrors('form_schema.0.key');
+        ->assertSessionHasErrors('form_pages.0.fields.0.key');
 
     expect(RegistrationCategory::count())->toBe(0);
 });
@@ -134,9 +140,11 @@ test('field keys must be unique within a form schema', function () {
 
     $this->actingAs($user)
         ->post(route('registration_categories.store', $event), categoryPayload([
-            'form_schema' => [
-                ['key' => 'dup', 'label' => 'One', 'type' => 'text', 'required' => false],
-                ['key' => 'dup', 'label' => 'Two', 'type' => 'text', 'required' => false],
+            'form_pages' => [
+                ['key' => 'page-1', 'title' => 'Details', 'fields' => [
+                    ['key' => 'dup', 'label' => 'One', 'type' => 'text', 'required' => false],
+                    ['key' => 'dup', 'label' => 'Two', 'type' => 'text', 'required' => false],
+                ]],
             ],
         ]))
         ->assertStatus(422);
@@ -150,11 +158,13 @@ test('field type must be one of the supported types', function () {
 
     $this->actingAs($user)
         ->post(route('registration_categories.store', $event), categoryPayload([
-            'form_schema' => [
-                ['key' => 'x', 'label' => 'X', 'type' => 'not-a-type', 'required' => false],
+            'form_pages' => [
+                ['key' => 'page-1', 'title' => 'Details', 'fields' => [
+                    ['key' => 'x', 'label' => 'X', 'type' => 'not-a-type', 'required' => false],
+                ]],
             ],
         ]))
-        ->assertSessionHasErrors('form_schema.0.type');
+        ->assertSessionHasErrors('form_pages.0.fields.0.type');
 });
 
 test('a document upload field type is accepted', function () {
@@ -163,15 +173,17 @@ test('a document upload field type is accepted', function () {
 
     $this->actingAs($user)
         ->post(route('registration_categories.store', $event), categoryPayload([
-            'form_schema' => [
-                ['key' => 'id_proof', 'label' => 'ID Proof', 'type' => 'document', 'required' => true],
+            'form_pages' => [
+                ['key' => 'page-1', 'title' => 'Details', 'fields' => [
+                    ['key' => 'id_proof', 'label' => 'ID Proof', 'type' => 'document', 'required' => true],
+                ]],
             ],
         ]))
         ->assertRedirect(route('registration_categories.index', $event));
 
     $category = RegistrationCategory::firstOrFail();
 
-    expect($category->form_schema[0]['type'])->toBe('document');
+    expect($category->allFields()[0]['type'])->toBe('document');
 });
 
 test('an organizer can update a registration category', function () {
@@ -201,7 +213,7 @@ test('an organizer cannot update a registration category belonging to another ev
 test('a registration category with existing registrations cannot be deleted', function () {
     $user = User::factory()->create();
     $event = Event::factory()->create();
-    $category = RegistrationCategory::create(array_merge(['event_id' => $event->id], categoryPayload(['form_schema' => []])));
+    $category = RegistrationCategory::create(array_merge(['event_id' => $event->id], categoryPayload(['form_pages' => []])));
     Registration::create([
         'registration_category_id' => $category->id,
         'event_id' => $event->id,

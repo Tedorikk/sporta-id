@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { formatRupiah } from '@/lib/format-currency';
 import type { Event } from '@/types/event';
 import type { RegistrationCategory } from '@/types/registration-category';
-import { RegistrationCategoryFormDialog } from './components/registration-category-form-dialog';
 
 interface Props {
     event: Event;
@@ -44,15 +43,12 @@ export default function RegistrationCategoriesIndex({ event, registrationCategor
                     </div>
                 </div>
 
-                <RegistrationCategoryFormDialog
-                    event={event}
-                    trigger={
-                        <Button>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Add Category
-                        </Button>
-                    }
-                />
+                <Button asChild>
+                    <Link href={`/dashboard/events/${event.id}/registration-categories/builder`}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Category
+                    </Link>
+                </Button>
             </div>
 
             <div className="divide-y rounded-lg border">
@@ -78,7 +74,7 @@ export default function RegistrationCategoriesIndex({ event, registrationCategor
                                 {category.registered_count}
                                 {category.quota ? ` / ${category.quota}` : ''} registered
                                 {' · '}
-                                {(category.form_schema ?? []).length} custom field(s)
+                                {(category.form_pages ?? []).reduce((count, page) => count + page.fields.length, 0)} custom field(s)
                             </p>
                         </div>
 
@@ -94,15 +90,11 @@ export default function RegistrationCategoriesIndex({ event, registrationCategor
                                 <Link2 className="h-4 w-4" />
                             </Button>
 
-                            <RegistrationCategoryFormDialog
-                                event={event}
-                                registrationCategory={category}
-                                trigger={
-                                    <Button variant="ghost" size="icon">
-                                        <Pencil className="h-4 w-4" />
-                                    </Button>
-                                }
-                            />
+                            <Button variant="ghost" size="icon" asChild>
+                                <Link href={`/dashboard/events/${event.id}/registration-categories/builder?registration_category_id=${category.id}`}>
+                                    <Pencil className="h-4 w-4" />
+                                </Link>
+                            </Button>
 
                             <DeleteConfirmationDialog
                                 title="Delete registration category?"

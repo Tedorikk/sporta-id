@@ -18,7 +18,7 @@ beforeEach(function () {
         'event_id' => $this->event->id,
         'name' => '5K Fun Run',
         'subject_type' => RegistrationCategory::SUBJECT_INDIVIDUAL,
-        'form_schema' => [],
+        'form_pages' => [],
     ]);
 });
 
@@ -74,7 +74,7 @@ test('the index only lists individual-subject registration categories', function
         'event_id' => $this->event->id,
         'name' => 'Team Relay',
         'subject_type' => RegistrationCategory::SUBJECT_TEAM,
-        'form_schema' => [],
+        'form_pages' => [],
     ]);
 
     $this->actingAs($this->user)
@@ -192,7 +192,7 @@ test('templates for different registration categories coexist', function () {
         'event_id' => $this->event->id,
         'name' => 'VIP Pass',
         'subject_type' => RegistrationCategory::SUBJECT_INDIVIDUAL,
-        'form_schema' => [],
+        'form_pages' => [],
     ]);
 
     $this->actingAs($this->user)->post(route('id-card-templates.store', $this->event), templatePayload([

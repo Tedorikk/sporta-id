@@ -32,9 +32,11 @@ class PaidEventRegistrationSeeder extends Seeder
             'price' => 150000,
             'quota' => 200,
             'registration_open' => true,
-            'form_schema' => [
-                ['key' => 'shirt_size', 'label' => 'Shirt Size', 'type' => 'select', 'required' => true, 'options' => ['S', 'M', 'L', 'XL']],
-                ['key' => 'emergency_contact', 'label' => 'Emergency Contact Number', 'type' => 'phone', 'required' => true],
+            'form_pages' => [
+                ['key' => 'page-1', 'title' => 'Details', 'fields' => [
+                    ['key' => 'shirt_size', 'label' => 'Shirt Size', 'type' => 'select', 'required' => true, 'options' => ['S', 'M', 'L', 'XL']],
+                    ['key' => 'emergency_contact', 'label' => 'Emergency Contact Number', 'type' => 'phone', 'required' => true],
+                ]],
             ],
         ]);
 

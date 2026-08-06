@@ -15,7 +15,7 @@ test('the public event page lists open registration categories with available qu
         'subject_type' => RegistrationCategory::SUBJECT_INDIVIDUAL,
         'price' => '150000',
         'registration_open' => true,
-        'form_schema' => [],
+        'form_pages' => [],
     ]);
 
     $this->get(route('events.public.show', $event))
@@ -35,7 +35,7 @@ test('a closed registration category is not listed on the public event page', fu
         'name' => 'Closed Category',
         'subject_type' => RegistrationCategory::SUBJECT_INDIVIDUAL,
         'registration_open' => false,
-        'form_schema' => [],
+        'form_pages' => [],
     ]);
 
     $this->get(route('events.public.show', $event))
@@ -53,7 +53,7 @@ test('a full registration category is not listed on the public event page', func
         'registration_open' => true,
         'quota' => 1,
         'registered_count' => 1,
-        'form_schema' => [],
+        'form_pages' => [],
     ]);
 
     $this->get(route('events.public.show', $event))

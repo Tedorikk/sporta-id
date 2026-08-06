@@ -23,7 +23,7 @@ function makePendingPayment(): array
         'price' => '100000',
         'registration_open' => true,
         'registered_count' => 1,
-        'form_schema' => [],
+        'form_pages' => [],
     ]);
 
     $registration = Registration::create([

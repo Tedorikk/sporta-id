@@ -25,7 +25,7 @@ class RegistrationCategory extends Model
     protected $fillable = [
         'event_id', 'name', 'slug', 'subject_type', 'price', 'quota',
         'registered_count', 'registration_open', 'opens_at', 'closes_at',
-        'form_schema', 'status',
+        'form_pages', 'form_branding', 'form_settings', 'status',
     ];
 
     protected $casts = [
@@ -35,7 +35,9 @@ class RegistrationCategory extends Model
         'registration_open' => 'boolean',
         'opens_at' => 'datetime',
         'closes_at' => 'datetime',
-        'form_schema' => 'array',
+        'form_pages' => 'array',
+        'form_branding' => 'array',
+        'form_settings' => 'array',
     ];
 
     // Mirrors the DB column defaults so a freshly `create()`d instance reflects
@@ -99,5 +101,14 @@ class RegistrationCategory extends Model
     public function hasAvailableQuota(): bool
     {
         return $this->quota === null || $this->registered_count < $this->quota;
+    }
+
+    /** Flattens fields across every page — used by validation, CSV export, and table columns. */
+    public function allFields(): array
+    {
+        return collect($this->form_pages ?? [])
+            ->flatMap(fn (array $page) => $page['fields'] ?? [])
+            ->values()
+            ->all();
     }
 }

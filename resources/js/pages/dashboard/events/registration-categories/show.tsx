@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ChevronLeft, ExternalLink, Search, Users } from 'lucide-react';
+import { ChevronLeft, Download, ExternalLink, Search, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -43,7 +43,9 @@ function EmptyState() {
 export default function RegistrationCategoryShow({ event, registrationCategory, registrations, filters }: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
 
-    const customFields = (registrationCategory.form_schema ?? []).filter((f) => !RESERVED_KEYS.includes(f.key));
+    const customFields = (registrationCategory.form_pages ?? [])
+        .flatMap((page) => page.fields)
+        .filter((f) => !RESERVED_KEYS.includes(f.key));
 
     useEffect(() => {
         const timeout = setTimeout(() => {
@@ -57,6 +59,20 @@ export default function RegistrationCategoryShow({ event, registrationCategory, 
         return () => clearTimeout(timeout);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [search]);
+
+    // Pragmatic stand-in for real-time: quietly refresh the response list on
+    // an interval instead of pulling in a websocket/broadcasting stack.
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (document.visibilityState !== 'visible') {
+                return;
+            }
+
+            router.reload({ only: ['registrations'], showProgress: false });
+        }, 15000);
+
+        return () => clearInterval(interval);
+    }, []);
 
     function applyFilters(next: Partial<RegistrationFilters>) {
         router.get(
@@ -76,12 +92,18 @@ export default function RegistrationCategoryShow({ event, registrationCategory, 
                         <ChevronLeft className="h-5 w-5" />
                     </Link>
                 </Button>
-                <div>
+                <div className="flex-1">
                     <h1 className="text-2xl font-bold tracking-tight">{registrationCategory.name}</h1>
                     <p className="text-sm text-muted-foreground">
                         {event.name} · {registrations.total} registration{registrations.total !== 1 ? 's' : ''}
                     </p>
                 </div>
+                <Button variant="outline" size="sm" asChild>
+                    <a href={`/dashboard/events/${event.id}/registration-categories/${registrationCategory.id}/responses/export`}>
+                        <Download className="mr-2 h-4 w-4" />
+                        Export CSV
+                    </a>
+                </Button>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

@@ -209,8 +209,9 @@ export default function CardTemplateEdit({
         }
 
         const category = registrationCategories.find((c) => c.id === registrationCategoryId);
+        const fields = (category?.form_pages ?? []).flatMap((page) => page.fields);
 
-        return (category?.form_schema ?? [])
+        return fields
             .filter((field) => !RESERVED_FIELD_KEYS.includes(field.key))
             .map((field) => ({
                 value: `form_data.${field.key}`,

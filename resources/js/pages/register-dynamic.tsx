@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Head, router } from '@inertiajs/react';
-import { CheckCircle2, Clock, Loader2, Lock } from 'lucide-react';
+import { CheckCircle2, Clock, Loader2, Lock, Star } from 'lucide-react';
 import QRCode from 'qrcode';
 import type { CSSProperties } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -10,6 +10,7 @@ import { RegistrationIdCardCard } from '@/components/id-card/registration-id-car
 import { TeamIdCardCard } from '@/components/id-card/team-id-card-card';
 import { IdCardActions } from '@/components/id-card-actions';
 import { PublicPageHeader } from '@/components/public/public-page-header';
+import { SignaturePad } from '@/components/signature-pad';
 import { Button } from '@/components/ui/button';
 import {
     Field,
@@ -36,7 +37,7 @@ import { loadSnapScript } from '@/lib/midtrans';
 import type { CardTemplate } from '@/types/card-template';
 import type { Event } from '@/types/event';
 import type { Registration } from '@/types/registration';
-import type { RegistrationCategory, RegistrationField } from '@/types/registration-category';
+import type { FormPage, RegistrationCategory, RegistrationField } from '@/types/registration-category';
 
 interface Props {
     event: Event;
@@ -59,7 +60,7 @@ function PaymentPendingView({
     accentStyle,
 }: {
     event: Event;
-    registrationCategory: RegistrationCategory;
+    registrationCategory: Props['registrationCategory'];
     registration: Registration;
     snapToken: string | null;
     midtransClientKey: string | null;
@@ -151,12 +152,14 @@ function RegistrationSuccessView({
     registration,
     cardTemplate,
     accentStyle,
+    confirmationMessage,
 }: {
     event: Event;
-    registrationCategory: RegistrationCategory;
+    registrationCategory: Props['registrationCategory'];
     registration: Registration;
     cardTemplate: CardTemplate | null;
     accentStyle: CSSProperties;
+    confirmationMessage?: string | null;
 }) {
     const cardRef = useRef<HTMLDivElement>(null);
     const [qrDataUrl, setQrDataUrl] = useState('');
@@ -188,6 +191,10 @@ function RegistrationSuccessView({
                     <span className="text-sm font-semibold tracking-wide uppercase">Registration confirmed</span>
                 </div>
 
+                {confirmationMessage && (
+                    <p className="max-w-sm text-center text-sm text-white/80">{confirmationMessage}</p>
+                )}
+
                 {team ? (
                     <TeamIdCardCard team={team} qrDataUrl={qrDataUrl} cardRef={cardRef} />
                 ) : cardTemplate ? (
@@ -213,8 +220,14 @@ function RegistrationSuccessView({
 }
 
 const RESERVED_KEYS = ['name', 'email', 'phone', 'photo'];
+const PHONE_REGEX = /^[0-9+\-\s()]{6,25}$/;
 
-function buildSchema(fields: RegistrationField[]) {
+function allFieldsOf(pages: FormPage[]): RegistrationField[] {
+    return pages.flatMap((page) => page.fields);
+}
+
+function buildSchema(pages: FormPage[]) {
+    const fields = allFieldsOf(pages);
     const shape: Record<string, z.ZodTypeAny> = {
         name: z.string().min(1, 'Input a name').max(255),
     };
@@ -229,33 +242,54 @@ function buildSchema(fields: RegistrationField[]) {
 
     return z.object(shape).superRefine((data, ctx) => {
         fields.forEach((f) => {
-            if (f.key === 'name' || !f.required) {
+            if (f.key === 'name') {
                 return;
             }
 
             const value = (data as Record<string, unknown>)[f.key];
-
             const isEmpty = f.type === 'checkbox' ? value !== true : typeof value !== 'string' || value.trim() === '';
 
-            if (isEmpty) {
-                ctx.addIssue({ code: 'custom', path: [f.key], message: `${f.label} is required` });
+            if (f.required && isEmpty) {
+                ctx.addIssue({ code: 'custom', path: [f.key], message: f.error_message || `${f.label} is required` });
+
+                return;
             }
 
-            if (f.type === 'email' && typeof value === 'string' && value && !/^\S+@\S+\.\S+$/.test(value)) {
+            if (isEmpty || typeof value !== 'string') {
+                return;
+            }
+
+            if (f.type === 'email' && !/^\S+@\S+\.\S+$/.test(value)) {
                 ctx.addIssue({ code: 'custom', path: [f.key], message: 'Must be a valid email' });
             }
 
-            if (f.type === 'number' && typeof value === 'string' && value && !/^\d*\.?\d*$/.test(value)) {
-                ctx.addIssue({ code: 'custom', path: [f.key], message: 'Must be a number' });
+            if (f.type === 'phone' && !PHONE_REGEX.test(value)) {
+                ctx.addIssue({ code: 'custom', path: [f.key], message: 'Must be a valid phone number' });
+            }
+
+            if (f.type === 'number') {
+                if (!/^-?\d*\.?\d*$/.test(value)) {
+                    ctx.addIssue({ code: 'custom', path: [f.key], message: 'Must be a number' });
+                } else {
+                    const numeric = Number(value);
+
+                    if (f.min != null && numeric < f.min) {
+                        ctx.addIssue({ code: 'custom', path: [f.key], message: `Must be at least ${f.min}` });
+                    }
+
+                    if (f.max != null && numeric > f.max) {
+                        ctx.addIssue({ code: 'custom', path: [f.key], message: `Must be at most ${f.max}` });
+                    }
+                }
             }
         });
     });
 }
 
-function defaultValuesFor(fields: RegistrationField[]) {
+function defaultValuesFor(pages: FormPage[]) {
     const defaults: Record<string, string | boolean> = { name: '' };
 
-    fields.forEach((f) => {
+    allFieldsOf(pages).forEach((f) => {
         if (f.key === 'name') {
             return;
         }
@@ -264,6 +298,27 @@ function defaultValuesFor(fields: RegistrationField[]) {
     });
 
     return defaults;
+}
+
+function RatingInput({ value, onChange, max = 5, disabled }: { value: string; onChange: (value: string) => void; max?: number; disabled?: boolean }) {
+    const selected = Number(value) || 0;
+
+    return (
+        <div className="flex items-center gap-1">
+            {Array.from({ length: max }, (_, i) => i + 1).map((n) => (
+                <button
+                    key={n}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => onChange(String(n))}
+                    aria-label={`${n} star${n > 1 ? 's' : ''}`}
+                    className="disabled:opacity-50"
+                >
+                    <Star className={n <= selected ? 'h-6 w-6 fill-[var(--accent)] text-[var(--accent)]' : 'h-6 w-6 text-neutral-300'} />
+                </button>
+            ))}
+        </div>
+    );
 }
 
 export default function RegisterDynamic({
@@ -279,29 +334,50 @@ export default function RegisterDynamic({
     useForceLightMode();
 
     const [isSaving, setIsSaving] = useState(false);
-    const fields = useMemo(() => registrationCategory.form_schema ?? [], [registrationCategory.form_schema]);
+    const [pageIndex, setPageIndex] = useState(0);
+    const [honeypot, setHoneypot] = useState('');
+    const pages = useMemo(() => registrationCategory.form_pages ?? [], [registrationCategory.form_pages]);
+    const branding = registrationCategory.form_branding ?? {};
 
-    const schema = useMemo(() => buildSchema(fields), [fields]);
+    const schema = useMemo(() => buildSchema(pages), [pages]);
     type FormValues = z.infer<typeof schema>;
 
-    const { control, handleSubmit, setError } = useForm<FormValues>({
+    const { control, handleSubmit, setError, trigger } = useForm<FormValues>({
         resolver: zodResolver(schema),
-        defaultValues: defaultValuesFor(fields) as FormValues,
+        defaultValues: defaultValuesFor(pages) as FormValues,
         mode: 'onChange',
     });
 
     const isTeam = registrationCategory.subject_type === 'team';
     const { accent, accentDark } = accentColors(event.accent_color);
-    const accentStyle = { '--accent': accent, '--accent-dark': accentDark } as CSSProperties;
+    const radiusValue = branding.border_radius === 'sharp' ? '2px' : branding.border_radius === 'pill' ? '9999px' : branding.border_radius === 'rounded' ? '0.75rem' : undefined;
+    const accentStyle = {
+        '--accent': branding.primary_color || accent,
+        '--accent-dark': branding.secondary_color || accentDark,
+        ...(branding.font_family ? { fontFamily: branding.font_family } : {}),
+    } as CSSProperties;
+    const controlStyle: CSSProperties = radiusValue ? { borderRadius: radiusValue } : {};
+    const cardStyle: CSSProperties = {
+        ...(branding.background_color ? { backgroundColor: branding.background_color } : {}),
+        ...(branding.text_color ? { color: branding.text_color } : {}),
+    };
+
+    const currentPage = pages[pageIndex];
+    const isLastPage = pageIndex === pages.length - 1;
+    const isFirstPage = pageIndex === 0;
 
     const onSubmit = (data: FormValues) => {
         setIsSaving(true);
 
         const raw = data as Record<string, string | boolean>;
-        const payload: Record<string, string | boolean | Record<string, string | boolean>> = { name: raw.name, form_data: {} };
+        const payload: Record<string, string | boolean | Record<string, string | boolean>> = {
+            name: raw.name,
+            form_data: {},
+            website: honeypot,
+        };
         const formData = payload.form_data as Record<string, string | boolean>;
 
-        fields.forEach((f) => {
+        allFieldsOf(pages).forEach((f) => {
             if (f.key === 'name') {
                 return;
             }
@@ -323,6 +399,20 @@ export default function RegisterDynamic({
             },
         });
     };
+
+    async function goNext() {
+        if (!currentPage) {
+            return;
+        }
+
+        const keys = currentPage.fields.filter((f) => f.key !== 'name').map((f) => f.key) as never[];
+        const namesToCheck = pageIndex === 0 ? (['name', ...keys] as never[]) : keys;
+        const valid = await trigger(namesToCheck);
+
+        if (valid) {
+            setPageIndex((i) => Math.min(i + 1, pages.length - 1));
+        }
+    }
 
     if (confirmedRegistration?.status === 'pending_payment') {
         return (
@@ -346,6 +436,7 @@ export default function RegisterDynamic({
                 registration={confirmedRegistration}
                 cardTemplate={cardTemplate ?? null}
                 accentStyle={accentStyle}
+                confirmationMessage={registrationCategory.form_settings?.confirmation_message}
             />
         );
     }
@@ -388,38 +479,70 @@ export default function RegisterDynamic({
             <Head title={`${registrationCategory.name} Registration — ${event.name}`} />
 
             <div className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10" style={accentStyle}>
-                <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
+                <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl" style={cardStyle}>
                     <PublicPageHeader
                         eyebrow="Registration"
                         title={event.name}
                         subtitle={registrationCategory.name}
-                        logoUrl={event.logo}
+                        logoUrl={branding.logo_url || event.logo}
                         accentColor={event.accent_color}
                     />
 
-                    <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-6">
-                        <FieldGroup>
-                            <Controller
-                                name={'name' as never}
-                                control={control}
-                                render={({ field, fieldState }) => (
-                                    <Field data-invalid={fieldState.invalid}>
-                                        <FieldLabel htmlFor="name">{isTeam ? 'Team Name' : 'Full Name'}</FieldLabel>
-                                        <Input
-                                            {...field}
-                                            id="name"
-                                            placeholder={isTeam ? "Input your team's name" : 'Input your name'}
-                                            aria-invalid={fieldState.invalid}
-                                            autoComplete="off"
-                                            disabled={isSaving}
-                                            className="border-2 border-black focus-visible:ring-[var(--accent)]"
-                                        />
-                                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                                    </Field>
-                                )}
-                            />
+                    {pages.length > 1 && (
+                        <div className="px-6 pt-4">
+                            <div className="flex items-center justify-between text-xs font-medium text-neutral-500">
+                                <span>
+                                    Step {pageIndex + 1} of {pages.length}
+                                </span>
+                                <span>{currentPage?.title}</span>
+                            </div>
+                            <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-neutral-200">
+                                <div
+                                    className="h-full bg-[var(--accent)] transition-all"
+                                    style={{ width: `${((pageIndex + 1) / pages.length) * 100}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
 
-                            {fields
+                    <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-6">
+                        {/* Honeypot — hidden from real visitors, a filled value is a strong bot signal. */}
+                        <input
+                            value={honeypot}
+                            onChange={(e) => setHoneypot(e.target.value)}
+                            type="text"
+                            name="website"
+                            tabIndex={-1}
+                            autoComplete="off"
+                            className="absolute -left-[9999px] h-0 w-0 opacity-0"
+                            aria-hidden="true"
+                        />
+
+                        <FieldGroup>
+                            {isFirstPage && (
+                                <Controller
+                                    name={'name' as never}
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <Field data-invalid={fieldState.invalid}>
+                                            <FieldLabel htmlFor="name">{isTeam ? 'Team Name' : 'Full Name'}</FieldLabel>
+                                            <Input
+                                                {...field}
+                                                id="name"
+                                                placeholder={isTeam ? "Input your team's name" : 'Input your name'}
+                                                aria-invalid={fieldState.invalid}
+                                                autoComplete="off"
+                                                disabled={isSaving}
+                                                style={controlStyle}
+                                                className="border-2 border-black focus-visible:ring-[var(--accent)]"
+                                            />
+                                            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                                        </Field>
+                                    )}
+                                />
+                            )}
+
+                            {(currentPage?.fields ?? [])
                                 .filter((f) => f.key !== 'name')
                                 .map((f) => (
                                     <Controller
@@ -465,18 +588,34 @@ export default function RegisterDynamic({
                                                         }
                                                         className="rounded-2xl border-2 border-black"
                                                     />
+                                                ) : f.type === 'signature' ? (
+                                                    <SignaturePad
+                                                        value={field.value as string}
+                                                        disabled={isSaving}
+                                                        onChange={(value) => field.onChange(value ?? '')}
+                                                        onError={(error) => setError(f.key as never, { type: 'manual', message: error })}
+                                                    />
+                                                ) : f.type === 'rating' ? (
+                                                    <RatingInput
+                                                        value={field.value as string}
+                                                        onChange={field.onChange}
+                                                        max={f.max_rating ?? 5}
+                                                        disabled={isSaving}
+                                                    />
                                                 ) : f.type === 'textarea' ? (
                                                     <Textarea
                                                         {...field}
                                                         id={f.key}
                                                         value={field.value as string}
                                                         disabled={isSaving}
+                                                        style={controlStyle}
                                                         className="border-2 border-black focus-visible:ring-[var(--accent)]"
                                                     />
                                                 ) : f.type === 'select' ? (
                                                     <Select value={field.value as string} onValueChange={field.onChange} disabled={isSaving}>
                                                         <SelectTrigger
                                                             id={f.key}
+                                                            style={controlStyle}
                                                             className="w-full cursor-pointer border-2 border-black font-semibold focus-visible:ring-[var(--accent)]"
                                                         >
                                                             <SelectValue placeholder="Select an option" />
@@ -525,6 +664,7 @@ export default function RegisterDynamic({
                                                         aria-invalid={fieldState.invalid}
                                                         autoComplete="off"
                                                         disabled={isSaving}
+                                                        style={controlStyle}
                                                         className="border-2 border-black focus-visible:ring-[var(--accent)]"
                                                     />
                                                 )}
@@ -536,14 +676,41 @@ export default function RegisterDynamic({
                                     />
                                 ))}
 
-                            <Button
-                                type="submit"
-                                className="mt-2 w-full cursor-pointer bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
-                                disabled={isSaving}
-                            >
-                                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
-                                {isSaving ? 'Registering...' : 'Register'}
-                            </Button>
+                            <div className="mt-2 flex gap-2">
+                                {!isFirstPage && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="flex-1 cursor-pointer"
+                                        onClick={() => setPageIndex((i) => Math.max(i - 1, 0))}
+                                        disabled={isSaving}
+                                        style={controlStyle}
+                                    >
+                                        Back
+                                    </Button>
+                                )}
+
+                                {isLastPage ? (
+                                    <Button
+                                        type="submit"
+                                        className="flex-1 cursor-pointer bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
+                                        disabled={isSaving}
+                                        style={controlStyle}
+                                    >
+                                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
+                                        {isSaving ? 'Registering...' : branding.button_label || 'Register'}
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        type="button"
+                                        className="flex-1 cursor-pointer bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
+                                        onClick={goNext}
+                                        style={controlStyle}
+                                    >
+                                        Next
+                                    </Button>
+                                )}
+                            </div>
                         </FieldGroup>
                     </form>
                 </div>

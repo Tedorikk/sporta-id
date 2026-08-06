@@ -20,7 +20,7 @@ function makeUnreconciledPendingPayment(): array
         'price' => '100000',
         'registration_open' => true,
         'registered_count' => 1,
-        'form_schema' => [],
+        'form_pages' => [],
     ]);
 
     $registration = Registration::create([
@@ -89,7 +89,7 @@ test('the command fails when the registration has no payment on record', functio
         'name' => 'No Payment Category',
         'subject_type' => RegistrationCategory::SUBJECT_INDIVIDUAL,
         'registration_open' => true,
-        'form_schema' => [],
+        'form_pages' => [],
     ]);
 
     $registration = Registration::create([
