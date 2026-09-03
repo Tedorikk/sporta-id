@@ -5,6 +5,7 @@ namespace App\Services\Midtrans;
 use App\Models\Payment;
 use App\Models\Registration;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 /**
@@ -16,6 +17,8 @@ class MidtransClient
 {
     public function createSnapTransaction(Payment $payment, Registration $registration): string
     {
+        $registration->loadMissing(['event', 'registrationCategory']);
+
         $response = Http::withBasicAuth(config('services.midtrans.server_key'), '')
             ->acceptJson()
             ->post($this->baseUrl().'/snap/v1/transactions', [
@@ -23,6 +26,19 @@ class MidtransClient
                     'order_id' => $payment->order_id,
                     'gross_amount' => (int) $payment->amount,
                 ],
+                // Names the thing being bought on Midtrans's own payment page
+                // and in the merchant dashboard — without it a payer only ever
+                // sees an order id and a total.
+                'item_details' => [[
+                    'id' => (string) $registration->registration_category_id,
+                    'name' => Str::limit(
+                        trim(($registration->event?->name ? $registration->event->name.' — ' : '').$registration->registrationCategory?->name),
+                        50,
+                        ''
+                    ),
+                    'price' => (int) $payment->amount,
+                    'quantity' => 1,
+                ]],
                 'customer_details' => [
                     'first_name' => $registration->name,
                     'email' => $registration->email,

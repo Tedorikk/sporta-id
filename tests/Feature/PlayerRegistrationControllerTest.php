@@ -203,3 +203,92 @@ test('toggling registration 404s for an event with no basketball tournament atta
         ->put(route('events.basketball.update', $event), ['registration_open' => false])
         ->assertNotFound();
 });
+
+// ─── /events/{event}/register as a generic entry point ─────────────────────
+//
+// This URL is the one people guess, bookmark, and print. It used to 404 for
+// every event that wasn't a basketball tournament — which is how Midtrans's
+// reviewer got stuck on the landing page.
+
+test('the register URL redirects straight to the form when an event sells exactly one category', function () {
+    $event = Event::factory()->create(['is_published' => true]);
+
+    $category = RegistrationCategory::create([
+        'event_id' => $event->id,
+        'name' => '5K Individual Run',
+        'subject_type' => RegistrationCategory::SUBJECT_INDIVIDUAL,
+        'price' => '150000',
+        'registration_open' => true,
+        'form_pages' => [],
+    ]);
+
+    $this->get(route('players.register', $event))
+        ->assertRedirect(route('registrations.create', [$event, $category]));
+});
+
+test('the register URL redirects to the event page when several categories are open', function () {
+    $event = Event::factory()->create(['is_published' => true]);
+
+    foreach (['5K', '10K'] as $name) {
+        RegistrationCategory::create([
+            'event_id' => $event->id,
+            'name' => $name,
+            'subject_type' => RegistrationCategory::SUBJECT_INDIVIDUAL,
+            'price' => '150000',
+            'registration_open' => true,
+            'form_pages' => [],
+        ]);
+    }
+
+    $this->get(route('players.register', $event))
+        ->assertRedirect(route('events.public.show', $event));
+});
+
+test('the register URL redirects to the event page when every category is closed or full', function () {
+    $event = Event::factory()->create(['is_published' => true]);
+
+    RegistrationCategory::create([
+        'event_id' => $event->id,
+        'name' => 'Sold Out',
+        'subject_type' => RegistrationCategory::SUBJECT_INDIVIDUAL,
+        'price' => '150000',
+        'registration_open' => true,
+        'quota' => 1,
+        'registered_count' => 1,
+        'form_pages' => [],
+    ]);
+
+    $this->get(route('players.register', $event))
+        ->assertRedirect(route('events.public.show', $event));
+});
+
+test('the register URL redirects to the event page for an event with no registration at all', function () {
+    $event = Event::factory()->create(['is_published' => true]);
+
+    $this->get(route('players.register', $event))
+        ->assertRedirect(route('events.public.show', $event));
+});
+
+test('the register URL still renders the basketball form when that is what the event uses', function () {
+    $event = makeBasketballEvent();
+
+    $this->get(route('players.register', $event))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('register'));
+});
+
+test('generic registration categories take precedence over the legacy basketball form', function () {
+    $event = makeBasketballEvent();
+
+    $category = RegistrationCategory::create([
+        'event_id' => $event->id,
+        'name' => 'Team Entry',
+        'subject_type' => RegistrationCategory::SUBJECT_TEAM,
+        'price' => '400000',
+        'registration_open' => true,
+        'form_pages' => [],
+    ]);
+
+    $this->get(route('players.register', $event))
+        ->assertRedirect(route('registrations.create', [$event, $category]));
+});

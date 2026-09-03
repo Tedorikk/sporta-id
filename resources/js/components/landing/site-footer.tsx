@@ -16,6 +16,12 @@ const EXPLORE_LINKS = [
     { href: '/contact', label: 'Contact' },
 ];
 
+const LEGAL_LINKS = [
+    { href: '/terms', label: 'Terms & Conditions' },
+    { href: '/refund-policy', label: 'Refund & Cancellation' },
+    { href: '/privacy', label: 'Privacy Policy' },
+];
+
 export function SiteFooter() {
     return (
         <footer className="border-t-2 border-white/10 bg-black/20">
@@ -99,8 +105,19 @@ export function SiteFooter() {
             </div>
 
             <div className="border-t border-white/10 px-6 py-6">
-                <div className="mx-auto max-w-6xl text-center text-xs text-white/40">
-                    © {new Date().getFullYear()} Sporta Indonesia. All rights reserved.
+                <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 text-xs text-white/40">
+                    <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+                        {LEGAL_LINKS.map((link) => (
+                            <Link key={link.href} href={link.href} className="transition hover:text-white">
+                                {link.label}
+                            </Link>
+                        ))}
+                    </div>
+                    <p className="text-center">
+                        Online payments are processed securely by Midtrans — bank transfer &amp; virtual account,
+                        e-wallet, QRIS, and credit/debit card.
+                    </p>
+                    <p>© {new Date().getFullYear()} Sporta Indonesia. All rights reserved.</p>
                 </div>
             </div>
         </footer>

@@ -1,10 +1,11 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Calendar, Search } from 'lucide-react';
+import { Calendar, Search, Tag } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { IdToolsSection } from '@/components/landing/id-tools-section';
 import { EventsCalendar } from '@/components/public/events-calendar';
 import { PublicPageHeader } from '@/components/public/public-page-header';
 import PublicLayout from '@/layouts/public-layout';
+import { formatPriceRange } from '@/lib/format-currency';
 import { formatDate } from '@/lib/format-date';
 import { formatImageUrl } from '@/lib/image-utils';
 import type { EventFilters, PaginatedEvents } from '@/types/event';
@@ -102,7 +103,10 @@ export default function EventsIndex({ events, filters, categories, calendarEvent
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                            {events.data.map((event) => (
+                            {events.data.map((event) => {
+                                const price = formatPriceRange(event.price_from, event.price_to);
+
+                                return (
                                 <Link
                                     key={event.id}
                                     href={`/events/${event.id}`}
@@ -128,9 +132,16 @@ export default function EventsIndex({ events, filters, categories, calendarEvent
                                             <Calendar className="h-3.5 w-3.5" />
                                             {formatDate(event.start_date)} – {formatDate(event.end_date)}
                                         </div>
+                                        {price && (
+                                            <div className="mt-auto flex items-center gap-1.5 text-sm font-bold text-white">
+                                                <Tag className="h-3.5 w-3.5 text-white/50" />
+                                                {price}
+                                            </div>
+                                        )}
                                     </div>
                                 </Link>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
 

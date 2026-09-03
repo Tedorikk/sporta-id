@@ -205,11 +205,17 @@ test('a paid category creates a pending-payment registration with a snap token',
     expect($payment->snap_token)->toBe('snap-token-abc')
         ->and((float) $payment->amount)->toBe(150000.0);
 
-    Http::assertSent(function ($request) use ($payment) {
+    Http::assertSent(function ($request) use ($payment, $category) {
         $data = $request->data();
+        $item = $data['item_details'][0] ?? [];
 
         return ($data['transaction_details']['order_id'] ?? null) === $payment->order_id
-            && ($data['transaction_details']['gross_amount'] ?? null) === 150000;
+            && ($data['transaction_details']['gross_amount'] ?? null) === 150000
+            // Midtrans's own payment page shows item_details, so the payer sees
+            // what they're buying and not just an order id.
+            && str_contains($item['name'] ?? '', $category->name)
+            && ($item['price'] ?? null) === 150000
+            && ($item['quantity'] ?? null) === 1;
     });
 });
 

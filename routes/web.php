@@ -42,6 +42,11 @@ Route::get('/', [LandingController::class, 'index'])->name('home');
 // --- Public marketing pages -------------------------------------------------
 Route::inertia('about', 'about')->name('about');
 
+// --- Public legal pages (required for payment-gateway onboarding) ----------
+Route::inertia('terms', 'terms')->name('terms');
+Route::inertia('privacy', 'privacy')->name('privacy');
+Route::inertia('refund-policy', 'refund-policy')->name('refund-policy');
+
 Route::get('events', [PublicEventController::class, 'index'])->name('events.public.index');
 Route::get('events/{event}', [PublicEventController::class, 'show'])->name('events.public.show');
 

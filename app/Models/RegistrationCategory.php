@@ -103,6 +103,32 @@ class RegistrationCategory extends Model
         return $this->quota === null || $this->registered_count < $this->quota;
     }
 
+    /**
+     * The shape every public page (landing, events index, event detail) renders
+     * a category in: the price is always present, and `is_available` says
+     * whether it can be bought right now rather than whether it gets listed.
+     *
+     * @return array<string, mixed>
+     */
+    public function toPublicArray(): array
+    {
+        $isOpen = $this->isOpen();
+        $hasQuota = $this->hasAvailableQuota();
+
+        return [
+            ...$this->toArray(),
+            'is_available' => $isOpen && $hasQuota,
+            'unavailable_reason' => match (true) {
+                ! $hasQuota => 'full',
+                ! $isOpen => 'closed',
+                default => null,
+            },
+            'slots_left' => $this->quota === null
+                ? null
+                : max($this->quota - $this->registered_count, 0),
+        ];
+    }
+
     /** Flattens fields across every page — used by validation, CSV export, and table columns. */
     public function allFields(): array
     {

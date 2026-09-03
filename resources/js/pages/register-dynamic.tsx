@@ -349,6 +349,7 @@ export default function RegisterDynamic({
     });
 
     const isTeam = registrationCategory.subject_type === 'team';
+    const isFreeCategory = !registrationCategory.price || Number(registrationCategory.price) === 0;
     const { accent, accentDark } = accentColors(event.accent_color);
     const radiusValue = branding.border_radius === 'sharp' ? '2px' : branding.border_radius === 'pill' ? '9999px' : branding.border_radius === 'rounded' ? '0.75rem' : undefined;
     const accentStyle = {
@@ -487,6 +488,33 @@ export default function RegisterDynamic({
                         logoUrl={branding.logo_url || event.logo}
                         accentColor={event.accent_color}
                     />
+
+                    {/* Order summary — a registrant must see what they are buying and
+                        what it costs on the same screen as the submit button, not for
+                        the first time on the payment step. */}
+                    <div className="border-b border-neutral-200 bg-neutral-50 px-6 py-4">
+                        <div className="flex items-start justify-between gap-4">
+                            <div className="flex flex-col">
+                                <span className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+                                    You are registering for
+                                </span>
+                                <span className="text-sm font-bold text-neutral-900">{registrationCategory.name}</span>
+                                <span className="text-xs text-neutral-500">
+                                    {event.name} · {isTeam ? 'Per team' : 'Per person'}
+                                </span>
+                            </div>
+                            <span className="shrink-0 text-lg font-black text-neutral-900">
+                                {formatRupiah(registrationCategory.price)}
+                            </span>
+                        </div>
+                        {!isFreeCategory && (
+                            <p className="mt-2 text-xs text-neutral-500">
+                                After you submit this form your slot is reserved and you&apos;ll be taken to the
+                                Midtrans payment page to pay {formatRupiah(registrationCategory.price)}. The
+                                registration is confirmed once payment settles.
+                            </p>
+                        )}
+                    </div>
 
                     {pages.length > 1 && (
                         <div className="px-6 pt-4">

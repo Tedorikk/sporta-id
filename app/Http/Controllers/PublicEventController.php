@@ -6,6 +6,7 @@ use App\Models\BasketballEvent;
 use App\Models\BasketballEventCategory;
 use App\Models\Event;
 use App\Models\Pool;
+use App\Models\RegistrationCategory;
 use App\Services\Basketball\StandingsService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -22,6 +23,10 @@ class PublicEventController extends Controller
             ->status('published')
             ->search($filters['search'] ?? null)
             ->category($filters['category'] ?? null)
+            // Same price range as the landing page — the catalogue has to state
+            // a price for every listed event, not just the detail page.
+            ->withMin('registrationCategories as price_from', 'price')
+            ->withMax('registrationCategories as price_to', 'price')
             ->orderBy('start_date')
             ->paginate(9)
             ->withQueryString();
@@ -78,13 +83,15 @@ class PublicEventController extends Controller
 
         $meetings = $event->meetings()->with('speaker')->orderBy('scheduled_at')->get();
 
-        // Only categories a visitor could actually register for right now —
-        // reuses the same isOpen()/hasAvailableQuota() checks the register
-        // page itself enforces, so this list never promises a slot it can't give.
+        // Every category is listed with its price, including ones that are
+        // closed or full — a price list that hides its own items reads as an
+        // empty catalogue to a first-time visitor. `is_available` carries the
+        // same isOpen()/hasAvailableQuota() verdict the register page enforces,
+        // so an unavailable row renders as a disabled card instead of a link.
         $registrationCategories = $event->registrationCategories()
             ->orderBy('name')
             ->get()
-            ->filter(fn ($category) => $category->isOpen() && $category->hasAvailableQuota())
+            ->map(fn (RegistrationCategory $category) => $category->toPublicArray())
             ->values();
 
         return Inertia::render('events/show', [

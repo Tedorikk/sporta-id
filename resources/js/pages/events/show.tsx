@@ -10,14 +10,19 @@ import { formatImageUrl } from '@/lib/image-utils';
 import type { Event } from '@/types/event';
 import type { Meeting } from '@/types/meeting';
 import type { PublicEventCategory } from '@/types/public-event-category';
-import type { RegistrationCategory } from '@/types/registration-category';
+import type { PublicRegistrationCategory } from '@/types/registration-category';
 
 interface Props {
     event: Event;
     categories: PublicEventCategory[] | null;
     meetings: Meeting[];
-    registrationCategories: RegistrationCategory[];
+    registrationCategories: PublicRegistrationCategory[];
 }
+
+const UNAVAILABLE_LABEL: Record<string, string> = {
+    closed: 'Registration closed',
+    full: 'Sold out',
+};
 
 const STATUS_STYLE: Record<string, string> = {
     upcoming: 'bg-amber-400 text-amber-950',
@@ -151,23 +156,63 @@ export default function EventShow({ event, categories, meetings, registrationCat
                                 Register
                             </h2>
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                {registrationCategories.map((category) => (
-                                    <Link
-                                        key={category.id}
-                                        href={`/events/${event.id}/registration-categories/${category.id}/register`}
-                                        className="group flex items-center justify-between gap-4 rounded-2xl border-2 border-white/10 bg-white/5 p-5 transition hover:border-red-500 hover:bg-white/10"
-                                    >
+                                {registrationCategories.map((category) => {
+                                    const details = (
                                         <div className="flex flex-col gap-1">
                                             <span className="text-lg font-bold text-white">{category.name}</span>
-                                            <span className="text-sm text-white/50">{formatRupiah(category.price)}</span>
+                                            <span className="text-xl font-black text-white">{formatRupiah(category.price)}</span>
+                                            <span className="text-xs text-white/50">
+                                                {category.subject_type === 'team' ? 'Per team' : 'Per person'}
+                                                {category.slots_left !== null && category.is_available
+                                                    ? ` · ${category.slots_left} slot${category.slots_left === 1 ? '' : 's'} left`
+                                                    : ''}
+                                            </span>
                                         </div>
-                                        <span className="flex items-center gap-1.5 rounded-full bg-red-600 px-4 py-2 text-xs font-bold tracking-wide text-white uppercase transition group-hover:bg-red-700">
-                                            Register
-                                            <ArrowRight className="h-3.5 w-3.5" />
-                                        </span>
-                                    </Link>
-                                ))}
+                                    );
+
+                                    if (!category.is_available) {
+                                        return (
+                                            <div
+                                                key={category.id}
+                                                className="flex items-center justify-between gap-4 rounded-2xl border-2 border-white/10 bg-white/5 p-5 opacity-60"
+                                            >
+                                                {details}
+                                                <span className="rounded-full border-2 border-white/20 px-4 py-2 text-xs font-bold tracking-wide text-white/60 uppercase">
+                                                    {UNAVAILABLE_LABEL[category.unavailable_reason ?? ''] ?? 'Unavailable'}
+                                                </span>
+                                            </div>
+                                        );
+                                    }
+
+                                    return (
+                                        <Link
+                                            key={category.id}
+                                            href={`/events/${event.id}/registration-categories/${category.id}/register`}
+                                            className="group flex items-center justify-between gap-4 rounded-2xl border-2 border-white/10 bg-white/5 p-5 transition hover:border-red-500 hover:bg-white/10"
+                                        >
+                                            {details}
+                                            <span className="flex items-center gap-1.5 rounded-full bg-red-600 px-4 py-2 text-xs font-bold tracking-wide text-white uppercase transition group-hover:bg-red-700">
+                                                Register
+                                                <ArrowRight className="h-3.5 w-3.5" />
+                                            </span>
+                                        </Link>
+                                    );
+                                })}
                             </div>
+
+                            <p className="text-xs text-white/50">
+                                Prices are per registration and include the event entry described above. Paid
+                                registrations are settled online through Midtrans (bank transfer / virtual account,
+                                e-wallet, QRIS, or card) right after you submit the form. See our{' '}
+                                <Link href="/terms" className="text-red-400 underline-offset-2 hover:underline">
+                                    Terms &amp; Conditions
+                                </Link>{' '}
+                                and{' '}
+                                <Link href="/refund-policy" className="text-red-400 underline-offset-2 hover:underline">
+                                    Refund Policy
+                                </Link>
+                                .
+                            </p>
                         </div>
                     )}
 

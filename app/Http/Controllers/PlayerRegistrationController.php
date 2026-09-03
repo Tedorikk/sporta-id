@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\BasketballEvent;
 use App\Models\Event;
 use App\Models\Player;
+use App\Models\RegistrationCategory;
 use App\Models\Team;
 use Closure;
 use Illuminate\Http\Request;
@@ -14,15 +15,44 @@ use Inertia\Inertia;
 class PlayerRegistrationController extends Controller
 {
     /**
-     * Public self-registration form.
-     * Player picks a category, then a team (both already created by the admin),
-     * then fills in their own details.
+     * The generic "register for this event" entry point — the URL people
+     * actually guess, bookmark, and print on posters.
+     *
+     * Historically this rendered the basketball-only self-registration form and
+     * 404'd for everything else, which dead-ended every non-basketball event.
+     * It now routes the visitor to wherever that event actually takes
+     * registrations, and only falls through to the basketball form when that
+     * is genuinely what the event uses.
      */
     public function create(Event $event)
     {
         $event->loadMissing('specific');
 
-        abort_unless($event->specific instanceof BasketballEvent, 404);
+        // The generic registration_categories system supersedes the basketball
+        // form below, so it wins whenever the event sells through it.
+        $categories = $event->registrationCategories()->orderBy('name')->get();
+
+        if ($categories->isNotEmpty()) {
+            $available = $categories->filter(
+                fn (RegistrationCategory $category) => $category->isOpen() && $category->hasAvailableQuota()
+            );
+
+            // Exactly one thing to buy — send them straight to its form rather
+            // than through a page whose only content is a single link.
+            if ($available->count() === 1) {
+                return redirect()->route('registrations.create', [$event, $available->first()]);
+            }
+
+            // Several categories to choose between, or nothing open right now:
+            // the event page lists them all with prices and availability.
+            return redirect()->route('events.public.show', $event);
+        }
+
+        if (! $event->specific instanceof BasketballEvent) {
+            // No registration wired up at all. The event page still answers
+            // "what is this event and how do I take part" better than a 404.
+            return redirect()->route('events.public.show', $event);
+        }
 
         $registrationOpen = $event->specific->registration_open;
 

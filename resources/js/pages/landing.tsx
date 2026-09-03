@@ -18,10 +18,12 @@ export default function Landing({ events }: Props) {
 
             <PublicLayout>
                 <HeroSection />
+                {/* Directly under the hero: what we sell and what it costs. The
+                    company story below is context, not the reason to be here. */}
+                <EventsSection events={events} />
                 <StatsStrip />
                 <FlagshipEventSection />
                 <ReachSection />
-                <EventsSection events={events} />
             </PublicLayout>
         </>
     );

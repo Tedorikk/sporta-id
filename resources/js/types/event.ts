@@ -1,5 +1,6 @@
 import type { BasketballEventCategory } from "./basketball-event-category";
 import type { Pool } from './pool';
+import type { PublicRegistrationCategory } from './registration-category';
 import type { Team } from './team';
 
 export type EventStatus = 'upcoming' | 'ongoing' | 'past';
@@ -29,6 +30,11 @@ export interface Event {
     status: EventStatus;
     specific_type: 'BasketballEvent' | null;
     specific?: BasketballEventSpecific | null;
+    /** Cheapest / dearest registration category price, for the "from Rp x" line on cards. Null when the event sells nothing yet. */
+    price_from?: string | null;
+    price_to?: string | null;
+    /** The purchasable items themselves — sent to the landing page so it doubles as a price list. */
+    registration_categories?: PublicRegistrationCategory[];
     teams_count?: number;
     pools_count?: number;
     matches_count?: number;

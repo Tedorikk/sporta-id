@@ -74,6 +74,17 @@ export interface RegistrationCategory {
     registrations_count?: number;
 }
 
+/**
+ * A category as the public event page sees it — still listed (with its price)
+ * when registration is closed or full, but flagged so the card renders as a
+ * disabled row instead of a link into a form that would only reject you.
+ */
+export interface PublicRegistrationCategory extends RegistrationCategory {
+    is_available: boolean;
+    unavailable_reason: 'closed' | 'full' | null;
+    slots_left: number | null;
+}
+
 export const REGISTRATION_FIELD_TYPES: { value: RegistrationFieldType; label: string }[] = [
     { value: 'text', label: 'Text' },
     { value: 'number', label: 'Number' },
