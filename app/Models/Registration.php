@@ -54,6 +54,21 @@ class Registration extends Model
         });
     }
 
+    /**
+     * Resolves a registration from either its numeric id or its qr_token.
+     *
+     * Public URLs are keyed on qr_token so registrations can't be enumerated,
+     * but ID cards issued before that change encode the numeric id in their QR
+     * code. Staff-side lookups (the gate scanner, meeting check-in) accept
+     * both so those cards keep working; public routes accept only the token.
+     */
+    public static function findByIdOrToken(string $identifier): ?self
+    {
+        return ctype_digit($identifier)
+            ? static::find((int) $identifier)
+            : static::where('qr_token', $identifier)->first();
+    }
+
     public function registrationCategory(): BelongsTo
     {
         return $this->belongsTo(RegistrationCategory::class);

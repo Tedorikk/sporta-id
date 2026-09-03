@@ -15,7 +15,7 @@ export default function RegistrationIdCard({ registration, template }: Props) {
     const cardRef = useRef<HTMLDivElement>(null);
     const [qrDataUrl, setQrDataUrl] = useState<string>('');
 
-    const idCardUrl = `${window.location.origin}/registrations/${registration.id}/id-card`;
+    const idCardUrl = `${window.location.origin}/registrations/${registration.qr_token}/id-card`;
     const typeLabel = registration.registration_category?.name ?? '';
 
     useEffect(() => {

@@ -42,7 +42,7 @@ export default function RegistrationStatus({ registration }: Props) {
         setIsPaying(true);
 
         axios
-            .post<PayResponse>(`/registrations/${registration.id}/pay`)
+            .post<PayResponse>(`/registrations/${registration.qr_token}/pay`)
             .then(({ data }) => loadSnapScript(data.midtrans_client_key, data.midtrans_is_production).then(() => data))
             .then((data) => {
                 window.snap?.pay(data.snap_token, {

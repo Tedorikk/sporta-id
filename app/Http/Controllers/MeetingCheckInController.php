@@ -7,7 +7,6 @@ use App\Models\MeetingCheckIn;
 use App\Models\Registration;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rule;
 
 class MeetingCheckInController extends Controller
 {
@@ -19,14 +18,20 @@ class MeetingCheckInController extends Controller
     {
         Gate::authorize('update', $meeting->event);
 
+        // The scanner sends whatever the ID card's QR encodes: a qr_token on
+        // cards issued now, the numeric id on ones printed before public URLs
+        // moved to tokens. Both must check in.
+        // alpha_dash covers both shapes the scanner can send — a numeric id and a
+        // hyphenated uuid — while still rejecting arrays and junk payloads.
         $validated = $request->validate([
-            'registration_id' => [
-                'required',
-                Rule::exists('registrations', 'id')->where('event_id', $meeting->event_id),
-            ],
+            'registration_id' => ['required', 'alpha_dash'],
         ]);
 
-        $registration = Registration::with(['registrationCategory', 'event'])->findOrFail($validated['registration_id']);
+        $registration = Registration::findByIdOrToken((string) $validated['registration_id']);
+
+        abort_if($registration === null || $registration->event_id !== $meeting->event_id, 404, 'Registration not found.');
+
+        $registration->load(['registrationCategory', 'event']);
 
         abort_unless($registration->status === Registration::STATUS_CONFIRMED, 403, 'This registration is not confirmed.');
 

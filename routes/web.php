@@ -60,7 +60,7 @@ Route::get('teams/{team}/id-card', [TeamQrController::class, 'idCard'])->name('t
 Route::get('attendees/{attendee}/id-card', [AttendeeQrController::class, 'idCard'])->name('attendees.id-card');
 
 // --- Public Registration ID Card (individual registrants, shareable, no auth required) --
-Route::get('registrations/{registration}/id-card', [RegistrationQrController::class, 'idCard'])->name('registrations.id-card');
+Route::get('registrations/{registration:qr_token}/id-card', [RegistrationQrController::class, 'idCard'])->name('registrations.id-card');
 
 // --- Public Player Self-Registration & ID Card (shareable, no auth required) --
 Route::get('events/{event}/register', [PlayerRegistrationController::class, 'create'])->name('players.register');
@@ -71,8 +71,8 @@ Route::get('players/{player}/id-card', [PlayerQrController::class, 'idCard'])->n
 Route::get('events/{event}/registration-categories/{registrationCategory}/register', [RegistrationController::class, 'create'])->name('registrations.create');
 Route::post('events/{event}/registration-categories/{registrationCategory}/register', [RegistrationController::class, 'store'])
     ->middleware('throttle:10,1')->name('registrations.store');
-Route::get('registrations/{registration}/status', [RegistrationController::class, 'status'])->name('registrations.status');
-Route::post('registrations/{registration}/pay', [RegistrationController::class, 'pay'])
+Route::get('registrations/{registration:qr_token}/status', [RegistrationController::class, 'status'])->name('registrations.status');
+Route::post('registrations/{registration:qr_token}/pay', [RegistrationController::class, 'pay'])
     ->middleware('throttle:20,1')->name('registrations.pay');
 
 // --- Midtrans payment notification webhook (server-to-server, no session) --
@@ -210,7 +210,7 @@ Route::middleware(['auth', 'verified', 'organization.current'])->group(function 
     Route::get('dashboard/teams/{team}/qr-data', [TeamQrController::class, 'show'])->name('teams.qr-data');
     Route::get('dashboard/players/{player}/qr-data', [PlayerQrController::class, 'show'])->name('players.qr-data');
     Route::get('dashboard/attendees/{attendee}/qr-data', [AttendeeQrController::class, 'show'])->name('attendees.qr-data');
-    Route::get('dashboard/registrations/{registration}/qr-data', [RegistrationQrController::class, 'show'])->name('registrations.qr-data');
+    Route::get('dashboard/registrations/{identifier}/qr-data', [RegistrationQrController::class, 'show'])->name('registrations.qr-data');
     Route::post('dashboard/meetings/{meeting}/check-ins', [MeetingCheckInController::class, 'store'])->name('meetings.check-ins.store');
     Route::get('dashboard/meetings/search', [MeetingController::class, 'search'])->name('meetings.search');
 

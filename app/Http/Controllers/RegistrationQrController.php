@@ -35,9 +35,16 @@ class RegistrationQrController extends Controller
     /**
      * API endpoint: resolve a registration ID and return full data for the scanner.
      * Read-only — does not record meeting attendance (see MeetingCheckInController).
+     *
+     * Takes the raw identifier rather than a bound model so the gate scanner can
+     * hand over either a qr_token or the numeric id printed on older ID cards.
      */
-    public function show(Registration $registration)
+    public function show(string $identifier)
     {
+        $registration = Registration::findByIdOrToken($identifier);
+
+        abort_if($registration === null, 404);
+
         $registration->load(['registrationCategory', 'event']);
 
         Gate::authorize('view', $registration->event);

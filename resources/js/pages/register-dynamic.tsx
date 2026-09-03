@@ -79,8 +79,8 @@ function PaymentPendingView({
         loadSnapScript(midtransClientKey, midtransIsProduction)
             .then(() => {
                 window.snap?.pay(snapToken, {
-                    onSuccess: () => router.visit(`/registrations/${registration.id}/status`),
-                    onPending: () => router.visit(`/registrations/${registration.id}/status`),
+                    onSuccess: () => router.visit(`/registrations/${registration.qr_token}/status`),
+                    onPending: () => router.visit(`/registrations/${registration.qr_token}/status`),
                     onError: () => setIsPaying(false),
                     onClose: () => setIsPaying(false),
                 });
@@ -136,7 +136,7 @@ function PaymentPendingView({
                 </div>
 
                 <a
-                    href={`/registrations/${registration.id}/status`}
+                    href={`/registrations/${registration.qr_token}/status`}
                     className="text-sm font-medium text-white/70 underline-offset-2 hover:text-white hover:underline"
                 >
                     Check registration status
@@ -167,7 +167,7 @@ function RegistrationSuccessView({
 
     const idCardUrl = team
         ? `${window.location.origin}/teams/${team.id}/id-card`
-        : `${window.location.origin}/registrations/${registration.id}/id-card`;
+        : `${window.location.origin}/registrations/${registration.qr_token}/id-card`;
 
     useEffect(() => {
         QRCode.toDataURL(idCardUrl, {
@@ -220,6 +220,34 @@ function RegistrationSuccessView({
 }
 
 const RESERVED_KEYS = ['name', 'email', 'phone', 'photo'];
+
+/**
+ * Injected into a paid category's form when the organizer didn't ask for an
+ * email themselves. A paid registration has nowhere to send the Midtrans
+ * receipt or our confirmation without one, and the server enforces the same
+ * rule — so the field has to exist even if the form builder omitted it.
+ */
+const EMAIL_FIELD: RegistrationField = {
+    key: 'email',
+    label: 'Email Address',
+    type: 'email',
+    required: true,
+    help_text: 'Your payment receipt and registration confirmation are sent here.',
+};
+
+function withRequiredEmail(pages: FormPage[], isPaid: boolean): FormPage[] {
+    if (! isPaid || pages.some((page) => (page.fields ?? []).some((field) => field.key === 'email'))) {
+        return pages;
+    }
+
+    if (pages.length === 0) {
+        return [{ key: 'contact', title: 'Contact', fields: [EMAIL_FIELD] }];
+    }
+
+    const [first, ...rest] = pages;
+
+    return [{ ...first, fields: [...(first.fields ?? []), EMAIL_FIELD] }, ...rest];
+}
 const PHONE_REGEX = /^[0-9+\-\s()]{6,25}$/;
 
 function allFieldsOf(pages: FormPage[]): RegistrationField[] {
@@ -336,7 +364,13 @@ export default function RegisterDynamic({
     const [isSaving, setIsSaving] = useState(false);
     const [pageIndex, setPageIndex] = useState(0);
     const [honeypot, setHoneypot] = useState('');
-    const pages = useMemo(() => registrationCategory.form_pages ?? [], [registrationCategory.form_pages]);
+    const pages = useMemo(
+        () => withRequiredEmail(
+            registrationCategory.form_pages ?? [],
+            Boolean(registrationCategory.price) && Number(registrationCategory.price) > 0,
+        ),
+        [registrationCategory.form_pages, registrationCategory.price],
+    );
     const branding = registrationCategory.form_branding ?? {};
 
     const schema = useMemo(() => buildSchema(pages), [pages]);

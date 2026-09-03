@@ -71,9 +71,12 @@ test('a registration from a different event is rejected', function () {
     $user = organizerOf($event);
     [, , $otherRegistration] = makeMeetingWithRegistration();
 
+    // Scanning a card from another event is a missing resource here, not a
+    // malformed request: the identifier can be a numeric id or a qr_token, so
+    // scoping moved out of the `exists` rule and into an explicit 404.
     $this->actingAs($user)
         ->postJson(route('meetings.check-ins.store', $meeting), ['registration_id' => $otherRegistration->id])
-        ->assertJsonValidationErrors('registration_id');
+        ->assertNotFound();
 
     expect(MeetingCheckIn::count())->toBe(0);
 });

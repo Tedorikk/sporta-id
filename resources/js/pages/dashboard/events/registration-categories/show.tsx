@@ -186,7 +186,7 @@ export default function RegistrationCategoryShow({ event, registrationCategory, 
                                     <TableCell>
                                         {registrationCategory.subject_type === 'individual' && (
                                             <Button variant="ghost" size="icon" asChild>
-                                                <a href={`/registrations/${registration.id}/id-card`} target="_blank" rel="noreferrer">
+                                                <a href={`/registrations/${registration.qr_token}/id-card`} target="_blank" rel="noreferrer">
                                                     <ExternalLink className="h-4 w-4" />
                                                 </a>
                                             </Button>

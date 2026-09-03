@@ -355,7 +355,10 @@ export default function QrScanner({ meetings, preselectedMeeting }: Props) {
             const teamMatch = text.match(/\/teams\/(\d+)\/id-card/);
             const playerMatch = text.match(/\/players\/(\d+)\/id-card/);
             const attendeeMatch = text.match(/\/attendees\/(\d+)\/id-card/);
-            const registrationMatch = text.match(/\/registrations\/(\d+)\/id-card/);
+            // Registration cards encode a qr_token (public URLs are keyed on it so
+            // registrations can't be enumerated), but cards printed before that
+            // change encode the numeric id — accept either so both still scan.
+            const registrationMatch = text.match(/\/registrations\/([\w-]+)\/id-card/);
 
             if (!teamMatch && !playerMatch && !attendeeMatch && !registrationMatch) {
                 const message = 'Invalid QR code. Please scan a Sporta ID team, player, attendee, or registration QR code.';

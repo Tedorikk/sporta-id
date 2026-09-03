@@ -4,6 +4,7 @@ namespace App\Services\Midtrans;
 
 use App\Models\Payment;
 use App\Models\Registration;
+use App\Services\RegistrationConfirmationNotifier;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -15,9 +16,11 @@ use Illuminate\Support\Facades\DB;
  */
 class PaymentReconciler
 {
+    public function __construct(private readonly RegistrationConfirmationNotifier $notifier) {}
+
     public function reconcile(Payment $payment, array $transaction): void
     {
-        DB::transaction(function () use ($payment, $transaction) {
+        $confirmed = DB::transaction(function () use ($payment, $transaction) {
             $payment = Payment::whereKey($payment->id)->lockForUpdate()->first();
             $registration = Registration::whereKey($payment->registration_id)->lockForUpdate()->first();
 
@@ -35,24 +38,35 @@ class PaymentReconciler
             // keeps a retried/duplicate notification (or re-running the manual
             // reconcile command) from double-releasing quota.
             if ($registration->status !== Registration::STATUS_PENDING_PAYMENT) {
-                return;
+                return null;
             }
 
             if ($paymentStatus === Payment::STATUS_SETTLEMENT) {
                 $registration->update(['status' => Registration::STATUS_CONFIRMED, 'expires_at' => null]);
 
-                return;
+                return $registration;
             }
 
             if ($paymentStatus === Payment::STATUS_PENDING) {
-                return;
+                return null;
             }
 
             $registration->update([
                 'status' => $paymentStatus === Payment::STATUS_EXPIRE ? Registration::STATUS_EXPIRED : Registration::STATUS_REJECTED,
             ]);
             $registration->registrationCategory()->decrement('registered_count');
+
+            return null;
         });
+
+        // Outside the transaction: a registration that just went from awaiting
+        // payment to confirmed is the paid equivalent of a free registration
+        // being created, and until now it notified nobody — not the payer, not
+        // the organizers. The guard above means a replayed webhook won't
+        // re-send.
+        if ($confirmed !== null) {
+            $this->notifier->notify($confirmed);
+        }
     }
 
     private function resolvePaymentStatus(array $transaction): string

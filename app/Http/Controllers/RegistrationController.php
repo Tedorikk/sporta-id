@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\RegistrationReceived;
 use App\Models\CardTemplate;
 use App\Models\Event;
 use App\Models\Payment;
@@ -10,9 +9,9 @@ use App\Models\Registration;
 use App\Models\RegistrationCategory;
 use App\Models\Team;
 use App\Services\Midtrans\MidtransClient;
+use App\Services\RegistrationConfirmationNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -22,7 +21,10 @@ class RegistrationController extends Controller
     /** Field keys that map to top-level Registration columns instead of form_data. */
     private const RESERVED_KEYS = ['name', 'email', 'phone', 'photo'];
 
-    public function __construct(private readonly MidtransClient $midtrans) {}
+    public function __construct(
+        private readonly MidtransClient $midtrans,
+        private readonly RegistrationConfirmationNotifier $notifier,
+    ) {}
 
     public function create(Event $event, RegistrationCategory $registrationCategory)
     {
@@ -88,7 +90,7 @@ class RegistrationController extends Controller
         $registration->loadMissing(['team.basketballEventCategory', 'event', 'registrationCategory']);
 
         if ($registration->status === Registration::STATUS_CONFIRMED) {
-            $this->notifyOrganizers($registration, $registrationCategory);
+            $this->notifier->notify($registration);
         }
 
         $snapToken = null;
@@ -186,6 +188,15 @@ class RegistrationController extends Controller
             }
         }
 
+        // A paid registration must carry an email address whatever the organizer
+        // put on the form: it's the only channel the payer gets a Midtrans
+        // receipt and our confirmation on. Deliberately set after the loop so it
+        // also overrides an `email` field the organizer marked optional.
+        if (! $registrationCategory->isFree()) {
+            $rules['email'] = ['required', 'email', 'max:255'];
+            $messages['email.required'] = 'An email address is required so we can send your payment receipt and confirmation.';
+        }
+
         return $request->validate($rules, $messages);
     }
 
@@ -233,18 +244,5 @@ class RegistrationController extends Controller
             : $query->where("form_data->{$duplicateField}", data_get($validated, "form_data.{$duplicateField}"))->exists();
 
         abort_if($exists, 422, "You've already registered for this category with that {$duplicateField}.");
-    }
-
-    private function notifyOrganizers(Registration $registration, RegistrationCategory $registrationCategory): void
-    {
-        $recipients = $registrationCategory->form_settings['notify_emails'] ?? [];
-
-        foreach ($recipients as $recipient) {
-            try {
-                Mail::to($recipient)->send(new RegistrationReceived($registration));
-            } catch (\Throwable $e) {
-                report($e);
-            }
-        }
     }
 }
