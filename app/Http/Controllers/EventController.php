@@ -6,22 +6,29 @@ use App\Models\BasketballEvent;
 use App\Models\Event;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 class EventController extends Controller
 {
     public function index(Request $request)
     {
+        Gate::authorize('viewAny', Event::class);
+
         $view = $request->input('view', 'grid');
 
         $filters = $request->only(['search', 'category', 'status']);
 
+        $organizationId = $request->user()->current_organization_id;
+
         $base = Event::query()
+            ->forOrganization($organizationId)
             ->search($filters['search'] ?? null)
             ->category($filters['category'] ?? null)
             ->status($filters['status'] ?? null);
 
         $categories = Event::query()
+            ->forOrganization($organizationId)
             ->whereNotNull('category')
             ->distinct()
             ->orderBy('category')
@@ -129,7 +136,12 @@ class EventController extends Controller
 
     public function store(Request $request)
     {
+        Gate::authorize('create', Event::class);
+
         $validated = $this->validated($request);
+
+        // Taken from the session user, never from request input.
+        $validated['organization_id'] = $request->user()->current_organization_id;
 
         Event::create($validated);
 

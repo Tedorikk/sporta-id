@@ -3,7 +3,6 @@
 use App\Models\Event;
 use App\Models\Registration;
 use App\Models\RegistrationCategory;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -33,8 +32,8 @@ test('guests cannot view a registration category\'s registrations', function () 
 });
 
 test('an organizer can view submitted registrations, including custom field answers', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create();
+    $user = organizerOf($event);
     $category = RegistrationCategory::create(array_merge(['event_id' => $event->id], categoryPayload([
         'subject_type' => 'individual',
         'form_pages' => [
@@ -64,8 +63,8 @@ test('an organizer can view submitted registrations, including custom field answ
 });
 
 test('the registrations list can be filtered by search and status', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create();
+    $user = organizerOf($event);
     $category = RegistrationCategory::create(array_merge(['event_id' => $event->id], categoryPayload(['form_pages' => []])));
     Registration::create(['registration_category_id' => $category->id, 'event_id' => $event->id, 'name' => 'Jane Doe', 'status' => Registration::STATUS_CONFIRMED]);
     Registration::create(['registration_category_id' => $category->id, 'event_id' => $event->id, 'name' => 'John Smith', 'status' => Registration::STATUS_PENDING_PAYMENT]);
@@ -80,8 +79,8 @@ test('the registrations list can be filtered by search and status', function () 
 });
 
 test('a registration category from another event 404s', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create();
+    $user = organizerOf($event);
     $otherEvent = Event::factory()->create();
     $category = RegistrationCategory::create(array_merge(['event_id' => $otherEvent->id], categoryPayload(['form_pages' => []])));
 
@@ -100,8 +99,8 @@ test('guests cannot manage registration categories', function () {
 });
 
 test('an organizer can create a registration category with a dynamic form schema', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create();
+    $user = organizerOf($event);
 
     $this->actingAs($user)
         ->post(route('registration_categories.store', $event), categoryPayload())
@@ -118,8 +117,8 @@ test('an organizer can create a registration category with a dynamic form schema
 });
 
 test('a custom field cannot reuse the reserved "name" key', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create();
+    $user = organizerOf($event);
 
     $this->actingAs($user)
         ->post(route('registration_categories.store', $event), categoryPayload([
@@ -135,8 +134,8 @@ test('a custom field cannot reuse the reserved "name" key', function () {
 });
 
 test('field keys must be unique within a form schema', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create();
+    $user = organizerOf($event);
 
     $this->actingAs($user)
         ->post(route('registration_categories.store', $event), categoryPayload([
@@ -153,8 +152,8 @@ test('field keys must be unique within a form schema', function () {
 });
 
 test('field type must be one of the supported types', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create();
+    $user = organizerOf($event);
 
     $this->actingAs($user)
         ->post(route('registration_categories.store', $event), categoryPayload([
@@ -168,8 +167,8 @@ test('field type must be one of the supported types', function () {
 });
 
 test('a document upload field type is accepted', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create();
+    $user = organizerOf($event);
 
     $this->actingAs($user)
         ->post(route('registration_categories.store', $event), categoryPayload([
@@ -187,8 +186,8 @@ test('a document upload field type is accepted', function () {
 });
 
 test('an organizer can update a registration category', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create();
+    $user = organizerOf($event);
     $category = RegistrationCategory::create(array_merge(['event_id' => $event->id], categoryPayload()));
 
     $this->actingAs($user)
@@ -200,8 +199,8 @@ test('an organizer can update a registration category', function () {
 });
 
 test('an organizer cannot update a registration category belonging to another event', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create();
+    $user = organizerOf($event);
     $otherEvent = Event::factory()->create();
     $category = RegistrationCategory::create(array_merge(['event_id' => $otherEvent->id], categoryPayload()));
 
@@ -211,8 +210,8 @@ test('an organizer cannot update a registration category belonging to another ev
 });
 
 test('a registration category with existing registrations cannot be deleted', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create();
+    $user = organizerOf($event);
     $category = RegistrationCategory::create(array_merge(['event_id' => $event->id], categoryPayload(['form_pages' => []])));
     Registration::create([
         'registration_category_id' => $category->id,
@@ -228,8 +227,8 @@ test('a registration category with existing registrations cannot be deleted', fu
 });
 
 test('a registration category with no registrations can be deleted', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create();
+    $user = organizerOf($event);
     $category = RegistrationCategory::create(array_merge(['event_id' => $event->id], categoryPayload()));
 
     $this->actingAs($user)

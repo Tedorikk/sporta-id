@@ -1,14 +1,14 @@
 <?php
 
 use App\Models\Event;
+use App\Models\Organization;
 use App\Models\Team;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->user = User::factory()->create();
+    $this->user = memberOf(Organization::factory()->create());
 });
 
 // ─── QR Scanner Page ──────────────────────────────────────────────────────────
@@ -51,11 +51,20 @@ test('authenticated users can fetch team qr data', function () {
     $event = Event::factory()->create();
     $team = Team::factory()->for($event)->verified()->create();
 
-    $this->actingAs($this->user)
+    $this->actingAs(organizerOf($event))
         ->getJson(route('teams.qr-data', $team))
         ->assertOk()
         ->assertJsonPath('id', $team->id)
         ->assertJsonPath('name', $team->name);
+});
+
+test('team qr data is not readable from another organization', function () {
+    $event = Event::factory()->create();
+    $team = Team::factory()->for($event)->verified()->create();
+
+    $this->actingAs($this->user)
+        ->getJson(route('teams.qr-data', $team))
+        ->assertNotFound();
 });
 
 test('guests cannot fetch team qr data', function () {

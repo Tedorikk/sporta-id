@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CardTemplate;
 use App\Models\Registration;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 class RegistrationQrController extends Controller
@@ -38,6 +39,8 @@ class RegistrationQrController extends Controller
     public function show(Registration $registration)
     {
         $registration->load(['registrationCategory', 'event']);
+
+        Gate::authorize('view', $registration->event);
 
         if ($registration->status !== Registration::STATUS_CONFIRMED) {
             abort(403, 'This registration is not confirmed.');

@@ -12,6 +12,7 @@ class NoIndexRestrictedPages
         'dashboard',
         'dashboard/*',
         'login',
+        'register',
         'forgot-password',
         'reset-password/*',
         'two-factor-challenge',

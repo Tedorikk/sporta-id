@@ -1,3 +1,5 @@
+import type { Organization, OrganizationMembership } from './organization';
+
 export type User = {
     id: number;
     name: string;
@@ -12,6 +14,9 @@ export type User = {
 
 export type Auth = {
     user: User;
+    /** Null while the user belongs to no organization yet. */
+    organization: Organization | null;
+    organizations: OrganizationMembership[];
 };
 
 /* @chisel-passkeys */

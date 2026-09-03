@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -18,6 +19,7 @@ class Event extends Model
     protected $primaryKey = 'id';
 
     protected $fillable = [
+        'organization_id',
         'name',
         'description',
         'contact_person',
@@ -66,6 +68,14 @@ class Event extends Model
         return 'ongoing';
     }
 
+    public function scopeForOrganization(Builder $query, Organization|int|null $organization): Builder
+    {
+        $organizationId = $organization instanceof Organization ? $organization->id : $organization;
+
+        // A null organization must match nothing rather than everything.
+        return $query->where('organization_id', $organizationId);
+    }
+
     public function scopeSearch(Builder $query, ?string $term): Builder
     {
         return $query->when($term, fn ($q) => $q->where(fn ($q2) => $q2
@@ -93,6 +103,11 @@ class Event extends Model
                 default => null,
             };
         });
+    }
+
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
     }
 
     // Relasi Polymorphic

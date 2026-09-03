@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Meeting;
 use App\Models\Team;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 class TeamQrController extends Controller
@@ -22,7 +23,10 @@ class TeamQrController extends Controller
         // Event is loaded in full (not a column subset) because its `status`
         // accessor depends on start_date/end_date; a partial select would
         // leave those null and crash the accessor when this gets serialized.
+        $organizationId = $request->user()->current_organization_id;
+
         $meetings = Meeting::with('event')
+            ->whereHas('event', fn ($q) => $q->forOrganization($organizationId))
             ->where('scheduled_at', '>=', now()->subHours(6))
             ->orderBy('scheduled_at')
             ->limit(50)
@@ -31,7 +35,9 @@ class TeamQrController extends Controller
         $preselectedMeeting = null;
 
         if ($request->filled('meeting')) {
-            $preselectedMeeting = Meeting::with('event')->find($request->query('meeting'), ['id', 'event_id', 'title', 'scheduled_at']);
+            $preselectedMeeting = Meeting::with('event')
+                ->whereHas('event', fn ($q) => $q->forOrganization($organizationId))
+                ->find($request->query('meeting'), ['id', 'event_id', 'title', 'scheduled_at']);
         }
 
         return Inertia::render('dashboard/qr-scanner', [
@@ -59,6 +65,8 @@ class TeamQrController extends Controller
     public function show(Team $team)
     {
         $team->load(['players', 'basketballEventCategory', 'event']);
+
+        Gate::authorize('view', $team->event);
 
         if ($team->status == 'pending') {
             abort(404, 'Tim tidak ditemukan');

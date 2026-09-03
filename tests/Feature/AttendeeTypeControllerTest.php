@@ -2,14 +2,13 @@
 
 use App\Models\AttendeeType;
 use App\Models\Event;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->user = User::factory()->create();
     $this->event = Event::factory()->create();
+    $this->user = organizerOf($this->event);
 });
 
 // ─── Auto-seeding ─────────────────────────────────────────────────────────────
@@ -72,7 +71,7 @@ test('an attendee type can be created for an event', function () {
 });
 
 test('the same key can be reused across different events', function () {
-    $other = Event::factory()->create();
+    $other = Event::factory()->create(['organization_id' => $this->event->organization_id]);
 
     $this->actingAs($this->user)->post(route('attendee-types.store', $this->event), [
         'key' => 'vendor', 'label' => 'Vendor', 'is_active' => true,

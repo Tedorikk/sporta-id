@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\Event;
+use App\Models\Organization;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -44,7 +47,23 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Create a user who belongs to the given organization with the given role.
+ */
+function memberOf(Organization $organization, string $role = Organization::ROLE_OWNER): User
 {
-    // ..
+    $user = User::factory()->create();
+
+    $organization->users()->attach($user, ['role' => $role]);
+    $user->forceFill(['current_organization_id' => $organization->id])->save();
+
+    return $user->fresh();
+}
+
+/**
+ * Create a user authorized to manage the given event, via its organization.
+ */
+function organizerOf(Event $event, string $role = Organization::ROLE_OWNER): User
+{
+    return memberOf($event->organization, $role);
 }

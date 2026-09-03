@@ -19,6 +19,9 @@ use App\Http\Controllers\LandingController;
 use App\Http\Controllers\MeetingAttendanceController;
 use App\Http\Controllers\MeetingCheckInController;
 use App\Http\Controllers\MeetingController;
+use App\Http\Controllers\OrganizationController;
+use App\Http\Controllers\OrganizationMemberController;
+use App\Http\Controllers\OrganizationSwitchController;
 use App\Http\Controllers\PaymentNotificationController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\PlayerLookupController;
@@ -88,17 +91,35 @@ Route::delete('public-upload/document', [DocumentUploadController::class, 'destr
     ->middleware('throttle:20,1')->name('public-upload.document.destroy');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Outside the organization.current middleware: a user with no organization
+    // must be able to reach these to create or be added to one.
+    Route::get('dashboard/organizations', [OrganizationController::class, 'index'])->name('organizations.index');
+    Route::post('dashboard/organizations', [OrganizationController::class, 'store'])->name('organizations.store');
+    Route::put('dashboard/organizations/{organization}', [OrganizationController::class, 'update'])->name('organizations.update');
+    Route::delete('dashboard/organizations/{organization}', [OrganizationController::class, 'destroy'])->name('organizations.destroy');
+    Route::put('dashboard/organizations/{organization}/switch', [OrganizationSwitchController::class, 'update'])->name('organizations.switch');
+
+    Route::prefix('dashboard/organizations/{organization}/members')->name('organizations.members.')->group(function () {
+        Route::get('/', [OrganizationMemberController::class, 'index'])->name('index');
+        Route::post('/', [OrganizationMemberController::class, 'store'])->name('store');
+        Route::patch('{user}', [OrganizationMemberController::class, 'update'])->name('update');
+        Route::delete('{user}', [OrganizationMemberController::class, 'destroy'])->name('destroy');
+    });
+});
+
+Route::middleware(['auth', 'verified', 'organization.current'])->group(function () {
     Route::inertia('dashboard', 'dashboard/page')->name('dashboard');
 
     // --- Events -------------------------------------------------------
     Route::prefix('dashboard/events')->group(function () {
         Route::get('/', [EventController::class, 'index'])->name('events.index');
         Route::inertia('create', 'dashboard/events/create')->name('events.create');
-        Route::get('{event}', [EventController::class, 'show'])->name('events.show');
-        Route::get('{event}/edit', [EventController::class, 'edit'])->name('events.edit');
+        Route::get('{event}', [EventController::class, 'show'])->middleware('event.org')->name('events.show');
+        Route::get('{event}/edit', [EventController::class, 'edit'])->middleware('event.org')->name('events.edit');
 
-        // Everything scoped to a single event lives here.
-        Route::prefix('{event}')->group(function () {
+        // Everything scoped to a single event lives here. The event.org
+        // middleware authorizes {event} once for every nested controller.
+        Route::prefix('{event}')->middleware('event.org')->group(function () {
             Route::get('teams/review-export', [TeamController::class, 'exportReviewAll'])->name('teams.review-export-all');
             Route::get('teams/{team}/review-export', [TeamController::class, 'exportReview'])->name('teams.review-export');
             Route::resource('teams', TeamController::class);
@@ -172,11 +193,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard/contact-messages', [ContactMessageController::class, 'index'])
         ->name('contact-messages.index');
 
-    Route::resource('events', EventController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('events', EventController::class)->only(['store', 'update', 'destroy'])
+        ->middleware('event.org');
     Route::post('events/{event}/basketball', [BasketballEventController::class, 'store'])
-        ->name('events.basketball.store');
+        ->middleware('event.org')->name('events.basketball.store');
     Route::put('events/{event}/basketball', [BasketballEventController::class, 'update'])
-        ->name('events.basketball.update');
+        ->middleware('event.org')->name('events.basketball.update');
 
     // --- QR Scanner (admin only) ----------------------------------------
     Route::get('dashboard/qr-scanner', [TeamQrController::class, 'scan'])->name('qr-scanner');

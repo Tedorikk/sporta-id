@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\BasketballEvent;
 use App\Models\Event;
+use App\Models\Organization;
 use Illuminate\Database\Seeder;
 
 class BbmXAikaEventSeeder extends Seeder
@@ -63,6 +64,7 @@ class BbmXAikaEventSeeder extends Seeder
         ]);
 
         $event = new Event([
+            'organization_id' => Organization::defaultForSeeding()->id,
             'name' => 'BBM X AIKA',
             'description' => 'BBM X AIKA basketball tournament.',
             'contact_person' => '+6281234567890',

@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Event;
+use App\Models\Organization;
 use App\Models\RegistrationCategory;
 use Illuminate\Database\Seeder;
 
@@ -18,6 +19,7 @@ class PaidEventRegistrationSeeder extends Seeder
     public function run(): void
     {
         $event = Event::create([
+            'organization_id' => Organization::defaultForSeeding()->id,
             'name' => 'Sporta Fun Run 2027',
             'description' => 'A 5K community fun run through Pontianak, open to all ages and fitness levels. Register online to lock in your race pack, bib number, and finisher medal.',
             'contact_person' => '+62 811-5639-555',

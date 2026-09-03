@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\Event;
-use App\Models\User;
+use App\Models\Organization;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -20,7 +20,7 @@ function eventPayload(array $overrides = []): array
 }
 
 test('an organizer can set a valid hex accent color on an event', function () {
-    $user = User::factory()->create();
+    $user = memberOf(Organization::factory()->create());
 
     $this->actingAs($user)
         ->post(route('events.store'), eventPayload(['accent_color' => '#1d4ed8']))
@@ -31,7 +31,7 @@ test('an organizer can set a valid hex accent color on an event', function () {
 });
 
 test('an invalid accent color is rejected', function () {
-    $user = User::factory()->create();
+    $user = memberOf(Organization::factory()->create());
 
     $this->actingAs($user)
         ->post(route('events.store'), eventPayload(['accent_color' => 'not-a-color']))
@@ -41,7 +41,7 @@ test('an invalid accent color is rejected', function () {
 });
 
 test('accent color is optional', function () {
-    $user = User::factory()->create();
+    $user = memberOf(Organization::factory()->create());
 
     $this->actingAs($user)
         ->post(route('events.store'), eventPayload(['accent_color' => '']))
@@ -52,8 +52,8 @@ test('accent color is optional', function () {
 });
 
 test('an organizer can update an event\'s accent color', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create(['accent_color' => '#dc2626']);
+    $user = organizerOf($event);
 
     $this->actingAs($user)
         ->put(route('events.update', $event), eventPayload(['accent_color' => '#059669']))

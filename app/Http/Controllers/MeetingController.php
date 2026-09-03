@@ -18,7 +18,10 @@ class MeetingController extends Controller
     {
         $query = $request->query('q', '');
 
+        $organizationId = $request->user()->current_organization_id;
+
         $meetings = Meeting::with('event')
+            ->whereHas('event', fn ($q) => $q->forOrganization($organizationId))
             ->when($query, fn ($q) => $q->where('title', 'like', "%{$query}%"))
             ->orderByDesc('scheduled_at')
             ->limit(20)

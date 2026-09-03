@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\EnsureEventBelongsToOrganization;
+use App\Http\Middleware\EnsureHasCurrentOrganization;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\NoIndexRestrictedPages;
@@ -29,6 +31,11 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
             NoIndexRestrictedPages::class,
+        ]);
+
+        $middleware->alias([
+            'event.org' => EnsureEventBelongsToOrganization::class,
+            'organization.current' => EnsureHasCurrentOrganization::class,
         ]);
     })
     ->withSchedule(function (Schedule $schedule): void {

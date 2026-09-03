@@ -5,7 +5,6 @@ use App\Models\Meeting;
 use App\Models\MeetingCheckIn;
 use App\Models\Registration;
 use App\Models\RegistrationCategory;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -42,8 +41,8 @@ test('guests cannot view or mark attendance', function () {
 });
 
 test('the attendance roster only lists confirmed individual registrations for the event', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create();
+    $user = organizerOf($event);
     $meeting = Meeting::create(['event_id' => $event->id, 'title' => 'Keynote', 'scheduled_at' => now()]);
 
     $confirmed = makeConfirmedIndividualRegistration($event, 'Confirmed Attendee');
@@ -65,8 +64,8 @@ test('the attendance roster only lists confirmed individual registrations for th
 });
 
 test('an organizer can manually mark a registrant present or absent', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create();
+    $user = organizerOf($event);
     $meeting = Meeting::create(['event_id' => $event->id, 'title' => 'Keynote', 'scheduled_at' => now()]);
     $registration = makeConfirmedIndividualRegistration($event);
 
@@ -93,8 +92,8 @@ test('an organizer can manually mark a registrant present or absent', function (
 });
 
 test('marking attendance for a registration from another event is rejected', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create();
+    $user = organizerOf($event);
     $otherEvent = Event::factory()->create();
     $meeting = Meeting::create(['event_id' => $event->id, 'title' => 'Keynote', 'scheduled_at' => now()]);
     $registration = makeConfirmedIndividualRegistration($otherEvent);

@@ -5,7 +5,6 @@ use App\Models\Meeting;
 use App\Models\MeetingCheckIn;
 use App\Models\Registration;
 use App\Models\RegistrationCategory;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -39,8 +38,8 @@ test('guests cannot record a QR check-in', function () {
 });
 
 test('scanning a confirmed registration records a present check-in via QR', function () {
-    $user = User::factory()->create();
-    [, $meeting, $registration] = makeMeetingWithRegistration();
+    [$event, $meeting, $registration] = makeMeetingWithRegistration();
+    $user = organizerOf($event);
 
     $this->actingAs($user)
         ->postJson(route('meetings.check-ins.store', $meeting), ['registration_id' => $registration->id])
@@ -55,8 +54,8 @@ test('scanning a confirmed registration records a present check-in via QR', func
 });
 
 test('scanning the same registration twice reports already checked in without duplicating', function () {
-    $user = User::factory()->create();
-    [, $meeting, $registration] = makeMeetingWithRegistration();
+    [$event, $meeting, $registration] = makeMeetingWithRegistration();
+    $user = organizerOf($event);
 
     $this->actingAs($user)->postJson(route('meetings.check-ins.store', $meeting), ['registration_id' => $registration->id])
         ->assertOk()->assertJsonPath('already_checked_in', false);
@@ -68,9 +67,9 @@ test('scanning the same registration twice reports already checked in without du
 });
 
 test('a registration from a different event is rejected', function () {
-    $user = User::factory()->create();
-    [, $meeting] = makeMeetingWithRegistration();
-    [$otherEvent, , $otherRegistration] = makeMeetingWithRegistration();
+    [$event, $meeting] = makeMeetingWithRegistration();
+    $user = organizerOf($event);
+    [, , $otherRegistration] = makeMeetingWithRegistration();
 
     $this->actingAs($user)
         ->postJson(route('meetings.check-ins.store', $meeting), ['registration_id' => $otherRegistration->id])
@@ -80,8 +79,8 @@ test('a registration from a different event is rejected', function () {
 });
 
 test('a non-confirmed registration is rejected', function () {
-    $user = User::factory()->create();
-    [, $meeting, $registration] = makeMeetingWithRegistration(['status' => Registration::STATUS_PENDING_PAYMENT]);
+    [$event, $meeting, $registration] = makeMeetingWithRegistration(['status' => Registration::STATUS_PENDING_PAYMENT]);
+    $user = organizerOf($event);
 
     $this->actingAs($user)
         ->postJson(route('meetings.check-ins.store', $meeting), ['registration_id' => $registration->id])

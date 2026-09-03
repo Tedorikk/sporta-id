@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Attendee;
 use App\Models\CardTemplate;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 class AttendeeQrController extends Controller
@@ -31,6 +32,8 @@ class AttendeeQrController extends Controller
     public function show(Attendee $attendee)
     {
         $attendee->load(['attendeeType', 'event']);
+
+        Gate::authorize('view', $attendee->event);
 
         if ($attendee->status === Attendee::STATUS_REVOKED) {
             abort(403, 'This attendee pass has been revoked');

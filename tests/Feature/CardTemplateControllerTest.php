@@ -3,16 +3,15 @@
 use App\Models\CardTemplate;
 use App\Models\Event;
 use App\Models\RegistrationCategory;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->user = User::factory()->create();
     // Event::boot() auto-seeds guest/tenant/photographer for every new event —
     // reuse that instead of creating a colliding duplicate key.
     $this->event = Event::factory()->create();
+    $this->user = organizerOf($this->event);
     $this->type = $this->event->attendeeTypes()->where('key', 'guest')->firstOrFail();
     $this->category = RegistrationCategory::create([
         'event_id' => $this->event->id,

@@ -6,6 +6,7 @@ use App\Models\Meeting;
 use App\Models\MeetingCheckIn;
 use App\Models\Registration;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class MeetingCheckInController extends Controller
@@ -16,6 +17,8 @@ class MeetingCheckInController extends Controller
      */
     public function store(Request $request, Meeting $meeting)
     {
+        Gate::authorize('update', $meeting->event);
+
         $validated = $request->validate([
             'registration_id' => [
                 'required',

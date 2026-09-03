@@ -3,7 +3,6 @@
 use App\Models\Event;
 use App\Models\Meeting;
 use App\Models\Speaker;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -18,8 +17,8 @@ test('guests cannot manage speakers', function () {
 });
 
 test('an organizer can create, update, and delete a speaker', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create();
+    $user = organizerOf($event);
 
     $this->actingAs($user)
         ->post(route('speakers.store', $event), ['name' => 'Jane Speaker', 'title' => 'CTO, Acme'])
@@ -42,8 +41,8 @@ test('an organizer can create, update, and delete a speaker', function () {
 });
 
 test('a speaker with meetings assigned cannot be deleted', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create();
+    $user = organizerOf($event);
     $speaker = Speaker::create(['event_id' => $event->id, 'name' => 'Jane Speaker']);
     Meeting::create(['event_id' => $event->id, 'speaker_id' => $speaker->id, 'title' => 'Keynote', 'scheduled_at' => now()]);
 

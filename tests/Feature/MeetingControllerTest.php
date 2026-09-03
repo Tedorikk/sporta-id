@@ -3,7 +3,6 @@
 use App\Models\Event;
 use App\Models\Meeting;
 use App\Models\Speaker;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -18,8 +17,8 @@ test('guests cannot manage meetings', function () {
 });
 
 test('an organizer can create a meeting with a speaker', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create();
+    $user = organizerOf($event);
     $speaker = Speaker::create(['event_id' => $event->id, 'name' => 'Jane Speaker']);
 
     $this->actingAs($user)
@@ -38,8 +37,8 @@ test('an organizer can create a meeting with a speaker', function () {
 });
 
 test('a speaker from another event cannot be assigned to a meeting', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create();
+    $user = organizerOf($event);
     $otherEvent = Event::factory()->create();
     $speaker = Speaker::create(['event_id' => $otherEvent->id, 'name' => 'Jane Speaker']);
 
@@ -53,8 +52,8 @@ test('a speaker from another event cannot be assigned to a meeting', function ()
 });
 
 test('ends_at must be after scheduled_at', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create();
+    $user = organizerOf($event);
     $start = now()->addDay();
 
     $this->actingAs($user)
@@ -71,11 +70,26 @@ test('guests cannot use the meeting search endpoint', function () {
 });
 
 test('an organizer can search meetings by title across events', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create();
-    $otherEvent = Event::factory()->create();
+    $user = organizerOf($event);
+    // Same organization, so the search genuinely spans events rather than
+    // appearing to only because the other event is invisible.
+    $otherEvent = Event::factory()->create(['organization_id' => $event->organization_id]);
     Meeting::create(['event_id' => $event->id, 'title' => 'Opening Keynote', 'scheduled_at' => now()->addDay()]);
-    Meeting::create(['event_id' => $otherEvent->id, 'title' => 'Closing Ceremony', 'scheduled_at' => now()->addDays(2)]);
+    Meeting::create(['event_id' => $otherEvent->id, 'title' => 'Closing Keynote', 'scheduled_at' => now()->addDays(2)]);
+
+    $this->actingAs($user)
+        ->getJson(route('meetings.search', ['q' => 'keynote']))
+        ->assertOk()
+        ->assertJsonCount(2);
+});
+
+test('the meeting search endpoint does not cross organizations', function () {
+    $event = Event::factory()->create();
+    $user = organizerOf($event);
+    $foreignEvent = Event::factory()->create();
+    Meeting::create(['event_id' => $event->id, 'title' => 'Opening Keynote', 'scheduled_at' => now()->addDay()]);
+    Meeting::create(['event_id' => $foreignEvent->id, 'title' => 'Foreign Keynote', 'scheduled_at' => now()->addDays(2)]);
 
     $this->actingAs($user)
         ->getJson(route('meetings.search', ['q' => 'keynote']))
@@ -85,8 +99,8 @@ test('an organizer can search meetings by title across events', function () {
 });
 
 test('the meeting search endpoint returns recent meetings when there is no query', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create();
+    $user = organizerOf($event);
     Meeting::create(['event_id' => $event->id, 'title' => 'Session A', 'scheduled_at' => now()->addDay()]);
     Meeting::create(['event_id' => $event->id, 'title' => 'Session B', 'scheduled_at' => now()->addDays(2)]);
 
@@ -97,8 +111,8 @@ test('the meeting search endpoint returns recent meetings when there is no query
 });
 
 test('the meeting search endpoint caps results at 20', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create();
+    $user = organizerOf($event);
 
     foreach (range(1, 25) as $i) {
         Meeting::create(['event_id' => $event->id, 'title' => "Session {$i}", 'scheduled_at' => now()->addHours($i)]);
@@ -111,8 +125,8 @@ test('the meeting search endpoint caps results at 20', function () {
 });
 
 test('an organizer can delete a meeting', function () {
-    $user = User::factory()->create();
     $event = Event::factory()->create();
+    $user = organizerOf($event);
     $meeting = Meeting::create(['event_id' => $event->id, 'title' => 'Keynote', 'scheduled_at' => now()]);
 
     $this->actingAs($user)

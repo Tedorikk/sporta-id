@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Event;
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -21,6 +22,7 @@ class EventFactory extends Factory
         $end = fake()->dateTimeBetween($start, '+2 months');
 
         return [
+            'organization_id' => Organization::factory(),
             'name' => fake()->company().' Tournament',
             'description' => fake()->sentence(),
             'contact_person' => fake()->name(),

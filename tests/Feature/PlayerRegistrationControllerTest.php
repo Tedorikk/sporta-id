@@ -3,8 +3,9 @@
 use App\Models\BasketballEvent;
 use App\Models\BasketballEventCategory;
 use App\Models\Event;
+use App\Models\Organization;
+use App\Models\RegistrationCategory;
 use App\Models\Team;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -14,6 +15,7 @@ function makeBasketballEvent(array $overrides = []): Event
     $basketballEvent = BasketballEvent::create(array_merge(['pool_drawing_date' => now()], $overrides));
 
     $event = new Event([
+        'organization_id' => Organization::factory()->create()->id,
         'name' => 'Registration Test Cup',
         'description' => 'Test Event Description',
         'contact_person' => 'John Doe',
@@ -144,8 +146,8 @@ test('registering is rejected once registration is closed', function () {
 // ─── Organizer toggle ───────────────────────────────────────────────────────────
 
 test('an organizer can close registration', function () {
-    $user = User::factory()->create();
     $event = makeBasketballEvent();
+    $user = organizerOf($event);
 
     $this->actingAs($user)
         ->put(route('events.basketball.update', $event), ['registration_open' => false])
@@ -159,8 +161,8 @@ test('an organizer can close registration', function () {
 });
 
 test('an organizer can reopen registration', function () {
-    $user = User::factory()->create();
     $event = makeBasketballEvent(['registration_open' => false]);
+    $user = organizerOf($event);
 
     $this->actingAs($user)
         ->put(route('events.basketball.update', $event), ['registration_open' => true])
@@ -183,8 +185,8 @@ test('guests cannot toggle registration', function () {
 });
 
 test('toggling registration requires a boolean', function () {
-    $user = User::factory()->create();
     $event = makeBasketballEvent();
+    $user = organizerOf($event);
 
     $this->actingAs($user)
         ->put(route('events.basketball.update', $event), ['registration_open' => 'not-a-bool'])
@@ -192,10 +194,10 @@ test('toggling registration requires a boolean', function () {
 });
 
 test('toggling registration 404s for an event with no basketball tournament attached', function () {
-    $user = User::factory()->create();
     // A BASKETBALL-category event before "Turnamen Basket" has been created for it
     // (see BasketballEventController::store) has no `specific` relation yet.
     $event = Event::factory()->create();
+    $user = organizerOf($event);
 
     $this->actingAs($user)
         ->put(route('events.basketball.update', $event), ['registration_open' => false])
