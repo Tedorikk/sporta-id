@@ -1,5 +1,10 @@
 import { useCallback, useMemo, useState } from 'react';
-import type { CardCanvas, CardElement, CardElementKind, CardElementStyle } from '@/types/card-template';
+import type {
+    CardCanvas,
+    CardElement,
+    CardElementKind,
+    CardElementStyle,
+} from '@/types/card-template';
 
 export interface DesignerState {
     canvas: CardCanvas;
@@ -25,8 +30,13 @@ function serialize(state: DesignerState): string {
  * to `[]` rather than `{}` and optional keys may be missing entirely. Normalise
  * once on load so every consumer can assume a well-formed shape.
  */
-export function normalizeElement(element: CardElement, index: number): CardElement {
-    const style = (Array.isArray(element.style) || !element.style ? {} : element.style) as CardElementStyle;
+export function normalizeElement(
+    element: CardElement,
+    index: number,
+): CardElement {
+    const style = (
+        Array.isArray(element.style) || !element.style ? {} : element.style
+    ) as CardElementStyle;
 
     return {
         ...element,
@@ -56,7 +66,12 @@ function cascadeOffset(addIndex: number): number {
 }
 
 /** Centers a new element horizontally, applies the cascade offset, and keeps it fully on-canvas. */
-function place(width: number, height: number, canvas: CardCanvas, offset: number): { x: number; y: number } {
+function place(
+    width: number,
+    height: number,
+    canvas: CardCanvas,
+    offset: number,
+): { x: number; y: number } {
     const x = Math.round((canvas.width - width) / 2) + offset;
     const y = 40 + offset;
 
@@ -66,8 +81,19 @@ function place(width: number, height: number, canvas: CardCanvas, offset: number
     };
 }
 
-export function newElement(kind: CardElementKind, zIndex: number, canvas: CardCanvas, addIndex = 0): CardElement {
-    const base = { id: makeId(), zIndex, rotation: 0, locked: false, hidden: false };
+export function newElement(
+    kind: CardElementKind,
+    zIndex: number,
+    canvas: CardCanvas,
+    addIndex = 0,
+): CardElement {
+    const base = {
+        id: makeId(),
+        zIndex,
+        rotation: 0,
+        locked: false,
+        hidden: false,
+    };
     const offset = cascadeOffset(addIndex);
 
     if (kind === 'text') {
@@ -82,7 +108,13 @@ export function newElement(kind: CardElementKind, zIndex: number, canvas: CardCa
             width,
             height,
             staticText: 'New text',
-            style: { fontSize: 16, fontWeight: 500, textAlign: 'center', verticalAlign: 'middle', color: '#0f172a' },
+            style: {
+                fontSize: 16,
+                fontWeight: 500,
+                textAlign: 'center',
+                verticalAlign: 'middle',
+                color: '#0f172a',
+            },
         };
     }
 
@@ -110,7 +142,11 @@ export function newElement(kind: CardElementKind, zIndex: number, canvas: CardCa
             ...place(size, size, canvas, offset),
             width: size,
             height: size,
-            style: { borderRadius: 12, objectFit: 'cover', background: '#e2e8f0' },
+            style: {
+                borderRadius: 12,
+                objectFit: 'cover',
+                background: '#e2e8f0',
+            },
         };
     }
 
@@ -158,7 +194,10 @@ export function useCardDesigner(initial: DesignerState) {
     }, []);
 
     const update = useCallback(
-        (patch: (prev: DesignerState) => Partial<DesignerState>, options: { history?: boolean } = {}) => {
+        (
+            patch: (prev: DesignerState) => Partial<DesignerState>,
+            options: { history?: boolean } = {},
+        ) => {
             setStore((prev) => {
                 const next = { ...prev.present, ...patch(prev.present) };
 
@@ -173,46 +212,92 @@ export function useCardDesigner(initial: DesignerState) {
     );
 
     const setElements = useCallback(
-        (updater: (prev: CardElement[]) => CardElement[], options: { history?: boolean } = {}) => {
+        (
+            updater: (prev: CardElement[]) => CardElement[],
+            options: { history?: boolean } = {},
+        ) => {
             update((prev) => ({ elements: updater(prev.elements) }), options);
         },
         [update],
     );
 
     const updateElement = useCallback(
-        (id: string, patch: Partial<CardElement>, options: { history?: boolean } = {}) => {
-            setElements((prev) => prev.map((el) => (el.id === id ? { ...el, ...patch } : el)), options);
+        (
+            id: string,
+            patch: Partial<CardElement>,
+            options: { history?: boolean } = {},
+        ) => {
+            setElements(
+                (prev) =>
+                    prev.map((el) => (el.id === id ? { ...el, ...patch } : el)),
+                options,
+            );
         },
         [setElements],
     );
 
     const updateStyle = useCallback(
-        (id: string, patch: Partial<CardElementStyle>, options: { history?: boolean } = {}) => {
-            setElements((prev) => prev.map((el) => (el.id === id ? { ...el, style: { ...el.style, ...patch } } : el)), options);
+        (
+            id: string,
+            patch: Partial<CardElementStyle>,
+            options: { history?: boolean } = {},
+        ) => {
+            setElements(
+                (prev) =>
+                    prev.map((el) =>
+                        el.id === id
+                            ? { ...el, style: { ...el.style, ...patch } }
+                            : el,
+                    ),
+                options,
+            );
         },
         [setElements],
     );
 
     const setCanvas = useCallback(
         (patch: Partial<CardCanvas>, options: { history?: boolean } = {}) => {
-            update((prev) => ({ canvas: { ...prev.canvas, ...patch } }), options);
+            update(
+                (prev) => ({ canvas: { ...prev.canvas, ...patch } }),
+                options,
+            );
         },
         [update],
     );
 
-    const addElement = useCallback((kind: CardElementKind, overrides: Partial<CardElement> = {}) => {
-        const id = overrides.id ?? makeId();
+    const addElement = useCallback(
+        (kind: CardElementKind, overrides: Partial<CardElement> = {}) => {
+            const id = overrides.id ?? makeId();
 
-        setStore((prev) => {
-            const maxZ = prev.present.elements.reduce((max, el) => Math.max(max, el.zIndex), 0);
-            const sameKindCount = prev.present.elements.filter((el) => el.kind === kind).length;
-            const element = { ...newElement(kind, maxZ + 1, prev.present.canvas, sameKindCount), ...overrides, id };
+            setStore((prev) => {
+                const maxZ = prev.present.elements.reduce(
+                    (max, el) => Math.max(max, el.zIndex),
+                    0,
+                );
+                const sameKindCount = prev.present.elements.filter(
+                    (el) => el.kind === kind,
+                ).length;
+                const element = {
+                    ...newElement(
+                        kind,
+                        maxZ + 1,
+                        prev.present.canvas,
+                        sameKindCount,
+                    ),
+                    ...overrides,
+                    id,
+                };
 
-            return pushPast(prev, { ...prev.present, elements: [...prev.present.elements, element] });
-        });
+                return pushPast(prev, {
+                    ...prev.present,
+                    elements: [...prev.present.elements, element],
+                });
+            });
 
-        setSelectedIds([id]);
-    }, []);
+            setSelectedIds([id]);
+        },
+        [],
+    );
 
     const removeElements = useCallback(
         (ids: string[]) => {
@@ -234,13 +319,18 @@ export function useCardDesigner(initial: DesignerState) {
         const newIds = ids.map(() => makeId());
 
         setStore((prev) => {
-            const source = prev.present.elements.filter((el) => ids.includes(el.id));
+            const source = prev.present.elements.filter((el) =>
+                ids.includes(el.id),
+            );
 
             if (source.length === 0) {
                 return prev;
             }
 
-            let z = prev.present.elements.reduce((max, el) => Math.max(max, el.zIndex), 0);
+            let z = prev.present.elements.reduce(
+                (max, el) => Math.max(max, el.zIndex),
+                0,
+            );
 
             const copies = source.map((el, i) => ({
                 ...el,
@@ -250,7 +340,10 @@ export function useCardDesigner(initial: DesignerState) {
                 zIndex: ++z,
             }));
 
-            return pushPast(prev, { ...prev.present, elements: [...prev.present.elements, ...copies] });
+            return pushPast(prev, {
+                ...prev.present,
+                elements: [...prev.present.elements, ...copies],
+            });
         });
 
         setSelectedIds(newIds);
@@ -269,10 +362,13 @@ export function useCardDesigner(initial: DesignerState) {
 
                 const [moved] = sorted.splice(index, 1);
                 const target =
-                    direction === 'up' ? Math.min(sorted.length, index + 1)
-                    : direction === 'down' ? Math.max(0, index - 1)
-                    : direction === 'front' ? sorted.length
-                    : 0;
+                    direction === 'up'
+                        ? Math.min(sorted.length, index + 1)
+                        : direction === 'down'
+                          ? Math.max(0, index - 1)
+                          : direction === 'front'
+                            ? sorted.length
+                            : 0;
 
                 sorted.splice(target, 0, moved);
 
@@ -291,9 +387,18 @@ export function useCardDesigner(initial: DesignerState) {
     const reorderAll = useCallback(
         (orderedIdsTopFirst: string[]) => {
             setElements((prev) => {
-                const zByIndex = new Map(orderedIdsTopFirst.map((id, i) => [id, orderedIdsTopFirst.length - i]));
+                const zByIndex = new Map(
+                    orderedIdsTopFirst.map((id, i) => [
+                        id,
+                        orderedIdsTopFirst.length - i,
+                    ]),
+                );
 
-                return prev.map((el) => (zByIndex.has(el.id) ? { ...el, zIndex: zByIndex.get(el.id)! } : el));
+                return prev.map((el) =>
+                    zByIndex.has(el.id)
+                        ? { ...el, zIndex: zByIndex.get(el.id)! }
+                        : el,
+                );
             });
         },
         [setElements],

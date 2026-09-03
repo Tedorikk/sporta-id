@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\BasketballEventCategory;
 use App\Models\Event;
 use App\Models\Pool;

@@ -6,7 +6,11 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 import { PublicPageHeader } from '@/components/public/public-page-header';
-import { CONTACT_ADDRESS, CONTACT_EMAIL, CONTACT_PHONE } from '@/data/contact-info';
+import {
+    CONTACT_ADDRESS,
+    CONTACT_EMAIL,
+    CONTACT_PHONE,
+} from '@/data/contact-info';
 import PublicLayout from '@/layouts/public-layout';
 
 const contactSchema = z.object({
@@ -44,7 +48,8 @@ export default function Contact() {
         router.post('/contact', data, {
             onSuccess: () => {
                 toast.success('Message sent', {
-                    description: "Thanks for reaching out — we'll get back to you soon.",
+                    description:
+                        "Thanks for reaching out — we'll get back to you soon.",
                 });
                 reset();
             },
@@ -73,15 +78,18 @@ export default function Contact() {
 
                 <section className="mx-auto grid max-w-5xl grid-cols-1 gap-10 px-6 py-14 lg:grid-cols-2">
                     <div className="flex flex-col gap-4">
-                        <h2 className="text-xl font-black tracking-tight uppercase">Contact Info</h2>
+                        <h2 className="text-xl font-black tracking-tight uppercase">
+                            Contact Info
+                        </h2>
                         {CONTACT_INFO.map(({ icon: Icon, label }) => (
-                            <div key={label} className="flex items-center gap-3 text-white/80">
+                            <div
+                                key={label}
+                                className="flex items-center gap-3 text-white/80"
+                            >
                                 <div className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-red-500 bg-red-600/20">
                                     <Icon className="h-4 w-4 text-red-400" />
                                 </div>
-                                <p className="w-full">
-                                    {label}
-                                </p>
+                                <p className="w-full">{label}</p>
                             </div>
                         ))}
                     </div>
@@ -91,7 +99,10 @@ export default function Contact() {
                         className="flex flex-col gap-4 rounded-2xl border-2 border-white/15 bg-white/5 p-6"
                     >
                         <div className="flex flex-col gap-1.5">
-                            <label htmlFor="name" className="text-xs font-bold tracking-wide text-white/70 uppercase">
+                            <label
+                                htmlFor="name"
+                                className="text-xs font-bold tracking-wide text-white/70 uppercase"
+                            >
                                 Name
                             </label>
                             <input
@@ -101,11 +112,18 @@ export default function Contact() {
                                 placeholder="Your name"
                                 className="rounded-xl border-2 border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:border-red-500 focus:outline-none"
                             />
-                            {errors.name && <span className="text-xs text-red-400">{errors.name.message}</span>}
+                            {errors.name && (
+                                <span className="text-xs text-red-400">
+                                    {errors.name.message}
+                                </span>
+                            )}
                         </div>
 
                         <div className="flex flex-col gap-1.5">
-                            <label htmlFor="email" className="text-xs font-bold tracking-wide text-white/70 uppercase">
+                            <label
+                                htmlFor="email"
+                                className="text-xs font-bold tracking-wide text-white/70 uppercase"
+                            >
                                 Email
                             </label>
                             <input
@@ -116,12 +134,22 @@ export default function Contact() {
                                 placeholder="you@example.com"
                                 className="rounded-xl border-2 border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:border-red-500 focus:outline-none"
                             />
-                            {errors.email && <span className="text-xs text-red-400">{errors.email.message}</span>}
+                            {errors.email && (
+                                <span className="text-xs text-red-400">
+                                    {errors.email.message}
+                                </span>
+                            )}
                         </div>
 
                         <div className="flex flex-col gap-1.5">
-                            <label htmlFor="phone" className="text-xs font-bold tracking-wide text-white/70 uppercase">
-                                Phone <span className="font-normal text-white/40 normal-case">(Optional)</span>
+                            <label
+                                htmlFor="phone"
+                                className="text-xs font-bold tracking-wide text-white/70 uppercase"
+                            >
+                                Phone{' '}
+                                <span className="font-normal text-white/40 normal-case">
+                                    (Optional)
+                                </span>
                             </label>
                             <input
                                 id="phone"
@@ -133,7 +161,10 @@ export default function Contact() {
                         </div>
 
                         <div className="flex flex-col gap-1.5">
-                            <label htmlFor="message" className="text-xs font-bold tracking-wide text-white/70 uppercase">
+                            <label
+                                htmlFor="message"
+                                className="text-xs font-bold tracking-wide text-white/70 uppercase"
+                            >
                                 Message
                             </label>
                             <textarea
@@ -144,7 +175,11 @@ export default function Contact() {
                                 placeholder="How can we help?"
                                 className="rounded-xl border-2 border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:border-red-500 focus:outline-none"
                             />
-                            {errors.message && <span className="text-xs text-red-400">{errors.message.message}</span>}
+                            {errors.message && (
+                                <span className="text-xs text-red-400">
+                                    {errors.message.message}
+                                </span>
+                            )}
                         </div>
 
                         <button
@@ -152,7 +187,11 @@ export default function Contact() {
                             disabled={isSending}
                             className="mt-2 flex items-center justify-center gap-2 rounded-full bg-red-600 py-3 text-sm font-bold tracking-wide text-white uppercase transition hover:bg-red-700 disabled:opacity-60"
                         >
-                            {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                            {isSending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <Send className="h-4 w-4" />
+                            )}
                             {isSending ? 'Sending...' : 'Send Message'}
                         </button>
                     </form>

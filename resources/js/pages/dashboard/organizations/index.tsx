@@ -42,7 +42,7 @@ export default function OrganizationsIndex({ organizations }: Props) {
                     <h1 className="text-2xl font-bold tracking-tight">
                         Organizations
                     </h1>
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-sm text-muted-foreground">
                         Events belong to an organization. Switch between the
                         ones you are a member of, or create another.
                     </p>
@@ -99,11 +99,11 @@ export default function OrganizationsIndex({ organizations }: Props) {
 
             {organizations.length === 0 ? (
                 <div className="rounded-lg border border-dashed px-6 py-12 text-center">
-                    <Building2 className="text-muted-foreground mx-auto h-8 w-8" />
+                    <Building2 className="mx-auto h-8 w-8 text-muted-foreground" />
                     <p className="mt-3 text-sm font-medium">
                         You are not a member of any organization yet
                     </p>
-                    <p className="text-muted-foreground mt-1 text-sm">
+                    <p className="mt-1 text-sm text-muted-foreground">
                         Create one to start adding events.
                     </p>
                 </div>
@@ -115,7 +115,7 @@ export default function OrganizationsIndex({ organizations }: Props) {
                             className="flex items-center justify-between gap-4 px-4 py-3"
                         >
                             <div className="flex items-center gap-3">
-                                <div className="bg-muted flex size-9 items-center justify-center rounded-lg">
+                                <div className="flex size-9 items-center justify-center rounded-lg bg-muted">
                                     <Building2 className="size-4" />
                                 </div>
                                 <div>
@@ -128,7 +128,7 @@ export default function OrganizationsIndex({ organizations }: Props) {
                                             </Badge>
                                         )}
                                     </p>
-                                    <p className="text-muted-foreground text-xs">
+                                    <p className="text-xs text-muted-foreground">
                                         <span className="capitalize">
                                             {organization.role}
                                         </span>
@@ -142,9 +142,7 @@ export default function OrganizationsIndex({ organizations }: Props) {
 
                             <div className="flex items-center gap-2">
                                 <Button variant="outline" size="sm" asChild>
-                                    <Link
-                                        href={membersIndex(organization.id)}
-                                    >
+                                    <Link href={membersIndex(organization.id)}>
                                         <Users className="mr-2 size-4" />
                                         Members
                                     </Link>

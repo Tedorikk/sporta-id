@@ -43,11 +43,7 @@ export default function EditTeam({
                 </div>
             </section>
             <section id="form">
-                <TeamForm
-                    event={event}
-                    team={team}
-                    categories={categories}
-                />
+                <TeamForm event={event} team={team} categories={categories} />
             </section>
         </div>
     );

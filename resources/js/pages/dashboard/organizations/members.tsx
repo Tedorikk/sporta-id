@@ -65,7 +65,7 @@ export default function OrganizationMembers({
                     <h1 className="text-2xl font-bold tracking-tight">
                         Members
                     </h1>
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-sm text-muted-foreground">
                         {organization.name} · everyone here can see and work on
                         this organization's events.
                     </p>
@@ -107,8 +107,7 @@ export default function OrganizationMembers({
                                         {roles
                                             .filter(
                                                 (role) =>
-                                                    isOwner ||
-                                                    role !== 'owner',
+                                                    isOwner || role !== 'owner',
                                             )
                                             .map((role) => (
                                                 <SelectItem
@@ -154,7 +153,7 @@ export default function OrganizationMembers({
                                         <Badge variant="outline">You</Badge>
                                     )}
                                 </p>
-                                <p className="text-muted-foreground text-xs">
+                                <p className="text-xs text-muted-foreground">
                                     {member.email}
                                 </p>
                             </div>

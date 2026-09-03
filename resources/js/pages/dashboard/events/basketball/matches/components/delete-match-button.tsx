@@ -47,8 +47,11 @@ export function DeleteMatchButton({
             description={
                 <>
                     This will permanently delete{' '}
-                    <span className="font-semibold text-foreground">{matchLabel}</span>. This
-                    action cannot be undone. Type the matchup above to confirm.
+                    <span className="font-semibold text-foreground">
+                        {matchLabel}
+                    </span>
+                    . This action cannot be undone. Type the matchup above to
+                    confirm.
                 </>
             }
             onConfirm={handleDelete}

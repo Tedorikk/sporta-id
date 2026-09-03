@@ -35,15 +35,24 @@ interface Row {
 
 const THUMB_HEIGHT = 208;
 
-export default function CardTemplatesIndex({ event, templates, attendeeTypes, registrationCategories, defaultTemplates }: Props) {
+export default function CardTemplatesIndex({
+    event,
+    templates,
+    attendeeTypes,
+    registrationCategories,
+    defaultTemplates,
+}: Props) {
     const [qrDataUrl, setQrDataUrl] = useState('');
 
     useEffect(() => {
-        QRCode.toDataURL(`${window.location.origin}/attendees/preview/id-card`, {
-            width: 240,
-            margin: 1,
-            errorCorrectionLevel: 'H',
-        }).then(setQrDataUrl);
+        QRCode.toDataURL(
+            `${window.location.origin}/attendees/preview/id-card`,
+            {
+                width: 240,
+                margin: 1,
+                errorCorrectionLevel: 'H',
+            },
+        ).then(setQrDataUrl);
     }, []);
 
     const rows: Row[] = useMemo(
@@ -55,7 +64,11 @@ export default function CardTemplatesIndex({ event, templates, attendeeTypes, re
                 subjectType: 'attendee',
                 attendeeTypeId: null,
                 registrationCategoryId: null,
-                template: templates.find((t) => t.subject_type === 'attendee' && t.attendee_type_id === null),
+                template: templates.find(
+                    (t) =>
+                        t.subject_type === 'attendee' &&
+                        t.attendee_type_id === null,
+                ),
             },
             ...attendeeTypes.map((type) => ({
                 key: `attendee:${type.id}`,
@@ -64,7 +77,11 @@ export default function CardTemplatesIndex({ event, templates, attendeeTypes, re
                 subjectType: 'attendee' as const,
                 attendeeTypeId: type.id,
                 registrationCategoryId: null,
-                template: templates.find((t) => t.subject_type === 'attendee' && t.attendee_type_id === type.id),
+                template: templates.find(
+                    (t) =>
+                        t.subject_type === 'attendee' &&
+                        t.attendee_type_id === type.id,
+                ),
             })),
             {
                 key: 'player',
@@ -91,7 +108,11 @@ export default function CardTemplatesIndex({ event, templates, attendeeTypes, re
                 subjectType: 'registration',
                 attendeeTypeId: null,
                 registrationCategoryId: null,
-                template: templates.find((t) => t.subject_type === 'registration' && t.registration_category_id === null),
+                template: templates.find(
+                    (t) =>
+                        t.subject_type === 'registration' &&
+                        t.registration_category_id === null,
+                ),
             },
             ...registrationCategories.map((category) => ({
                 key: `registration:${category.id}`,
@@ -100,7 +121,11 @@ export default function CardTemplatesIndex({ event, templates, attendeeTypes, re
                 subjectType: 'registration' as const,
                 attendeeTypeId: null,
                 registrationCategoryId: category.id,
-                template: templates.find((t) => t.subject_type === 'registration' && t.registration_category_id === category.id),
+                template: templates.find(
+                    (t) =>
+                        t.subject_type === 'registration' &&
+                        t.registration_category_id === category.id,
+                ),
             })),
         ],
         [templates, attendeeTypes, registrationCategories],
@@ -126,7 +151,10 @@ export default function CardTemplatesIndex({ event, templates, attendeeTypes, re
     const customizedCount = templates.length;
 
     function handleDelete(templateId: number) {
-        router.delete(`/dashboard/events/${event.id}/id-card-templates/${templateId}`, { preserveScroll: true });
+        router.delete(
+            `/dashboard/events/${event.id}/id-card-templates/${templateId}`,
+            { preserveScroll: true },
+        );
     }
 
     function builderUrl(row: Row) {
@@ -137,7 +165,10 @@ export default function CardTemplatesIndex({ event, templates, attendeeTypes, re
         }
 
         if (row.registrationCategoryId) {
-            params.set('registration_category_id', String(row.registrationCategoryId));
+            params.set(
+                'registration_category_id',
+                String(row.registrationCategoryId),
+            );
         }
 
         return `/dashboard/events/${event.id}/id-card-templates/builder?${params}`;
@@ -149,15 +180,26 @@ export default function CardTemplatesIndex({ event, templates, attendeeTypes, re
 
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-4">
-                    <Button variant="outline" size="icon" className="h-10 w-10 shrink-0" asChild>
-                        <Link href={`/dashboard/events/${event.id}`} aria-label="Back to event">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-10 w-10 shrink-0"
+                        asChild
+                    >
+                        <Link
+                            href={`/dashboard/events/${event.id}`}
+                            aria-label="Back to event"
+                        >
                             <ChevronLeft className="h-5 w-5" />
                         </Link>
                     </Button>
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">ID Card Designer</h1>
+                        <h1 className="text-2xl font-bold tracking-tight">
+                            ID Card Designer
+                        </h1>
                         <p className="text-sm text-muted-foreground">
-                            {event.name} · {customizedCount} custom {customizedCount === 1 ? 'design' : 'designs'}
+                            {event.name} · {customizedCount} custom{' '}
+                            {customizedCount === 1 ? 'design' : 'designs'}
                         </p>
                     </div>
                 </div>
@@ -170,14 +212,18 @@ export default function CardTemplatesIndex({ event, templates, attendeeTypes, re
             </div>
 
             <p className="rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-                Each card type can have its own layout. Anything left on the default layout falls back to the built-in design, so
-                every badge still prints correctly.
+                Each card type can have its own layout. Anything left on the
+                default layout falls back to the built-in design, so every badge
+                still prints correctly.
             </p>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {rows.map((row) => {
-                    const design = row.template ?? defaultTemplates[row.subjectType];
-                    const scale = design ? Math.min(THUMB_HEIGHT / design.canvas.height, 1) : 1;
+                    const design =
+                        row.template ?? defaultTemplates[row.subjectType];
+                    const scale = design
+                        ? Math.min(THUMB_HEIGHT / design.canvas.height, 1)
+                        : 1;
 
                     return (
                         <div
@@ -197,32 +243,52 @@ export default function CardTemplatesIndex({ event, templates, attendeeTypes, re
                                         className="rounded shadow-lg ring-1 ring-black/10 transition-transform group-hover:scale-[1.03]"
                                     />
                                 ) : (
-                                    <span className="text-xs text-muted-foreground">No preview</span>
+                                    <span className="text-xs text-muted-foreground">
+                                        No preview
+                                    </span>
                                 )}
                             </Link>
 
                             <div className="flex flex-1 flex-col gap-3 border-t p-4">
                                 <div className="flex items-start justify-between gap-2">
                                     <div className="min-w-0">
-                                        <h2 className="truncate text-sm font-semibold">{row.label}</h2>
-                                        <p className="truncate text-xs text-muted-foreground">{row.caption}</p>
+                                        <h2 className="truncate text-sm font-semibold">
+                                            {row.label}
+                                        </h2>
+                                        <p className="truncate text-xs text-muted-foreground">
+                                            {row.caption}
+                                        </p>
                                     </div>
                                     {row.template ? (
-                                        <Badge variant="secondary" className="shrink-0 gap-1">
-                                            <Sparkles className="h-3 w-3" /> Custom
+                                        <Badge
+                                            variant="secondary"
+                                            className="shrink-0 gap-1"
+                                        >
+                                            <Sparkles className="h-3 w-3" />{' '}
+                                            Custom
                                         </Badge>
                                     ) : (
-                                        <Badge variant="outline" className="shrink-0">
+                                        <Badge
+                                            variant="outline"
+                                            className="shrink-0"
+                                        >
                                             Default
                                         </Badge>
                                     )}
                                 </div>
 
                                 <div className="mt-auto flex items-center gap-2">
-                                    <Button variant="outline" size="sm" className="flex-1" asChild>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="flex-1"
+                                        asChild
+                                    >
                                         <Link href={builderUrl(row)}>
                                             <PenSquare className="h-4 w-4" />
-                                            {row.template ? 'Edit design' : 'Start designing'}
+                                            {row.template
+                                                ? 'Edit design'
+                                                : 'Start designing'}
                                         </Link>
                                     </Button>
 
@@ -230,8 +296,14 @@ export default function CardTemplatesIndex({ event, templates, attendeeTypes, re
                                         <DeleteConfirmationDialog
                                             title="Delete template?"
                                             description="This card type will fall back to the default layout."
-                                            confirmationValue={row.template.name}
-                                            onConfirm={() => handleDelete(row.template!.id as number)}
+                                            confirmationValue={
+                                                row.template.name
+                                            }
+                                            onConfirm={() =>
+                                                handleDelete(
+                                                    row.template!.id as number,
+                                                )
+                                            }
                                             trigger={
                                                 <Button
                                                     variant="ghost"

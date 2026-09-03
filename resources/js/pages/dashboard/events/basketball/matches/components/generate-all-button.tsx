@@ -31,7 +31,11 @@ export function GenerateAllButton({
     if (!hasMatches) {
         return (
             <Button size="sm" onClick={handleGenerate} disabled={generating}>
-                {generating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                {generating ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                )}
                 Generate Schedule
             </Button>
         );
@@ -41,7 +45,11 @@ export function GenerateAllButton({
         <DeleteConfirmationDialog
             trigger={
                 <Button size="sm" variant="outline" disabled={generating}>
-                    {generating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                    {generating ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                    )}
                     Regenerate
                 </Button>
             }
@@ -50,9 +58,11 @@ export function GenerateAllButton({
             description={
                 <>
                     This deletes all existing matches in{' '}
-                    <span className="font-semibold text-foreground">{category.name}</span> and
-                    creates a new round-robin schedule. This action cannot be undone. Type the
-                    category name above to confirm.
+                    <span className="font-semibold text-foreground">
+                        {category.name}
+                    </span>{' '}
+                    and creates a new round-robin schedule. This action cannot
+                    be undone. Type the category name above to confirm.
                 </>
             }
             onConfirm={handleGenerate}

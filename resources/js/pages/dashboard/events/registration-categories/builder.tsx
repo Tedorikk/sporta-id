@@ -5,14 +5,26 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import type { Event } from '@/types/event';
-import type { FormBranding, FormSettings, RegistrationCategory, RegistrationFieldType, RegistrationSubjectType } from '@/types/registration-category';
-import { OPTION_FIELD_TYPES, REGISTRATION_FIELD_TYPES } from '@/types/registration-category';
+import type {
+    FormBranding,
+    FormSettings,
+    RegistrationCategory,
+    RegistrationFieldType,
+    RegistrationSubjectType,
+} from '@/types/registration-category';
+import {
+    OPTION_FIELD_TYPES,
+    REGISTRATION_FIELD_TYPES,
+} from '@/types/registration-category';
 import type { DraftField } from './components/builder/field-list';
 import { FieldList } from './components/builder/field-list';
 import { FieldPalette } from './components/builder/field-palette';
 import type { DraftPage } from './components/builder/page-tabs';
 import { PageTabs } from './components/builder/page-tabs';
-import { DUPLICATE_FIELD_RESERVED_OPTIONS, SettingsPanel } from './components/builder/settings-panel';
+import {
+    DUPLICATE_FIELD_RESERVED_OPTIONS,
+    SettingsPanel,
+} from './components/builder/settings-panel';
 import type { FormTemplate } from './components/builder/templates';
 import { FORM_TEMPLATES } from './components/builder/templates';
 
@@ -26,7 +38,11 @@ function uid() {
 }
 
 function slugify(label: string, existing: string[]): string {
-    const base = label.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'field';
+    const base =
+        label
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/^_+|_+$/g, '') || 'field';
     let key = base;
     let i = 2;
 
@@ -53,22 +69,39 @@ function toDraftPages(category: RegistrationCategory | null): DraftPage[] {
     }));
 }
 
-export default function RegistrationCategoryBuilder({ event, registrationCategory }: Props) {
+export default function RegistrationCategoryBuilder({
+    event,
+    registrationCategory,
+}: Props) {
     const isEditing = Boolean(registrationCategory);
 
-    const [pages, setPages] = useState<DraftPage[]>(() => toDraftPages(registrationCategory));
-    const [activeUid, setActiveUid] = useState<string>(() => pages[0]?._uid ?? '');
-    const [showTemplates, setShowTemplates] = useState(!isEditing && pages.length === 0);
+    const [pages, setPages] = useState<DraftPage[]>(() =>
+        toDraftPages(registrationCategory),
+    );
+    const [activeUid, setActiveUid] = useState<string>(
+        () => pages[0]?._uid ?? '',
+    );
+    const [showTemplates, setShowTemplates] = useState(
+        !isEditing && pages.length === 0,
+    );
 
     const [details, setDetails] = useState({
         name: registrationCategory?.name ?? '',
-        subject_type: (registrationCategory?.subject_type ?? 'team') as RegistrationSubjectType,
+        subject_type: (registrationCategory?.subject_type ??
+            'team') as RegistrationSubjectType,
         price: registrationCategory?.price ?? '',
-        quota: registrationCategory?.quota != null ? String(registrationCategory.quota) : '',
+        quota:
+            registrationCategory?.quota != null
+                ? String(registrationCategory.quota)
+                : '',
         registration_open: registrationCategory?.registration_open ?? true,
     });
-    const [branding, setBranding] = useState<FormBranding>(registrationCategory?.form_branding ?? {});
-    const [settings, setSettings] = useState<FormSettings>(registrationCategory?.form_settings ?? {});
+    const [branding, setBranding] = useState<FormBranding>(
+        registrationCategory?.form_branding ?? {},
+    );
+    const [settings, setSettings] = useState<FormSettings>(
+        registrationCategory?.form_settings ?? {},
+    );
     const [isSaving, setIsSaving] = useState(false);
 
     const activePage = pages.find((p) => p._uid === activeUid) ?? pages[0];
@@ -79,7 +112,10 @@ export default function RegistrationCategoryBuilder({ event, registrationCategor
             key: `page-${uid().slice(0, 8)}`,
             title: page.title,
             description: page.description,
-            fields: (page.fields ?? []).map((field) => ({ ...field, _uid: uid() })),
+            fields: (page.fields ?? []).map((field) => ({
+                ...field,
+                _uid: uid(),
+            })),
         }));
 
         setPages(draft);
@@ -96,7 +132,9 @@ export default function RegistrationCategoryBuilder({ event, registrationCategor
             return;
         }
 
-        const label = REGISTRATION_FIELD_TYPES.find((t) => t.value === type)?.label ?? type;
+        const label =
+            REGISTRATION_FIELD_TYPES.find((t) => t.value === type)?.label ??
+            type;
         const existingKeys = pages.flatMap((p) => p.fields.map((f) => f.key));
 
         const newField: DraftField = {
@@ -105,7 +143,9 @@ export default function RegistrationCategoryBuilder({ event, registrationCategor
             label,
             type,
             required: false,
-            options: OPTION_FIELD_TYPES.includes(type) ? ['Option 1', 'Option 2'] : undefined,
+            options: OPTION_FIELD_TYPES.includes(type)
+                ? ['Option 1', 'Option 2']
+                : undefined,
             max_rating: type === 'rating' ? 5 : undefined,
         };
 
@@ -113,7 +153,12 @@ export default function RegistrationCategoryBuilder({ event, registrationCategor
     }
 
     function addPage() {
-        const newPage: DraftPage = { _uid: uid(), key: `page-${uid().slice(0, 8)}`, title: `Page ${pages.length + 1}`, fields: [] };
+        const newPage: DraftPage = {
+            _uid: uid(),
+            key: `page-${uid().slice(0, 8)}`,
+            title: `Page ${pages.length + 1}`,
+            fields: [],
+        };
         setPages([...pages, newPage]);
         setActiveUid(newPage._uid);
     }
@@ -129,7 +174,9 @@ export default function RegistrationCategoryBuilder({ event, registrationCategor
         }
 
         if (new Set(keys).size !== keys.length) {
-            toast.error('Two fields are using the same key — field keys must be unique.');
+            toast.error(
+                'Two fields are using the same key — field keys must be unique.',
+            );
 
             return;
         }
@@ -168,19 +215,30 @@ export default function RegistrationCategoryBuilder({ event, registrationCategor
             preserveScroll: true,
             onStart: () => setIsSaving(true),
             onFinish: () => setIsSaving(false),
-            onError: () => toast.error("Couldn't save — check the form for errors."),
+            onError: () =>
+                toast.error("Couldn't save — check the form for errors."),
         };
 
         if (isEditing && registrationCategory) {
-            router.put(`/dashboard/events/${event.id}/registration-categories/${registrationCategory.id}`, payload, options);
+            router.put(
+                `/dashboard/events/${event.id}/registration-categories/${registrationCategory.id}`,
+                payload,
+                options,
+            );
         } else {
-            router.post(`/dashboard/events/${event.id}/registration-categories`, payload, options);
+            router.post(
+                `/dashboard/events/${event.id}/registration-categories`,
+                payload,
+                options,
+            );
         }
     }
 
     const fieldOptions = [
         ...DUPLICATE_FIELD_RESERVED_OPTIONS,
-        ...pages.flatMap((p) => p.fields.map((f) => ({ value: f.key, label: f.label || f.key }))),
+        ...pages.flatMap((p) =>
+            p.fields.map((f) => ({ value: f.key, label: f.label || f.key })),
+        ),
     ];
 
     if (showTemplates) {
@@ -189,14 +247,27 @@ export default function RegistrationCategoryBuilder({ event, registrationCategor
                 <Head title={`New Registration Category · ${event.name}`} />
 
                 <div className="flex items-center gap-4">
-                    <Button variant="outline" size="icon" className="h-10 w-10 shrink-0" asChild>
-                        <Link href={`/dashboard/events/${event.id}/registration-categories`} aria-label="Back to registration categories">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-10 w-10 shrink-0"
+                        asChild
+                    >
+                        <Link
+                            href={`/dashboard/events/${event.id}/registration-categories`}
+                            aria-label="Back to registration categories"
+                        >
                             <ChevronLeft className="h-5 w-5" />
                         </Link>
                     </Button>
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Choose a starting point</h1>
-                        <p className="text-sm text-muted-foreground">Pick a template to seed your form, or start from a blank page.</p>
+                        <h1 className="text-2xl font-bold tracking-tight">
+                            Choose a starting point
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            Pick a template to seed your form, or start from a
+                            blank page.
+                        </p>
                     </div>
                 </div>
 
@@ -208,8 +279,12 @@ export default function RegistrationCategoryBuilder({ event, registrationCategor
                             onClick={() => applyTemplate(template)}
                             className="rounded-lg border p-4 text-left hover:border-primary hover:bg-primary/5"
                         >
-                            <p className="text-sm font-semibold">{template.name}</p>
-                            <p className="mt-1 text-xs text-muted-foreground">{template.description}</p>
+                            <p className="text-sm font-semibold">
+                                {template.name}
+                            </p>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                                {template.description}
+                            </p>
                         </button>
                     ))}
                 </div>
@@ -219,21 +294,41 @@ export default function RegistrationCategoryBuilder({ event, registrationCategor
 
     return (
         <div className="mx-auto flex h-full w-full max-w-7xl flex-1 flex-col gap-4 px-4 py-6 md:px-8 md:py-8">
-            <Head title={`${isEditing ? 'Edit' : 'New'} Registration Category · ${event.name}`} />
+            <Head
+                title={`${isEditing ? 'Edit' : 'New'} Registration Category · ${event.name}`}
+            />
 
             <div className="flex items-center gap-4">
-                <Button variant="outline" size="icon" className="h-10 w-10 shrink-0" asChild>
-                    <Link href={`/dashboard/events/${event.id}/registration-categories`} aria-label="Back to registration categories">
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-10 w-10 shrink-0"
+                    asChild
+                >
+                    <Link
+                        href={`/dashboard/events/${event.id}/registration-categories`}
+                        aria-label="Back to registration categories"
+                    >
                         <ChevronLeft className="h-5 w-5" />
                     </Link>
                 </Button>
                 <div className="flex-1">
-                    <h1 className="text-2xl font-bold tracking-tight">{details.name || 'Untitled category'}</h1>
-                    <p className="text-sm text-muted-foreground">{event.name}</p>
+                    <h1 className="text-2xl font-bold tracking-tight">
+                        {details.name || 'Untitled category'}
+                    </h1>
+                    <p className="text-sm text-muted-foreground">
+                        {event.name}
+                    </p>
                 </div>
                 <Button onClick={handleSave} disabled={isSaving}>
-                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {isSaving ? 'Saving…' : isEditing ? 'Save changes' : 'Create category'}
+                    {isSaving && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    {isSaving
+                        ? 'Saving…'
+                        : isEditing
+                          ? 'Save changes'
+                          : 'Create category'}
                 </Button>
             </div>
 
@@ -243,26 +338,47 @@ export default function RegistrationCategoryBuilder({ event, registrationCategor
                 </div>
 
                 <div className="min-w-0 space-y-3 rounded-lg border p-3">
-                    <PageTabs pages={pages} activeUid={activeUid} onSelect={setActiveUid} onChange={setPages} onAdd={addPage} />
+                    <PageTabs
+                        pages={pages}
+                        activeUid={activeUid}
+                        onSelect={setActiveUid}
+                        onChange={setPages}
+                        onAdd={addPage}
+                    />
 
                     {activePage ? (
-                        <FieldList fields={activePage.fields} onChange={(fields) => updatePageFields(activePage._uid, fields)} />
+                        <FieldList
+                            fields={activePage.fields}
+                            onChange={(fields) =>
+                                updatePageFields(activePage._uid, fields)
+                            }
+                        />
                     ) : (
-                        <p className="rounded-md border border-dashed py-8 text-center text-sm text-muted-foreground">Add a page to get started.</p>
+                        <p className="rounded-md border border-dashed py-8 text-center text-sm text-muted-foreground">
+                            Add a page to get started.
+                        </p>
                     )}
                 </div>
 
                 <div className="rounded-lg border p-3 lg:h-fit">
                     <SettingsPanel
                         event={event}
-                        registrationCategoryId={registrationCategory?.id ?? null}
+                        registrationCategoryId={
+                            registrationCategory?.id ?? null
+                        }
                         isEditingSubjectType={isEditing}
                         details={details}
-                        onDetailsChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
+                        onDetailsChange={(patch) =>
+                            setDetails((d) => ({ ...d, ...patch }))
+                        }
                         branding={branding}
-                        onBrandingChange={(patch) => setBranding((b) => ({ ...b, ...patch }))}
+                        onBrandingChange={(patch) =>
+                            setBranding((b) => ({ ...b, ...patch }))
+                        }
                         settings={settings}
-                        onSettingsChange={(patch) => setSettings((s) => ({ ...s, ...patch }))}
+                        onSettingsChange={(patch) =>
+                            setSettings((s) => ({ ...s, ...patch }))
+                        }
                         fieldOptions={fieldOptions}
                     />
                 </div>

@@ -1,6 +1,16 @@
 // resources/js/pages/dashboard/events/teams/index.tsx
 import { Head, Link, router } from '@inertiajs/react';
-import { ChevronLeft, Plus, Pencil, Trash2, Search, Users, AlertCircle, ShieldAlert, Download } from 'lucide-react';
+import {
+    ChevronLeft,
+    Plus,
+    Pencil,
+    Trash2,
+    Search,
+    Users,
+    AlertCircle,
+    ShieldAlert,
+    Download,
+} from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { IssueSummaryBadge } from '@/components/review-issues';
@@ -32,7 +42,10 @@ interface Props {
     };
 }
 
-const STATUS_VARIANT: Record<TeamStatus, 'default' | 'secondary' | 'destructive'> = {
+const STATUS_VARIANT: Record<
+    TeamStatus,
+    'default' | 'secondary' | 'destructive'
+> = {
     verified: 'default',
     pending: 'secondary',
     rejected: 'destructive',
@@ -52,7 +65,12 @@ function EmptyState({ hasCategories }: { hasCategories: boolean }) {
     );
 }
 
-export default function TeamsIndex({ event, teams, categories, filters }: Props) {
+export default function TeamsIndex({
+    event,
+    teams,
+    categories,
+    filters,
+}: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
     const [reviewMode, setReviewMode] = useState(false);
     const [onlyIssues, setOnlyIssues] = useState(false);
@@ -61,8 +79,8 @@ export default function TeamsIndex({ event, teams, categories, filters }: Props)
     useEffect(() => {
         const timeout = setTimeout(() => {
             if (search === (filters.search ?? '')) {
-return;
-}
+                return;
+            }
 
             applyFilters({ search: search || undefined });
         }, 400);
@@ -99,8 +117,15 @@ return;
                     <AlertTitle>No Event Categories Found</AlertTitle>
                     <AlertDescription>
                         <span className="inline">
-                            You cannot add teams yet because this event has no categories. Please configure categories in the{' '}
-                            <Link href={`/dashboard/events/${event.id}`} className="inline underline font-semibold">event settings</Link> first.
+                            You cannot add teams yet because this event has no
+                            categories. Please configure categories in the{' '}
+                            <Link
+                                href={`/dashboard/events/${event.id}`}
+                                className="inline font-semibold underline"
+                            >
+                                event settings
+                            </Link>{' '}
+                            first.
                         </span>
                     </AlertDescription>
                 </Alert>
@@ -109,14 +134,23 @@ return;
             {/* Header */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-4">
-                    <Button variant="outline" size="icon" className="h-10 w-10 shrink-0" asChild>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-10 w-10 shrink-0"
+                        asChild
+                    >
                         <Link href={`/dashboard/events/${event.id}`}>
                             <ChevronLeft className="h-5 w-5" />
                         </Link>
                     </Button>
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Teams</h1>
-                        <p className="text-sm text-muted-foreground">{event.name}</p>
+                        <h1 className="text-2xl font-bold tracking-tight">
+                            Teams
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            {event.name}
+                        </p>
                     </div>
                 </div>
 
@@ -131,7 +165,9 @@ return;
 
                     {categories.length > 0 ? (
                         <Button asChild>
-                            <Link href={`/dashboard/events/${event.id}/teams/create`}>
+                            <Link
+                                href={`/dashboard/events/${event.id}/teams/create`}
+                            >
                                 <Plus className="mr-2 h-4 w-4" />
                                 Add Team
                             </Link>
@@ -161,7 +197,9 @@ return;
                         </span>
                     </div>
                     <Button variant="outline" size="sm" asChild>
-                        <a href={`/dashboard/events/${event.id}/teams/review-export`}>
+                        <a
+                            href={`/dashboard/events/${event.id}/teams/review-export`}
+                        >
                             <Download className="mr-2 h-4 w-4" />
                             Export All Issues (CSV)
                         </a>
@@ -193,7 +231,10 @@ return;
                     <SelectContent>
                         <SelectItem value="all">All categories</SelectItem>
                         {categories.map((category) => (
-                            <SelectItem key={category.id} value={String(category.id)}>
+                            <SelectItem
+                                key={category.id}
+                                value={String(category.id)}
+                            >
                                 {category.name}
                             </SelectItem>
                         ))}
@@ -225,9 +266,13 @@ return;
                         size="sm"
                         onClick={() => {
                             setSearch('');
-                            router.get(`/dashboard/events/${event.id}/teams`, {}, {
-                                preserveScroll: true,
-                            });
+                            router.get(
+                                `/dashboard/events/${event.id}/teams`,
+                                {},
+                                {
+                                    preserveScroll: true,
+                                },
+                            );
                         }}
                     >
                         Clear
@@ -244,75 +289,116 @@ return;
                         <thead className="border-b bg-muted/40 text-left text-muted-foreground">
                             <tr>
                                 <th className="px-4 py-3 font-medium">Team</th>
-                                <th className="px-4 py-3 font-medium">Category</th>
-                                <th className="px-4 py-3 font-medium">Status</th>
-                                {reviewMode && <th className="px-4 py-3 font-medium">Data Issues</th>}
-                                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                                <th className="px-4 py-3 font-medium">
+                                    Category
+                                </th>
+                                <th className="px-4 py-3 font-medium">
+                                    Status
+                                </th>
+                                {reviewMode && (
+                                    <th className="px-4 py-3 font-medium">
+                                        Data Issues
+                                    </th>
+                                )}
+                                <th className="px-4 py-3 text-right font-medium">
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y">
                             {teams.data
-                                .filter((team) => !(reviewMode && onlyIssues) || (team.review_summary?.total ?? 0) > 0)
+                                .filter(
+                                    (team) =>
+                                        !(reviewMode && onlyIssues) ||
+                                        (team.review_summary?.total ?? 0) > 0,
+                                )
                                 .map((team) => (
-                                <tr key={team.id} className="transition hover:bg-muted/30">
-                                    <td className="px-4 py-3">
-                                        <Link
-                                            href={`/dashboard/events/${event.id}/teams/${team.id}`}
-                                            className="font-medium hover:underline"
-                                        >
-                                            {team.name}
-                                        </Link>
-                                    </td>
-                                    <td className="px-4 py-3 text-muted-foreground">
-                                        {team.basketball_event_category?.name ?? (
-                                            <span className="italic">Unassigned</span>
-                                        )}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        <Badge variant={STATUS_VARIANT[team.status]}>
-                                            {team.status}
-                                        </Badge>
-                                    </td>
-                                    {reviewMode && (
+                                    <tr
+                                        key={team.id}
+                                        className="transition hover:bg-muted/30"
+                                    >
                                         <td className="px-4 py-3">
-                                            {team.review_summary && (
-                                                <IssueSummaryBadge summary={team.review_summary} />
+                                            <Link
+                                                href={`/dashboard/events/${event.id}/teams/${team.id}`}
+                                                className="font-medium hover:underline"
+                                            >
+                                                {team.name}
+                                            </Link>
+                                        </td>
+                                        <td className="px-4 py-3 text-muted-foreground">
+                                            {team.basketball_event_category
+                                                ?.name ?? (
+                                                <span className="italic">
+                                                    Unassigned
+                                                </span>
                                             )}
                                         </td>
-                                    )}
-                                    <td className="px-4 py-3">
-                                        <div className="flex justify-end gap-1">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                                                <Link href={`/dashboard/events/${event.id}/teams/${team.id}/edit`}>
-                                                    <Pencil className="h-4 w-4" />
-                                                </Link>
-                                            </Button>
-                                            <DeleteConfirmationDialog
-                                                trigger={
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-destructive"
+                                        <td className="px-4 py-3">
+                                            <Badge
+                                                variant={
+                                                    STATUS_VARIANT[team.status]
+                                                }
+                                            >
+                                                {team.status}
+                                            </Badge>
+                                        </td>
+                                        {reviewMode && (
+                                            <td className="px-4 py-3">
+                                                {team.review_summary && (
+                                                    <IssueSummaryBadge
+                                                        summary={
+                                                            team.review_summary
+                                                        }
+                                                    />
+                                                )}
+                                            </td>
+                                        )}
+                                        <td className="px-4 py-3">
+                                            <div className="flex justify-end gap-1">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8"
+                                                    asChild
+                                                >
+                                                    <Link
+                                                        href={`/dashboard/events/${event.id}/teams/${team.id}/edit`}
                                                     >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                }
-                                                confirmationValue={team.name}
-                                                description={
-                                                    <>
-                                                        This will permanently delete{' '}
-                                                        <span className="font-semibold text-foreground">
-                                                            {team.name}
-                                                        </span>
-                                                        . This action cannot be undone.
-                                                    </>
-                                                }
-                                                onConfirm={() => handleDelete(team)}
-                                            />
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Link>
+                                                </Button>
+                                                <DeleteConfirmationDialog
+                                                    trigger={
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-destructive"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    }
+                                                    confirmationValue={
+                                                        team.name
+                                                    }
+                                                    description={
+                                                        <>
+                                                            This will
+                                                            permanently delete{' '}
+                                                            <span className="font-semibold text-foreground">
+                                                                {team.name}
+                                                            </span>
+                                                            . This action cannot
+                                                            be undone.
+                                                        </>
+                                                    }
+                                                    onConfirm={() =>
+                                                        handleDelete(team)
+                                                    }
+                                                />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
                         </tbody>
                     </table>
                 </div>
@@ -331,7 +417,14 @@ return;
                                 variant={link.active ? 'default' : 'outline'}
                                 size="sm"
                                 disabled={!link.url}
-                                onClick={() => link.url && router.get(link.url, {}, { preserveScroll: true })}
+                                onClick={() =>
+                                    link.url &&
+                                    router.get(
+                                        link.url,
+                                        {},
+                                        { preserveScroll: true },
+                                    )
+                                }
                                 dangerouslySetInnerHTML={{ __html: link.label }}
                             />
                         ))}

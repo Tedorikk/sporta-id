@@ -16,7 +16,8 @@ export interface GradientValue {
     stops: GradientStop[];
 }
 
-export type ColorValue = { mode: 'solid'; color: string } | ({ mode: GradientType } & GradientValue);
+export type ColorValue =
+    { mode: 'solid'; color: string } | ({ mode: GradientType } & GradientValue);
 
 let stopSeq = 0;
 
@@ -26,7 +27,10 @@ function makeStopId(): string {
     return `stop_${stopSeq}_${Date.now().toString(36)}`;
 }
 
-export function defaultGradient(type: GradientType, baseColor: string): GradientValue {
+export function defaultGradient(
+    type: GradientType,
+    baseColor: string,
+): GradientValue {
     return {
         type,
         angle: 90,
@@ -65,16 +69,28 @@ function splitTopLevel(input: string): string[] {
     return parts;
 }
 
-function parseStopToken(token: string, index: number, total: number): GradientStop | null {
+function parseStopToken(
+    token: string,
+    index: number,
+    total: number,
+): GradientStop | null {
     const match = token.match(/^(.+?)\s+(-?\d+(?:\.\d+)?)%$/);
 
     if (match) {
-        return { id: makeStopId(), color: match[1].trim(), offset: clamp(Number(match[2]), 0, 100) };
+        return {
+            id: makeStopId(),
+            color: match[1].trim(),
+            offset: clamp(Number(match[2]), 0, 100),
+        };
     }
 
     // No explicit offset — spread evenly, matching CSS's own default behavior.
     if (token.trim()) {
-        return { id: makeStopId(), color: token.trim(), offset: total > 1 ? (index / (total - 1)) * 100 : 0 };
+        return {
+            id: makeStopId(),
+            color: token.trim(),
+            offset: total > 1 ? (index / (total - 1)) * 100 : 0,
+        };
     }
 
     return null;
@@ -104,7 +120,13 @@ export function parseGradient(input: string): GradientValue | null {
         } else if (/^to\s+/i.test(tokens[0] ?? '')) {
             // "to right" etc. — approximate with the closest cardinal angle.
             const dir = tokens[0].toLowerCase();
-            angle = dir.includes('right') ? 90 : dir.includes('left') ? 270 : dir.includes('top') ? 0 : 180;
+            angle = dir.includes('right')
+                ? 90
+                : dir.includes('left')
+                  ? 270
+                  : dir.includes('top')
+                    ? 0
+                    : 180;
             stopTokens = tokens.slice(1);
         }
     } else if (/^(circle|ellipse)/i.test(tokens[0] ?? '')) {
@@ -168,7 +190,10 @@ export function serializeGradient(gradient: GradientValue): string {
 }
 
 /** Parses any style `background` value into a discriminated color/gradient shape for the picker UI. */
-export function parseColorValue(input: string | undefined | null, fallback = '#000000'): ColorValue {
+export function parseColorValue(
+    input: string | undefined | null,
+    fallback = '#000000',
+): ColorValue {
     if (!input) {
         return { mode: 'solid', color: fallback };
     }

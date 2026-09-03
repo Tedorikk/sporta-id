@@ -42,14 +42,14 @@ export function OrganizationSwitcher() {
                             className="data-[state=open]:bg-sidebar-accent"
                             data-test="organization-switcher"
                         >
-                            <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                                 <Building2 className="size-4" />
                             </div>
                             <div className="grid flex-1 text-left text-sm leading-tight">
                                 <span className="truncate font-medium">
                                     {current?.name ?? 'No organization'}
                                 </span>
-                                <span className="text-muted-foreground truncate text-xs">
+                                <span className="truncate text-xs text-muted-foreground">
                                     {organizations.length === 1
                                         ? '1 organization'
                                         : `${organizations.length} organizations`}
@@ -70,7 +70,7 @@ export function OrganizationSwitcher() {
                                   : 'bottom'
                         }
                     >
-                        <DropdownMenuLabel className="text-muted-foreground text-xs">
+                        <DropdownMenuLabel className="text-xs text-muted-foreground">
                             Organizations
                         </DropdownMenuLabel>
 
@@ -94,7 +94,7 @@ export function OrganizationSwitcher() {
                                 <span className="truncate">
                                     {organization.name}
                                 </span>
-                                <span className="text-muted-foreground ml-auto text-xs capitalize">
+                                <span className="ml-auto text-xs text-muted-foreground capitalize">
                                     {organization.role}
                                 </span>
                                 {organization.id === current?.id && (

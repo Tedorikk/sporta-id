@@ -1,5 +1,12 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, CalendarDays, FolderGit2, LayoutGrid, Mail, QrCode } from 'lucide-react';
+import {
+    BookOpen,
+    CalendarDays,
+    FolderGit2,
+    LayoutGrid,
+    Mail,
+    QrCode,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';

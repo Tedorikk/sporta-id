@@ -7,13 +7,30 @@ export function FlagshipEventSection() {
         <section id="flagship-event" className="mx-auto max-w-6xl px-6 py-14">
             <div className="relative overflow-hidden rounded-3xl border-2 border-white/15 bg-gradient-to-br from-red-700 via-red-800 to-neutral-950 px-6 py-14 sm:px-12">
                 <div className="pointer-events-none absolute inset-0 opacity-10">
-                    <svg className="h-full w-full" xmlns="http://www.w3.org/2000/svg">
+                    <svg
+                        className="h-full w-full"
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
                         <defs>
-                            <pattern id="flagship-grid" width="28" height="28" patternUnits="userSpaceOnUse">
-                                <path d="M 28 0 L 0 0 0 28" fill="none" stroke="white" strokeWidth="0.5" />
+                            <pattern
+                                id="flagship-grid"
+                                width="28"
+                                height="28"
+                                patternUnits="userSpaceOnUse"
+                            >
+                                <path
+                                    d="M 28 0 L 0 0 0 28"
+                                    fill="none"
+                                    stroke="white"
+                                    strokeWidth="0.5"
+                                />
                             </pattern>
                         </defs>
-                        <rect width="100%" height="100%" fill="url(#flagship-grid)" />
+                        <rect
+                            width="100%"
+                            height="100%"
+                            fill="url(#flagship-grid)"
+                        />
                     </svg>
                 </div>
 
@@ -22,12 +39,17 @@ export function FlagshipEventSection() {
                         <Footprints className="h-5 w-5 text-white" />
                     </div>
                     <div>
-                        <span className="text-xs font-bold tracking-[0.3em] text-white/70 uppercase">Our Biggest Event</span>
-                        <h2 className="mt-2 text-4xl font-black tracking-tight uppercase sm:text-5xl">Pontianak City Run</h2>
+                        <span className="text-xs font-bold tracking-[0.3em] text-white/70 uppercase">
+                            Our Biggest Event
+                        </span>
+                        <h2 className="mt-2 text-4xl font-black tracking-tight uppercase sm:text-5xl">
+                            Pontianak City Run
+                        </h2>
                     </div>
                     <p className="max-w-xl text-white/80">
-                        The biggest running event in Pontianak and West Kalimantan, bringing together thousands of
-                        runners every year across four distance categories.
+                        The biggest running event in Pontianak and West
+                        Kalimantan, bringing together thousands of runners every
+                        year across four distance categories.
                     </p>
                     <div className="flex flex-wrap gap-3">
                         {DISTANCES.map((distance) => (

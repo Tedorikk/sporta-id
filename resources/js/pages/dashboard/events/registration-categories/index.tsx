@@ -13,9 +13,15 @@ interface Props {
     registrationCategories: RegistrationCategory[];
 }
 
-export default function RegistrationCategoriesIndex({ event, registrationCategories }: Props) {
+export default function RegistrationCategoriesIndex({
+    event,
+    registrationCategories,
+}: Props) {
     function handleDelete(id: number) {
-        router.delete(`/dashboard/events/${event.id}/registration-categories/${id}`, { preserveScroll: true });
+        router.delete(
+            `/dashboard/events/${event.id}/registration-categories/${id}`,
+            { preserveScroll: true },
+        );
     }
 
     function handleCopyLink(category: RegistrationCategory) {
@@ -30,21 +36,34 @@ export default function RegistrationCategoriesIndex({ event, registrationCategor
 
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-4">
-                    <Button variant="outline" size="icon" className="h-10 w-10 shrink-0" asChild>
-                        <Link href={`/dashboard/events/${event.id}`} aria-label="Back to event">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-10 w-10 shrink-0"
+                        asChild
+                    >
+                        <Link
+                            href={`/dashboard/events/${event.id}`}
+                            aria-label="Back to event"
+                        >
                             <ChevronLeft className="h-5 w-5" />
                         </Link>
                     </Button>
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Registration Categories</h1>
+                        <h1 className="text-2xl font-bold tracking-tight">
+                            Registration Categories
+                        </h1>
                         <p className="text-sm text-muted-foreground">
-                            {event.name} · Define who can register, what it costs, and the questions they answer.
+                            {event.name} · Define who can register, what it
+                            costs, and the questions they answer.
                         </p>
                     </div>
                 </div>
 
                 <Button asChild>
-                    <Link href={`/dashboard/events/${event.id}/registration-categories/builder`}>
+                    <Link
+                        href={`/dashboard/events/${event.id}/registration-categories/builder`}
+                    >
                         <Plus className="mr-2 h-4 w-4" />
                         Add Category
                     </Link>
@@ -54,27 +73,42 @@ export default function RegistrationCategoriesIndex({ event, registrationCategor
             <div className="divide-y rounded-lg border">
                 {registrationCategories.length === 0 && (
                     <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-                        No registration categories yet. Add one to start collecting registrations for this event.
+                        No registration categories yet. Add one to start
+                        collecting registrations for this event.
                     </p>
                 )}
 
                 {registrationCategories.map((category) => (
-                    <div key={category.id} className="flex items-center justify-between gap-4 px-4 py-3">
+                    <div
+                        key={category.id}
+                        className="flex items-center justify-between gap-4 px-4 py-3"
+                    >
                         <div>
                             <div className="flex items-center gap-2">
-                                <p className="text-sm font-medium">{category.name}</p>
+                                <p className="text-sm font-medium">
+                                    {category.name}
+                                </p>
                                 <Badge variant="outline" className="capitalize">
                                     {category.subject_type}
                                 </Badge>
-                                {!category.registration_open && <Badge variant="outline">Closed</Badge>}
+                                {!category.registration_open && (
+                                    <Badge variant="outline">Closed</Badge>
+                                )}
                             </div>
                             <p className="text-xs text-muted-foreground">
                                 {formatRupiah(category.price)}
                                 {' · '}
                                 {category.registered_count}
-                                {category.quota ? ` / ${category.quota}` : ''} registered
+                                {category.quota
+                                    ? ` / ${category.quota}`
+                                    : ''}{' '}
+                                registered
                                 {' · '}
-                                {(category.form_pages ?? []).reduce((count, page) => count + page.fields.length, 0)} custom field(s)
+                                {(category.form_pages ?? []).reduce(
+                                    (count, page) => count + page.fields.length,
+                                    0,
+                                )}{' '}
+                                custom field(s)
                             </p>
                         </div>
 
@@ -83,15 +117,23 @@ export default function RegistrationCategoriesIndex({ event, registrationCategor
                                 href={`/dashboard/events/${event.id}/registration-categories/${category.id}`}
                                 className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
                             >
-                                {category.registrations_count ?? 0} registration(s)
+                                {category.registrations_count ?? 0}{' '}
+                                registration(s)
                             </Link>
 
-                            <Button variant="ghost" size="icon" onClick={() => handleCopyLink(category)} aria-label="Copy registration link">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleCopyLink(category)}
+                                aria-label="Copy registration link"
+                            >
                                 <Link2 className="h-4 w-4" />
                             </Button>
 
                             <Button variant="ghost" size="icon" asChild>
-                                <Link href={`/dashboard/events/${event.id}/registration-categories/builder?registration_category_id=${category.id}`}>
+                                <Link
+                                    href={`/dashboard/events/${event.id}/registration-categories/builder?registration_category_id=${category.id}`}
+                                >
                                     <Pencil className="h-4 w-4" />
                                 </Link>
                             </Button>
@@ -106,7 +148,11 @@ export default function RegistrationCategoriesIndex({ event, registrationCategor
                                 confirmationValue={category.slug}
                                 onConfirm={() => handleDelete(category.id)}
                                 trigger={
-                                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="text-muted-foreground hover:text-destructive"
+                                    >
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
                                 }

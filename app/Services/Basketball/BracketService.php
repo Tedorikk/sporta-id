@@ -61,7 +61,9 @@ class BracketService
     public function advanceWinner(GameMatch $match): void
     {
         $winnerId = $match->winnerTeamId();
-        if (!$winnerId) return;
+        if (! $winnerId) {
+            return;
+        }
 
         GameMatch::where('home_source_match_id', $match->id)->update(['home_team_id' => $winnerId]);
         GameMatch::where('away_source_match_id', $match->id)->update(['away_team_id' => $winnerId]);

@@ -3,9 +3,15 @@ import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useEffect, useState } from 'react';
 import { clamp } from '@/components/id-card/color-math';
 
-function fractionsFromEvent(rect: DOMRect, clientX: number, clientY: number): [number, number] {
-    const fx = rect.width === 0 ? 0 : clamp((clientX - rect.left) / rect.width, 0, 1);
-    const fy = rect.height === 0 ? 0 : clamp((clientY - rect.top) / rect.height, 0, 1);
+function fractionsFromEvent(
+    rect: DOMRect,
+    clientX: number,
+    clientY: number,
+): [number, number] {
+    const fx =
+        rect.width === 0 ? 0 : clamp((clientX - rect.left) / rect.width, 0, 1);
+    const fy =
+        rect.height === 0 ? 0 : clamp((clientY - rect.top) / rect.height, 0, 1);
 
     return [fx, fy];
 }
@@ -19,7 +25,10 @@ function fractionsFromEvent(rect: DOMRect, clientX: number, clientY: number): [n
  * and keeps every callback reading current props (this project's lint config
  * forbids the alternative of mirroring props into a ref written at render time).
  */
-export function usePointerDrag(containerRef: RefObject<HTMLElement | null>, onDrag: (fx: number, fy: number) => void) {
+export function usePointerDrag(
+    containerRef: RefObject<HTMLElement | null>,
+    onDrag: (fx: number, fy: number) => void,
+) {
     const [active, setActive] = useState(false);
 
     useEffect(() => {

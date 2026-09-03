@@ -17,7 +17,14 @@ import type { BasketballEventCategory } from '@/types/basketball-event-category'
 import type { Event } from '@/types/event';
 import type { Pool } from '@/types/pool';
 import type { Team } from '@/types/team';
-import { MATCH_SERVER_FIELD_MAP, MatchFormFields, matchDefaultValues, matchSchema, toScheduledAt, type MatchFormValues } from './match-form';
+import {
+    MATCH_SERVER_FIELD_MAP,
+    MatchFormFields,
+    matchDefaultValues,
+    matchSchema,
+    toScheduledAt,
+} from './match-form';
+import type { MatchFormValues } from './match-form';
 
 export function CreateMatchDialog({
     event,
@@ -44,7 +51,9 @@ export function CreateMatchDialog({
         formState: { errors },
     } = useForm<MatchFormValues>({
         resolver: zodResolver(matchSchema),
-        defaultValues: matchDefaultValues(defaultPool ? { pool_id: String(defaultPool.id) } : undefined),
+        defaultValues: matchDefaultValues(
+            defaultPool ? { pool_id: String(defaultPool.id) } : undefined,
+        ),
         mode: 'onChange',
     });
 
@@ -54,7 +63,13 @@ export function CreateMatchDialog({
     // from a previous match never leaks into the next one.
     useEffect(() => {
         if (open) {
-            reset(matchDefaultValues(defaultPool ? { pool_id: String(defaultPool.id) } : undefined));
+            reset(
+                matchDefaultValues(
+                    defaultPool
+                        ? { pool_id: String(defaultPool.id) }
+                        : undefined,
+                ),
+            );
         }
     }, [open, defaultPool, reset]);
 
@@ -83,8 +98,12 @@ export function CreateMatchDialog({
                 onSuccess: () => setOpen(false),
                 onError: (serverErrors) => {
                     Object.entries(serverErrors).forEach(([field, message]) => {
-                        const formField = MATCH_SERVER_FIELD_MAP[field] ?? 'root';
-                        setError(formField, { type: 'server', message: String(message) });
+                        const formField =
+                            MATCH_SERVER_FIELD_MAP[field] ?? 'root';
+                        setError(formField, {
+                            type: 'server',
+                            message: String(message),
+                        });
                     });
                 },
                 onFinish: () => setSaving(false),
@@ -120,11 +139,18 @@ export function CreateMatchDialog({
                     </FieldGroup>
 
                     <DialogFooter className="mt-4">
-                        <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={saving}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setOpen(false)}
+                            disabled={saving}
+                        >
                             Cancel
                         </Button>
                         <Button type="submit" disabled={saving}>
-                            {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                            {saving && (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            )}
                             {saving ? 'Creating...' : 'Create'}
                         </Button>
                     </DialogFooter>

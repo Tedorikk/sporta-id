@@ -49,7 +49,10 @@ export default function ShowEvent({ event }: { event: Event }) {
         router.put(
             `/events/${event.id}/basketball`,
             { registration_open: checked },
-            { preserveScroll: true, onFinish: () => setIsTogglingRegistration(false) },
+            {
+                preserveScroll: true,
+                onFinish: () => setIsTogglingRegistration(false),
+            },
         );
     };
 
@@ -97,7 +100,9 @@ export default function ShowEvent({ event }: { event: Event }) {
                         </Link>
                     </Button>
                     <Button variant="outline" size="sm" asChild>
-                        <Link href={`/dashboard/events/${event.id}/registration-categories`}>
+                        <Link
+                            href={`/dashboard/events/${event.id}/registration-categories`}
+                        >
                             <ClipboardList className="mr-2 h-4 w-4" />
                             Registration Categories
                         </Link>
@@ -109,7 +114,9 @@ export default function ShowEvent({ event }: { event: Event }) {
                         </Link>
                     </Button>
                     <Button variant="outline" size="sm" asChild>
-                        <Link href={`/dashboard/events/${event.id}/id-card-templates`}>
+                        <Link
+                            href={`/dashboard/events/${event.id}/id-card-templates`}
+                        >
                             <Palette className="mr-2 h-4 w-4" />
                             Card Designer
                         </Link>
@@ -117,7 +124,9 @@ export default function ShowEvent({ event }: { event: Event }) {
                     {event.category === 'BASKETBALL' && (
                         <>
                             <Button variant="outline" size="sm" asChild>
-                                <Link href={`/dashboard/events/${event.id}/matches`}>
+                                <Link
+                                    href={`/dashboard/events/${event.id}/matches`}
+                                >
                                     <Swords className="mr-2 h-4 w-4" />
                                     All Matches
                                 </Link>
@@ -141,7 +150,8 @@ export default function ShowEvent({ event }: { event: Event }) {
                                     htmlFor="registration-toggle"
                                     className="cursor-pointer text-sm font-medium select-none"
                                 >
-                                    Registration {registrationOpen ? 'Open' : 'Closed'}
+                                    Registration{' '}
+                                    {registrationOpen ? 'Open' : 'Closed'}
                                 </label>
                             </div>
                         </>

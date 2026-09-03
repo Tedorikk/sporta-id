@@ -7,7 +7,10 @@ function playTone(frequencies: number[], noteDuration: number) {
         return;
     }
 
-    const AudioContextCtor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    const AudioContextCtor =
+        window.AudioContext ??
+        (window as unknown as { webkitAudioContext?: typeof AudioContext })
+            .webkitAudioContext;
 
     if (!AudioContextCtor) {
         return;

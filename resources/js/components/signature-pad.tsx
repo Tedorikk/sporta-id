@@ -21,7 +21,14 @@ export interface SignaturePadProps {
  * through the same endpoint photo/document fields already use, so the
  * result is just another URL stored in form_data.
  */
-export function SignaturePad({ value, onChange, onError, disabled, className, uploadUrl = '/public-upload/image' }: SignaturePadProps) {
+export function SignaturePad({
+    value,
+    onChange,
+    onError,
+    disabled,
+    className,
+    uploadUrl = '/public-upload/image',
+}: SignaturePadProps) {
     const canvasRef = React.useRef<HTMLCanvasElement>(null);
     const drawingRef = React.useRef(false);
     const hasStrokeRef = React.useRef(false);
@@ -113,7 +120,9 @@ export function SignaturePad({ value, onChange, onError, disabled, className, up
 
                 onChange?.(data.url);
             } catch (err) {
-                onError?.(`Couldn't save signature. Please try again. ${err instanceof Error ? err.message : String(err)}`);
+                onError?.(
+                    `Couldn't save signature. Please try again. ${err instanceof Error ? err.message : String(err)}`,
+                );
             } finally {
                 setIsUploading(false);
             }
@@ -137,7 +146,11 @@ export function SignaturePad({ value, onChange, onError, disabled, className, up
         <div className={cn('space-y-2', className)}>
             {value ? (
                 <div className="relative rounded-lg border-2 border-black bg-white p-2">
-                    <img src={value} alt="Signature" className="h-32 w-full object-contain" />
+                    <img
+                        src={value}
+                        alt="Signature"
+                        className="h-32 w-full object-contain"
+                    />
                     <Button
                         type="button"
                         variant="ghost"
@@ -165,7 +178,8 @@ export function SignaturePad({ value, onChange, onError, disabled, className, up
                     <div className="pointer-events-none absolute inset-x-0 bottom-2 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
                         {isUploading ? (
                             <>
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving…
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />{' '}
+                                Saving…
                             </>
                         ) : (
                             <>

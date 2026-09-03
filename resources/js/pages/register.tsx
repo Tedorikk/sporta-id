@@ -17,7 +17,11 @@ import {
     FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
 import {
     Select,
     SelectContent,
@@ -46,13 +50,19 @@ const roleValues = PLAYER_ROLES.map((r) => r.value) as [string, ...string[]];
 
 const registerSchema = z
     .object({
-        basketball_event_category_id: z.string().min(1, 'Please select a category'),
+        basketball_event_category_id: z
+            .string()
+            .min(1, 'Please select a category'),
         team_id: z.string().min(1, 'Please select a team'),
         photo: z.string().url('Must be a valid URL').or(z.literal('')),
         certificate: z.string().url('Must be a valid URL').or(z.literal('')),
         role: z.enum(roleValues, { message: 'Please select a role' }),
         name: z.string().min(1, 'Input your name').max(255),
-        jersey_number: z.string().max(3, 'Max 3 digits').regex(/^\d*$/, 'Must be a number').or(z.literal('')),
+        jersey_number: z
+            .string()
+            .max(3, 'Max 3 digits')
+            .regex(/^\d*$/, 'Must be a number')
+            .or(z.literal('')),
         position: z.string().max(255).or(z.literal('')),
         phone_number: z
             .string()
@@ -95,12 +105,19 @@ function formatE164Input(value: string) {
     return digits ? `+${digits}` : '';
 }
 
-export default function Register({ event, categories, registrationClosed }: Props) {
+export default function Register({
+    event,
+    categories,
+    registrationClosed,
+}: Props) {
     useForceLightMode();
 
     const [isSaving, setIsSaving] = useState(false);
     const { accent, accentDark } = accentColors(event.accent_color);
-    const accentStyle = { '--accent': accent, '--accent-dark': accentDark } as CSSProperties;
+    const accentStyle = {
+        '--accent': accent,
+        '--accent-dark': accentDark,
+    } as CSSProperties;
 
     const { control, handleSubmit, watch, resetField, setError } =
         useForm<RegisterFormValues>({
@@ -155,10 +172,13 @@ export default function Register({ event, categories, registrationClosed }: Prop
             <>
                 <Head title={`Registration Closed — ${event.name}`} />
 
-                <div className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10" style={accentStyle}>
+                <div
+                    className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10"
+                    style={accentStyle}
+                >
                     <div className="pointer-events-none absolute inset-0 overflow-hidden">
                         <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-[var(--accent)]/10 blur-3xl" />
-                        <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-[var(--accent-dark)]/20 blur-3xl" />
+                        <div className="absolute -right-40 -bottom-40 h-96 w-96 rounded-full bg-[var(--accent-dark)]/20 blur-3xl" />
                     </div>
 
                     <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
@@ -175,7 +195,9 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                 <Lock className="h-8 w-8 text-red-600" />
                             </div>
                             <p className="text-neutral-600">
-                                The organizer has closed player registration for this event. Please contact the organizer for more information.
+                                The organizer has closed player registration for
+                                this event. Please contact the organizer for
+                                more information.
                             </p>
                             {event.contact_person && (
                                 <p className="text-sm font-medium text-neutral-500">
@@ -193,10 +215,13 @@ export default function Register({ event, categories, registrationClosed }: Prop
         <>
             <Head title={`Team Registration — ${event.name}`} />
 
-            <div className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10" style={accentStyle}>
+            <div
+                className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10"
+                style={accentStyle}
+            >
                 <div className="pointer-events-none absolute inset-0 overflow-hidden">
                     <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-[var(--accent)]/10 blur-3xl" />
-                    <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-[var(--accent-dark)]/20 blur-3xl" />
+                    <div className="absolute -right-40 -bottom-40 h-96 w-96 rounded-full bg-[var(--accent-dark)]/20 blur-3xl" />
                 </div>
 
                 <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
@@ -208,13 +233,19 @@ export default function Register({ event, categories, registrationClosed }: Prop
                         accentColor={event.accent_color}
                     />
 
-                    <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-6">
+                    <form
+                        onSubmit={handleSubmit(onSubmit)}
+                        className="px-6 py-6"
+                    >
                         <FieldGroup>
                             <Controller
                                 name="photo"
                                 control={control}
                                 render={({ field, fieldState }) => (
-                                    <Field data-invalid={fieldState.invalid} className="mx-auto w-32">
+                                    <Field
+                                        data-invalid={fieldState.invalid}
+                                        className="mx-auto w-32"
+                                    >
                                         <FieldLabel htmlFor="photo">
                                             Photo
                                         </FieldLabel>
@@ -224,18 +255,26 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                             value={field.value}
                                             uploadUrl="/public-upload/image"
                                             deleteUrl="/public-upload/image"
-                                            onChange={(value) => field.onChange(value ?? '')}
+                                            onChange={(value) =>
+                                                field.onChange(value ?? '')
+                                            }
                                             onError={(error) =>
                                                 setError('photo', {
                                                     type: 'manual',
-                                                    message: typeof error === 'string' ? error : 'Upload failed',
+                                                    message:
+                                                        typeof error ===
+                                                        'string'
+                                                            ? error
+                                                            : 'Upload failed',
                                                 })
                                             }
                                             enableCrop
                                             className="rounded-2xl border-2 border-black"
                                         />
                                         {fieldState.invalid && (
-                                            <FieldError errors={[fieldState.error]} />
+                                            <FieldError
+                                                errors={[fieldState.error]}
+                                            />
                                         )}
                                     </Field>
                                 )}
@@ -259,7 +298,9 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                         >
                                             <SelectTrigger
                                                 id="basketball_event_category_id"
-                                                aria-invalid={fieldState.invalid}
+                                                aria-invalid={
+                                                    fieldState.invalid
+                                                }
                                                 className="w-full cursor-pointer border-2 border-black font-semibold focus-visible:ring-[var(--accent)]"
                                             >
                                                 <SelectValue placeholder="Select your category" />
@@ -268,7 +309,9 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                                 {categories.map((category) => (
                                                     <SelectItem
                                                         key={category.id}
-                                                        value={String(category.id)}
+                                                        value={String(
+                                                            category.id,
+                                                        )}
                                                         className="cursor-pointer"
                                                     >
                                                         {category.name}
@@ -277,7 +320,9 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                             </SelectContent>
                                         </Select>
                                         {fieldState.invalid && (
-                                            <FieldError errors={[fieldState.error]} />
+                                            <FieldError
+                                                errors={[fieldState.error]}
+                                            />
                                         )}
                                     </Field>
                                 )}
@@ -288,15 +333,21 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                 control={control}
                                 render={({ field, fieldState }) => (
                                     <Field data-invalid={fieldState.invalid}>
-                                        <FieldLabel htmlFor="team_id">Team</FieldLabel>
+                                        <FieldLabel htmlFor="team_id">
+                                            Team
+                                        </FieldLabel>
                                         <Select
                                             value={field.value}
                                             onValueChange={field.onChange}
-                                            disabled={isSaving || !selectedCategoryId}
+                                            disabled={
+                                                isSaving || !selectedCategoryId
+                                            }
                                         >
                                             <SelectTrigger
                                                 id="team_id"
-                                                aria-invalid={fieldState.invalid}
+                                                aria-invalid={
+                                                    fieldState.invalid
+                                                }
                                                 className="w-full cursor-pointer border-2 border-black font-semibold focus-visible:ring-[var(--accent)]"
                                             >
                                                 <SelectValue
@@ -308,24 +359,32 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                                 />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {teamsForCategory.map((team) => (
-                                                    <SelectItem
-                                                        key={team.id}
-                                                        value={String(team.id)}
-                                                        className="cursor-pointer"
-                                                    >
-                                                        {team.name}
-                                                    </SelectItem>
-                                                ))}
+                                                {teamsForCategory.map(
+                                                    (team) => (
+                                                        <SelectItem
+                                                            key={team.id}
+                                                            value={String(
+                                                                team.id,
+                                                            )}
+                                                            className="cursor-pointer"
+                                                        >
+                                                            {team.name}
+                                                        </SelectItem>
+                                                    ),
+                                                )}
                                             </SelectContent>
                                         </Select>
-                                        {selectedCategoryId && teamsForCategory.length === 0 && (
-                                            <FieldDescription>
-                                                No teams available in this category yet.
-                                            </FieldDescription>
-                                        )}
+                                        {selectedCategoryId &&
+                                            teamsForCategory.length === 0 && (
+                                                <FieldDescription>
+                                                    No teams available in this
+                                                    category yet.
+                                                </FieldDescription>
+                                            )}
                                         {fieldState.invalid && (
-                                            <FieldError errors={[fieldState.error]} />
+                                            <FieldError
+                                                errors={[fieldState.error]}
+                                            />
                                         )}
                                     </Field>
                                 )}
@@ -336,7 +395,9 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                 control={control}
                                 render={({ field, fieldState }) => (
                                     <Field data-invalid={fieldState.invalid}>
-                                        <FieldLabel htmlFor="role">Role</FieldLabel>
+                                        <FieldLabel htmlFor="role">
+                                            Role
+                                        </FieldLabel>
                                         <Select
                                             value={field.value}
                                             onValueChange={(value) => {
@@ -355,7 +416,9 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                         >
                                             <SelectTrigger
                                                 id="role"
-                                                aria-invalid={fieldState.invalid}
+                                                aria-invalid={
+                                                    fieldState.invalid
+                                                }
                                                 className="w-full cursor-pointer border-2 border-black font-semibold focus-visible:ring-[var(--accent)]"
                                             >
                                                 <SelectValue placeholder="Select your role" />
@@ -373,7 +436,9 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                             </SelectContent>
                                         </Select>
                                         {fieldState.invalid && (
-                                            <FieldError errors={[fieldState.error]} />
+                                            <FieldError
+                                                errors={[fieldState.error]}
+                                            />
                                         )}
                                     </Field>
                                 )}
@@ -384,7 +449,9 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                 control={control}
                                 render={({ field, fieldState }) => (
                                     <Field data-invalid={fieldState.invalid}>
-                                        <FieldLabel htmlFor="name">Full Name</FieldLabel>
+                                        <FieldLabel htmlFor="name">
+                                            Full Name
+                                        </FieldLabel>
                                         <Input
                                             {...field}
                                             id="name"
@@ -395,7 +462,9 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                             className="border-2 border-black focus-visible:ring-[var(--accent)]"
                                         />
                                         {fieldState.invalid && (
-                                            <FieldError errors={[fieldState.error]} />
+                                            <FieldError
+                                                errors={[fieldState.error]}
+                                            />
                                         )}
                                     </Field>
                                 )}
@@ -406,7 +475,9 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                     name="certificate"
                                     control={control}
                                     render={({ field, fieldState }) => (
-                                        <Field data-invalid={fieldState.invalid}>
+                                        <Field
+                                            data-invalid={fieldState.invalid}
+                                        >
                                             <FieldLabel htmlFor="certificate">
                                                 Medic Certificate
                                             </FieldLabel>
@@ -416,20 +487,30 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                                 value={field.value}
                                                 uploadUrl="/public-upload/image"
                                                 deleteUrl="/public-upload/image"
-                                                onChange={(value) => field.onChange(value ?? '')}
+                                                onChange={(value) =>
+                                                    field.onChange(value ?? '')
+                                                }
                                                 onError={(error) =>
                                                     setError('certificate', {
                                                         type: 'manual',
-                                                        message: typeof error === 'string' ? error : 'Upload failed',
+                                                        message:
+                                                            typeof error ===
+                                                            'string'
+                                                                ? error
+                                                                : 'Upload failed',
                                                     })
                                                 }
                                                 className="border-2 border-black"
                                             />
                                             <FieldDescription>
-                                                An admin will manually review this before your ID card can be scanned.
+                                                An admin will manually review
+                                                this before your ID card can be
+                                                scanned.
                                             </FieldDescription>
                                             {fieldState.invalid && (
-                                                <FieldError errors={[fieldState.error]} />
+                                                <FieldError
+                                                    errors={[fieldState.error]}
+                                                />
                                             )}
                                         </Field>
                                     )}
@@ -442,7 +523,11 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                         name="jersey_number"
                                         control={control}
                                         render={({ field, fieldState }) => (
-                                            <Field data-invalid={fieldState.invalid}>
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
                                                 <FieldLabel htmlFor="jersey_number">
                                                     Jersey Number
                                                 </FieldLabel>
@@ -451,18 +536,29 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                                     id="jersey_number"
                                                     placeholder="e.g. 23"
                                                     inputMode="numeric"
-                                                    aria-invalid={fieldState.invalid}
+                                                    aria-invalid={
+                                                        fieldState.invalid
+                                                    }
                                                     autoComplete="off"
                                                     disabled={isSaving}
                                                     className="border-2 border-black focus-visible:ring-[var(--accent)]"
                                                     onChange={(e) =>
                                                         field.onChange(
-                                                            e.target.value.replace(/\D/g, '').slice(0, 3),
+                                                            e.target.value
+                                                                .replace(
+                                                                    /\D/g,
+                                                                    '',
+                                                                )
+                                                                .slice(0, 3),
                                                         )
                                                     }
                                                 />
                                                 {fieldState.invalid && (
-                                                    <FieldError errors={[fieldState.error]} />
+                                                    <FieldError
+                                                        errors={[
+                                                            fieldState.error,
+                                                        ]}
+                                                    />
                                                 )}
                                             </Field>
                                         )}
@@ -472,7 +568,11 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                         name="position"
                                         control={control}
                                         render={({ field, fieldState }) => (
-                                            <Field data-invalid={fieldState.invalid}>
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
                                                 <FieldLabel htmlFor="position">
                                                     Position{' '}
                                                     <span className="font-normal text-muted-foreground">
@@ -483,13 +583,19 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                                     {...field}
                                                     id="position"
                                                     placeholder="e.g. Point Guard"
-                                                    aria-invalid={fieldState.invalid}
+                                                    aria-invalid={
+                                                        fieldState.invalid
+                                                    }
                                                     autoComplete="off"
                                                     disabled={isSaving}
                                                     className="border-2 border-black focus-visible:ring-[var(--accent)]"
                                                 />
                                                 {fieldState.invalid && (
-                                                    <FieldError errors={[fieldState.error]} />
+                                                    <FieldError
+                                                        errors={[
+                                                            fieldState.error,
+                                                        ]}
+                                                    />
                                                 )}
                                             </Field>
                                         )}
@@ -517,14 +623,21 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                             disabled={isSaving}
                                             className="border-2 border-black focus-visible:ring-[var(--accent)]"
                                             onChange={(e) =>
-                                                field.onChange(formatE164Input(e.target.value))
+                                                field.onChange(
+                                                    formatE164Input(
+                                                        e.target.value,
+                                                    ),
+                                                )
                                             }
                                         />
                                         <FieldDescription>
-                                            Phone number in E.164 format, e.g. +628123456789
+                                            Phone number in E.164 format, e.g.
+                                            +628123456789
                                         </FieldDescription>
                                         {fieldState.invalid && (
-                                            <FieldError errors={[fieldState.error]} />
+                                            <FieldError
+                                                errors={[fieldState.error]}
+                                            />
                                         )}
                                     </Field>
                                 )}
@@ -552,7 +665,9 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                             className="border-2 border-black focus-visible:ring-[var(--accent)]"
                                         />
                                         {fieldState.invalid && (
-                                            <FieldError errors={[fieldState.error]} />
+                                            <FieldError
+                                                errors={[fieldState.error]}
+                                            />
                                         )}
                                     </Field>
                                 )}
@@ -575,40 +690,64 @@ export default function Register({ event, categories, registrationClosed }: Prop
                                                     id="dob"
                                                     type="button"
                                                     variant="outline"
-                                                    aria-invalid={fieldState.invalid}
+                                                    aria-invalid={
+                                                        fieldState.invalid
+                                                    }
                                                     disabled={isSaving}
                                                     className={cn(
                                                         'w-full cursor-pointer justify-start border-2 border-black text-left font-normal',
-                                                        !field.value && 'text-muted-foreground',
+                                                        !field.value &&
+                                                            'text-muted-foreground',
                                                     )}
                                                 >
                                                     <CalendarIcon className="mr-2 h-4 w-4" />
                                                     {field.value ? (
-                                                        format(new Date(field.value), 'PPP')
+                                                        format(
+                                                            new Date(
+                                                                field.value,
+                                                            ),
+                                                            'PPP',
+                                                        )
                                                     ) : (
                                                         <span>Pick a date</span>
                                                     )}
                                                 </Button>
                                             </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0" align="start">
+                                            <PopoverContent
+                                                className="w-auto p-0"
+                                                align="start"
+                                            >
                                                 <Calendar
                                                     mode="single"
                                                     selected={
-                                                        field.value ? new Date(field.value) : undefined
+                                                        field.value
+                                                            ? new Date(
+                                                                  field.value,
+                                                              )
+                                                            : undefined
                                                     }
                                                     onSelect={(date) =>
                                                         field.onChange(
-                                                            date ? format(date, 'yyyy-MM-dd') : '',
+                                                            date
+                                                                ? format(
+                                                                      date,
+                                                                      'yyyy-MM-dd',
+                                                                  )
+                                                                : '',
                                                         )
                                                     }
-                                                    disabled={(date) => date > new Date()}
+                                                    disabled={(date) =>
+                                                        date > new Date()
+                                                    }
                                                     autoFocus
                                                     captionLayout="dropdown"
                                                 />
                                             </PopoverContent>
                                         </Popover>
                                         {fieldState.invalid && (
-                                            <FieldError errors={[fieldState.error]} />
+                                            <FieldError
+                                                errors={[fieldState.error]}
+                                            />
                                         )}
                                     </Field>
                                 )}

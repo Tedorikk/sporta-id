@@ -26,9 +26,25 @@ export const FORM_TEMPLATES: FormTemplate[] = [
             {
                 title: 'Details',
                 fields: [
-                    { key: 'shirt_size', label: 'Shirt Size', type: 'select', required: true, options: ['S', 'M', 'L', 'XL'] },
-                    { key: 'dietary_needs', label: 'Dietary Restrictions', type: 'text', required: false },
-                    { key: 'emergency_contact', label: 'Emergency Contact Number', type: 'phone', required: true },
+                    {
+                        key: 'shirt_size',
+                        label: 'Shirt Size',
+                        type: 'select',
+                        required: true,
+                        options: ['S', 'M', 'L', 'XL'],
+                    },
+                    {
+                        key: 'dietary_needs',
+                        label: 'Dietary Restrictions',
+                        type: 'text',
+                        required: false,
+                    },
+                    {
+                        key: 'emergency_contact',
+                        label: 'Emergency Contact Number',
+                        type: 'phone',
+                        required: true,
+                    },
                 ],
             },
         ],
@@ -40,13 +56,32 @@ export const FORM_TEMPLATES: FormTemplate[] = [
         pages: [
             {
                 title: 'About you',
-                fields: [{ key: 'role', label: 'What best describes you?', type: 'radio', required: true, options: ['Participant', 'Volunteer', 'Spectator'] }],
+                fields: [
+                    {
+                        key: 'role',
+                        label: 'What best describes you?',
+                        type: 'radio',
+                        required: true,
+                        options: ['Participant', 'Volunteer', 'Spectator'],
+                    },
+                ],
             },
             {
                 title: 'Your feedback',
                 fields: [
-                    { key: 'satisfaction', label: 'How satisfied are you overall?', type: 'rating', required: true, max_rating: 5 },
-                    { key: 'comments', label: 'Anything else you would like to share?', type: 'textarea', required: false },
+                    {
+                        key: 'satisfaction',
+                        label: 'How satisfied are you overall?',
+                        type: 'rating',
+                        required: true,
+                        max_rating: 5,
+                    },
+                    {
+                        key: 'comments',
+                        label: 'Anything else you would like to share?',
+                        type: 'textarea',
+                        required: false,
+                    },
                 ],
             },
         ],
@@ -59,8 +94,19 @@ export const FORM_TEMPLATES: FormTemplate[] = [
             {
                 title: 'Feedback',
                 fields: [
-                    { key: 'rating', label: 'Rate your experience', type: 'rating', required: true, max_rating: 5 },
-                    { key: 'feedback', label: 'Tell us more', type: 'textarea', required: false },
+                    {
+                        key: 'rating',
+                        label: 'Rate your experience',
+                        type: 'rating',
+                        required: true,
+                        max_rating: 5,
+                    },
+                    {
+                        key: 'feedback',
+                        label: 'Tell us more',
+                        type: 'textarea',
+                        required: false,
+                    },
                 ],
             },
         ],
@@ -68,19 +114,41 @@ export const FORM_TEMPLATES: FormTemplate[] = [
     {
         key: 'application',
         name: 'Application',
-        description: 'Multi-step application with a document upload and signature.',
+        description:
+            'Multi-step application with a document upload and signature.',
         pages: [
             {
                 title: 'Applicant Info',
-                fields: [{ key: 'motivation', label: 'Why do you want to join?', type: 'textarea', required: true }],
+                fields: [
+                    {
+                        key: 'motivation',
+                        label: 'Why do you want to join?',
+                        type: 'textarea',
+                        required: true,
+                    },
+                ],
             },
             {
                 title: 'Documents',
-                fields: [{ key: 'id_proof', label: 'ID Document', type: 'document', required: true }],
+                fields: [
+                    {
+                        key: 'id_proof',
+                        label: 'ID Document',
+                        type: 'document',
+                        required: true,
+                    },
+                ],
             },
             {
                 title: 'Confirmation',
-                fields: [{ key: 'signature', label: 'Signature', type: 'signature', required: true }],
+                fields: [
+                    {
+                        key: 'signature',
+                        label: 'Signature',
+                        type: 'signature',
+                        required: true,
+                    },
+                ],
             },
         ],
     },

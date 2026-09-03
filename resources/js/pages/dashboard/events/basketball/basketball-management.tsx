@@ -37,7 +37,9 @@ import { PoolFormDialog } from './teams/components/pool-form-dialog';
 // below assumes it exists. Until then this field is optional-chained so
 // the file still compiles, but category-scoped filtering won't do
 // anything useful until the type (and the backend relation) is real.
-type CategoryScopedTeam = Team & { basketball_event_category_id?: number | null };
+type CategoryScopedTeam = Team & {
+    basketball_event_category_id?: number | null;
+};
 
 function EmptyState({
     icon,
@@ -80,8 +82,8 @@ function PoolCard({
 
     const handleAssign = () => {
         if (!selectedTeamId) {
-return;
-}
+            return;
+        }
 
         router.post(
             `/dashboard/events/${event.id}/basketball-categories/${pool.basketball_event_category_id}/pools/${pool.id}/teams`,
@@ -351,7 +353,7 @@ export function BasketballManagement({
             `/dashboard/events/${event.id}/basketball-categories/${pool.basketball_event_category_id}/pools/${pool.id}`,
             {
                 preserveScroll: true,
-            }
+            },
         );
     };
 
@@ -446,7 +448,8 @@ export function BasketballManagement({
                                                 </span>
                                                 <div className="flex items-center gap-2">
                                                     <Badge variant="outline">
-                                                        {category.format === 'round_robin'
+                                                        {category.format ===
+                                                        'round_robin'
                                                             ? 'Round Robin'
                                                             : 'Pool Stage'}
                                                     </Badge>
@@ -485,20 +488,25 @@ export function BasketballManagement({
                                                         className="h-7 px-2 text-xs"
                                                         asChild
                                                     >
-                                                        <Link href={`/dashboard/events/${event.id}/basketball-categories/${category.id}/matches`}>
-                                                            <Swords className="h-3.5 w-3.5 mr-1" />
+                                                        <Link
+                                                            href={`/dashboard/events/${event.id}/basketball-categories/${category.id}/matches`}
+                                                        >
+                                                            <Swords className="mr-1 h-3.5 w-3.5" />
                                                             Matches
                                                         </Link>
                                                     </Button>
-                                                    {category.format !== 'round_robin' && (
+                                                    {category.format !==
+                                                        'round_robin' && (
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
                                                             className="h-7 px-2 text-xs"
                                                             asChild
                                                         >
-                                                            <Link href={`/dashboard/events/${event.id}/basketball-categories/${category.id}/bracket`}>
-                                                                <LayoutGrid className="h-3.5 w-3.5 mr-1" />
+                                                            <Link
+                                                                href={`/dashboard/events/${event.id}/basketball-categories/${category.id}/bracket`}
+                                                            >
+                                                                <LayoutGrid className="mr-1 h-3.5 w-3.5" />
                                                                 Bracket
                                                             </Link>
                                                         </Button>
@@ -534,10 +542,12 @@ export function BasketballManagement({
                                                         description={
                                                             <>
                                                                 This will
-                                                                permanently delete
-                                                                the{' '}
+                                                                permanently
+                                                                delete the{' '}
                                                                 <span className="font-semibold">
-                                                                    {category.name}
+                                                                    {
+                                                                        category.name
+                                                                    }
                                                                 </span>{' '}
                                                                 category.
                                                             </>
@@ -551,15 +561,12 @@ export function BasketballManagement({
                                                 </div>
                                             </div>
 
-
                                             <CategoryPools
                                                 event={event}
                                                 category={category}
                                                 pools={categoryPools}
                                                 teams={teams}
-                                                onDeletePool={
-                                                    handleDeletePool
-                                                }
+                                                onDeletePool={handleDeletePool}
                                                 onRemoveCategoryPools={
                                                     handleRemoveCategoryPools
                                                 }

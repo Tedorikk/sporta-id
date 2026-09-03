@@ -25,10 +25,15 @@ export function IdToolsSection() {
             <div className="mx-auto max-w-6xl px-6 py-14">
                 <div className="mb-8 flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <span className="text-xs font-bold tracking-[0.3em] text-blue-400 uppercase">Sporta ID</span>
-                        <h2 className="text-3xl font-black tracking-tight uppercase">Already Registered?</h2>
+                        <span className="text-xs font-bold tracking-[0.3em] text-blue-400 uppercase">
+                            Sporta ID
+                        </span>
+                        <h2 className="text-3xl font-black tracking-tight uppercase">
+                            Already Registered?
+                        </h2>
                         <p className="mt-2 max-w-lg text-sm text-white/60">
-                            Manage your digital player ID card — find it again anytime, no app required.
+                            Manage your digital player ID card — find it again
+                            anytime, no app required.
                         </p>
                     </div>
                     <Link
@@ -42,11 +47,16 @@ export function IdToolsSection() {
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     {FEATURES.map(({ icon: Icon, title, desc }) => (
-                        <div key={title} className="flex flex-col gap-3 rounded-2xl border-2 border-white/15 bg-black/20 p-6">
+                        <div
+                            key={title}
+                            className="flex flex-col gap-3 rounded-2xl border-2 border-white/15 bg-black/20 p-6"
+                        >
                             <div className="flex h-11 w-11 items-center justify-center rounded-xl border-2 border-red-500 bg-red-600/20">
                                 <Icon className="h-5 w-5 text-red-400" />
                             </div>
-                            <h3 className="text-base font-bold tracking-tight uppercase">{title}</h3>
+                            <h3 className="text-base font-bold tracking-tight uppercase">
+                                {title}
+                            </h3>
                             <p className="text-sm text-white/60">{desc}</p>
                         </div>
                     ))}

@@ -19,22 +19,39 @@ const STATUS_STYLE = {
  * team-id-card.tsx so it can be reused inline (e.g. shown immediately after
  * a team registers) as well as on its own standalone page.
  */
-export function TeamIdCardCard({ team, qrDataUrl, cardRef }: TeamIdCardCardProps) {
+export function TeamIdCardCard({
+    team,
+    qrDataUrl,
+    cardRef,
+}: TeamIdCardCardProps) {
     const status = STATUS_STYLE[team.status];
 
     return (
         <div
             id="team-id-card"
             ref={cardRef}
-            className="relative z-10 w-full max-w-sm overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl print:shadow-none print:rounded-none print:border-0"
+            className="relative z-10 w-full max-w-sm overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl print:rounded-none print:border-0 print:shadow-none"
         >
             {/* Top gradient strip */}
             <div className="relative h-36 overflow-hidden bg-gradient-to-br from-red-600 via-red-700 to-rose-950 print:bg-red-700">
                 {/* Pattern overlay */}
-                <svg className="absolute inset-0 h-full w-full opacity-10" xmlns="http://www.w3.org/2000/svg">
+                <svg
+                    className="absolute inset-0 h-full w-full opacity-10"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
                     <defs>
-                        <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
-                            <path d="M 24 0 L 0 0 0 24" fill="none" stroke="white" strokeWidth="0.5" />
+                        <pattern
+                            id="grid"
+                            width="24"
+                            height="24"
+                            patternUnits="userSpaceOnUse"
+                        >
+                            <path
+                                d="M 24 0 L 0 0 0 24"
+                                fill="none"
+                                stroke="white"
+                                strokeWidth="0.5"
+                            />
                         </pattern>
                     </defs>
                     <rect width="100%" height="100%" fill="url(#grid)" />
@@ -45,12 +62,14 @@ export function TeamIdCardCard({ team, qrDataUrl, cardRef }: TeamIdCardCardProps
                     <div className="flex h-7 w-7 items-center justify-center rounded-md bg-white/20">
                         <AppLogoIcon className="h-4 w-4 fill-current text-white" />
                     </div>
-                    <span className="text-sm font-bold tracking-wide text-white/90">Sporta ID</span>
+                    <span className="text-sm font-bold tracking-wide text-white/90">
+                        Sporta ID
+                    </span>
                 </div>
 
                 {/* Official ID badge */}
                 <div className="absolute top-4 right-5">
-                    <span className="rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-white/80">
+                    <span className="rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-semibold tracking-widest text-white/80 uppercase">
                         Official ID
                     </span>
                 </div>
@@ -75,9 +94,15 @@ export function TeamIdCardCard({ team, qrDataUrl, cardRef }: TeamIdCardCardProps
             <div className="flex flex-col items-center gap-5 px-6 pt-12 pb-6">
                 {/* Team name & status */}
                 <div className="flex flex-col items-center gap-2 text-center">
-                    <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">{team.name}</h1>
+                    <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
+                        {team.name}
+                    </h1>
                     <div className="flex flex-wrap items-center justify-center gap-2">
-                        <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${status.bg} ${status.text}`}>{status.label}</span>
+                        <span
+                            className={`rounded-full px-3 py-0.5 text-xs font-semibold ${status.bg} ${status.text}`}
+                        >
+                            {status.label}
+                        </span>
                         {team.basketball_event_category && (
                             <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-0.5 text-xs font-medium text-slate-600">
                                 {team.basketball_event_category.name}
@@ -93,25 +118,39 @@ export function TeamIdCardCard({ team, qrDataUrl, cardRef }: TeamIdCardCardProps
                 <div className="flex flex-col items-center gap-2">
                     {qrDataUrl ? (
                         <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-inner">
-                            <img src={qrDataUrl} alt="Team QR Code" className="h-44 w-44" />
+                            <img
+                                src={qrDataUrl}
+                                alt="Team QR Code"
+                                className="h-44 w-44"
+                            />
                         </div>
                     ) : (
                         <div className="flex h-52 w-52 items-center justify-center rounded-2xl bg-slate-50">
                             <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-red-600" />
                         </div>
                     )}
-                    <p className="text-center text-[10px] text-slate-400">Scan to verify this team's identity</p>
+                    <p className="text-center text-[10px] text-slate-400">
+                        Scan to verify this team's identity
+                    </p>
                 </div>
 
                 {/* Team ID */}
                 <div className="flex flex-col items-center gap-0.5">
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Team ID</span>
-                    <span className="font-mono text-sm font-bold text-slate-700">#{String(team.id).padStart(6, '0')}</span>
+                    <span className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
+                        Team ID
+                    </span>
+                    <span className="font-mono text-sm font-bold text-slate-700">
+                        #{String(team.id).padStart(6, '0')}
+                    </span>
                 </div>
 
                 {/* Footer */}
                 <div className="w-full border-t border-slate-100 pt-3 text-center text-[10px] text-slate-400">
-                    Generated by <span className="font-semibold text-red-600">Sporta ID</span> · {new Date().getFullYear()}
+                    Generated by{' '}
+                    <span className="font-semibold text-red-600">
+                        Sporta ID
+                    </span>{' '}
+                    · {new Date().getFullYear()}
                 </div>
             </div>
         </div>

@@ -1,13 +1,30 @@
 import { format } from 'date-fns';
 import { CalendarIcon, Clock } from 'lucide-react';
-import { Controller, useWatch, type Control } from 'react-hook-form';
+import { Controller, useWatch } from 'react-hook-form';
+import type { Control } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
+import {
+    Field,
+    FieldDescription,
+    FieldError,
+    FieldGroup,
+    FieldLabel,
+} from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import type { Pool } from '@/types/pool';
 import type { Team } from '@/types/team';
@@ -27,16 +44,22 @@ export const matchFieldsSchema = z.object({
     time: z.string(),
 });
 
-export const matchSchema = matchFieldsSchema.refine((data) => data.home_team_id !== data.away_team_id, {
-    message: 'Home and away teams must be different',
-    path: ['away_team_id'],
-});
+export const matchSchema = matchFieldsSchema.refine(
+    (data) => data.home_team_id !== data.away_team_id,
+    {
+        message: 'Home and away teams must be different',
+        path: ['away_team_id'],
+    },
+);
 
 export type MatchFormValues = z.infer<typeof matchSchema>;
 
 // Server field names -> form field names, so validation errors coming back
 // from Laravel land on the right input instead of disappearing silently.
-export const MATCH_SERVER_FIELD_MAP: Record<string, keyof MatchFormValues | 'root'> = {
+export const MATCH_SERVER_FIELD_MAP: Record<
+    string,
+    keyof MatchFormValues | 'root'
+> = {
     pool_id: 'pool_id',
     home_team_id: 'home_team_id',
     away_team_id: 'away_team_id',
@@ -58,7 +81,9 @@ export function toScheduledAt(date: string, time: string): string | null {
     return new Date(`${date}T${time}:00`).toISOString();
 }
 
-export function matchDefaultValues(overrides?: Partial<MatchFormValues>): MatchFormValues {
+export function matchDefaultValues(
+    overrides?: Partial<MatchFormValues>,
+): MatchFormValues {
     return {
         pool_id: '',
         home_team_id: '',
@@ -87,7 +112,10 @@ export function MatchFormFields({
     const poolId = useWatch({ control, name: 'pool_id' });
     const homeTeamId = useWatch({ control, name: 'home_team_id' });
 
-    const availableTeams = poolId === '' ? teams : (pools.find((p) => String(p.id) === poolId)?.teams ?? teams);
+    const availableTeams =
+        poolId === ''
+            ? teams
+            : (pools.find((p) => String(p.id) === poolId)?.teams ?? teams);
 
     return (
         <>
@@ -98,19 +126,30 @@ export function MatchFormFields({
                     render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>
                             <FieldLabel htmlFor="pool_id">Pool</FieldLabel>
-                            <Select value={field.value} onValueChange={field.onChange}>
-                                <SelectTrigger id="pool_id" aria-invalid={fieldState.invalid}>
+                            <Select
+                                value={field.value}
+                                onValueChange={field.onChange}
+                            >
+                                <SelectTrigger
+                                    id="pool_id"
+                                    aria-invalid={fieldState.invalid}
+                                >
                                     <SelectValue placeholder="Select Pool" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {pools.map((pool) => (
-                                        <SelectItem key={pool.id} value={String(pool.id)}>
+                                        <SelectItem
+                                            key={pool.id}
+                                            value={String(pool.id)}
+                                        >
                                             {pool.name}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
-                            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                            {fieldState.invalid && (
+                                <FieldError errors={[fieldState.error]} />
+                            )}
                         </Field>
                     )}
                 />
@@ -121,20 +160,33 @@ export function MatchFormFields({
                 control={control}
                 render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="home_team_id">Home Team</FieldLabel>
-                        <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger id="home_team_id" aria-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor="home_team_id">
+                            Home Team
+                        </FieldLabel>
+                        <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                        >
+                            <SelectTrigger
+                                id="home_team_id"
+                                aria-invalid={fieldState.invalid}
+                            >
                                 <SelectValue placeholder="Select Team" />
                             </SelectTrigger>
                             <SelectContent>
                                 {availableTeams.map((team) => (
-                                    <SelectItem key={team.id} value={String(team.id)}>
+                                    <SelectItem
+                                        key={team.id}
+                                        value={String(team.id)}
+                                    >
                                         {team.name}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
-                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                        {fieldState.invalid && (
+                            <FieldError errors={[fieldState.error]} />
+                        )}
                     </Field>
                 )}
             />
@@ -144,22 +196,38 @@ export function MatchFormFields({
                 control={control}
                 render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="away_team_id">Away Team</FieldLabel>
-                        <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger id="away_team_id" aria-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor="away_team_id">
+                            Away Team
+                        </FieldLabel>
+                        <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                        >
+                            <SelectTrigger
+                                id="away_team_id"
+                                aria-invalid={fieldState.invalid}
+                            >
                                 <SelectValue placeholder="Select Team" />
                             </SelectTrigger>
                             <SelectContent>
                                 {availableTeams
-                                    .filter((team) => String(team.id) !== homeTeamId)
+                                    .filter(
+                                        (team) =>
+                                            String(team.id) !== homeTeamId,
+                                    )
                                     .map((team) => (
-                                        <SelectItem key={team.id} value={String(team.id)}>
+                                        <SelectItem
+                                            key={team.id}
+                                            value={String(team.id)}
+                                        >
                                             {team.name}
                                         </SelectItem>
                                     ))}
                             </SelectContent>
                         </Select>
-                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                        {fieldState.invalid && (
+                            <FieldError errors={[fieldState.error]} />
+                        )}
                     </Field>
                 )}
             />
@@ -170,19 +238,30 @@ export function MatchFormFields({
                 render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                         <FieldLabel htmlFor="round">Round</FieldLabel>
-                        <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger id="round" aria-invalid={fieldState.invalid}>
+                        <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                        >
+                            <SelectTrigger
+                                id="round"
+                                aria-invalid={fieldState.invalid}
+                            >
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                                 {ROUND_OPTIONS.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
+                                    <SelectItem
+                                        key={option.value}
+                                        value={option.value}
+                                    >
                                         {option.label}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
-                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                        {fieldState.invalid && (
+                            <FieldError errors={[fieldState.error]} />
+                        )}
                     </Field>
                 )}
             />
@@ -192,7 +271,9 @@ export function MatchFormFields({
                 control={control}
                 render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="match_number">Match Number</FieldLabel>
+                        <FieldLabel htmlFor="match_number">
+                            Match Number
+                        </FieldLabel>
                         <Input
                             {...field}
                             id="match_number"
@@ -200,8 +281,12 @@ export function MatchFormFields({
                             placeholder="Auto-assigned if left blank"
                             aria-invalid={fieldState.invalid}
                         />
-                        <FieldDescription>Leave blank to auto-assign the next number.</FieldDescription>
-                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                        <FieldDescription>
+                            Leave blank to auto-assign the next number.
+                        </FieldDescription>
+                        {fieldState.invalid && (
+                            <FieldError errors={[fieldState.error]} />
+                        )}
                     </Field>
                 )}
             />
@@ -222,23 +307,43 @@ export function MatchFormFields({
                                         aria-invalid={fieldState.invalid}
                                         className={cn(
                                             'w-full cursor-pointer justify-start text-left font-normal',
-                                            !field.value && 'text-muted-foreground',
+                                            !field.value &&
+                                                'text-muted-foreground',
                                         )}
                                     >
                                         <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {field.value ? format(new Date(field.value), 'PPP') : <span>Pick a date</span>}
+                                        {field.value ? (
+                                            format(new Date(field.value), 'PPP')
+                                        ) : (
+                                            <span>Pick a date</span>
+                                        )}
                                     </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
+                                <PopoverContent
+                                    className="w-auto p-0"
+                                    align="start"
+                                >
                                     <Calendar
                                         mode="single"
-                                        selected={field.value ? new Date(field.value) : undefined}
-                                        onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
+                                        selected={
+                                            field.value
+                                                ? new Date(field.value)
+                                                : undefined
+                                        }
+                                        onSelect={(date) =>
+                                            field.onChange(
+                                                date
+                                                    ? format(date, 'yyyy-MM-dd')
+                                                    : '',
+                                            )
+                                        }
                                         autoFocus
                                     />
                                 </PopoverContent>
                             </Popover>
-                            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                            {fieldState.invalid && (
+                                <FieldError errors={[fieldState.error]} />
+                            )}
                         </Field>
                     )}
                 />
@@ -257,14 +362,22 @@ export function MatchFormFields({
                                         aria-invalid={fieldState.invalid}
                                         className={cn(
                                             'w-full cursor-pointer justify-start text-left font-normal',
-                                            !field.value && 'text-muted-foreground',
+                                            !field.value &&
+                                                'text-muted-foreground',
                                         )}
                                     >
                                         <Clock className="mr-2 h-4 w-4" />
-                                        {field.value ? field.value : <span>Pick a time</span>}
+                                        {field.value ? (
+                                            field.value
+                                        ) : (
+                                            <span>Pick a time</span>
+                                        )}
                                     </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-auto p-3" align="start">
+                                <PopoverContent
+                                    className="w-auto p-3"
+                                    align="start"
+                                >
                                     <Input
                                         value={field.value}
                                         onChange={field.onChange}
@@ -274,7 +387,9 @@ export function MatchFormFields({
                                     />
                                 </PopoverContent>
                             </Popover>
-                            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                            {fieldState.invalid && (
+                                <FieldError errors={[fieldState.error]} />
+                            )}
                         </Field>
                     )}
                 />

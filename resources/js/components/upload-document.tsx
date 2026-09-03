@@ -64,7 +64,11 @@ export function UploadDocument({
                         return;
                     }
 
-                    setUploadProgress(Math.round((progressEvent.loaded * 100) / progressEvent.total));
+                    setUploadProgress(
+                        Math.round(
+                            (progressEvent.loaded * 100) / progressEvent.total,
+                        ),
+                    );
                 },
             });
 
@@ -72,7 +76,9 @@ export function UploadDocument({
             setUploadedName(data.name ?? file.name);
             onChange?.(data.url);
         } catch (err) {
-            onError?.(`Upload failed. Please try again. ${err instanceof Error ? err.message : String(err)}`);
+            onError?.(
+                `Upload failed. Please try again. ${err instanceof Error ? err.message : String(err)}`,
+            );
         } finally {
             setIsUploading(false);
             setUploadProgress(0);
@@ -84,7 +90,9 @@ export function UploadDocument({
         const extension = file.name.split('.').pop()?.toLowerCase();
 
         if (!extension || !allowedExtensions.includes(extension)) {
-            onError?.('Please upload a PDF or Word document (.pdf, .doc, .docx)');
+            onError?.(
+                'Please upload a PDF or Word document (.pdf, .doc, .docx)',
+            );
 
             return false;
         }
@@ -169,17 +177,28 @@ export function UploadDocument({
             onDrop={handleDrop}
             className={cn(
                 'group relative flex min-h-24 w-full cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-lg border-2 border-dashed p-4 text-center transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-muted-foreground/50',
+                isDragging
+                    ? 'border-primary bg-primary/5'
+                    : 'border-muted-foreground/25 hover:border-muted-foreground/50',
                 isBusy && 'cursor-not-allowed opacity-75',
                 className,
             )}
         >
-            <input ref={inputRef} type="file" accept={accept} disabled={isBusy} className="hidden" onChange={(e) => handleFiles(e.target.files)} />
+            <input
+                ref={inputRef}
+                type="file"
+                accept={accept}
+                disabled={isBusy}
+                className="hidden"
+                onChange={(e) => handleFiles(e.target.files)}
+            />
 
             {displayName ? (
                 <div className="flex w-full items-center gap-2 text-left">
                     <FileText className="h-6 w-6 shrink-0 text-muted-foreground" />
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium">{displayName}</span>
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                        {displayName}
+                    </span>
                     {!isBusy && (
                         <button
                             type="button"
@@ -193,8 +212,14 @@ export function UploadDocument({
                 </div>
             ) : (
                 <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                    {isDragging ? <Upload className="h-6 w-6" /> : <FileText className="h-6 w-6" />}
-                    <p className="text-sm">{isUploading ? 'Uploading…' : placeholder}</p>
+                    {isDragging ? (
+                        <Upload className="h-6 w-6" />
+                    ) : (
+                        <FileText className="h-6 w-6" />
+                    )}
+                    <p className="text-sm">
+                        {isUploading ? 'Uploading…' : placeholder}
+                    </p>
                 </div>
             )}
 
@@ -215,7 +240,11 @@ export function UploadDocument({
                 </div>
             )}
 
-            {!isUploading && !displayName && <p className="text-xs text-muted-foreground">PDF, DOC or DOCX, up to {maxSizeMB}MB</p>}
+            {!isUploading && !displayName && (
+                <p className="text-xs text-muted-foreground">
+                    PDF, DOC or DOCX, up to {maxSizeMB}MB
+                </p>
+            )}
         </div>
     );
 }

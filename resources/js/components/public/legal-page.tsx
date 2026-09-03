@@ -12,27 +12,49 @@ interface LegalPageProps {
 }
 
 /** Shared shell for the Terms / Privacy / Refund pages so all three read alike. */
-export function LegalPage({ eyebrow, title, subtitle, lastUpdated, children }: LegalPageProps) {
+export function LegalPage({
+    eyebrow,
+    title,
+    subtitle,
+    lastUpdated,
+    children,
+}: LegalPageProps) {
     return (
         <>
             <Head title={`${title} — Sporta Indonesia`} />
 
             <PublicLayout>
-                <PublicPageHeader eyebrow={eyebrow} title={title} subtitle={subtitle} />
+                <PublicPageHeader
+                    eyebrow={eyebrow}
+                    title={title}
+                    subtitle={subtitle}
+                />
 
                 <section className="mx-auto max-w-3xl px-6 py-14">
-                    <p className="mb-8 text-xs tracking-wide text-white/40 uppercase">Last updated: {lastUpdated}</p>
-                    <div className="flex flex-col gap-8 text-white/75">{children}</div>
+                    <p className="mb-8 text-xs tracking-wide text-white/40 uppercase">
+                        Last updated: {lastUpdated}
+                    </p>
+                    <div className="flex flex-col gap-8 text-white/75">
+                        {children}
+                    </div>
                 </section>
             </PublicLayout>
         </>
     );
 }
 
-export function LegalSection({ heading, children }: { heading: string; children: ReactNode }) {
+export function LegalSection({
+    heading,
+    children,
+}: {
+    heading: string;
+    children: ReactNode;
+}) {
     return (
         <div className="flex flex-col gap-3">
-            <h2 className="text-lg font-black tracking-tight text-white uppercase">{heading}</h2>
+            <h2 className="text-lg font-black tracking-tight text-white uppercase">
+                {heading}
+            </h2>
             {children}
         </div>
     );

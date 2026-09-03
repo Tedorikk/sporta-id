@@ -2,7 +2,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from '@inertiajs/react';
 import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Controller, useForm, useWatch, type Control } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
+import type { Control } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,15 +14,26 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Field,
+    FieldError,
+    FieldGroup,
+    FieldLabel,
+} from '@/components/ui/field';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import {
     MATCH_SERVER_FIELD_MAP,
     MatchFormFields,
     matchFieldsSchema,
     toScheduledAt,
-    type MatchFormValues,
 } from '@/pages/dashboard/events/basketball/matches/components/match-form';
+import type { MatchFormValues } from '@/pages/dashboard/events/basketball/matches/components/match-form';
 import type { Event } from '@/types/event';
 import type { CategoryWithFixtures } from '../types';
 
@@ -47,7 +59,13 @@ function defaultValues(): CreateEventMatchValues {
     };
 }
 
-export function CreateEventMatchDialog({ event, categories }: { event: Event; categories: CategoryWithFixtures[] }) {
+export function CreateEventMatchDialog({
+    event,
+    categories,
+}: {
+    event: Event;
+    categories: CategoryWithFixtures[];
+}) {
     const [open, setOpen] = useState(false);
     const [saving, setSaving] = useState(false);
 
@@ -89,7 +107,9 @@ export function CreateEventMatchDialog({ event, categories }: { event: Event; ca
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [poolId]);
 
-    const selectedCategory = categories.find((category) => String(category.id) === categoryId);
+    const selectedCategory = categories.find(
+        (category) => String(category.id) === categoryId,
+    );
 
     const onSubmit = (data: CreateEventMatchValues) => {
         setSaving(true);
@@ -109,8 +129,12 @@ export function CreateEventMatchDialog({ event, categories }: { event: Event; ca
                 onSuccess: () => setOpen(false),
                 onError: (serverErrors) => {
                     Object.entries(serverErrors).forEach(([field, message]) => {
-                        const formField = MATCH_SERVER_FIELD_MAP[field] ?? 'root';
-                        setError(formField, { type: 'server', message: String(message) });
+                        const formField =
+                            MATCH_SERVER_FIELD_MAP[field] ?? 'root';
+                        setError(formField, {
+                            type: 'server',
+                            message: String(message),
+                        });
                     });
                 },
                 onFinish: () => setSaving(false),
@@ -142,20 +166,35 @@ export function CreateEventMatchDialog({ event, categories }: { event: Event; ca
                             control={control}
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel htmlFor="category_id">Category</FieldLabel>
-                                    <Select value={field.value} onValueChange={field.onChange}>
-                                        <SelectTrigger id="category_id" aria-invalid={fieldState.invalid}>
+                                    <FieldLabel htmlFor="category_id">
+                                        Category
+                                    </FieldLabel>
+                                    <Select
+                                        value={field.value}
+                                        onValueChange={field.onChange}
+                                    >
+                                        <SelectTrigger
+                                            id="category_id"
+                                            aria-invalid={fieldState.invalid}
+                                        >
                                             <SelectValue placeholder="Select Category" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {categories.map((category) => (
-                                                <SelectItem key={category.id} value={String(category.id)}>
+                                                <SelectItem
+                                                    key={category.id}
+                                                    value={String(category.id)}
+                                                >
                                                     {category.name}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                                    {fieldState.invalid && (
+                                        <FieldError
+                                            errors={[fieldState.error]}
+                                        />
+                                    )}
                                 </Field>
                             )}
                         />
@@ -164,20 +203,34 @@ export function CreateEventMatchDialog({ event, categories }: { event: Event; ca
                             <MatchFormFields
                                 // category_id is extra on this form; MatchFormFields only ever
                                 // reads/writes the shared match fields, so this narrowing is safe.
-                                control={control as unknown as Control<MatchFormValues>}
+                                control={
+                                    control as unknown as Control<MatchFormValues>
+                                }
                                 pools={selectedCategory.pools}
                                 teams={selectedCategory.teams}
-                                showPoolField={selectedCategory.pools.length > 0}
+                                showPoolField={
+                                    selectedCategory.pools.length > 0
+                                }
                             />
                         )}
                     </FieldGroup>
 
                     <DialogFooter className="mt-4">
-                        <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={saving}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setOpen(false)}
+                            disabled={saving}
+                        >
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={saving || !selectedCategory}>
-                            {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                        <Button
+                            type="submit"
+                            disabled={saving || !selectedCategory}
+                        >
+                            {saving && (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            )}
                             {saving ? 'Creating...' : 'Create'}
                         </Button>
                     </DialogFooter>

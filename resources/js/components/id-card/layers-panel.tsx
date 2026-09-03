@@ -25,7 +25,12 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import type { BindableField, CardElement, CardElementKind, CardSubjectType } from '@/types/card-template';
+import type {
+    BindableField,
+    CardElement,
+    CardElementKind,
+    CardSubjectType,
+} from '@/types/card-template';
 import { bindingLabel } from '@/types/card-template';
 
 const KIND_ICON: Record<CardElementKind, typeof Type> = {
@@ -39,7 +44,11 @@ const KIND_ICON: Record<CardElementKind, typeof Type> = {
  *  math (which slot the pointer is over) never has to measure the DOM. */
 const ROW_HEIGHT = 34;
 
-export function elementDisplayName(element: CardElement, subjectType: CardSubjectType, customFields: BindableField[] = []): string {
+export function elementDisplayName(
+    element: CardElement,
+    subjectType: CardSubjectType,
+    customFields: BindableField[] = [],
+): string {
     if (element.name) {
         return element.name;
     }
@@ -52,7 +61,11 @@ export function elementDisplayName(element: CardElement, subjectType: CardSubjec
         return element.staticText?.trim().split('\n')[0] || 'Text';
     }
 
-    return element.kind === 'qr' ? 'QR code' : element.kind === 'image' ? 'Image' : 'Shape';
+    return element.kind === 'qr'
+        ? 'QR code'
+        : element.kind === 'image'
+          ? 'Image'
+          : 'Shape';
 }
 
 function moveItem<T>(list: T[], fromIndex: number, toIndex: number): T[] {
@@ -71,7 +84,10 @@ interface LayersPanelProps {
     selectedIds: string[];
     onSelect: (ids: string[]) => void;
     onToggle: (id: string, patch: Partial<CardElement>) => void;
-    onReorder: (id: string, direction: 'up' | 'down' | 'front' | 'back') => void;
+    onReorder: (
+        id: string,
+        direction: 'up' | 'down' | 'front' | 'back',
+    ) => void;
     /** Commits a full topmost-first id order, e.g. after a drag gesture ends. */
     onReorderAll: (orderedIdsTopFirst: string[]) => void;
     onDuplicate: (ids: string[]) => void;
@@ -120,7 +136,9 @@ export function LayersPanel({
         e.stopPropagation();
 
         const container = containerRef.current;
-        const row = e.currentTarget.closest('[data-layer-row]') as HTMLElement | null;
+        const row = e.currentTarget.closest(
+            '[data-layer-row]',
+        ) as HTMLElement | null;
 
         if (!container || !row) {
             return;
@@ -156,7 +174,10 @@ export function LayersPanel({
 
             setFollowTranslate(clampedTop - state.originIndex * ROW_HEIGHT);
 
-            const targetIndex = Math.min(baseIds.length - 1, Math.max(0, Math.round(clampedTop / ROW_HEIGHT)));
+            const targetIndex = Math.min(
+                baseIds.length - 1,
+                Math.max(0, Math.round(clampedTop / ROW_HEIGHT)),
+            );
 
             setVisualOrder((prev) => {
                 const currentIndex = prev.indexOf(state.id);
@@ -207,13 +228,18 @@ export function LayersPanel({
     }
 
     return (
-        <ul ref={containerRef} className="relative p-1.5" style={{ height: ordered.length * ROW_HEIGHT + 12 }}>
+        <ul
+            ref={containerRef}
+            className="relative p-1.5"
+            style={{ height: ordered.length * ROW_HEIGHT + 12 }}
+        >
             {ordered.map((element, originalIndex) => {
                 const Icon = KIND_ICON[element.kind];
                 const isSelected = selectedIds.includes(element.id);
                 const isDragging = draggingId === element.id;
                 const visualIndex = visualOrder.indexOf(element.id);
-                const shiftTranslate = (visualIndex - originalIndex) * ROW_HEIGHT;
+                const shiftTranslate =
+                    (visualIndex - originalIndex) * ROW_HEIGHT;
 
                 return (
                     <li
@@ -226,14 +252,22 @@ export function LayersPanel({
                             right: 6,
                             height: ROW_HEIGHT,
                             transform: `translateY(${isDragging ? followTranslate : shiftTranslate}px)`,
-                            transition: isDragging ? 'none' : 'transform 150ms cubic-bezier(0.2, 0, 0, 1)',
+                            transition: isDragging
+                                ? 'none'
+                                : 'transform 150ms cubic-bezier(0.2, 0, 0, 1)',
                             zIndex: isDragging ? 10 : 1,
                         }}
                     >
                         <div
                             role="button"
                             tabIndex={0}
-                            onClick={(e) => onSelect(e.shiftKey || e.metaKey || e.ctrlKey ? toggleId(selectedIds, element.id) : [element.id])}
+                            onClick={(e) =>
+                                onSelect(
+                                    e.shiftKey || e.metaKey || e.ctrlKey
+                                        ? toggleId(selectedIds, element.id)
+                                        : [element.id],
+                                )
+                            }
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' || e.key === ' ') {
                                     e.preventDefault();
@@ -242,9 +276,12 @@ export function LayersPanel({
                             }}
                             className={cn(
                                 'group flex h-full w-full items-center gap-1.5 rounded-md pr-2 pl-1 text-left text-sm transition-colors',
-                                isSelected ? 'bg-primary/10 text-primary' : 'hover:bg-muted',
+                                isSelected
+                                    ? 'bg-primary/10 text-primary'
+                                    : 'hover:bg-muted',
                                 element.hidden && 'opacity-50',
-                                isDragging && 'bg-background shadow-md ring-1 ring-border',
+                                isDragging &&
+                                    'bg-background shadow-md ring-1 ring-border',
                             )}
                         >
                             <button
@@ -252,47 +289,78 @@ export function LayersPanel({
                                 aria-label="Drag to reorder"
                                 onPointerDown={(e) => beginDrag(e, element.id)}
                                 className="shrink-0 touch-none rounded p-0.5 text-muted-foreground/50 hover:text-foreground active:cursor-grabbing"
-                                style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+                                style={{
+                                    cursor: isDragging ? 'grabbing' : 'grab',
+                                }}
                             >
                                 <GripVertical className="h-3.5 w-3.5" />
                             </button>
 
                             <Icon className="h-3.5 w-3.5 shrink-0 opacity-70" />
 
-                            <span className="min-w-0 flex-1 truncate text-xs">{elementDisplayName(element, subjectType, customFields)}</span>
+                            <span className="min-w-0 flex-1 truncate text-xs">
+                                {elementDisplayName(
+                                    element,
+                                    subjectType,
+                                    customFields,
+                                )}
+                            </span>
 
                             <button
                                 type="button"
-                                aria-label={element.hidden ? 'Show layer' : 'Hide layer'}
+                                aria-label={
+                                    element.hidden ? 'Show layer' : 'Hide layer'
+                                }
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    onToggle(element.id, { hidden: !element.hidden });
+                                    onToggle(element.id, {
+                                        hidden: !element.hidden,
+                                    });
                                 }}
                                 className={cn(
                                     'rounded p-0.5 text-muted-foreground hover:text-foreground',
-                                    !element.hidden && 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
+                                    !element.hidden &&
+                                        'opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
                                 )}
                             >
-                                {element.hidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                                {element.hidden ? (
+                                    <EyeOff className="h-3.5 w-3.5" />
+                                ) : (
+                                    <Eye className="h-3.5 w-3.5" />
+                                )}
                             </button>
 
                             <button
                                 type="button"
-                                aria-label={element.locked ? 'Unlock layer' : 'Lock layer'}
+                                aria-label={
+                                    element.locked
+                                        ? 'Unlock layer'
+                                        : 'Lock layer'
+                                }
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    onToggle(element.id, { locked: !element.locked });
+                                    onToggle(element.id, {
+                                        locked: !element.locked,
+                                    });
                                 }}
                                 className={cn(
                                     'rounded p-0.5 text-muted-foreground hover:text-foreground',
-                                    !element.locked && 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
+                                    !element.locked &&
+                                        'opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
                                 )}
                             >
-                                {element.locked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
+                                {element.locked ? (
+                                    <Lock className="h-3.5 w-3.5" />
+                                ) : (
+                                    <Unlock className="h-3.5 w-3.5" />
+                                )}
                             </button>
 
                             <DropdownMenu>
-                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenuTrigger
+                                    asChild
+                                    onClick={(e) => e.stopPropagation()}
+                                >
                                     <Button
                                         variant="ghost"
                                         size="icon"
@@ -302,24 +370,54 @@ export function LayersPanel({
                                         <MoreVertical className="h-3.5 w-3.5" />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-44">
-                                    <DropdownMenuItem onClick={() => onReorder(element.id, 'front')}>
-                                        <ArrowUp className="h-4 w-4" /> Bring to front
+                                <DropdownMenuContent
+                                    align="end"
+                                    className="w-44"
+                                >
+                                    <DropdownMenuItem
+                                        onClick={() =>
+                                            onReorder(element.id, 'front')
+                                        }
+                                    >
+                                        <ArrowUp className="h-4 w-4" /> Bring to
+                                        front
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => onReorder(element.id, 'up')}>
-                                        <ArrowUp className="h-4 w-4" /> Bring forward
+                                    <DropdownMenuItem
+                                        onClick={() =>
+                                            onReorder(element.id, 'up')
+                                        }
+                                    >
+                                        <ArrowUp className="h-4 w-4" /> Bring
+                                        forward
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => onReorder(element.id, 'down')}>
-                                        <ArrowDown className="h-4 w-4" /> Send backward
+                                    <DropdownMenuItem
+                                        onClick={() =>
+                                            onReorder(element.id, 'down')
+                                        }
+                                    >
+                                        <ArrowDown className="h-4 w-4" /> Send
+                                        backward
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => onReorder(element.id, 'back')}>
-                                        <ArrowDown className="h-4 w-4" /> Send to back
+                                    <DropdownMenuItem
+                                        onClick={() =>
+                                            onReorder(element.id, 'back')
+                                        }
+                                    >
+                                        <ArrowDown className="h-4 w-4" /> Send
+                                        to back
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => onDuplicate([element.id])}>
+                                    <DropdownMenuItem
+                                        onClick={() =>
+                                            onDuplicate([element.id])
+                                        }
+                                    >
                                         <Copy className="h-4 w-4" /> Duplicate
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem variant="destructive" onClick={() => onDelete([element.id])}>
+                                    <DropdownMenuItem
+                                        variant="destructive"
+                                        onClick={() => onDelete([element.id])}
+                                    >
                                         <Trash2 className="h-4 w-4" /> Delete
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
@@ -333,5 +431,7 @@ export function LayersPanel({
 }
 
 function toggleId(ids: string[], id: string): string[] {
-    return ids.includes(id) ? ids.filter((existing) => existing !== id) : [...ids, id];
+    return ids.includes(id)
+        ? ids.filter((existing) => existing !== id)
+        : [...ids, id];
 }

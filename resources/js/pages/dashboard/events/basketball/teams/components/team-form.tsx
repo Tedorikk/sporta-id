@@ -30,7 +30,7 @@ const TEAM_STATUSES = [
     { value: 'pending', label: 'Pending' },
     { value: 'verified', label: 'Verified' },
     { value: 'rejected', label: 'Rejected' },
-]
+];
 
 const teamSchema = z.object({
     name: z.string().min(1, 'Team name is required').max(255),
@@ -260,8 +260,8 @@ function FormContent({ event, team, categories = [] }: TeamFormProps) {
                                     ? 'Saving...'
                                     : 'Creating...'
                                 : isEditing
-                                    ? 'Save Changes'
-                                    : 'Create Team'}
+                                  ? 'Save Changes'
+                                  : 'Create Team'}
                         </Button>
                     </FieldGroup>
                 </FieldGroup>
@@ -271,7 +271,5 @@ function FormContent({ event, team, categories = [] }: TeamFormProps) {
 }
 
 export default function TeamForm({ event, team, categories }: TeamFormProps) {
-    return (
-        <FormContent event={event} team={team} categories={categories} />
-    );
+    return <FormContent event={event} team={team} categories={categories} />;
 }

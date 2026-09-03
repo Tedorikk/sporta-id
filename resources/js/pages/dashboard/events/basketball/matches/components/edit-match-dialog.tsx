@@ -19,7 +19,14 @@ import type { Event } from '@/types/event';
 import type { GameMatch } from '@/types/game-match';
 import type { Pool } from '@/types/pool';
 import type { Team } from '@/types/team';
-import { MATCH_SERVER_FIELD_MAP, MatchFormFields, matchDefaultValues, matchSchema, toScheduledAt, type MatchFormValues } from './match-form';
+import {
+    MATCH_SERVER_FIELD_MAP,
+    MatchFormFields,
+    matchDefaultValues,
+    matchSchema,
+    toScheduledAt,
+} from './match-form';
+import type { MatchFormValues } from './match-form';
 
 function editDefaultValues(match: GameMatch): MatchFormValues {
     const scheduled = match.scheduled_at ? new Date(match.scheduled_at) : null;
@@ -68,7 +75,6 @@ export function EditMatchDialog({
         if (open) {
             reset(editDefaultValues(match));
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, match, reset]);
 
     const onSubmit = (data: MatchFormValues) => {
@@ -89,8 +95,12 @@ export function EditMatchDialog({
                 onSuccess: () => setOpen(false),
                 onError: (serverErrors) => {
                     Object.entries(serverErrors).forEach(([field, message]) => {
-                        const formField = MATCH_SERVER_FIELD_MAP[field] ?? 'root';
-                        setError(formField, { type: 'server', message: String(message) });
+                        const formField =
+                            MATCH_SERVER_FIELD_MAP[field] ?? 'root';
+                        setError(formField, {
+                            type: 'server',
+                            message: String(message),
+                        });
                     });
                 },
                 onFinish: () => setSaving(false),
@@ -101,7 +111,11 @@ export function EditMatchDialog({
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1 px-2 text-xs"
+                >
                     <Pencil className="h-3 w-3" />
                     Edit
                 </Button>
@@ -129,11 +143,18 @@ export function EditMatchDialog({
                     </FieldGroup>
 
                     <DialogFooter className="mt-4">
-                        <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={saving}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setOpen(false)}
+                            disabled={saving}
+                        >
                             Cancel
                         </Button>
                         <Button type="submit" disabled={saving}>
-                            {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                            {saving && (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            )}
                             {saving ? 'Saving...' : 'Save Changes'}
                         </Button>
                     </DialogFooter>

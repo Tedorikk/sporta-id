@@ -3,7 +3,11 @@ import { Check, ChevronsUpDown, Search } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
 import { formatDateTime } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
 import type { Meeting } from '@/types/meeting';
@@ -22,7 +26,11 @@ interface MeetingComboboxProps {
  * Falls back to a debounced server search (MeetingController::search) for
  * anything outside the initial `meetings` list.
  */
-export function MeetingCombobox({ meetings, value, onChange }: MeetingComboboxProps) {
+export function MeetingCombobox({
+    meetings,
+    value,
+    onChange,
+}: MeetingComboboxProps) {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
     // Only ever populated by a completed server search; when `query` is empty
@@ -45,7 +53,9 @@ export function MeetingCombobox({ meetings, value, onChange }: MeetingComboboxPr
             setLoading(true);
 
             axios
-                .get<Meeting[]>('/dashboard/meetings/search', { params: { q: query } })
+                .get<Meeting[]>('/dashboard/meetings/search', {
+                    params: { q: query },
+                })
                 .then(({ data }) => setSearchResults(data))
                 .finally(() => setLoading(false));
         }, 300);
@@ -71,8 +81,15 @@ export function MeetingCombobox({ meetings, value, onChange }: MeetingComboboxPr
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <Button variant="outline" role="combobox" aria-expanded={open} className="w-64 justify-between font-normal">
-                    <span className="truncate">{value ? value.title : 'No meeting selected'}</span>
+                <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open}
+                    className="w-64 justify-between font-normal"
+                >
+                    <span className="truncate">
+                        {value ? value.title : 'No meeting selected'}
+                    </span>
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
@@ -97,14 +114,25 @@ export function MeetingCombobox({ meetings, value, onChange }: MeetingComboboxPr
                             !value && 'font-medium',
                         )}
                     >
-                        <Check className={cn('h-4 w-4 shrink-0', value ? 'opacity-0' : 'opacity-100')} />
+                        <Check
+                            className={cn(
+                                'h-4 w-4 shrink-0',
+                                value ? 'opacity-0' : 'opacity-100',
+                            )}
+                        />
                         No meeting (lookup only)
                     </button>
 
-                    {isSearching && <p className="px-2 py-3 text-center text-xs text-muted-foreground">Searching…</p>}
+                    {isSearching && (
+                        <p className="px-2 py-3 text-center text-xs text-muted-foreground">
+                            Searching…
+                        </p>
+                    )}
 
                     {!isSearching && visibleResults.length === 0 && (
-                        <p className="px-2 py-3 text-center text-xs text-muted-foreground">No meetings found.</p>
+                        <p className="px-2 py-3 text-center text-xs text-muted-foreground">
+                            No meetings found.
+                        </p>
                     )}
 
                     {!isSearching &&
@@ -118,11 +146,21 @@ export function MeetingCombobox({ meetings, value, onChange }: MeetingComboboxPr
                                     value?.id === meeting.id && 'font-medium',
                                 )}
                             >
-                                <Check className={cn('mt-0.5 h-4 w-4 shrink-0', value?.id === meeting.id ? 'opacity-100' : 'opacity-0')} />
+                                <Check
+                                    className={cn(
+                                        'mt-0.5 h-4 w-4 shrink-0',
+                                        value?.id === meeting.id
+                                            ? 'opacity-100'
+                                            : 'opacity-0',
+                                    )}
+                                />
                                 <span className="flex min-w-0 flex-col">
-                                    <span className="truncate">{meeting.title}</span>
+                                    <span className="truncate">
+                                        {meeting.title}
+                                    </span>
                                     <span className="truncate text-xs text-muted-foreground">
-                                        {meeting.event?.name} · {formatDateTime(meeting.scheduled_at)}
+                                        {meeting.event?.name} ·{' '}
+                                        {formatDateTime(meeting.scheduled_at)}
                                     </span>
                                 </span>
                             </button>

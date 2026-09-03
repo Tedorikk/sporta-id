@@ -3,7 +3,11 @@ export function formatRupiah(price: string | null): string {
         return 'Free';
     }
 
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(price));
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        maximumFractionDigits: 0,
+    }).format(Number(price));
 }
 
 /**
@@ -11,7 +15,10 @@ export function formatRupiah(price: string | null): string {
  * registration categories. Returns null when the event has no categories at
  * all — the card then shows no price rather than a misleading "Free".
  */
-export function formatPriceRange(from?: string | null, to?: string | null): string | null {
+export function formatPriceRange(
+    from?: string | null,
+    to?: string | null,
+): string | null {
     if (from === null || from === undefined) {
         return null;
     }

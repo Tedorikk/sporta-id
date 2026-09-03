@@ -14,7 +14,9 @@ interface Props {
 
 export default function AttendeeTypesIndex({ event, attendeeTypes }: Props) {
     function handleDelete(id: number) {
-        router.delete(`/dashboard/events/${event.id}/attendee-types/${id}`, { preserveScroll: true });
+        router.delete(`/dashboard/events/${event.id}/attendee-types/${id}`, {
+            preserveScroll: true,
+        });
     }
 
     return (
@@ -23,15 +25,27 @@ export default function AttendeeTypesIndex({ event, attendeeTypes }: Props) {
 
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-4">
-                    <Button variant="outline" size="icon" className="h-10 w-10 shrink-0" asChild>
-                        <Link href={`/dashboard/events/${event.id}/attendees`} aria-label="Back to attendees">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-10 w-10 shrink-0"
+                        asChild
+                    >
+                        <Link
+                            href={`/dashboard/events/${event.id}/attendees`}
+                            aria-label="Back to attendees"
+                        >
                             <ChevronLeft className="h-5 w-5" />
                         </Link>
                     </Button>
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Attendee Types</h1>
+                        <h1 className="text-2xl font-bold tracking-tight">
+                            Attendee Types
+                        </h1>
                         <p className="text-sm text-muted-foreground">
-                            {event.name} · Guest, Tenant, and Photographer ship by default — add more any time this event needs a new kind of ID card.
+                            {event.name} · Guest, Tenant, and Photographer ship
+                            by default — add more any time this event needs a
+                            new kind of ID card.
                         </p>
                     </div>
                 </div>
@@ -49,18 +63,32 @@ export default function AttendeeTypesIndex({ event, attendeeTypes }: Props) {
 
             <div className="divide-y rounded-lg border">
                 {attendeeTypes.map((type) => (
-                    <div key={type.id} className="flex items-center justify-between gap-4 px-4 py-3">
+                    <div
+                        key={type.id}
+                        className="flex items-center justify-between gap-4 px-4 py-3"
+                    >
                         <div className="flex items-center gap-3">
-                            <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: type.color ?? '#94a3b8' }} />
+                            <span
+                                className="h-3 w-3 shrink-0 rounded-full"
+                                style={{ background: type.color ?? '#94a3b8' }}
+                            />
                             <div>
-                                <p className="text-sm font-medium">{type.label}</p>
-                                <p className="text-xs text-muted-foreground">{type.key}</p>
+                                <p className="text-sm font-medium">
+                                    {type.label}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    {type.key}
+                                </p>
                             </div>
-                            {!type.is_active && <Badge variant="outline">Inactive</Badge>}
+                            {!type.is_active && (
+                                <Badge variant="outline">Inactive</Badge>
+                            )}
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">{type.attendees_count} attendee(s)</span>
+                            <span className="text-xs text-muted-foreground">
+                                {type.attendees_count} attendee(s)
+                            </span>
 
                             <AttendeeTypeFormDialog
                                 event={event}
@@ -82,7 +110,11 @@ export default function AttendeeTypesIndex({ event, attendeeTypes }: Props) {
                                 confirmationValue={type.key}
                                 onConfirm={() => handleDelete(type.id)}
                                 trigger={
-                                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="text-muted-foreground hover:text-destructive"
+                                    >
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
                                 }

@@ -11,7 +11,12 @@ interface IdCardActionsProps {
     shareUrl: string;
 }
 
-export function IdCardActions({ targetRef, fileName, shareTitle, shareUrl }: IdCardActionsProps) {
+export function IdCardActions({
+    targetRef,
+    fileName,
+    shareTitle,
+    shareUrl,
+}: IdCardActionsProps) {
     const [isDownloading, setIsDownloading] = useState(false);
 
     const handleShare = async () => {

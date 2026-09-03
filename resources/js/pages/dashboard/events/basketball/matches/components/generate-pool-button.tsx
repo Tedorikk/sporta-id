@@ -33,8 +33,18 @@ export function GeneratePoolButton({
     // typed confirmation — only regenerating (which wipes existing matches) does.
     if (!hasMatches) {
         return (
-            <Button size="sm" variant="outline" onClick={handleGenerate} disabled={generating} className="h-7 text-xs">
-                {generating ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5 mr-1.5" />}
+            <Button
+                size="sm"
+                variant="outline"
+                onClick={handleGenerate}
+                disabled={generating}
+                className="h-7 text-xs"
+            >
+                {generating ? (
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                    <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                )}
                 Generate
             </Button>
         );
@@ -43,8 +53,17 @@ export function GeneratePoolButton({
     return (
         <DeleteConfirmationDialog
             trigger={
-                <Button size="sm" variant="outline" disabled={generating} className="h-7 text-xs">
-                    {generating ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5 mr-1.5" />}
+                <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={generating}
+                    className="h-7 text-xs"
+                >
+                    {generating ? (
+                        <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                        <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                    )}
                     Generate
                 </Button>
             }
@@ -53,9 +72,11 @@ export function GeneratePoolButton({
             description={
                 <>
                     This deletes the existing matches for{' '}
-                    <span className="font-semibold text-foreground">{pool.name}</span> and creates
-                    a new schedule. This action cannot be undone. Type the pool name above to
-                    confirm.
+                    <span className="font-semibold text-foreground">
+                        {pool.name}
+                    </span>{' '}
+                    and creates a new schedule. This action cannot be undone.
+                    Type the pool name above to confirm.
                 </>
             }
             onConfirm={handleGenerate}

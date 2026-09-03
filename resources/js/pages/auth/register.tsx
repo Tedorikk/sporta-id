@@ -65,7 +65,7 @@ export default function Register() {
                                 placeholder="Your club, school or company"
                             />
                             <InputError message={errors.organization_name} />
-                            <p className="text-muted-foreground text-sm">
+                            <p className="text-sm text-muted-foreground">
                                 Your events live inside this organization. You
                                 can invite teammates to it later.
                             </p>
@@ -96,7 +96,9 @@ export default function Register() {
                                 autoComplete="new-password"
                                 placeholder="Confirm password"
                             />
-                            <InputError message={errors.password_confirmation} />
+                            <InputError
+                                message={errors.password_confirmation}
+                            />
                         </div>
 
                         <Button
@@ -110,7 +112,7 @@ export default function Register() {
                             Create account
                         </Button>
 
-                        <div className="text-muted-foreground text-center text-sm">
+                        <div className="text-center text-sm text-muted-foreground">
                             Already have an account?{' '}
                             <TextLink href={login()} tabIndex={7}>
                                 Log in

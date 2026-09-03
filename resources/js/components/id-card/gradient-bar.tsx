@@ -21,7 +21,14 @@ function previewGradientCss(stops: GradientStop[]): string {
     return serializeGradient({ type: 'linear', angle: 90, stops });
 }
 
-export function GradientBar({ stops, activeStopId, onSelect, onMoveStop, onAddStop, onRemoveStop }: GradientBarProps) {
+export function GradientBar({
+    stops,
+    activeStopId,
+    onSelect,
+    onMoveStop,
+    onAddStop,
+    onRemoveStop,
+}: GradientBarProps) {
     const trackRef = useRef<HTMLDivElement>(null);
     const draggingId = useRef<string | null>(null);
 
@@ -43,7 +50,13 @@ export function GradientBar({ stops, activeStopId, onSelect, onMoveStop, onAddSt
                     }
 
                     const rect = trackRef.current.getBoundingClientRect();
-                    onAddStop(clamp(((e.clientX - rect.left) / rect.width) * 100, 0, 100));
+                    onAddStop(
+                        clamp(
+                            ((e.clientX - rect.left) / rect.width) * 100,
+                            0,
+                            100,
+                        ),
+                    );
                 }}
             >
                 {stops.map((stop) => (
@@ -59,15 +72,22 @@ export function GradientBar({ stops, activeStopId, onSelect, onMoveStop, onAddSt
                         }}
                         className={cn(
                             'absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 shadow',
-                            stop.id === activeStopId ? 'z-10 scale-110 border-primary' : 'border-white',
+                            stop.id === activeStopId
+                                ? 'z-10 scale-110 border-primary'
+                                : 'border-white',
                         )}
-                        style={{ left: `${stop.offset}%`, background: stop.color }}
+                        style={{
+                            left: `${stop.offset}%`,
+                            background: stop.color,
+                        }}
                     />
                 ))}
             </div>
 
             <div className="flex items-center justify-between">
-                <p className="text-[11px] text-muted-foreground">Click the bar to add a stop, drag stops to reposition.</p>
+                <p className="text-[11px] text-muted-foreground">
+                    Click the bar to add a stop, drag stops to reposition.
+                </p>
                 <Button
                     type="button"
                     variant="ghost"

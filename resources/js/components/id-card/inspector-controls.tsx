@@ -1,19 +1,42 @@
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
-export function InspectorSection({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
+export function InspectorSection({
+    title,
+    children,
+    className,
+}: {
+    title: string;
+    children: React.ReactNode;
+    className?: string;
+}) {
     return (
-        <section className={cn('border-b px-4 py-3.5 last:border-b-0', className)}>
-            <h3 className="mb-2.5 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">{title}</h3>
+        <section
+            className={cn('border-b px-4 py-3.5 last:border-b-0', className)}
+        >
+            <h3 className="mb-2.5 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                {title}
+            </h3>
             <div className="flex flex-col gap-2.5">{children}</div>
         </section>
     );
 }
 
-export function ControlRow({ label, children, htmlFor }: { label: string; children: React.ReactNode; htmlFor?: string }) {
+export function ControlRow({
+    label,
+    children,
+    htmlFor,
+}: {
+    label: string;
+    children: React.ReactNode;
+    htmlFor?: string;
+}) {
     return (
         <div className="grid grid-cols-[76px_1fr] items-center gap-2">
-            <label htmlFor={htmlFor} className="truncate text-xs text-muted-foreground">
+            <label
+                htmlFor={htmlFor}
+                className="truncate text-xs text-muted-foreground"
+            >
                 {label}
             </label>
             {children}
@@ -31,7 +54,15 @@ interface NumberControlProps {
     id?: string;
 }
 
-export function NumberControl({ value, onChange, min, max, step = 1, suffix, id }: NumberControlProps) {
+export function NumberControl({
+    value,
+    onChange,
+    min,
+    max,
+    step = 1,
+    suffix,
+    id,
+}: NumberControlProps) {
     return (
         <div className="relative">
             <Input
@@ -45,7 +76,9 @@ export function NumberControl({ value, onChange, min, max, step = 1, suffix, id 
                     const next = Number(e.target.value);
 
                     if (Number.isFinite(next)) {
-                        onChange(min !== undefined ? Math.max(min, next) : next);
+                        onChange(
+                            min !== undefined ? Math.max(min, next) : next,
+                        );
                     }
                 }}
                 className={cn('h-8 text-xs tabular-nums', suffix && 'pr-8')}

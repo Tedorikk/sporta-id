@@ -11,7 +11,13 @@ interface PublicPageHeaderProps {
     accentColor?: string | null;
 }
 
-export function PublicPageHeader({ eyebrow, title, subtitle, logoUrl, accentColor }: PublicPageHeaderProps) {
+export function PublicPageHeader({
+    eyebrow,
+    title,
+    subtitle,
+    logoUrl,
+    accentColor,
+}: PublicPageHeaderProps) {
     const accent = isValidHexColor(accentColor) ? accentColor : null;
 
     return (
@@ -29,10 +35,23 @@ export function PublicPageHeader({ eyebrow, title, subtitle, logoUrl, accentColo
             }}
         >
             <div className="pointer-events-none absolute inset-0 opacity-10">
-                <svg className="h-full w-full" xmlns="http://www.w3.org/2000/svg">
+                <svg
+                    className="h-full w-full"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
                     <defs>
-                        <pattern id="ppgrid" width="22" height="22" patternUnits="userSpaceOnUse">
-                            <path d="M 22 0 L 0 0 0 22" fill="none" stroke="white" strokeWidth="0.5" />
+                        <pattern
+                            id="ppgrid"
+                            width="22"
+                            height="22"
+                            patternUnits="userSpaceOnUse"
+                        >
+                            <path
+                                d="M 22 0 L 0 0 0 22"
+                                fill="none"
+                                stroke="white"
+                                strokeWidth="0.5"
+                            />
                         </pattern>
                     </defs>
                     <rect width="100%" height="100%" fill="url(#ppgrid)" />
@@ -42,7 +61,11 @@ export function PublicPageHeader({ eyebrow, title, subtitle, logoUrl, accentColo
             <div className="relative z-10 flex flex-col items-center gap-2">
                 <div className="flex items-center justify-center">
                     {logoUrl ? (
-                        <img src={formatImageUrl(logoUrl)} alt="" className="h-16 w-auto object-contain" />
+                        <img
+                            src={formatImageUrl(logoUrl)}
+                            alt=""
+                            className="h-16 w-auto object-contain"
+                        />
                     ) : (
                         <SiteLogo className="h-16 w-auto" />
                     )}
@@ -53,7 +76,9 @@ export function PublicPageHeader({ eyebrow, title, subtitle, logoUrl, accentColo
                 <h1 className="text-2xl font-black tracking-tight text-white uppercase">
                     {title}
                 </h1>
-                {subtitle && <p className="max-w-sm text-sm text-white/80">{subtitle}</p>}
+                {subtitle && (
+                    <p className="max-w-sm text-sm text-white/80">{subtitle}</p>
+                )}
             </div>
         </div>
     );

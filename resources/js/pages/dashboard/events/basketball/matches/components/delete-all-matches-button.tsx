@@ -18,8 +18,8 @@ export function DeleteAllMatchesButton({
     const [isDeleting, setIsDeleting] = useState(false);
 
     if (!hasMatches) {
-return null;
-}
+        return null;
+    }
 
     const handleDelete = () => {
         setIsDeleting(true);
@@ -32,8 +32,12 @@ return null;
     return (
         <DeleteConfirmationDialog
             trigger={
-                <Button size="sm" variant="outline" className="text-destructive hover:text-destructive">
-                    <Trash2 className="h-4 w-4 mr-2" />
+                <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-destructive hover:text-destructive"
+                >
+                    <Trash2 className="mr-2 h-4 w-4" />
                     Delete All
                 </Button>
             }
@@ -41,9 +45,13 @@ return null;
             confirmationValue={category.name}
             description={
                 <>
-                    This will permanently delete every match, score, and bracket result in{' '}
-                    <span className="font-semibold text-foreground">{category.name}</span>. This
-                    action cannot be undone. Type the category name above to confirm.
+                    This will permanently delete every match, score, and bracket
+                    result in{' '}
+                    <span className="font-semibold text-foreground">
+                        {category.name}
+                    </span>
+                    . This action cannot be undone. Type the category name above
+                    to confirm.
                 </>
             }
             onConfirm={handleDelete}

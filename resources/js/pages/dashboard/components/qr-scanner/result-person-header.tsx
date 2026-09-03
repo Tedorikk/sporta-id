@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { ZoomableImage  } from './zoomable-image';
-import type {Lightbox} from './zoomable-image';
+import { ZoomableImage } from './zoomable-image';
+import type { Lightbox } from './zoomable-image';
 
 interface ResultPersonHeaderProps {
     photo?: string | null;
@@ -11,7 +11,13 @@ interface ResultPersonHeaderProps {
 }
 
 /** Shared "photo + name + badges + subtitle" header used by team/attendee/registration result cards. */
-export function ResultPersonHeader({ photo, name, badges, subtitle, onImageOpen }: ResultPersonHeaderProps) {
+export function ResultPersonHeader({
+    photo,
+    name,
+    badges,
+    subtitle,
+    onImageOpen,
+}: ResultPersonHeaderProps) {
     return (
         <div className="flex items-start gap-5">
             <ZoomableImage
@@ -27,7 +33,9 @@ export function ResultPersonHeader({ photo, name, badges, subtitle, onImageOpen 
             />
             <div className="flex flex-1 flex-col gap-1.5">
                 <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-3xl font-extrabold tracking-tight">{name}</h2>
+                    <h2 className="text-3xl font-extrabold tracking-tight">
+                        {name}
+                    </h2>
                     {badges}
                 </div>
                 {subtitle}

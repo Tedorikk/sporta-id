@@ -9,7 +9,10 @@ let loadPromise: Promise<void> | null = null;
  * ever created once. Sandbox and production are served from different
  * URLs, so `isProduction` must match whichever key generated the snap token.
  */
-export function loadSnapScript(clientKey: string, isProduction: boolean): Promise<void> {
+export function loadSnapScript(
+    clientKey: string,
+    isProduction: boolean,
+): Promise<void> {
     if (window.snap) {
         return Promise.resolve();
     }
@@ -29,10 +32,13 @@ export function loadSnapScript(clientKey: string, isProduction: boolean): Promis
 
         const script = document.createElement('script');
         script.id = SNAP_SCRIPT_ID;
-        script.src = isProduction ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js';
+        script.src = isProduction
+            ? 'https://app.midtrans.com/snap/snap.js'
+            : 'https://app.sandbox.midtrans.com/snap/snap.js';
         script.dataset.clientKey = clientKey;
         script.onload = () => resolve();
-        script.onerror = () => reject(new Error('Could not load the payment provider script.'));
+        script.onerror = () =>
+            reject(new Error('Could not load the payment provider script.'));
         document.head.appendChild(script);
     });
 

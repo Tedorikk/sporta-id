@@ -1,8 +1,8 @@
 import { Calendar, Shield, Trophy } from 'lucide-react';
 import { formatDateTime } from '@/lib/format-date';
 import { formatImageUrl } from '@/lib/image-utils';
-import type { Team } from '@/types/team';
 import type { GameMatch } from '@/types/game-match';
+import type { Team } from '@/types/team';
 
 const STATUS_STYLE: Record<string, string> = {
     scheduled: 'bg-white/10 text-white/60',
@@ -34,12 +34,20 @@ function TeamLogo({ team }: { team?: Team | null }) {
     );
 }
 
-export function MatchRow({ match, categoryLabel }: { match: GameMatch; categoryLabel?: string }) {
+export function MatchRow({
+    match,
+    categoryLabel,
+}: {
+    match: GameMatch;
+    categoryLabel?: string;
+}) {
     const homeName = match.home_team?.name ?? 'TBD';
     const awayName = match.away_team?.name ?? 'TBD';
     const isCompleted = match.status === 'finished';
-    const homeWon = isCompleted && (match.home_score ?? 0) > (match.away_score ?? 0);
-    const awayWon = isCompleted && (match.away_score ?? 0) > (match.home_score ?? 0);
+    const homeWon =
+        isCompleted && (match.home_score ?? 0) > (match.away_score ?? 0);
+    const awayWon =
+        isCompleted && (match.away_score ?? 0) > (match.home_score ?? 0);
 
     return (
         <div className="flex flex-wrap items-center gap-3 rounded-xl border-2 border-white/10 bg-white/5 px-4 py-3">
@@ -48,12 +56,20 @@ export function MatchRow({ match, categoryLabel }: { match: GameMatch; categoryL
                     {categoryLabel}
                 </span>
             )}
-            {match.match_number && <span className="w-6 shrink-0 text-xs text-white/40">#{match.match_number}</span>}
+            {match.match_number && (
+                <span className="w-6 shrink-0 text-xs text-white/40">
+                    #{match.match_number}
+                </span>
+            )}
 
             <div className="flex min-w-0 flex-1 items-center gap-2">
-                <div className="flex flex-1 min-w-0 items-center justify-end gap-2">
-                    <span className={`truncate text-right text-sm font-semibold ${homeWon ? 'text-red-400' : 'text-white/80'}`}>
-                        {homeWon && <Trophy className="mr-1 inline h-3 w-3 text-amber-400" />}
+                <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
+                    <span
+                        className={`truncate text-right text-sm font-semibold ${homeWon ? 'text-red-400' : 'text-white/80'}`}
+                    >
+                        {homeWon && (
+                            <Trophy className="mr-1 inline h-3 w-3 text-amber-400" />
+                        )}
                         {homeName}
                     </span>
                     <TeamLogo team={match.home_team} />
@@ -62,11 +78,15 @@ export function MatchRow({ match, categoryLabel }: { match: GameMatch; categoryL
                 <div className="shrink-0">
                     {isCompleted && match.home_score !== null ? (
                         <div className="flex items-center gap-1.5">
-                            <span className={`text-lg font-black tabular-nums ${homeWon ? 'text-red-400' : 'text-white/50'}`}>
+                            <span
+                                className={`text-lg font-black tabular-nums ${homeWon ? 'text-red-400' : 'text-white/50'}`}
+                            >
                                 {match.home_score}
                             </span>
                             <span className="text-white/30">–</span>
-                            <span className={`text-lg font-black tabular-nums ${awayWon ? 'text-red-400' : 'text-white/50'}`}>
+                            <span
+                                className={`text-lg font-black tabular-nums ${awayWon ? 'text-red-400' : 'text-white/50'}`}
+                            >
                                 {match.away_score}
                             </span>
                         </div>
@@ -75,11 +95,15 @@ export function MatchRow({ match, categoryLabel }: { match: GameMatch; categoryL
                     )}
                 </div>
 
-                <div className="flex flex-1 min-w-0 items-center gap-2">
+                <div className="flex min-w-0 flex-1 items-center gap-2">
                     <TeamLogo team={match.away_team} />
-                    <span className={`truncate text-sm font-semibold ${awayWon ? 'text-red-400' : 'text-white/80'}`}>
+                    <span
+                        className={`truncate text-sm font-semibold ${awayWon ? 'text-red-400' : 'text-white/80'}`}
+                    >
                         {awayName}
-                        {awayWon && <Trophy className="ml-1 inline h-3 w-3 text-amber-400" />}
+                        {awayWon && (
+                            <Trophy className="ml-1 inline h-3 w-3 text-amber-400" />
+                        )}
                     </span>
                 </div>
             </div>

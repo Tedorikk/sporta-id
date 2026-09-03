@@ -16,7 +16,11 @@ import {
 import { Button } from '@/components/ui/button';
 import type { RegistrationFieldType } from '@/types/registration-category';
 
-const PALETTE: { type: RegistrationFieldType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+const PALETTE: {
+    type: RegistrationFieldType;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+}[] = [
     { type: 'text', label: 'Text', icon: Type },
     { type: 'textarea', label: 'Long text', icon: AlignLeft },
     { type: 'number', label: 'Number', icon: Hash },
@@ -40,7 +44,9 @@ interface FieldPaletteProps {
 export function FieldPalette({ onAdd, disabled }: FieldPaletteProps) {
     return (
         <div className="space-y-1">
-            <p className="px-1 text-xs font-medium text-muted-foreground uppercase">Add a field</p>
+            <p className="px-1 text-xs font-medium text-muted-foreground uppercase">
+                Add a field
+            </p>
             <div className="grid grid-cols-2 gap-1.5">
                 {PALETTE.map(({ type, label, icon: Icon }) => (
                     <Button

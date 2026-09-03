@@ -1,6 +1,9 @@
 import type { Ref } from 'react';
 import { APP_LOGO_URL } from '@/components/id-card/card-presets';
-import { formDataBindings, IdCardRenderer } from '@/components/id-card/id-card-renderer';
+import {
+    formDataBindings,
+    IdCardRenderer,
+} from '@/components/id-card/id-card-renderer';
 import type { IdCardData } from '@/components/id-card/id-card-renderer';
 import { formatImageUrl } from '@/lib/image-utils';
 import type { CardTemplate } from '@/types/card-template';
@@ -18,7 +21,12 @@ interface RegistrationIdCardCardProps {
  * so it can be reused inline (shown immediately after registering) as well as on
  * its own standalone page.
  */
-export function RegistrationIdCardCard({ registration, template, qrDataUrl, cardRef }: RegistrationIdCardCardProps) {
+export function RegistrationIdCardCard({
+    registration,
+    template,
+    qrDataUrl,
+    cardRef,
+}: RegistrationIdCardCardProps) {
     const typeLabel = registration.registration_category?.name ?? '';
 
     const data: IdCardData = {
@@ -31,7 +39,9 @@ export function RegistrationIdCardCard({ registration, template, qrDataUrl, card
         phone: registration.phone ?? undefined,
         qrDataUrl,
         eventName: registration.event?.name,
-        eventLogo: registration.event?.logo ? formatImageUrl(registration.event.logo) : undefined,
+        eventLogo: registration.event?.logo
+            ? formatImageUrl(registration.event.logo)
+            : undefined,
         appLogo: APP_LOGO_URL,
         ...formDataBindings(registration.form_data),
     };

@@ -1,6 +1,8 @@
 const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 
-export function isValidHexColor(value: string | null | undefined): value is string {
+export function isValidHexColor(
+    value: string | null | undefined,
+): value is string {
     return typeof value === 'string' && HEX_COLOR_PATTERN.test(value);
 }
 
@@ -29,7 +31,10 @@ export function shadeColor(hex: string, percent: number): string {
  * The default red (Tailwind's red-600/red-700) exactly, so pages with no
  * event accent color render pixel-identical to before this was configurable.
  */
-export function accentColors(hex: string | null | undefined): { accent: string; accentDark: string } {
+export function accentColors(hex: string | null | undefined): {
+    accent: string;
+    accentDark: string;
+} {
     if (isValidHexColor(hex)) {
         return { accent: hex, accentDark: shadeColor(hex, -12) };
     }

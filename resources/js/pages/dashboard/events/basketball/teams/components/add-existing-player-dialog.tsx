@@ -38,7 +38,12 @@ interface AddExistingPlayerDialogProps {
     trigger: React.ReactNode;
 }
 
-export function AddExistingPlayerDialog({ event, team, clubs, trigger }: AddExistingPlayerDialogProps) {
+export function AddExistingPlayerDialog({
+    event,
+    team,
+    clubs,
+    trigger,
+}: AddExistingPlayerDialogProps) {
     const [open, setOpen] = useState(false);
     const [selectedClubId, setSelectedClubId] = useState<string>('');
 
@@ -54,8 +59,8 @@ export function AddExistingPlayerDialog({ event, team, clubs, trigger }: AddExis
     // Filter out players that are already on THIS team
     const availablePlayers = useMemo(() => {
         if (!selectedClub?.player) {
-return [];
-}
+            return [];
+        }
 
         const existingPlayerIds = new Set(team.players?.map((p) => p.id) ?? []);
 
@@ -82,7 +87,8 @@ return [];
                     <DialogHeader>
                         <DialogTitle>Add Existing Player</DialogTitle>
                         <DialogDescription>
-                            Select a basketball club to find and add an existing registered player to {team.name}.
+                            Select a basketball club to find and add an existing
+                            registered player to {team.name}.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -101,7 +107,10 @@ return [];
                                 </SelectTrigger>
                                 <SelectContent>
                                     {clubs.map((club) => (
-                                        <SelectItem key={club.id} value={club.id.toString()}>
+                                        <SelectItem
+                                            key={club.id}
+                                            value={club.id.toString()}
+                                        >
                                             {club.name}
                                         </SelectItem>
                                     ))}
@@ -113,23 +122,31 @@ return [];
                             <Label htmlFor="player">Available Player</Label>
                             <Select
                                 value={data.player_id}
-                                onValueChange={(val) => setData('player_id', val)}
-                                disabled={!selectedClubId || availablePlayers.length === 0}
+                                onValueChange={(val) =>
+                                    setData('player_id', val)
+                                }
+                                disabled={
+                                    !selectedClubId ||
+                                    availablePlayers.length === 0
+                                }
                             >
                                 <SelectTrigger id="player">
                                     <SelectValue
                                         placeholder={
                                             !selectedClubId
-                                                ? "Select a club first"
+                                                ? 'Select a club first'
                                                 : availablePlayers.length === 0
-                                                    ? "No available players in this club"
-                                                    : "Select a player..."
+                                                  ? 'No available players in this club'
+                                                  : 'Select a player...'
                                         }
                                     />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {availablePlayers.map((player) => (
-                                        <SelectItem key={player.id} value={player.id.toString()}>
+                                        <SelectItem
+                                            key={player.id}
+                                            value={player.id.toString()}
+                                        >
                                             {player.name} (
                                             {player.role === 'player'
                                                 ? `#${player.jersey_number}`
@@ -140,16 +157,25 @@ return [];
                                 </SelectContent>
                             </Select>
                             {errors.player_id && (
-                                <p className="text-sm font-medium text-destructive">{errors.player_id}</p>
+                                <p className="text-sm font-medium text-destructive">
+                                    {errors.player_id}
+                                </p>
                             )}
                         </div>
                     </div>
 
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setOpen(false)}
+                        >
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={processing || !data.player_id}>
+                        <Button
+                            type="submit"
+                            disabled={processing || !data.player_id}
+                        >
                             <UserCheck className="mr-2 h-4 w-4" />
                             Add to Team
                         </Button>

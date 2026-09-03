@@ -141,7 +141,9 @@ function FormContent({ event }: EventFormProps) {
                             control={control}
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel htmlFor="banner">Banner</FieldLabel>
+                                    <FieldLabel htmlFor="banner">
+                                        Banner
+                                    </FieldLabel>
                                     <UploadImage
                                         {...field}
                                         ratio={4 / 5}
@@ -162,7 +164,9 @@ function FormContent({ event }: EventFormProps) {
                                         enableCrop={true}
                                     />
                                     {fieldState.invalid && (
-                                        <FieldError errors={[fieldState.error]} />
+                                        <FieldError
+                                            errors={[fieldState.error]}
+                                        />
                                     )}
                                 </Field>
                             )}
@@ -198,7 +202,9 @@ function FormContent({ event }: EventFormProps) {
                                         Shown on player ID cards for this event.
                                     </FieldDescription>
                                     {fieldState.invalid && (
-                                        <FieldError errors={[fieldState.error]} />
+                                        <FieldError
+                                            errors={[fieldState.error]}
+                                        />
                                     )}
                                 </Field>
                             )}
@@ -218,7 +224,9 @@ function FormContent({ event }: EventFormProps) {
                                         <input
                                             type="color"
                                             value={field.value || '#dc2626'}
-                                            onChange={(e) => field.onChange(e.target.value)}
+                                            onChange={(e) =>
+                                                field.onChange(e.target.value)
+                                            }
                                             disabled={isSaving}
                                             className="h-10 w-12 shrink-0 cursor-pointer rounded-md border p-1"
                                             aria-label="Pick accent color"
@@ -235,10 +243,13 @@ function FormContent({ event }: EventFormProps) {
                                         />
                                     </div>
                                     <FieldDescription>
-                                        Used on the public registration page. Defaults to red when left blank.
+                                        Used on the public registration page.
+                                        Defaults to red when left blank.
                                     </FieldDescription>
                                     {fieldState.invalid && (
-                                        <FieldError errors={[fieldState.error]} />
+                                        <FieldError
+                                            errors={[fieldState.error]}
+                                        />
                                     )}
                                 </Field>
                             )}

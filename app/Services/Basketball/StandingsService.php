@@ -3,7 +3,6 @@
 namespace App\Services\Basketball;
 
 use App\Models\BasketballEventCategory;
-use App\Models\GameMatch;
 use App\Models\Pool;
 use Illuminate\Support\Collection;
 
@@ -44,18 +43,23 @@ class StandingsService
             $home = &$table[$match->home_team_id];
             $away = &$table[$match->away_team_id];
 
-            $home['played']++; $away['played']++;
+            $home['played']++;
+            $away['played']++;
             $home['points_for'] += $match->home_score;
             $home['points_against'] += $match->away_score;
             $away['points_for'] += $match->away_score;
             $away['points_against'] += $match->home_score;
 
             if ($match->home_score > $match->away_score) {
-                $home['won']++; $home['points'] += $category->win_points;
-                $away['lost']++; $away['points'] += $category->loss_points;
+                $home['won']++;
+                $home['points'] += $category->win_points;
+                $away['lost']++;
+                $away['points'] += $category->loss_points;
             } else {
-                $away['won']++; $away['points'] += $category->win_points;
-                $home['lost']++; $home['points'] += $category->loss_points;
+                $away['won']++;
+                $away['points'] += $category->win_points;
+                $home['lost']++;
+                $home['points'] += $category->loss_points;
             }
         }
 

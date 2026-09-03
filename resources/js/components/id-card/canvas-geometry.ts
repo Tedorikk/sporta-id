@@ -9,7 +9,16 @@ export interface Box {
 
 export type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
 
-export const RESIZE_HANDLES: ResizeHandle[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
+export const RESIZE_HANDLES: ResizeHandle[] = [
+    'nw',
+    'n',
+    'ne',
+    'e',
+    'se',
+    's',
+    'sw',
+    'w',
+];
 
 export const HANDLE_CURSOR: Record<ResizeHandle, string> = {
     nw: 'nwse-resize',
@@ -23,7 +32,10 @@ export const HANDLE_CURSOR: Record<ResizeHandle, string> = {
 };
 
 /** Percentage offsets of each handle within the selection box. */
-export const HANDLE_ANCHOR: Record<ResizeHandle, { left: string; top: string }> = {
+export const HANDLE_ANCHOR: Record<
+    ResizeHandle,
+    { left: string; top: string }
+> = {
     nw: { left: '0%', top: '0%' },
     n: { left: '50%', top: '0%' },
     ne: { left: '100%', top: '0%' },
@@ -53,7 +65,11 @@ interface SnapTargets {
  * Candidate alignment positions: canvas edges + centre, plus the edges and
  * centres of every other (visible) element.
  */
-export function collectSnapTargets(canvas: CardCanvas, elements: CardElement[], excludeId: string | null): SnapTargets {
+export function collectSnapTargets(
+    canvas: CardCanvas,
+    elements: CardElement[],
+    excludeId: string | null,
+): SnapTargets {
     const x = [0, canvas.width / 2, canvas.width];
     const y = [0, canvas.height / 2, canvas.height];
 
@@ -70,7 +86,11 @@ export function collectSnapTargets(canvas: CardCanvas, elements: CardElement[], 
 }
 
 /** Nearest target within the threshold, or null. `scale` keeps the threshold constant in screen pixels. */
-function nearest(value: number, targets: number[], scale: number): number | null {
+function nearest(
+    value: number,
+    targets: number[],
+    scale: number,
+): number | null {
     let best: number | null = null;
     let bestDistance = SNAP_THRESHOLD / scale;
 
@@ -90,7 +110,11 @@ function nearest(value: number, targets: number[], scale: number): number | null
  * Snap a moving box by translating it — tries the leading edge, centre and
  * trailing edge on each axis and applies whichever lands closest.
  */
-export function snapMove(box: Box, targets: SnapTargets, scale: number): { box: Box; guides: SnapGuide[] } {
+export function snapMove(
+    box: Box,
+    targets: SnapTargets,
+    scale: number,
+): { box: Box; guides: SnapGuide[] } {
     const guides: SnapGuide[] = [];
     const next = { ...box };
 
@@ -101,7 +125,10 @@ export function snapMove(box: Box, targets: SnapTargets, scale: number): { box: 
     for (const edge of xEdges) {
         const hit = nearest(edge, targets.x, scale);
 
-        if (hit !== null && (xShift === null || Math.abs(hit - edge) < Math.abs(xShift))) {
+        if (
+            hit !== null &&
+            (xShift === null || Math.abs(hit - edge) < Math.abs(xShift))
+        ) {
             xShift = hit - edge;
             xGuide = hit;
         }
@@ -119,7 +146,10 @@ export function snapMove(box: Box, targets: SnapTargets, scale: number): { box: 
     for (const edge of yEdges) {
         const hit = nearest(edge, targets.y, scale);
 
-        if (hit !== null && (yShift === null || Math.abs(hit - edge) < Math.abs(yShift))) {
+        if (
+            hit !== null &&
+            (yShift === null || Math.abs(hit - edge) < Math.abs(yShift))
+        ) {
             yShift = hit - edge;
             yGuide = hit;
         }
@@ -142,7 +172,11 @@ export function resizeBox(
     dx: number,
     dy: number,
     handle: ResizeHandle,
-    options: { targets?: SnapTargets; scale?: number; keepAspect?: boolean } = {},
+    options: {
+        targets?: SnapTargets;
+        scale?: number;
+        keepAspect?: boolean;
+    } = {},
 ): { box: Box; guides: SnapGuide[] } {
     const { targets, scale = 1, keepAspect = false } = options;
     const guides: SnapGuide[] = [];
@@ -232,7 +266,12 @@ export function resizeBox(
 }
 
 export function elementBox(element: CardElement): Box {
-    return { x: element.x, y: element.y, width: element.width, height: element.height };
+    return {
+        x: element.x,
+        y: element.y,
+        width: element.width,
+        height: element.height,
+    };
 }
 
 export function roundBox(box: Box): Box {

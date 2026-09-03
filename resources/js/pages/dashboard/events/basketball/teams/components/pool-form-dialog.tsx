@@ -26,7 +26,11 @@ import type { Team } from '@/types/team';
 
 type NumberingStyle = 'numeric' | 'alpha' | 'roman';
 
-const NUMBERING_STYLES: { value: NumberingStyle; label: string; sample: string }[] = [
+const NUMBERING_STYLES: {
+    value: NumberingStyle;
+    label: string;
+    sample: string;
+}[] = [
     { value: 'numeric', label: 'Numbers', sample: '1, 2, 3, 4' },
     { value: 'alpha', label: 'Letters', sample: 'A, B, C, D' },
     { value: 'roman', label: 'Roman numerals', sample: 'I, II, III, IV' },
@@ -47,9 +51,19 @@ function toAlpha(n: number): string {
 
 function toRoman(n: number): string {
     const table: [number, string][] = [
-        [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'],
-        [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'],
-        [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I'],
+        [1000, 'M'],
+        [900, 'CM'],
+        [500, 'D'],
+        [400, 'CD'],
+        [100, 'C'],
+        [90, 'XC'],
+        [50, 'L'],
+        [40, 'XL'],
+        [10, 'X'],
+        [9, 'IX'],
+        [5, 'V'],
+        [4, 'IV'],
+        [1, 'I'],
     ];
     let result = '';
 
@@ -65,12 +79,12 @@ function toRoman(n: number): string {
 
 function label(style: NumberingStyle, n: number): string {
     if (style === 'alpha') {
-return toAlpha(n);
-}
+        return toAlpha(n);
+    }
 
     if (style === 'roman') {
-return toRoman(n);
-}
+        return toRoman(n);
+    }
 
     return String(n);
 }
@@ -111,7 +125,8 @@ export function PoolFormDialog({
         () =>
             Array.from(
                 { length: Math.min(data.number_of_pools || 0, 4) },
-                (_, i) => `${data.prefix} ${label(data.numbering_style, i + 1)}`,
+                (_, i) =>
+                    `${data.prefix} ${label(data.numbering_style, i + 1)}`,
             ),
         [data.prefix, data.number_of_pools, data.numbering_style],
     );
@@ -138,13 +153,16 @@ export function PoolFormDialog({
                 <DialogTrigger asChild>{trigger}</DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Pools not used for this category</DialogTitle>
+                        <DialogTitle>
+                            Pools not used for this category
+                        </DialogTitle>
                         <DialogDescription className="flex items-start gap-2 pt-2">
                             <Info className="mt-0.5 h-4 w-4 shrink-0" />
                             <span>
-                                "{category.name}" is set to round robin format, so every
-                                team plays every other team directly. Head to the Matches
-                                tab to generate the schedule instead.
+                                "{category.name}" is set to round robin format,
+                                so every team plays every other team directly.
+                                Head to the Matches tab to generate the schedule
+                                instead.
                             </span>
                         </DialogDescription>
                     </DialogHeader>
@@ -163,8 +181,8 @@ export function PoolFormDialog({
                         <DialogDescription className="flex items-start gap-2 pt-2">
                             <Info className="mt-0.5 h-4 w-4 shrink-0" />
                             <span>
-                                Register at least one team in "{category.name}" before
-                                creating pools.
+                                Register at least one team in "{category.name}"
+                                before creating pools.
                             </span>
                         </DialogDescription>
                     </DialogHeader>
@@ -180,8 +198,8 @@ export function PoolFormDialog({
                 setOpen(next);
 
                 if (!next) {
-reset();
-}
+                    reset();
+                }
             }}
         >
             <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -189,15 +207,19 @@ reset();
                 <DialogHeader>
                     <DialogTitle>Manage pools</DialogTitle>
                     <DialogDescription>
-                        {category.name} — {teamCount} team{teamCount === 1 ? '' : 's'}{' '}
-                        registered
+                        {category.name} — {teamCount} team
+                        {teamCount === 1 ? '' : 's'} registered
                         {existingPoolCount > 0 &&
                             `, ${existingPoolCount} pool${existingPoolCount === 1 ? '' : 's'} already created`}
                         .
                     </DialogDescription>
                 </DialogHeader>
 
-                <Tabs value={mode} onValueChange={(v) => setMode(v as 'single' | 'bulk')} className="w-full">
+                <Tabs
+                    value={mode}
+                    onValueChange={(v) => setMode(v as 'single' | 'bulk')}
+                    className="w-full"
+                >
                     <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="single">
                             <LayoutGrid className="mr-2 h-4 w-4" />
@@ -216,13 +238,17 @@ reset();
                                 <Input
                                     id="pool_name"
                                     value={data.name}
-                                    onChange={(e) => setData('name', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('name', e.target.value)
+                                    }
                                     required
                                     placeholder="e.g., Final Round"
                                     aria-invalid={Boolean(errors.name)}
                                 />
                                 {errors.name && (
-                                    <p className="mt-1 text-sm text-destructive">{errors.name}</p>
+                                    <p className="mt-1 text-sm text-destructive">
+                                        {errors.name}
+                                    </p>
                                 )}
                             </div>
                         </TabsContent>
@@ -234,12 +260,16 @@ reset();
                                     <Input
                                         id="prefix"
                                         value={data.prefix}
-                                        onChange={(e) => setData('prefix', e.target.value)}
+                                        onChange={(e) =>
+                                            setData('prefix', e.target.value)
+                                        }
                                         placeholder="Group"
                                     />
                                 </div>
                                 <div>
-                                    <Label htmlFor="number_of_pools">Number of pools</Label>
+                                    <Label htmlFor="number_of_pools">
+                                        Number of pools
+                                    </Label>
                                     <Input
                                         id="number_of_pools"
                                         type="number"
@@ -247,25 +277,40 @@ reset();
                                         max={10}
                                         value={data.number_of_pools}
                                         onChange={(e) =>
-                                            setData('number_of_pools', Number(e.target.value))
+                                            setData(
+                                                'number_of_pools',
+                                                Number(e.target.value),
+                                            )
                                         }
-                                        aria-invalid={Boolean(errors.number_of_pools)}
+                                        aria-invalid={Boolean(
+                                            errors.number_of_pools,
+                                        )}
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <Label htmlFor="numbering_style">Numbering style</Label>
+                                <Label htmlFor="numbering_style">
+                                    Numbering style
+                                </Label>
                                 <Select
                                     value={data.numbering_style}
-                                    onValueChange={(v) => setData('numbering_style', v as NumberingStyle)}
+                                    onValueChange={(v) =>
+                                        setData(
+                                            'numbering_style',
+                                            v as NumberingStyle,
+                                        )
+                                    }
                                 >
                                     <SelectTrigger id="numbering_style">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {NUMBERING_STYLES.map((style) => (
-                                            <SelectItem key={style.value} value={style.value}>
+                                            <SelectItem
+                                                key={style.value}
+                                                value={style.value}
+                                            >
                                                 {style.label}
                                                 <span className="ml-2 text-muted-foreground">
                                                     ({style.sample})
@@ -277,24 +322,32 @@ reset();
                             </div>
 
                             <div>
-                                <Label htmlFor="teams_per_pool">Teams per pool</Label>
+                                <Label htmlFor="teams_per_pool">
+                                    Teams per pool
+                                </Label>
                                 <Input
                                     id="teams_per_pool"
                                     type="number"
                                     min={1}
                                     value={data.teams_per_pool}
                                     onChange={(e) =>
-                                        setData('teams_per_pool', Number(e.target.value))
+                                        setData(
+                                            'teams_per_pool',
+                                            Number(e.target.value),
+                                        )
                                     }
-                                    aria-invalid={Boolean(errors.teams_per_pool)}
+                                    aria-invalid={Boolean(
+                                        errors.teams_per_pool,
+                                    )}
                                 />
                             </div>
 
                             {previewNames.length > 0 && (
                                 <p className="text-xs text-muted-foreground">
                                     Preview: {previewNames.join(', ')}
-                                    {data.number_of_pools > 4 ? ', …' : ''} — capacity for{' '}
-                                    {capacity} of {teamCount} team{teamCount === 1 ? '' : 's'}.
+                                    {data.number_of_pools > 4 ? ', …' : ''} —
+                                    capacity for {capacity} of {teamCount} team
+                                    {teamCount === 1 ? '' : 's'}.
                                 </p>
                             )}
 
@@ -302,17 +355,20 @@ reset();
                                 <p className="flex items-start gap-2 text-xs text-destructive">
                                     <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                                     {teamCount - capacity} team
-                                    {teamCount - capacity === 1 ? '' : 's'} won't fit —
-                                    increase the number of pools or teams per pool.
+                                    {teamCount - capacity === 1 ? '' : 's'}{' '}
+                                    won't fit — increase the number of pools or
+                                    teams per pool.
                                 </p>
                             )}
 
                             {existingPoolCount > 0 && (
                                 <p className="flex items-start gap-2 text-xs text-muted-foreground">
                                     <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                                    This category already has {existingPoolCount} pool
-                                    {existingPoolCount === 1 ? '' : 's'}. Generating again
-                                    will add to them, not replace them.
+                                    This category already has{' '}
+                                    {existingPoolCount} pool
+                                    {existingPoolCount === 1 ? '' : 's'}.
+                                    Generating again will add to them, not
+                                    replace them.
                                 </p>
                             )}
                         </TabsContent>
@@ -320,9 +376,13 @@ reset();
                         <Button
                             type="submit"
                             className="w-full"
-                            disabled={processing || (mode === 'bulk' && overCapacity)}
+                            disabled={
+                                processing || (mode === 'bulk' && overCapacity)
+                            }
                         >
-                            {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {processing && (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            )}
                             {processing ? 'Saving...' : 'Confirm & create'}
                         </Button>
                     </form>

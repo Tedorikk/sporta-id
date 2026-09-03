@@ -30,7 +30,12 @@ const STATUS_STYLE: Record<string, string> = {
     past: 'bg-neutral-400 text-neutral-950',
 };
 
-export default function EventsIndex({ events, filters, categories, calendarEvents }: Props) {
+export default function EventsIndex({
+    events,
+    filters,
+    categories,
+    calendarEvents,
+}: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
 
     useEffect(() => {
@@ -83,14 +88,22 @@ export default function EventsIndex({ events, filters, categories, calendarEvent
 
                         <select
                             value={filters.category ?? ''}
-                            onChange={(e) => updateQuery({ category: e.target.value || undefined })}
+                            onChange={(e) =>
+                                updateQuery({
+                                    category: e.target.value || undefined,
+                                })
+                            }
                             className="rounded-full border-2 border-white/15 bg-white/5 px-4 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
                         >
                             <option value="" className="bg-neutral-900">
                                 All categories
                             </option>
                             {categories.map((category) => (
-                                <option key={category} value={category} className="bg-neutral-900">
+                                <option
+                                    key={category}
+                                    value={category}
+                                    className="bg-neutral-900"
+                                >
                                     {category}
                                 </option>
                             ))}
@@ -104,42 +117,50 @@ export default function EventsIndex({ events, filters, categories, calendarEvent
                     ) : (
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                             {events.data.map((event) => {
-                                const price = formatPriceRange(event.price_from, event.price_to);
+                                const price = formatPriceRange(
+                                    event.price_from,
+                                    event.price_to,
+                                );
 
                                 return (
-                                <Link
-                                    key={event.id}
-                                    href={`/events/${event.id}`}
-                                    className="group flex flex-col overflow-hidden rounded-2xl border-2 border-white/15 bg-white/5 transition hover:border-red-500"
-                                >
-                                    <div className="relative aspect-4/5 w-full overflow-hidden bg-gradient-to-br from-red-700 to-neutral-900">
-                                        {event.banner && (
-                                            <img
-                                                src={formatImageUrl(event.banner)}
-                                                alt={event.name}
-                                                className="h-full w-full object-cover opacity-80 transition group-hover:opacity-100"
-                                            />
-                                        )}
-                                        <span
-                                            className={`absolute top-3 left-3 rounded-full px-3 py-0.5 text-[10px] font-bold tracking-wide uppercase ${STATUS_STYLE[event.status] ?? 'bg-white text-black'}`}
-                                        >
-                                            {event.status}
-                                        </span>
-                                    </div>
-                                    <div className="flex flex-1 flex-col gap-3 p-5">
-                                        <h3 className="text-lg font-bold tracking-tight">{event.name}</h3>
-                                        <div className="flex items-center gap-1.5 text-xs text-white/60">
-                                            <Calendar className="h-3.5 w-3.5" />
-                                            {formatDate(event.start_date)} – {formatDate(event.end_date)}
+                                    <Link
+                                        key={event.id}
+                                        href={`/events/${event.id}`}
+                                        className="group flex flex-col overflow-hidden rounded-2xl border-2 border-white/15 bg-white/5 transition hover:border-red-500"
+                                    >
+                                        <div className="relative aspect-4/5 w-full overflow-hidden bg-gradient-to-br from-red-700 to-neutral-900">
+                                            {event.banner && (
+                                                <img
+                                                    src={formatImageUrl(
+                                                        event.banner,
+                                                    )}
+                                                    alt={event.name}
+                                                    className="h-full w-full object-cover opacity-80 transition group-hover:opacity-100"
+                                                />
+                                            )}
+                                            <span
+                                                className={`absolute top-3 left-3 rounded-full px-3 py-0.5 text-[10px] font-bold tracking-wide uppercase ${STATUS_STYLE[event.status] ?? 'bg-white text-black'}`}
+                                            >
+                                                {event.status}
+                                            </span>
                                         </div>
-                                        {price && (
-                                            <div className="mt-auto flex items-center gap-1.5 text-sm font-bold text-white">
-                                                <Tag className="h-3.5 w-3.5 text-white/50" />
-                                                {price}
+                                        <div className="flex flex-1 flex-col gap-3 p-5">
+                                            <h3 className="text-lg font-bold tracking-tight">
+                                                {event.name}
+                                            </h3>
+                                            <div className="flex items-center gap-1.5 text-xs text-white/60">
+                                                <Calendar className="h-3.5 w-3.5" />
+                                                {formatDate(event.start_date)} –{' '}
+                                                {formatDate(event.end_date)}
                                             </div>
-                                        )}
-                                    </div>
-                                </Link>
+                                            {price && (
+                                                <div className="mt-auto flex items-center gap-1.5 text-sm font-bold text-white">
+                                                    <Tag className="h-3.5 w-3.5 text-white/50" />
+                                                    {price}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </Link>
                                 );
                             })}
                         </div>
@@ -153,9 +174,14 @@ export default function EventsIndex({ events, filters, categories, calendarEvent
                                     disabled={!link.url}
                                     onClick={() =>
                                         link.url &&
-                                        router.visit(link.url, { preserveState: true, preserveScroll: true })
+                                        router.visit(link.url, {
+                                            preserveState: true,
+                                            preserveScroll: true,
+                                        })
                                     }
-                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                    dangerouslySetInnerHTML={{
+                                        __html: link.label,
+                                    }}
                                     className={`rounded-full border-2 px-4 py-1.5 text-sm font-semibold tracking-wide uppercase transition ${
                                         link.active
                                             ? 'border-red-500 bg-red-600 text-white'

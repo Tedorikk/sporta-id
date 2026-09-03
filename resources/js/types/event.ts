@@ -1,4 +1,4 @@
-import type { BasketballEventCategory } from "./basketball-event-category";
+import type { BasketballEventCategory } from './basketball-event-category';
 import type { Pool } from './pool';
 import type { PublicRegistrationCategory } from './registration-category';
 import type { Team } from './team';
@@ -42,7 +42,6 @@ export interface Event {
     pools?: Pool[];
     teams?: Team[];
 }
-
 
 export const EVENT_CATEGORIES = [
     { value: 'BASKETBALL', label: 'Basketball' },

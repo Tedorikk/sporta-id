@@ -1,4 +1,11 @@
-export type PaymentStatus = 'pending' | 'settlement' | 'expire' | 'cancel' | 'deny' | 'failure' | 'refund';
+export type PaymentStatus =
+    | 'pending'
+    | 'settlement'
+    | 'expire'
+    | 'cancel'
+    | 'deny'
+    | 'failure'
+    | 'refund';
 
 export interface Payment {
     id: number;

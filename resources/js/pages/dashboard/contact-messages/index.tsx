@@ -51,11 +51,21 @@ export default function ContactMessagesIndex({ messages }: Props) {
                         <TableBody>
                             {messages.data.map((message) => (
                                 <TableRow key={message.id}>
-                                    <TableCell className="font-medium whitespace-nowrap">{message.name}</TableCell>
-                                    <TableCell className="whitespace-nowrap">{message.email}</TableCell>
-                                    <TableCell className="whitespace-nowrap">{message.phone ?? '—'}</TableCell>
-                                    <TableCell className="max-w-md whitespace-normal">{message.message}</TableCell>
-                                    <TableCell className="whitespace-nowrap">{formatDate(message.created_at)}</TableCell>
+                                    <TableCell className="font-medium whitespace-nowrap">
+                                        {message.name}
+                                    </TableCell>
+                                    <TableCell className="whitespace-nowrap">
+                                        {message.email}
+                                    </TableCell>
+                                    <TableCell className="whitespace-nowrap">
+                                        {message.phone ?? '—'}
+                                    </TableCell>
+                                    <TableCell className="max-w-md whitespace-normal">
+                                        {message.message}
+                                    </TableCell>
+                                    <TableCell className="whitespace-nowrap">
+                                        {formatDate(message.created_at)}
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>

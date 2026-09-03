@@ -85,7 +85,10 @@ export interface PublicRegistrationCategory extends RegistrationCategory {
     slots_left: number | null;
 }
 
-export const REGISTRATION_FIELD_TYPES: { value: RegistrationFieldType; label: string }[] = [
+export const REGISTRATION_FIELD_TYPES: {
+    value: RegistrationFieldType;
+    label: string;
+}[] = [
     { value: 'text', label: 'Text' },
     { value: 'number', label: 'Number' },
     { value: 'email', label: 'Email' },
@@ -125,22 +128,54 @@ export interface ThemePreset {
 export const THEME_PRESETS: ThemePreset[] = [
     {
         name: 'Classic',
-        branding: { primary_color: '#f97316', secondary_color: '#c2410c', background_color: '#ffffff', text_color: '#171717', border_radius: 'rounded' },
+        branding: {
+            primary_color: '#f97316',
+            secondary_color: '#c2410c',
+            background_color: '#ffffff',
+            text_color: '#171717',
+            border_radius: 'rounded',
+        },
     },
     {
         name: 'Ocean',
-        branding: { primary_color: '#0ea5e9', secondary_color: '#0369a1', background_color: '#ffffff', text_color: '#0c1a24', border_radius: 'rounded' },
+        branding: {
+            primary_color: '#0ea5e9',
+            secondary_color: '#0369a1',
+            background_color: '#ffffff',
+            text_color: '#0c1a24',
+            border_radius: 'rounded',
+        },
     },
     {
         name: 'Forest',
-        branding: { primary_color: '#16a34a', secondary_color: '#166534', background_color: '#ffffff', text_color: '#14201a', border_radius: 'sharp' },
+        branding: {
+            primary_color: '#16a34a',
+            secondary_color: '#166534',
+            background_color: '#ffffff',
+            text_color: '#14201a',
+            border_radius: 'sharp',
+        },
     },
     {
         name: 'Berry',
-        branding: { primary_color: '#db2777', secondary_color: '#9d174d', background_color: '#ffffff', text_color: '#22131a', border_radius: 'pill', font_family: "'Poppins', sans-serif" },
+        branding: {
+            primary_color: '#db2777',
+            secondary_color: '#9d174d',
+            background_color: '#ffffff',
+            text_color: '#22131a',
+            border_radius: 'pill',
+            font_family: "'Poppins', sans-serif",
+        },
     },
     {
         name: 'Slate',
-        branding: { primary_color: '#475569', secondary_color: '#1e293b', background_color: '#f8fafc', text_color: '#0f172a', border_radius: 'sharp', font_family: "'Georgia', serif" },
+        branding: {
+            primary_color: '#475569',
+            secondary_color: '#1e293b',
+            background_color: '#f8fafc',
+            text_color: '#0f172a',
+            border_radius: 'sharp',
+            font_family: "'Georgia', serif",
+        },
     },
 ];

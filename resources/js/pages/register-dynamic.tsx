@@ -37,7 +37,11 @@ import { loadSnapScript } from '@/lib/midtrans';
 import type { CardTemplate } from '@/types/card-template';
 import type { Event } from '@/types/event';
 import type { Registration } from '@/types/registration';
-import type { FormPage, RegistrationCategory, RegistrationField } from '@/types/registration-category';
+import type {
+    FormPage,
+    RegistrationCategory,
+    RegistrationField,
+} from '@/types/registration-category';
 
 interface Props {
     event: Event;
@@ -79,8 +83,14 @@ function PaymentPendingView({
         loadSnapScript(midtransClientKey, midtransIsProduction)
             .then(() => {
                 window.snap?.pay(snapToken, {
-                    onSuccess: () => router.visit(`/registrations/${registration.qr_token}/status`),
-                    onPending: () => router.visit(`/registrations/${registration.qr_token}/status`),
+                    onSuccess: () =>
+                        router.visit(
+                            `/registrations/${registration.qr_token}/status`,
+                        ),
+                    onPending: () =>
+                        router.visit(
+                            `/registrations/${registration.qr_token}/status`,
+                        ),
                     onError: () => setIsPaying(false),
                     onClose: () => setIsPaying(false),
                 });
@@ -98,7 +108,9 @@ function PaymentPendingView({
             >
                 <div className="flex items-center gap-2 text-amber-400">
                     <Clock className="h-5 w-5" />
-                    <span className="text-sm font-semibold tracking-wide uppercase">Awaiting payment</span>
+                    <span className="text-sm font-semibold tracking-wide uppercase">
+                        Awaiting payment
+                    </span>
                 </div>
 
                 <div className="w-full max-w-sm overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
@@ -111,10 +123,15 @@ function PaymentPendingView({
                     />
 
                     <div className="flex flex-col items-center gap-4 px-6 py-10 text-center">
-                        <p className="text-sm font-medium text-neutral-500">{registration.name}</p>
-                        <p className="text-3xl font-bold text-neutral-900">{formatRupiah(registrationCategory.price)}</p>
+                        <p className="text-sm font-medium text-neutral-500">
+                            {registration.name}
+                        </p>
+                        <p className="text-3xl font-bold text-neutral-900">
+                            {formatRupiah(registrationCategory.price)}
+                        </p>
                         <p className="text-sm text-neutral-600">
-                            Your slot is reserved — complete payment to confirm this registration and get your ID card.
+                            Your slot is reserved — complete payment to confirm
+                            this registration and get your ID card.
                         </p>
 
                         {snapToken ? (
@@ -124,12 +141,16 @@ function PaymentPendingView({
                                 disabled={isPaying}
                                 className="mt-2 w-full cursor-pointer bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
                             >
-                                {isPaying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                {isPaying ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : null}
                                 {isPaying ? 'Opening payment…' : 'Pay Now'}
                             </Button>
                         ) : (
                             <p className="text-sm text-amber-600">
-                                Couldn&apos;t start payment just now — use &quot;Check registration status&quot; below to try again.
+                                Couldn&apos;t start payment just now — use
+                                &quot;Check registration status&quot; below to
+                                try again.
                             </p>
                         )}
                     </div>
@@ -188,17 +209,30 @@ function RegistrationSuccessView({
             >
                 <div className="flex items-center gap-2 text-emerald-400">
                     <CheckCircle2 className="h-5 w-5" />
-                    <span className="text-sm font-semibold tracking-wide uppercase">Registration confirmed</span>
+                    <span className="text-sm font-semibold tracking-wide uppercase">
+                        Registration confirmed
+                    </span>
                 </div>
 
                 {confirmationMessage && (
-                    <p className="max-w-sm text-center text-sm text-white/80">{confirmationMessage}</p>
+                    <p className="max-w-sm text-center text-sm text-white/80">
+                        {confirmationMessage}
+                    </p>
                 )}
 
                 {team ? (
-                    <TeamIdCardCard team={team} qrDataUrl={qrDataUrl} cardRef={cardRef} />
+                    <TeamIdCardCard
+                        team={team}
+                        qrDataUrl={qrDataUrl}
+                        cardRef={cardRef}
+                    />
                 ) : cardTemplate ? (
-                    <RegistrationIdCardCard registration={registration} template={cardTemplate} qrDataUrl={qrDataUrl} cardRef={cardRef} />
+                    <RegistrationIdCardCard
+                        registration={registration}
+                        template={cardTemplate}
+                        qrDataUrl={qrDataUrl}
+                        cardRef={cardRef}
+                    />
                 ) : null}
 
                 <IdCardActions
@@ -232,11 +266,17 @@ const EMAIL_FIELD: RegistrationField = {
     label: 'Email Address',
     type: 'email',
     required: true,
-    help_text: 'Your payment receipt and registration confirmation are sent here.',
+    help_text:
+        'Your payment receipt and registration confirmation are sent here.',
 };
 
 function withRequiredEmail(pages: FormPage[], isPaid: boolean): FormPage[] {
-    if (! isPaid || pages.some((page) => (page.fields ?? []).some((field) => field.key === 'email'))) {
+    if (
+        !isPaid ||
+        pages.some((page) =>
+            (page.fields ?? []).some((field) => field.key === 'email'),
+        )
+    ) {
         return pages;
     }
 
@@ -246,7 +286,10 @@ function withRequiredEmail(pages: FormPage[], isPaid: boolean): FormPage[] {
 
     const [first, ...rest] = pages;
 
-    return [{ ...first, fields: [...(first.fields ?? []), EMAIL_FIELD] }, ...rest];
+    return [
+        { ...first, fields: [...(first.fields ?? []), EMAIL_FIELD] },
+        ...rest,
+    ];
 }
 const PHONE_REGEX = /^[0-9+\-\s()]{6,25}$/;
 
@@ -275,10 +318,17 @@ function buildSchema(pages: FormPage[]) {
             }
 
             const value = (data as Record<string, unknown>)[f.key];
-            const isEmpty = f.type === 'checkbox' ? value !== true : typeof value !== 'string' || value.trim() === '';
+            const isEmpty =
+                f.type === 'checkbox'
+                    ? value !== true
+                    : typeof value !== 'string' || value.trim() === '';
 
             if (f.required && isEmpty) {
-                ctx.addIssue({ code: 'custom', path: [f.key], message: f.error_message || `${f.label} is required` });
+                ctx.addIssue({
+                    code: 'custom',
+                    path: [f.key],
+                    message: f.error_message || `${f.label} is required`,
+                });
 
                 return;
             }
@@ -288,25 +338,45 @@ function buildSchema(pages: FormPage[]) {
             }
 
             if (f.type === 'email' && !/^\S+@\S+\.\S+$/.test(value)) {
-                ctx.addIssue({ code: 'custom', path: [f.key], message: 'Must be a valid email' });
+                ctx.addIssue({
+                    code: 'custom',
+                    path: [f.key],
+                    message: 'Must be a valid email',
+                });
             }
 
             if (f.type === 'phone' && !PHONE_REGEX.test(value)) {
-                ctx.addIssue({ code: 'custom', path: [f.key], message: 'Must be a valid phone number' });
+                ctx.addIssue({
+                    code: 'custom',
+                    path: [f.key],
+                    message: 'Must be a valid phone number',
+                });
             }
 
             if (f.type === 'number') {
                 if (!/^-?\d*\.?\d*$/.test(value)) {
-                    ctx.addIssue({ code: 'custom', path: [f.key], message: 'Must be a number' });
+                    ctx.addIssue({
+                        code: 'custom',
+                        path: [f.key],
+                        message: 'Must be a number',
+                    });
                 } else {
                     const numeric = Number(value);
 
                     if (f.min != null && numeric < f.min) {
-                        ctx.addIssue({ code: 'custom', path: [f.key], message: `Must be at least ${f.min}` });
+                        ctx.addIssue({
+                            code: 'custom',
+                            path: [f.key],
+                            message: `Must be at least ${f.min}`,
+                        });
                     }
 
                     if (f.max != null && numeric > f.max) {
-                        ctx.addIssue({ code: 'custom', path: [f.key], message: `Must be at most ${f.max}` });
+                        ctx.addIssue({
+                            code: 'custom',
+                            path: [f.key],
+                            message: `Must be at most ${f.max}`,
+                        });
                     }
                 }
             }
@@ -328,7 +398,17 @@ function defaultValuesFor(pages: FormPage[]) {
     return defaults;
 }
 
-function RatingInput({ value, onChange, max = 5, disabled }: { value: string; onChange: (value: string) => void; max?: number; disabled?: boolean }) {
+function RatingInput({
+    value,
+    onChange,
+    max = 5,
+    disabled,
+}: {
+    value: string;
+    onChange: (value: string) => void;
+    max?: number;
+    disabled?: boolean;
+}) {
     const selected = Number(value) || 0;
 
     return (
@@ -342,7 +422,13 @@ function RatingInput({ value, onChange, max = 5, disabled }: { value: string; on
                     aria-label={`${n} star${n > 1 ? 's' : ''}`}
                     className="disabled:opacity-50"
                 >
-                    <Star className={n <= selected ? 'h-6 w-6 fill-[var(--accent)] text-[var(--accent)]' : 'h-6 w-6 text-neutral-300'} />
+                    <Star
+                        className={
+                            n <= selected
+                                ? 'h-6 w-6 fill-[var(--accent)] text-[var(--accent)]'
+                                : 'h-6 w-6 text-neutral-300'
+                        }
+                    />
                 </button>
             ))}
         </div>
@@ -365,10 +451,12 @@ export default function RegisterDynamic({
     const [pageIndex, setPageIndex] = useState(0);
     const [honeypot, setHoneypot] = useState('');
     const pages = useMemo(
-        () => withRequiredEmail(
-            registrationCategory.form_pages ?? [],
-            Boolean(registrationCategory.price) && Number(registrationCategory.price) > 0,
-        ),
+        () =>
+            withRequiredEmail(
+                registrationCategory.form_pages ?? [],
+                Boolean(registrationCategory.price) &&
+                    Number(registrationCategory.price) > 0,
+            ),
         [registrationCategory.form_pages, registrationCategory.price],
     );
     const branding = registrationCategory.form_branding ?? {};
@@ -383,17 +471,29 @@ export default function RegisterDynamic({
     });
 
     const isTeam = registrationCategory.subject_type === 'team';
-    const isFreeCategory = !registrationCategory.price || Number(registrationCategory.price) === 0;
+    const isFreeCategory =
+        !registrationCategory.price || Number(registrationCategory.price) === 0;
     const { accent, accentDark } = accentColors(event.accent_color);
-    const radiusValue = branding.border_radius === 'sharp' ? '2px' : branding.border_radius === 'pill' ? '9999px' : branding.border_radius === 'rounded' ? '0.75rem' : undefined;
+    const radiusValue =
+        branding.border_radius === 'sharp'
+            ? '2px'
+            : branding.border_radius === 'pill'
+              ? '9999px'
+              : branding.border_radius === 'rounded'
+                ? '0.75rem'
+                : undefined;
     const accentStyle = {
         '--accent': branding.primary_color || accent,
         '--accent-dark': branding.secondary_color || accentDark,
         ...(branding.font_family ? { fontFamily: branding.font_family } : {}),
     } as CSSProperties;
-    const controlStyle: CSSProperties = radiusValue ? { borderRadius: radiusValue } : {};
+    const controlStyle: CSSProperties = radiusValue
+        ? { borderRadius: radiusValue }
+        : {};
     const cardStyle: CSSProperties = {
-        ...(branding.background_color ? { backgroundColor: branding.background_color } : {}),
+        ...(branding.background_color
+            ? { backgroundColor: branding.background_color }
+            : {}),
         ...(branding.text_color ? { color: branding.text_color } : {}),
     };
 
@@ -405,7 +505,10 @@ export default function RegisterDynamic({
         setIsSaving(true);
 
         const raw = data as Record<string, string | boolean>;
-        const payload: Record<string, string | boolean | Record<string, string | boolean>> = {
+        const payload: Record<
+            string,
+            string | boolean | Record<string, string | boolean>
+        > = {
             name: raw.name,
             form_data: {},
             website: honeypot,
@@ -424,15 +527,22 @@ export default function RegisterDynamic({
             }
         });
 
-        router.post(`/events/${event.id}/registration-categories/${registrationCategory.id}/register`, payload, {
-            onFinish: () => setIsSaving(false),
-            onError: (errors) => {
-                Object.entries(errors).forEach(([field, message]) => {
-                    const key = field.replace(/^form_data\./, '');
-                    setError(key as never, { type: 'manual', message: message as string });
-                });
+        router.post(
+            `/events/${event.id}/registration-categories/${registrationCategory.id}/register`,
+            payload,
+            {
+                onFinish: () => setIsSaving(false),
+                onError: (errors) => {
+                    Object.entries(errors).forEach(([field, message]) => {
+                        const key = field.replace(/^form_data\./, '');
+                        setError(key as never, {
+                            type: 'manual',
+                            message: message as string,
+                        });
+                    });
+                },
             },
-        });
+        );
     };
 
     async function goNext() {
@@ -440,8 +550,11 @@ export default function RegisterDynamic({
             return;
         }
 
-        const keys = currentPage.fields.filter((f) => f.key !== 'name').map((f) => f.key) as never[];
-        const namesToCheck = pageIndex === 0 ? (['name', ...keys] as never[]) : keys;
+        const keys = currentPage.fields
+            .filter((f) => f.key !== 'name')
+            .map((f) => f.key) as never[];
+        const namesToCheck =
+            pageIndex === 0 ? (['name', ...keys] as never[]) : keys;
         const valid = await trigger(namesToCheck);
 
         if (valid) {
@@ -471,7 +584,9 @@ export default function RegisterDynamic({
                 registration={confirmedRegistration}
                 cardTemplate={cardTemplate ?? null}
                 accentStyle={accentStyle}
-                confirmationMessage={registrationCategory.form_settings?.confirmation_message}
+                confirmationMessage={
+                    registrationCategory.form_settings?.confirmation_message
+                }
             />
         );
     }
@@ -481,7 +596,10 @@ export default function RegisterDynamic({
             <>
                 <Head title={`Registration Closed — ${event.name}`} />
 
-                <div className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10" style={accentStyle}>
+                <div
+                    className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10"
+                    style={accentStyle}
+                >
                     <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
                         <PublicPageHeader
                             eyebrow="Registration"
@@ -496,11 +614,14 @@ export default function RegisterDynamic({
                                 <Lock className="h-8 w-8 text-red-600" />
                             </div>
                             <p className="text-neutral-600">
-                                Registration for this category is currently closed or full. Please contact the organizer for more
-                                information.
+                                Registration for this category is currently
+                                closed or full. Please contact the organizer for
+                                more information.
                             </p>
                             {event.contact_person && (
-                                <p className="text-sm font-medium text-neutral-500">Contact: {event.contact_person}</p>
+                                <p className="text-sm font-medium text-neutral-500">
+                                    Contact: {event.contact_person}
+                                </p>
                             )}
                         </div>
                     </div>
@@ -511,10 +632,18 @@ export default function RegisterDynamic({
 
     return (
         <>
-            <Head title={`${registrationCategory.name} Registration — ${event.name}`} />
+            <Head
+                title={`${registrationCategory.name} Registration — ${event.name}`}
+            />
 
-            <div className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10" style={accentStyle}>
-                <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl" style={cardStyle}>
+            <div
+                className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10"
+                style={accentStyle}
+            >
+                <div
+                    className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl"
+                    style={cardStyle}
+                >
                     <PublicPageHeader
                         eyebrow="Registration"
                         title={event.name}
@@ -532,9 +661,12 @@ export default function RegisterDynamic({
                                 <span className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">
                                     You are registering for
                                 </span>
-                                <span className="text-sm font-bold text-neutral-900">{registrationCategory.name}</span>
+                                <span className="text-sm font-bold text-neutral-900">
+                                    {registrationCategory.name}
+                                </span>
                                 <span className="text-xs text-neutral-500">
-                                    {event.name} · {isTeam ? 'Per team' : 'Per person'}
+                                    {event.name} ·{' '}
+                                    {isTeam ? 'Per team' : 'Per person'}
                                 </span>
                             </div>
                             <span className="shrink-0 text-lg font-black text-neutral-900">
@@ -543,8 +675,10 @@ export default function RegisterDynamic({
                         </div>
                         {!isFreeCategory && (
                             <p className="mt-2 text-xs text-neutral-500">
-                                After you submit this form your slot is reserved and you&apos;ll be taken to the
-                                Midtrans payment page to pay {formatRupiah(registrationCategory.price)}. The
+                                After you submit this form your slot is reserved
+                                and you&apos;ll be taken to the Midtrans payment
+                                page to pay{' '}
+                                {formatRupiah(registrationCategory.price)}. The
                                 registration is confirmed once payment settles.
                             </p>
                         )}
@@ -561,13 +695,18 @@ export default function RegisterDynamic({
                             <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-neutral-200">
                                 <div
                                     className="h-full bg-[var(--accent)] transition-all"
-                                    style={{ width: `${((pageIndex + 1) / pages.length) * 100}%` }}
+                                    style={{
+                                        width: `${((pageIndex + 1) / pages.length) * 100}%`,
+                                    }}
                                 />
                             </div>
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-6">
+                    <form
+                        onSubmit={handleSubmit(onSubmit)}
+                        className="px-6 py-6"
+                    >
                         {/* Honeypot — hidden from real visitors, a filled value is a strong bot signal. */}
                         <input
                             value={honeypot}
@@ -586,19 +725,35 @@ export default function RegisterDynamic({
                                     name={'name' as never}
                                     control={control}
                                     render={({ field, fieldState }) => (
-                                        <Field data-invalid={fieldState.invalid}>
-                                            <FieldLabel htmlFor="name">{isTeam ? 'Team Name' : 'Full Name'}</FieldLabel>
+                                        <Field
+                                            data-invalid={fieldState.invalid}
+                                        >
+                                            <FieldLabel htmlFor="name">
+                                                {isTeam
+                                                    ? 'Team Name'
+                                                    : 'Full Name'}
+                                            </FieldLabel>
                                             <Input
                                                 {...field}
                                                 id="name"
-                                                placeholder={isTeam ? "Input your team's name" : 'Input your name'}
-                                                aria-invalid={fieldState.invalid}
+                                                placeholder={
+                                                    isTeam
+                                                        ? "Input your team's name"
+                                                        : 'Input your name'
+                                                }
+                                                aria-invalid={
+                                                    fieldState.invalid
+                                                }
                                                 autoComplete="off"
                                                 disabled={isSaving}
                                                 style={controlStyle}
                                                 className="border-2 border-black focus-visible:ring-[var(--accent)]"
                                             />
-                                            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                                            {fieldState.invalid && (
+                                                <FieldError
+                                                    errors={[fieldState.error]}
+                                                />
+                                            )}
                                         </Field>
                                     )}
                                 />
@@ -612,55 +767,107 @@ export default function RegisterDynamic({
                                         name={f.key as never}
                                         control={control}
                                         render={({ field, fieldState }) => (
-                                            <Field data-invalid={fieldState.invalid}>
+                                            <Field
+                                                data-invalid={
+                                                    fieldState.invalid
+                                                }
+                                            >
                                                 <FieldLabel htmlFor={f.key}>
                                                     {f.label}
                                                     {!f.required && (
-                                                        <span className="font-normal text-muted-foreground"> (Optional)</span>
+                                                        <span className="font-normal text-muted-foreground">
+                                                            {' '}
+                                                            (Optional)
+                                                        </span>
                                                     )}
                                                 </FieldLabel>
 
                                                 {f.type === 'file' ? (
                                                     <UploadImage
-                                                        value={field.value as string}
+                                                        value={
+                                                            field.value as string
+                                                        }
                                                         ratio={4 / 5}
                                                         uploadUrl="/public-upload/image"
                                                         deleteUrl="/public-upload/image"
-                                                        onChange={(value) => field.onChange(value ?? '')}
+                                                        onChange={(value) =>
+                                                            field.onChange(
+                                                                value ?? '',
+                                                            )
+                                                        }
                                                         onError={(error) =>
-                                                            setError(f.key as never, {
-                                                                type: 'manual',
-                                                                message: typeof error === 'string' ? error : 'Upload failed',
-                                                            })
+                                                            setError(
+                                                                f.key as never,
+                                                                {
+                                                                    type: 'manual',
+                                                                    message:
+                                                                        typeof error ===
+                                                                        'string'
+                                                                            ? error
+                                                                            : 'Upload failed',
+                                                                },
+                                                            )
                                                         }
                                                         enableCrop
                                                         className="rounded-2xl border-2 border-black"
                                                     />
                                                 ) : f.type === 'document' ? (
                                                     <UploadDocument
-                                                        value={field.value as string}
+                                                        value={
+                                                            field.value as string
+                                                        }
                                                         uploadUrl="/public-upload/document"
                                                         deleteUrl="/public-upload/document"
-                                                        onChange={(value) => field.onChange(value ?? '')}
+                                                        onChange={(value) =>
+                                                            field.onChange(
+                                                                value ?? '',
+                                                            )
+                                                        }
                                                         onError={(error) =>
-                                                            setError(f.key as never, {
-                                                                type: 'manual',
-                                                                message: typeof error === 'string' ? error : 'Upload failed',
-                                                            })
+                                                            setError(
+                                                                f.key as never,
+                                                                {
+                                                                    type: 'manual',
+                                                                    message:
+                                                                        typeof error ===
+                                                                        'string'
+                                                                            ? error
+                                                                            : 'Upload failed',
+                                                                },
+                                                            )
                                                         }
                                                         className="rounded-2xl border-2 border-black"
                                                     />
                                                 ) : f.type === 'signature' ? (
                                                     <SignaturePad
-                                                        value={field.value as string}
+                                                        value={
+                                                            field.value as string
+                                                        }
                                                         disabled={isSaving}
-                                                        onChange={(value) => field.onChange(value ?? '')}
-                                                        onError={(error) => setError(f.key as never, { type: 'manual', message: error })}
+                                                        onChange={(value) =>
+                                                            field.onChange(
+                                                                value ?? '',
+                                                            )
+                                                        }
+                                                        onError={(error) =>
+                                                            setError(
+                                                                f.key as never,
+                                                                {
+                                                                    type: 'manual',
+                                                                    message:
+                                                                        error,
+                                                                },
+                                                            )
+                                                        }
                                                     />
                                                 ) : f.type === 'rating' ? (
                                                     <RatingInput
-                                                        value={field.value as string}
-                                                        onChange={field.onChange}
+                                                        value={
+                                                            field.value as string
+                                                        }
+                                                        onChange={
+                                                            field.onChange
+                                                        }
                                                         max={f.max_rating ?? 5}
                                                         disabled={isSaving}
                                                     />
@@ -668,13 +875,23 @@ export default function RegisterDynamic({
                                                     <Textarea
                                                         {...field}
                                                         id={f.key}
-                                                        value={field.value as string}
+                                                        value={
+                                                            field.value as string
+                                                        }
                                                         disabled={isSaving}
                                                         style={controlStyle}
                                                         className="border-2 border-black focus-visible:ring-[var(--accent)]"
                                                     />
                                                 ) : f.type === 'select' ? (
-                                                    <Select value={field.value as string} onValueChange={field.onChange} disabled={isSaving}>
+                                                    <Select
+                                                        value={
+                                                            field.value as string
+                                                        }
+                                                        onValueChange={
+                                                            field.onChange
+                                                        }
+                                                        disabled={isSaving}
+                                                    >
                                                         <SelectTrigger
                                                             id={f.key}
                                                             style={controlStyle}
@@ -683,8 +900,16 @@ export default function RegisterDynamic({
                                                             <SelectValue placeholder="Select an option" />
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            {(f.options ?? []).map((option) => (
-                                                                <SelectItem key={option} value={option} className="cursor-pointer">
+                                                            {(
+                                                                f.options ?? []
+                                                            ).map((option) => (
+                                                                <SelectItem
+                                                                    key={option}
+                                                                    value={
+                                                                        option
+                                                                    }
+                                                                    className="cursor-pointer"
+                                                                >
                                                                     {option}
                                                                 </SelectItem>
                                                             ))}
@@ -692,26 +917,51 @@ export default function RegisterDynamic({
                                                     </Select>
                                                 ) : f.type === 'radio' ? (
                                                     <div className="flex flex-wrap gap-4">
-                                                        {(f.options ?? []).map((option) => (
-                                                            <label key={option} className="flex items-center gap-2 text-sm">
-                                                                <input
-                                                                    type="radio"
-                                                                    name={f.key}
-                                                                    value={option}
-                                                                    checked={field.value === option}
-                                                                    onChange={() => field.onChange(option)}
-                                                                    disabled={isSaving}
-                                                                />
-                                                                {option}
-                                                            </label>
-                                                        ))}
+                                                        {(f.options ?? []).map(
+                                                            (option) => (
+                                                                <label
+                                                                    key={option}
+                                                                    className="flex items-center gap-2 text-sm"
+                                                                >
+                                                                    <input
+                                                                        type="radio"
+                                                                        name={
+                                                                            f.key
+                                                                        }
+                                                                        value={
+                                                                            option
+                                                                        }
+                                                                        checked={
+                                                                            field.value ===
+                                                                            option
+                                                                        }
+                                                                        onChange={() =>
+                                                                            field.onChange(
+                                                                                option,
+                                                                            )
+                                                                        }
+                                                                        disabled={
+                                                                            isSaving
+                                                                        }
+                                                                    />
+                                                                    {option}
+                                                                </label>
+                                                            ),
+                                                        )}
                                                     </div>
                                                 ) : f.type === 'checkbox' ? (
                                                     <label className="flex items-center gap-2 text-sm">
                                                         <input
                                                             type="checkbox"
-                                                            checked={field.value as boolean}
-                                                            onChange={(e) => field.onChange(e.target.checked)}
+                                                            checked={
+                                                                field.value as boolean
+                                                            }
+                                                            onChange={(e) =>
+                                                                field.onChange(
+                                                                    e.target
+                                                                        .checked,
+                                                                )
+                                                            }
                                                             disabled={isSaving}
                                                         />
                                                         {f.help_text ?? 'Yes'}
@@ -720,10 +970,28 @@ export default function RegisterDynamic({
                                                     <Input
                                                         {...field}
                                                         id={f.key}
-                                                        value={field.value as string}
-                                                        type={f.type === 'date' ? 'date' : f.type === 'number' ? 'text' : f.type === 'email' ? 'email' : 'text'}
-                                                        inputMode={f.type === 'number' ? 'decimal' : undefined}
-                                                        aria-invalid={fieldState.invalid}
+                                                        value={
+                                                            field.value as string
+                                                        }
+                                                        type={
+                                                            f.type === 'date'
+                                                                ? 'date'
+                                                                : f.type ===
+                                                                    'number'
+                                                                  ? 'text'
+                                                                  : f.type ===
+                                                                      'email'
+                                                                    ? 'email'
+                                                                    : 'text'
+                                                        }
+                                                        inputMode={
+                                                            f.type === 'number'
+                                                                ? 'decimal'
+                                                                : undefined
+                                                        }
+                                                        aria-invalid={
+                                                            fieldState.invalid
+                                                        }
                                                         autoComplete="off"
                                                         disabled={isSaving}
                                                         style={controlStyle}
@@ -731,8 +999,19 @@ export default function RegisterDynamic({
                                                     />
                                                 )}
 
-                                                {f.help_text && f.type !== 'checkbox' && <FieldDescription>{f.help_text}</FieldDescription>}
-                                                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                                                {f.help_text &&
+                                                    f.type !== 'checkbox' && (
+                                                        <FieldDescription>
+                                                            {f.help_text}
+                                                        </FieldDescription>
+                                                    )}
+                                                {fieldState.invalid && (
+                                                    <FieldError
+                                                        errors={[
+                                                            fieldState.error,
+                                                        ]}
+                                                    />
+                                                )}
                                             </Field>
                                         )}
                                     />
@@ -744,7 +1023,11 @@ export default function RegisterDynamic({
                                         type="button"
                                         variant="outline"
                                         className="flex-1 cursor-pointer"
-                                        onClick={() => setPageIndex((i) => Math.max(i - 1, 0))}
+                                        onClick={() =>
+                                            setPageIndex((i) =>
+                                                Math.max(i - 1, 0),
+                                            )
+                                        }
                                         disabled={isSaving}
                                         style={controlStyle}
                                     >
@@ -759,8 +1042,15 @@ export default function RegisterDynamic({
                                         disabled={isSaving}
                                         style={controlStyle}
                                     >
-                                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
-                                        {isSaving ? 'Registering...' : branding.button_label || 'Register'}
+                                        {isSaving ? (
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <CheckCircle2 className="mr-2 h-4 w-4" />
+                                        )}
+                                        {isSaving
+                                            ? 'Registering...'
+                                            : branding.button_label ||
+                                              'Register'}
                                     </Button>
                                 ) : (
                                     <Button

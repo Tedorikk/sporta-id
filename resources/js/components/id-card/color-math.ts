@@ -93,7 +93,9 @@ export function rgbaToHex({ r, g, b, a }: RGBA): string {
 export function parseColor(input: string): RGBA | null {
     const value = input.trim();
 
-    const rgbMatch = value.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+)\s*)?\)$/i);
+    const rgbMatch = value.match(
+        /^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+)\s*)?\)$/i,
+    );
 
     if (rgbMatch) {
         return {
@@ -134,5 +136,7 @@ export function parseColor(input: string): RGBA | null {
 }
 
 export function rgbaToCss({ r, g, b, a }: RGBA): string {
-    return a < 1 ? `rgba(${r}, ${g}, ${b}, ${Math.round(a * 100) / 100})` : rgbaToHex({ r, g, b, a: 1 });
+    return a < 1
+        ? `rgba(${r}, ${g}, ${b}, ${Math.round(a * 100) / 100})`
+        : rgbaToHex({ r, g, b, a: 1 });
 }

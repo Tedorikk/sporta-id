@@ -1,6 +1,18 @@
 import { Link } from '@inertiajs/react';
-import { Facebook, Instagram, Mail, MapPin, Phone, Youtube } from 'lucide-react';
-import { CONTACT_ADDRESS, CONTACT_EMAIL, CONTACT_PHONE, SOCIAL_LINKS } from '@/data/contact-info';
+import {
+    Facebook,
+    Instagram,
+    Mail,
+    MapPin,
+    Phone,
+    Youtube,
+} from 'lucide-react';
+import {
+    CONTACT_ADDRESS,
+    CONTACT_EMAIL,
+    CONTACT_PHONE,
+    SOCIAL_LINKS,
+} from '@/data/contact-info';
 import { SiteLogo } from './site-logo';
 
 const SOCIAL_ICONS: Record<string, typeof Instagram> = {
@@ -31,7 +43,8 @@ export function SiteFooter() {
                         <SiteLogo className="h-8 w-auto" />
                     </div>
                     <p className="text-sm text-white/60">
-                        Support Your Talent — organizing sports and arts events across Indonesia since 2011.
+                        Support Your Talent — organizing sports and arts events
+                        across Indonesia since 2011.
                     </p>
                     <div className="flex gap-2">
                         {SOCIAL_LINKS.map((social) => {
@@ -54,7 +67,9 @@ export function SiteFooter() {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <h3 className="text-xs font-bold tracking-[0.2em] text-white/40 uppercase">Explore</h3>
+                    <h3 className="text-xs font-bold tracking-[0.2em] text-white/40 uppercase">
+                        Explore
+                    </h3>
                     {EXPLORE_LINKS.map((link) => (
                         <Link
                             key={link.href}
@@ -67,8 +82,13 @@ export function SiteFooter() {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <h3 className="text-xs font-bold tracking-[0.2em] text-white/40 uppercase">Our Events</h3>
-                    <Link href="/events" className="text-sm text-white/70 transition hover:text-white">
+                    <h3 className="text-xs font-bold tracking-[0.2em] text-white/40 uppercase">
+                        Our Events
+                    </h3>
+                    <Link
+                        href="/events"
+                        className="text-sm text-white/70 transition hover:text-white"
+                    >
                         All Events
                     </Link>
                     <a
@@ -82,7 +102,9 @@ export function SiteFooter() {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <h3 className="text-xs font-bold tracking-[0.2em] text-white/40 uppercase">Contact</h3>
+                    <h3 className="text-xs font-bold tracking-[0.2em] text-white/40 uppercase">
+                        Contact
+                    </h3>
                     <div className="flex items-start gap-2 text-sm text-white/70">
                         <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-white/40" />
                         {CONTACT_ADDRESS}
@@ -108,16 +130,24 @@ export function SiteFooter() {
                 <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 text-xs text-white/40">
                     <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
                         {LEGAL_LINKS.map((link) => (
-                            <Link key={link.href} href={link.href} className="transition hover:text-white">
+                            <Link
+                                key={link.href}
+                                href={link.href}
+                                className="transition hover:text-white"
+                            >
                                 {link.label}
                             </Link>
                         ))}
                     </div>
                     <p className="text-center">
-                        Online payments are processed securely by Midtrans — bank transfer &amp; virtual account,
-                        e-wallet, QRIS, and credit/debit card.
+                        Online payments are processed securely by Midtrans —
+                        bank transfer &amp; virtual account, e-wallet, QRIS, and
+                        credit/debit card.
                     </p>
-                    <p>© {new Date().getFullYear()} Sporta Indonesia. All rights reserved.</p>
+                    <p>
+                        © {new Date().getFullYear()} Sporta Indonesia. All
+                        rights reserved.
+                    </p>
                 </div>
             </div>
         </footer>

@@ -1,6 +1,17 @@
-import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
+import {
+    DndContext,
+    PointerSensor,
+    closestCenter,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
-import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import {
+    SortableContext,
+    arrayMove,
+    useSortable,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ChevronDown, ChevronUp, GripVertical, Trash2 } from 'lucide-react';
 import { useState } from 'react';
@@ -9,10 +20,20 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { OPTION_FIELD_TYPES, REGISTRATION_FIELD_TYPES, RESERVED_FIELD_KEYS } from '@/types/registration-category';
+import {
+    OPTION_FIELD_TYPES,
+    REGISTRATION_FIELD_TYPES,
+    RESERVED_FIELD_KEYS,
+} from '@/types/registration-category';
 import type { RegistrationField } from '@/types/registration-category';
 
 export interface DraftField extends RegistrationField {
@@ -25,7 +46,9 @@ interface FieldListProps {
 }
 
 export function FieldList({ fields, onChange }: FieldListProps) {
-    const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    );
 
     function handleDragEnd(event: DragEndEvent) {
         const { active, over } = event;
@@ -51,17 +74,30 @@ export function FieldList({ fields, onChange }: FieldListProps) {
     if (fields.length === 0) {
         return (
             <p className="rounded-md border border-dashed py-8 text-center text-sm text-muted-foreground">
-                No fields on this page yet — add one from the palette on the left.
+                No fields on this page yet — add one from the palette on the
+                left.
             </p>
         );
     }
 
     return (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={fields.map((f) => f._uid)} strategy={verticalListSortingStrategy}>
+        <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+        >
+            <SortableContext
+                items={fields.map((f) => f._uid)}
+                strategy={verticalListSortingStrategy}
+            >
                 <div className="space-y-2">
                     {fields.map((field) => (
-                        <SortableFieldRow key={field._uid} field={field} onChange={(patch) => updateField(field._uid, patch)} onRemove={() => removeField(field._uid)} />
+                        <SortableFieldRow
+                            key={field._uid}
+                            field={field}
+                            onChange={(patch) => updateField(field._uid, patch)}
+                            onRemove={() => removeField(field._uid)}
+                        />
                     ))}
                 </div>
             </SortableContext>
@@ -69,16 +105,40 @@ export function FieldList({ fields, onChange }: FieldListProps) {
     );
 }
 
-function SortableFieldRow({ field, onChange, onRemove }: { field: DraftField; onChange: (patch: Partial<DraftField>) => void; onRemove: () => void }) {
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: field._uid });
+function SortableFieldRow({
+    field,
+    onChange,
+    onRemove,
+}: {
+    field: DraftField;
+    onChange: (patch: Partial<DraftField>) => void;
+    onRemove: () => void;
+}) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: field._uid });
     const [expanded, setExpanded] = useState(false);
 
     const style = { transform: CSS.Transform.toString(transform), transition };
     const isReserved = RESERVED_FIELD_KEYS.includes(field.key);
-    const typeLabel = REGISTRATION_FIELD_TYPES.find((t) => t.value === field.type)?.label ?? field.type;
+    const typeLabel =
+        REGISTRATION_FIELD_TYPES.find((t) => t.value === field.type)?.label ??
+        field.type;
 
     return (
-        <div ref={setNodeRef} style={style} className={cn('rounded-md border bg-muted/30', isDragging && 'opacity-60 shadow-lg')}>
+        <div
+            ref={setNodeRef}
+            style={style}
+            className={cn(
+                'rounded-md border bg-muted/30',
+                isDragging && 'opacity-60 shadow-lg',
+            )}
+        >
             <div className="flex items-center gap-2 p-2.5">
                 <button
                     type="button"
@@ -90,8 +150,14 @@ function SortableFieldRow({ field, onChange, onRemove }: { field: DraftField; on
                     <GripVertical className="h-4 w-4" />
                 </button>
 
-                <button type="button" className="flex flex-1 items-center gap-2 text-left" onClick={() => setExpanded((v) => !v)}>
-                    <span className="text-sm font-medium">{field.label || 'Untitled field'}</span>
+                <button
+                    type="button"
+                    className="flex flex-1 items-center gap-2 text-left"
+                    onClick={() => setExpanded((v) => !v)}
+                >
+                    <span className="text-sm font-medium">
+                        {field.label || 'Untitled field'}
+                    </span>
                     <Badge variant="outline" className="text-[10px]">
                         {typeLabel}
                     </Badge>
@@ -102,11 +168,28 @@ function SortableFieldRow({ field, onChange, onRemove }: { field: DraftField; on
                     )}
                 </button>
 
-                <Button type="button" variant="ghost" size="icon" onClick={() => setExpanded((v) => !v)} aria-label={expanded ? 'Collapse' : 'Expand'}>
-                    {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setExpanded((v) => !v)}
+                    aria-label={expanded ? 'Collapse' : 'Expand'}
+                >
+                    {expanded ? (
+                        <ChevronUp className="h-4 w-4" />
+                    ) : (
+                        <ChevronDown className="h-4 w-4" />
+                    )}
                 </Button>
 
-                <Button type="button" variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={onRemove} aria-label="Remove field">
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="text-muted-foreground hover:text-destructive"
+                    onClick={onRemove}
+                    aria-label="Remove field"
+                >
                     <Trash2 className="h-4 w-4" />
                 </Button>
             </div>
@@ -116,14 +199,33 @@ function SortableFieldRow({ field, onChange, onRemove }: { field: DraftField; on
                     <div className="grid grid-cols-2 gap-2">
                         <Field>
                             <FieldLabel>Label</FieldLabel>
-                            <Input value={field.label} onChange={(e) => onChange({ label: e.target.value })} placeholder="e.g. Shirt Size" />
+                            <Input
+                                value={field.label}
+                                onChange={(e) =>
+                                    onChange({ label: e.target.value })
+                                }
+                                placeholder="e.g. Shirt Size"
+                            />
                         </Field>
                         <Field>
-                            <FieldLabel>Key {isReserved && <span className="font-normal text-muted-foreground">(built-in)</span>}</FieldLabel>
+                            <FieldLabel>
+                                Key{' '}
+                                {isReserved && (
+                                    <span className="font-normal text-muted-foreground">
+                                        (built-in)
+                                    </span>
+                                )}
+                            </FieldLabel>
                             <Input
                                 value={field.key}
                                 disabled={isReserved}
-                                onChange={(e) => onChange({ key: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_') })}
+                                onChange={(e) =>
+                                    onChange({
+                                        key: e.target.value
+                                            .toLowerCase()
+                                            .replace(/[^a-z0-9_]/g, '_'),
+                                    })
+                                }
                                 placeholder="key, e.g. shirt_size"
                             />
                         </Field>
@@ -132,22 +234,42 @@ function SortableFieldRow({ field, onChange, onRemove }: { field: DraftField; on
                     <div className="grid grid-cols-2 gap-2">
                         <Field>
                             <FieldLabel>Type</FieldLabel>
-                            <Select value={field.type} onValueChange={(value) => onChange({ type: value as DraftField['type'] })}>
+                            <Select
+                                value={field.type}
+                                onValueChange={(value) =>
+                                    onChange({
+                                        type: value as DraftField['type'],
+                                    })
+                                }
+                            >
                                 <SelectTrigger className="w-full">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {REGISTRATION_FIELD_TYPES.map((t) => (
-                                        <SelectItem key={t.value} value={t.value}>
+                                        <SelectItem
+                                            key={t.value}
+                                            value={t.value}
+                                        >
                                             {t.label}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                         </Field>
-                        <Field orientation="horizontal" className="items-center pt-6">
-                            <Checkbox checked={field.required} onCheckedChange={(checked) => onChange({ required: Boolean(checked) })} />
-                            <FieldLabel className="font-normal">Required</FieldLabel>
+                        <Field
+                            orientation="horizontal"
+                            className="items-center pt-6"
+                        >
+                            <Checkbox
+                                checked={field.required}
+                                onCheckedChange={(checked) =>
+                                    onChange({ required: Boolean(checked) })
+                                }
+                            />
+                            <FieldLabel className="font-normal">
+                                Required
+                            </FieldLabel>
                         </Field>
                     </div>
 
@@ -156,7 +278,14 @@ function SortableFieldRow({ field, onChange, onRemove }: { field: DraftField; on
                             <FieldLabel>Options (comma separated)</FieldLabel>
                             <Input
                                 value={(field.options ?? []).join(', ')}
-                                onChange={(e) => onChange({ options: e.target.value.split(',').map((o) => o.trim()).filter(Boolean) })}
+                                onChange={(e) =>
+                                    onChange({
+                                        options: e.target.value
+                                            .split(',')
+                                            .map((o) => o.trim())
+                                            .filter(Boolean),
+                                    })
+                                }
                                 placeholder="S, M, L, XL"
                             />
                         </Field>
@@ -169,7 +298,14 @@ function SortableFieldRow({ field, onChange, onRemove }: { field: DraftField; on
                                 <Input
                                     type="number"
                                     value={field.min ?? ''}
-                                    onChange={(e) => onChange({ min: e.target.value === '' ? null : Number(e.target.value) })}
+                                    onChange={(e) =>
+                                        onChange({
+                                            min:
+                                                e.target.value === ''
+                                                    ? null
+                                                    : Number(e.target.value),
+                                        })
+                                    }
                                 />
                             </Field>
                             <Field>
@@ -177,7 +313,14 @@ function SortableFieldRow({ field, onChange, onRemove }: { field: DraftField; on
                                 <Input
                                     type="number"
                                     value={field.max ?? ''}
-                                    onChange={(e) => onChange({ max: e.target.value === '' ? null : Number(e.target.value) })}
+                                    onChange={(e) =>
+                                        onChange({
+                                            max:
+                                                e.target.value === ''
+                                                    ? null
+                                                    : Number(e.target.value),
+                                        })
+                                    }
                                 />
                             </Field>
                         </div>
@@ -191,7 +334,11 @@ function SortableFieldRow({ field, onChange, onRemove }: { field: DraftField; on
                                 min={1}
                                 max={10}
                                 value={field.max_rating ?? 5}
-                                onChange={(e) => onChange({ max_rating: Number(e.target.value) || 5 })}
+                                onChange={(e) =>
+                                    onChange({
+                                        max_rating: Number(e.target.value) || 5,
+                                    })
+                                }
                                 className="w-24"
                             />
                         </Field>
@@ -199,14 +346,22 @@ function SortableFieldRow({ field, onChange, onRemove }: { field: DraftField; on
 
                     <Field>
                         <FieldLabel>Help text</FieldLabel>
-                        <Input value={field.help_text ?? ''} onChange={(e) => onChange({ help_text: e.target.value })} placeholder="Optional hint shown under the field" />
+                        <Input
+                            value={field.help_text ?? ''}
+                            onChange={(e) =>
+                                onChange({ help_text: e.target.value })
+                            }
+                            placeholder="Optional hint shown under the field"
+                        />
                     </Field>
 
                     <Field>
                         <FieldLabel>Custom error message</FieldLabel>
                         <Textarea
                             value={field.error_message ?? ''}
-                            onChange={(e) => onChange({ error_message: e.target.value })}
+                            onChange={(e) =>
+                                onChange({ error_message: e.target.value })
+                            }
                             placeholder="Shown instead of the default message when this field fails validation"
                             className="min-h-16"
                         />

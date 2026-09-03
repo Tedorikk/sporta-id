@@ -1,5 +1,9 @@
 import type { CSSProperties } from 'react';
-import type { CardElement, CardElementStyle, CardTemplate } from '@/types/card-template';
+import type {
+    CardElement,
+    CardElementStyle,
+    CardTemplate,
+} from '@/types/card-template';
 
 /**
  * Flat bag of resolved values an element's `binding` can point at.
@@ -13,13 +17,18 @@ export type IdCardData = Record<string, string | undefined | null>;
  * same way it binds to any fixed field — see `bindableFieldsFor`'s use of
  * this same key convention in the builder.
  */
-export function formDataBindings(formData: Record<string, unknown> | null | undefined): IdCardData {
+export function formDataBindings(
+    formData: Record<string, unknown> | null | undefined,
+): IdCardData {
     if (!formData) {
         return {};
     }
 
     return Object.fromEntries(
-        Object.entries(formData).map(([key, value]) => [`form_data.${key}`, value == null ? undefined : String(value)]),
+        Object.entries(formData).map(([key, value]) => [
+            `form_data.${key}`,
+            value == null ? undefined : String(value),
+        ]),
     );
 }
 
@@ -37,7 +46,9 @@ export function elementBoxStyle(element: CardElement): CSSProperties {
         top: element.y,
         width: element.width,
         height: element.height,
-        transform: element.rotation ? `rotate(${element.rotation}deg)` : undefined,
+        transform: element.rotation
+            ? `rotate(${element.rotation}deg)`
+            : undefined,
         zIndex: element.zIndex ?? 1,
         display: element.hidden ? 'none' : undefined,
     };
@@ -51,7 +62,9 @@ export function elementContentStyle(element: CardElement): CSSProperties {
         fontWeight: style.fontWeight,
         fontFamily: style.fontFamily,
         fontStyle: style.fontStyle,
-        letterSpacing: style.letterSpacing ? `${style.letterSpacing}px` : undefined,
+        letterSpacing: style.letterSpacing
+            ? `${style.letterSpacing}px`
+            : undefined,
         lineHeight: style.lineHeight ?? 1.2,
         textTransform: style.textTransform,
         textAlign: style.textAlign,
@@ -68,7 +81,10 @@ export function elementContentStyle(element: CardElement): CSSProperties {
     };
 }
 
-export function resolveElementValue(element: CardElement, data: IdCardData): string {
+export function resolveElementValue(
+    element: CardElement,
+    data: IdCardData,
+): string {
     if (element.binding) {
         return data[element.binding] ?? '';
     }
@@ -80,17 +96,30 @@ export function resolveElementValue(element: CardElement, data: IdCardData): str
  * Just the visual content of an element (no absolute positioning) — reused
  * by both the read-only renderer below and the builder's draggable wrapper.
  */
-export function ElementContent({ element, data }: { element: CardElement; data: IdCardData }) {
+export function ElementContent({
+    element,
+    data,
+}: {
+    element: CardElement;
+    data: IdCardData;
+}) {
     const contentStyle = elementContentStyle(element);
     const style = safeStyle(element);
 
     if (element.kind === 'image' || element.kind === 'qr') {
-        const src = element.binding ? (data[element.binding] ?? undefined) : element.staticImageUrl;
+        const src = element.binding
+            ? (data[element.binding] ?? undefined)
+            : element.staticImageUrl;
 
         return src ? (
             <img src={src} alt="" draggable={false} style={contentStyle} />
         ) : (
-            <div style={{ ...contentStyle, background: style.background ?? '#f1f5f9' }} />
+            <div
+                style={{
+                    ...contentStyle,
+                    background: style.background ?? '#f1f5f9',
+                }}
+            />
         );
     }
 
@@ -99,14 +128,18 @@ export function ElementContent({ element, data }: { element: CardElement; data: 
     }
 
     const justify =
-        style.textAlign === 'left' ? 'flex-start'
-        : style.textAlign === 'right' ? 'flex-end'
-        : 'center';
+        style.textAlign === 'left'
+            ? 'flex-start'
+            : style.textAlign === 'right'
+              ? 'flex-end'
+              : 'center';
 
     const align =
-        style.verticalAlign === 'top' ? 'flex-start'
-        : style.verticalAlign === 'bottom' ? 'flex-end'
-        : 'center';
+        style.verticalAlign === 'top'
+            ? 'flex-start'
+            : style.verticalAlign === 'bottom'
+              ? 'flex-end'
+              : 'center';
 
     return (
         <div
@@ -125,7 +158,13 @@ export function ElementContent({ element, data }: { element: CardElement; data: 
     );
 }
 
-function CardElementView({ element, data }: { element: CardElement; data: IdCardData }) {
+function CardElementView({
+    element,
+    data,
+}: {
+    element: CardElement;
+    data: IdCardData;
+}) {
     if (element.hidden) {
         return null;
     }
@@ -145,7 +184,12 @@ interface IdCardRendererProps {
     scale?: number;
 }
 
-export function IdCardRenderer({ template, data, className, scale }: IdCardRendererProps) {
+export function IdCardRenderer({
+    template,
+    data,
+    className,
+    scale,
+}: IdCardRendererProps) {
     const { canvas } = template;
 
     const card = (
@@ -162,7 +206,11 @@ export function IdCardRenderer({ template, data, className, scale }: IdCardRende
             }}
         >
             {template.elements.map((element) => (
-                <CardElementView key={element.id} element={element} data={data} />
+                <CardElementView
+                    key={element.id}
+                    element={element}
+                    data={data}
+                />
             ))}
         </div>
     );
@@ -173,7 +221,14 @@ export function IdCardRenderer({ template, data, className, scale }: IdCardRende
 
     // Wrapper reserves the scaled footprint, since `transform` doesn't affect layout.
     return (
-        <div className={className} style={{ width: canvas.width * scale, height: canvas.height * scale, overflow: 'hidden' }}>
+        <div
+            className={className}
+            style={{
+                width: canvas.width * scale,
+                height: canvas.height * scale,
+                overflow: 'hidden',
+            }}
+        >
             {card}
         </div>
     );

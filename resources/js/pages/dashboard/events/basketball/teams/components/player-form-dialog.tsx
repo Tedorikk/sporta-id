@@ -2,12 +2,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from '@inertiajs/react';
 import { format } from 'date-fns';
 import { CalendarIcon, Loader2, Plus } from 'lucide-react';
-import { useState, useEffect  } from 'react';
-import type {ReactNode} from 'react';
+import { useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -24,7 +25,6 @@ import {
     FieldLabel,
     FieldDescription,
 } from '@/components/ui/field';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import {
     Popover,
@@ -52,7 +52,11 @@ const playerSchema = z
     .object({
         name: z.string().min(1, 'Input member name').max(255),
         role: z.enum(roleValues, { message: 'Please select a role' }),
-        jersey_number: z.string().max(3, 'Max 3 digits').regex(/^\d*$/, 'Must be a number').or(z.literal('')),
+        jersey_number: z
+            .string()
+            .max(3, 'Max 3 digits')
+            .regex(/^\d*$/, 'Must be a number')
+            .or(z.literal('')),
         position: z.string().max(255).or(z.literal('')),
         photo: z.string().url('Must be a valid URL').or(z.literal('')),
         certificate: z.string().url('Must be a valid URL').or(z.literal('')),
@@ -133,12 +137,20 @@ export function PlayerFormDialog({
     const [clubError, setClubError] = useState('');
     const [pendingClubName, setPendingClubName] = useState('');
 
-    const { control, handleSubmit, reset, setError, clearErrors, setValue, watch, resetField } =
-        useForm<PlayerFormValues>({
-            resolver: zodResolver(playerSchema),
-            defaultValues: toDefaultValues(player),
-            mode: 'onChange',
-        });
+    const {
+        control,
+        handleSubmit,
+        reset,
+        setError,
+        clearErrors,
+        setValue,
+        watch,
+        resetField,
+    } = useForm<PlayerFormValues>({
+        resolver: zodResolver(playerSchema),
+        defaultValues: toDefaultValues(player),
+        mode: 'onChange',
+    });
 
     const watchedRole = watch('role');
     const isPlayerRole = watchedRole === 'player';
@@ -148,7 +160,7 @@ export function PlayerFormDialog({
     useEffect(() => {
         if (pendingClubName && clubs.length > 0) {
             const newlyCreated = clubs.find(
-                (c) => c.name.toLowerCase() === pendingClubName.toLowerCase()
+                (c) => c.name.toLowerCase() === pendingClubName.toLowerCase(),
             );
 
             if (newlyCreated) {
@@ -161,8 +173,8 @@ export function PlayerFormDialog({
 
     const handleCreateClub = () => {
         if (!newClubName.trim()) {
-return;
-}
+            return;
+        }
 
         setIsSavingClub(true);
         setClubError('');
@@ -186,14 +198,15 @@ return;
                         setClubError(errors.name);
                     }
                 },
-            }
+            },
         );
     };
 
     const onSubmit = (data: PlayerFormValues) => {
         const payload = {
             ...data,
-            basketball_club_id: data.basketball_club_id === '' ? null : data.basketball_club_id,
+            basketball_club_id:
+                data.basketball_club_id === '' ? null : data.basketball_club_id,
         };
 
         const options = {
@@ -310,7 +323,10 @@ return;
 
                                             if (value !== 'medic') {
                                                 resetField('certificate');
-                                                setValue('is_certificate_validated', false);
+                                                setValue(
+                                                    'is_certificate_validated',
+                                                    false,
+                                                );
                                             }
                                         }}
                                         disabled={isSaving}
@@ -320,14 +336,19 @@ return;
                                         </SelectTrigger>
                                         <SelectContent>
                                             {PLAYER_ROLES.map((role) => (
-                                                <SelectItem key={role.value} value={role.value}>
+                                                <SelectItem
+                                                    key={role.value}
+                                                    value={role.value}
+                                                >
                                                     {role.label}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
                                     {fieldState.invalid && (
-                                        <FieldError errors={[fieldState.error]} />
+                                        <FieldError
+                                            errors={[fieldState.error]}
+                                        />
                                     )}
                                 </Field>
                             )}
@@ -364,7 +385,9 @@ return;
                                     name="certificate"
                                     control={control}
                                     render={({ field, fieldState }) => (
-                                        <Field data-invalid={fieldState.invalid}>
+                                        <Field
+                                            data-invalid={fieldState.invalid}
+                                        >
                                             <FieldLabel htmlFor="certificate">
                                                 Medic Certificate
                                             </FieldLabel>
@@ -380,7 +403,8 @@ return;
                                                     setError('certificate', {
                                                         type: 'manual',
                                                         message:
-                                                            typeof error === 'string'
+                                                            typeof error ===
+                                                            'string'
                                                                 ? error
                                                                 : 'Upload failed',
                                                     });
@@ -388,7 +412,9 @@ return;
                                                 enableCrop={true}
                                             />
                                             {fieldState.invalid && (
-                                                <FieldError errors={[fieldState.error]} />
+                                                <FieldError
+                                                    errors={[fieldState.error]}
+                                                />
                                             )}
                                         </Field>
                                     )}
@@ -417,10 +443,15 @@ return;
                                                 Certificate Validated
                                             </FieldLabel>
                                             <FieldDescription>
-                                                Review the certificate above, then tick this once confirmed. Until then, the ID card cannot be scanned.
+                                                Review the certificate above,
+                                                then tick this once confirmed.
+                                                Until then, the ID card cannot
+                                                be scanned.
                                             </FieldDescription>
                                             {fieldState.invalid && (
-                                                <FieldError errors={[fieldState.error]} />
+                                                <FieldError
+                                                    errors={[fieldState.error]}
+                                                />
                                             )}
                                         </Field>
                                     )}
@@ -433,7 +464,11 @@ return;
                             name="basketball_club_id"
                             control={control}
                             render={({ field, fieldState }) => (
-                                <Field data-invalid={fieldState.invalid || !!clubError}>
+                                <Field
+                                    data-invalid={
+                                        fieldState.invalid || !!clubError
+                                    }
+                                >
                                     <div className="flex items-center justify-between">
                                         <FieldLabel htmlFor="basketball_club_id">
                                             Basketball Club{' '}
@@ -447,13 +482,22 @@ return;
                                             size="sm"
                                             className="h-auto p-0 text-primary hover:bg-transparent hover:text-primary/80"
                                             onClick={() => {
-                                                setIsCreatingClub(!isCreatingClub);
+                                                setIsCreatingClub(
+                                                    !isCreatingClub,
+                                                );
                                                 setNewClubName('');
                                                 setClubError('');
                                             }}
                                             disabled={isSaving}
                                         >
-                                            {isCreatingClub ? 'Cancel' : <><Plus className="h-3 w-3 mr-1" /> Add New</>}
+                                            {isCreatingClub ? (
+                                                'Cancel'
+                                            ) : (
+                                                <>
+                                                    <Plus className="mr-1 h-3 w-3" />{' '}
+                                                    Add New
+                                                </>
+                                            )}
                                         </Button>
                                     </div>
 
@@ -462,8 +506,14 @@ return;
                                             <Input
                                                 placeholder="Enter new club name..."
                                                 value={newClubName}
-                                                onChange={(e) => setNewClubName(e.target.value)}
-                                                disabled={isSavingClub || isSaving}
+                                                onChange={(e) =>
+                                                    setNewClubName(
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                disabled={
+                                                    isSavingClub || isSaving
+                                                }
                                                 onKeyDown={(e) => {
                                                     if (e.key === 'Enter') {
                                                         e.preventDefault();
@@ -474,10 +524,18 @@ return;
                                             <Button
                                                 type="button"
                                                 size="sm"
-                                                disabled={!newClubName.trim() || isSavingClub || isSaving}
+                                                disabled={
+                                                    !newClubName.trim() ||
+                                                    isSavingClub ||
+                                                    isSaving
+                                                }
                                                 onClick={handleCreateClub}
                                             >
-                                                {isSavingClub ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                                                {isSavingClub ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                ) : (
+                                                    'Save'
+                                                )}
                                             </Button>
                                         </div>
                                     ) : (
@@ -490,9 +548,14 @@ return;
                                                 <SelectValue placeholder="Select a club..." />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="">None / Unaffiliated</SelectItem>
+                                                <SelectItem value="">
+                                                    None / Unaffiliated
+                                                </SelectItem>
                                                 {clubs.map((club) => (
-                                                    <SelectItem key={club.id} value={club.id.toString()}>
+                                                    <SelectItem
+                                                        key={club.id}
+                                                        value={club.id.toString()}
+                                                    >
                                                         {club.name}
                                                     </SelectItem>
                                                 ))}
@@ -500,12 +563,14 @@ return;
                                         </Select>
                                     )}
                                     {clubError && (
-                                        <p className="text-[0.8rem] font-medium text-destructive mt-1">
+                                        <p className="mt-1 text-[0.8rem] font-medium text-destructive">
                                             {clubError}
                                         </p>
                                     )}
                                     {fieldState.invalid && !clubError && (
-                                        <FieldError errors={[fieldState.error]} />
+                                        <FieldError
+                                            errors={[fieldState.error]}
+                                        />
                                     )}
                                 </Field>
                             )}
@@ -517,7 +582,9 @@ return;
                                     name="jersey_number"
                                     control={control}
                                     render={({ field, fieldState }) => (
-                                        <Field data-invalid={fieldState.invalid}>
+                                        <Field
+                                            data-invalid={fieldState.invalid}
+                                        >
                                             <FieldLabel htmlFor="jersey_number">
                                                 Jersey Number
                                             </FieldLabel>
@@ -526,7 +593,9 @@ return;
                                                 id="jersey_number"
                                                 placeholder="Input Jersey Number"
                                                 inputMode="numeric"
-                                                aria-invalid={fieldState.invalid}
+                                                aria-invalid={
+                                                    fieldState.invalid
+                                                }
                                                 autoComplete="off"
                                                 disabled={isSaving}
                                                 onChange={(e) =>
@@ -550,7 +619,9 @@ return;
                                     name="position"
                                     control={control}
                                     render={({ field, fieldState }) => (
-                                        <Field data-invalid={fieldState.invalid}>
+                                        <Field
+                                            data-invalid={fieldState.invalid}
+                                        >
                                             <FieldLabel htmlFor="position">
                                                 Position{' '}
                                                 <span className="font-normal text-muted-foreground">
@@ -561,7 +632,9 @@ return;
                                                 {...field}
                                                 id="position"
                                                 placeholder="Input Position"
-                                                aria-invalid={fieldState.invalid}
+                                                aria-invalid={
+                                                    fieldState.invalid
+                                                }
                                                 autoComplete="off"
                                                 disabled={isSaving}
                                             />
@@ -596,9 +669,7 @@ return;
                                         disabled={isSaving}
                                         onChange={(e) =>
                                             field.onChange(
-                                                formatE164Input(
-                                                    e.target.value,
-                                                ),
+                                                formatE164Input(e.target.value),
                                             )
                                         }
                                     />
@@ -660,16 +731,22 @@ return;
                                             <Button
                                                 id="dob"
                                                 variant="outline"
-                                                aria-invalid={fieldState.invalid}
+                                                aria-invalid={
+                                                    fieldState.invalid
+                                                }
                                                 disabled={isSaving}
                                                 className={cn(
                                                     'w-full cursor-pointer justify-start text-left font-normal',
-                                                    !field.value && 'text-muted-foreground',
+                                                    !field.value &&
+                                                        'text-muted-foreground',
                                                 )}
                                             >
                                                 <CalendarIcon className="mr-2 h-4 w-4" />
                                                 {field.value ? (
-                                                    format(new Date(field.value), 'PPP')
+                                                    format(
+                                                        new Date(field.value),
+                                                        'PPP',
+                                                    )
                                                 ) : (
                                                     <span>Pick a date</span>
                                                 )}
@@ -688,17 +765,26 @@ return;
                                                 }
                                                 onSelect={(date) =>
                                                     field.onChange(
-                                                        date ? format(date, 'yyyy-MM-dd') : ''
+                                                        date
+                                                            ? format(
+                                                                  date,
+                                                                  'yyyy-MM-dd',
+                                                              )
+                                                            : '',
                                                     )
                                                 }
-                                                disabled={(date) => date > new Date()}
+                                                disabled={(date) =>
+                                                    date > new Date()
+                                                }
                                                 autoFocus
                                                 captionLayout="dropdown"
                                             />
                                         </PopoverContent>
                                     </Popover>
                                     {fieldState.invalid && (
-                                        <FieldError errors={[fieldState.error]} />
+                                        <FieldError
+                                            errors={[fieldState.error]}
+                                        />
                                     )}
                                 </Field>
                             )}
@@ -706,15 +792,18 @@ return;
                     </FieldGroup>
 
                     <DialogFooter>
-                        <Button type="submit" disabled={isSaving || isSavingClub}>
+                        <Button
+                            type="submit"
+                            disabled={isSaving || isSavingClub}
+                        >
                             {isSaving && (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             )}
                             {isSaving
                                 ? 'Saving...'
                                 : isEditing
-                                    ? 'Update Member'
-                                    : 'Add Team Member'}
+                                  ? 'Update Member'
+                                  : 'Add Team Member'}
                         </Button>
                     </DialogFooter>
                 </form>

@@ -35,10 +35,14 @@ export default function TeamIdCard({ team }: Props) {
                 {/* Decorative orbs */}
                 <div className="pointer-events-none absolute inset-0 overflow-hidden print:hidden">
                     <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-red-600/10 blur-3xl" />
-                    <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-red-900/20 blur-3xl" />
+                    <div className="absolute -right-40 -bottom-40 h-96 w-96 rounded-full bg-red-900/20 blur-3xl" />
                 </div>
 
-                <TeamIdCardCard team={team} qrDataUrl={qrDataUrl} cardRef={cardRef} />
+                <TeamIdCardCard
+                    team={team}
+                    qrDataUrl={qrDataUrl}
+                    cardRef={cardRef}
+                />
 
                 <IdCardActions
                     targetRef={cardRef}

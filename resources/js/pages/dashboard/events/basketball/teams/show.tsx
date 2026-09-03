@@ -30,7 +30,10 @@ import { AddExistingPlayerDialog } from './components/add-existing-player-dialog
 import type { BasketballClub } from './components/add-existing-player-dialog';
 import { PlayerFormDialog } from './components/player-form-dialog';
 
-const STATUS_BADGE: Record<Team['status'], { label: string; className: string }> = {
+const STATUS_BADGE: Record<
+    Team['status'],
+    { label: string; className: string }
+> = {
     verified: {
         label: 'Verified',
         className: 'bg-emerald-500 hover:bg-emerald-600',
@@ -90,7 +93,10 @@ function PlayerRosterCard({
                         <span className="truncate text-sm font-semibold">
                             {player.name}
                         </span>
-                        <Badge variant="outline" className="shrink-0 font-mono text-xs">
+                        <Badge
+                            variant="outline"
+                            className="shrink-0 font-mono text-xs"
+                        >
                             {isPlayerRole
                                 ? `#${player.jersey_number ?? '-'}`
                                 : playerRoleLabel(player.role)}
@@ -119,7 +125,9 @@ function PlayerRosterCard({
                         </span>
                         <span className="flex items-center gap-1.5 truncate">
                             <Mail className="h-3 w-3 shrink-0" />
-                            {player.email ?? <span className="italic">Missing</span>}
+                            {player.email ?? (
+                                <span className="italic">Missing</span>
+                            )}
                         </span>
                     </div>
                 </div>
@@ -150,8 +158,10 @@ function PlayerRosterCard({
                         description={
                             <>
                                 This will remove the player{' '}
-                                <span className="font-semibold">{player.name}</span> from
-                                this team.
+                                <span className="font-semibold">
+                                    {player.name}
+                                </span>{' '}
+                                from this team.
                             </>
                         }
                         onConfirm={() => onDelete(player)}
@@ -168,13 +178,15 @@ function PlayerRosterCard({
                         <IssueSummaryBadge
                             summary={{
                                 total: issues.length,
-                                errors: issues.filter((i) => i.severity === 'error')
-                                    .length,
+                                errors: issues.filter(
+                                    (i) => i.severity === 'error',
+                                ).length,
                                 warnings: issues.filter(
                                     (i) => i.severity === 'warning',
                                 ).length,
-                                info: issues.filter((i) => i.severity === 'info')
-                                    .length,
+                                info: issues.filter(
+                                    (i) => i.severity === 'info',
+                                ).length,
                             }}
                         />
                     </div>
@@ -260,8 +272,8 @@ export default function ShowTeam({
                                     team.status === 'verified'
                                         ? 'default'
                                         : team.status === 'rejected'
-                                            ? 'destructive'
-                                            : 'secondary'
+                                          ? 'destructive'
+                                          : 'secondary'
                                 }
                                 className={STATUS_BADGE[team.status].className}
                             >
@@ -307,7 +319,9 @@ export default function ShowTeam({
                 <section className="flex flex-col gap-2 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
                     <div className="flex items-center gap-2">
                         <ShieldAlert className="h-4 w-4 text-amber-500" />
-                        <h3 className="text-sm font-semibold">Team-level issues</h3>
+                        <h3 className="text-sm font-semibold">
+                            Team-level issues
+                        </h3>
                     </div>
                     <IssueList issues={review.team_issues} />
                 </section>
@@ -320,8 +334,8 @@ export default function ShowTeam({
                         Team ID Card Link
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                        Share this public link with the team manager or players to
-                        access their ID card.
+                        Share this public link with the team manager or players
+                        to access their ID card.
                     </p>
                 </div>
                 <div className="flex w-full max-w-md items-center gap-2 sm:w-auto">
@@ -329,7 +343,7 @@ export default function ShowTeam({
                         type="text"
                         readOnly
                         value={shareUrl}
-                        className="flex h-9 w-full shrink rounded-md border border-input bg-background px-3 py-1 font-mono text-xs shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium select-all placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex h-9 w-full shrink rounded-md border border-input bg-background px-3 py-1 font-mono text-xs shadow-sm transition-colors select-all file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                     />
                     <Button
                         variant="secondary"
@@ -355,7 +369,11 @@ export default function ShowTeam({
                         asChild
                         className="shrink-0"
                     >
-                        <a href={shareUrl} target="_blank" rel="noopener noreferrer">
+                        <a
+                            href={shareUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
                             Open
                         </a>
                     </Button>

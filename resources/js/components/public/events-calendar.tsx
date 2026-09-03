@@ -22,6 +22,7 @@ function stripTime(date: Date) {
 export function EventsCalendar({ events }: Props) {
     const [cursor, setCursor] = useState(() => {
         const now = new Date();
+
         return new Date(now.getFullYear(), now.getMonth(), 1);
     });
 
@@ -57,13 +58,18 @@ export function EventsCalendar({ events }: Props) {
         return cells;
     }, [events, year, month]);
 
-    const monthLabel = cursor.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    const monthLabel = cursor.toLocaleDateString(undefined, {
+        month: 'long',
+        year: 'numeric',
+    });
     const today = stripTime(new Date());
 
     return (
         <div className="rounded-2xl border-2 border-white/15 bg-white/5 p-6">
             <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-lg font-black tracking-tight uppercase">{monthLabel}</h3>
+                <h3 className="text-lg font-black tracking-tight uppercase">
+                    {monthLabel}
+                </h3>
                 <div className="flex items-center gap-2">
                     <button
                         type="button"
@@ -76,7 +82,9 @@ export function EventsCalendar({ events }: Props) {
                         type="button"
                         onClick={() => {
                             const now = new Date();
-                            setCursor(new Date(now.getFullYear(), now.getMonth(), 1));
+                            setCursor(
+                                new Date(now.getFullYear(), now.getMonth(), 1),
+                            );
                         }}
                         className="rounded-full border-2 border-white/15 px-3 py-1 text-xs font-bold tracking-wide text-white/70 uppercase transition hover:border-red-500 hover:text-white"
                     >
@@ -103,7 +111,9 @@ export function EventsCalendar({ events }: Props) {
                 ))}
 
                 {grid.map((cell, i) => {
-                    const isToday = cell.date && stripTime(cell.date).getTime() === today.getTime();
+                    const isToday =
+                        cell.date &&
+                        stripTime(cell.date).getTime() === today.getTime();
 
                     return (
                         <div
@@ -112,21 +122,27 @@ export function EventsCalendar({ events }: Props) {
                         >
                             {cell.date && (
                                 <>
-                                    <div className={`mb-1 text-xs font-semibold ${isToday ? 'text-red-400' : 'text-white/50'}`}>
+                                    <div
+                                        className={`mb-1 text-xs font-semibold ${isToday ? 'text-red-400' : 'text-white/50'}`}
+                                    >
                                         {cell.date.getDate()}
                                     </div>
                                     <div className="flex flex-col gap-1">
-                                        {cell.events.slice(0, 2).map((event) => (
-                                            <Link
-                                                key={event.id}
-                                                href={`/events/${event.id}`}
-                                                className="block truncate rounded bg-red-600/20 px-1 py-0.5 text-[10px] font-medium text-red-300 transition hover:bg-red-600/40"
-                                            >
-                                                {event.name}
-                                            </Link>
-                                        ))}
+                                        {cell.events
+                                            .slice(0, 2)
+                                            .map((event) => (
+                                                <Link
+                                                    key={event.id}
+                                                    href={`/events/${event.id}`}
+                                                    className="block truncate rounded bg-red-600/20 px-1 py-0.5 text-[10px] font-medium text-red-300 transition hover:bg-red-600/40"
+                                                >
+                                                    {event.name}
+                                                </Link>
+                                            ))}
                                         {cell.events.length > 2 && (
-                                            <span className="text-[10px] text-white/40">+{cell.events.length - 2} more</span>
+                                            <span className="text-[10px] text-white/40">
+                                                +{cell.events.length - 2} more
+                                            </span>
                                         )}
                                     </div>
                                 </>

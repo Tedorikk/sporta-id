@@ -25,8 +25,12 @@ export function EventsSection({ events }: EventsSectionProps) {
         <section id="events" className="mx-auto max-w-6xl px-6 py-14">
             <div className="mb-3 flex items-end justify-between">
                 <div>
-                    <span className="text-xs font-bold tracking-[0.3em] text-red-500 uppercase">Live Now</span>
-                    <h2 className="text-3xl font-black tracking-tight uppercase">Events &amp; Registration Fees</h2>
+                    <span className="text-xs font-bold tracking-[0.3em] text-red-500 uppercase">
+                        Live Now
+                    </span>
+                    <h2 className="text-3xl font-black tracking-tight uppercase">
+                        Events &amp; Registration Fees
+                    </h2>
                 </div>
                 <Link
                     href="/events"
@@ -37,8 +41,10 @@ export function EventsSection({ events }: EventsSectionProps) {
             </div>
 
             <p className="mb-8 max-w-2xl text-sm text-white/60">
-                Every registration category we currently sell, with its price in Rupiah. Pick a category to open its
-                registration form — paid entries are settled online through Midtrans right after you submit.
+                Every registration category we currently sell, with its price in
+                Rupiah. Pick a category to open its registration form — paid
+                entries are settled online through Midtrans right after you
+                submit.
             </p>
 
             {events.length === 0 ? (
@@ -71,10 +77,13 @@ export function EventsSection({ events }: EventsSectionProps) {
                                 </div>
 
                                 <div className="flex flex-1 flex-col gap-3 p-5">
-                                    <h3 className="text-lg font-bold tracking-tight">{event.name}</h3>
+                                    <h3 className="text-lg font-bold tracking-tight">
+                                        {event.name}
+                                    </h3>
                                     <div className="flex items-center gap-1.5 text-xs text-white/60">
                                         <Calendar className="h-3.5 w-3.5" />
-                                        {formatDate(event.start_date)} – {formatDate(event.end_date)}
+                                        {formatDate(event.start_date)} –{' '}
+                                        {formatDate(event.end_date)}
                                     </div>
 
                                     {/* The price list itself. Each row is a thing you can buy and
@@ -89,11 +98,16 @@ export function EventsSection({ events }: EventsSectionProps) {
                                                                 {category.name}
                                                             </span>
                                                             <span className="text-[11px] text-white/45">
-                                                                {category.subject_type === 'team' ? 'Per team' : 'Per person'}
+                                                                {category.subject_type ===
+                                                                'team'
+                                                                    ? 'Per team'
+                                                                    : 'Per person'}
                                                             </span>
                                                         </span>
                                                         <span className="flex shrink-0 items-center gap-1.5 text-sm font-bold text-white">
-                                                            {formatRupiah(category.price)}
+                                                            {formatRupiah(
+                                                                category.price,
+                                                            )}
                                                             <ArrowRight className="h-3.5 w-3.5 text-white/40" />
                                                         </span>
                                                     </>
@@ -107,15 +121,22 @@ export function EventsSection({ events }: EventsSectionProps) {
                                                         >
                                                             <span className="flex flex-col">
                                                                 <span className="text-sm font-semibold text-white">
-                                                                    {category.name}
+                                                                    {
+                                                                        category.name
+                                                                    }
                                                                 </span>
                                                                 <span className="text-[11px] text-white/45">
-                                                                    {UNAVAILABLE_LABEL[category.unavailable_reason ?? ''] ??
+                                                                    {UNAVAILABLE_LABEL[
+                                                                        category.unavailable_reason ??
+                                                                            ''
+                                                                    ] ??
                                                                         'Unavailable'}
                                                                 </span>
                                                             </span>
                                                             <span className="shrink-0 text-sm font-bold text-white">
-                                                                {formatRupiah(category.price)}
+                                                                {formatRupiah(
+                                                                    category.price,
+                                                                )}
                                                             </span>
                                                         </li>
                                                     );
@@ -135,7 +156,8 @@ export function EventsSection({ events }: EventsSectionProps) {
                                         </ul>
                                     ) : (
                                         <p className="border-y border-white/10 py-2.5 text-xs text-white/45">
-                                            Registration for this event is not open yet.
+                                            Registration for this event is not
+                                            open yet.
                                         </p>
                                     )}
 

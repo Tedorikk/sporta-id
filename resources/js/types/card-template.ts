@@ -71,9 +71,21 @@ export interface BindableField {
 export const BINDABLE_FIELDS: Record<CardSubjectType, BindableField[]> = {
     attendee: [
         { value: 'name', label: 'Name', kinds: ['text'] },
-        { value: 'typeLabel', label: 'Type (e.g. Guest, Tenant)', kinds: ['text'] },
-        { value: 'organization', label: 'Organization / Company', kinds: ['text'] },
-        { value: 'title', label: 'Title (booth #, credential, etc.)', kinds: ['text'] },
+        {
+            value: 'typeLabel',
+            label: 'Type (e.g. Guest, Tenant)',
+            kinds: ['text'],
+        },
+        {
+            value: 'organization',
+            label: 'Organization / Company',
+            kinds: ['text'],
+        },
+        {
+            value: 'title',
+            label: 'Title (booth #, credential, etc.)',
+            kinds: ['text'],
+        },
         { value: 'status', label: 'Status', kinds: ['text'] },
         { value: 'eventName', label: 'Event Name', kinds: ['text'] },
         { value: 'photo', label: 'Photo', kinds: ['image'] },
@@ -115,10 +127,24 @@ export const BINDABLE_FIELDS: Record<CardSubjectType, BindableField[]> = {
     ],
 };
 
-export function bindableFieldsFor(subjectType: CardSubjectType, kind: CardElementKind, extra: BindableField[] = []): BindableField[] {
-    return [...BINDABLE_FIELDS[subjectType], ...extra].filter((field) => field.kinds.includes(kind));
+export function bindableFieldsFor(
+    subjectType: CardSubjectType,
+    kind: CardElementKind,
+    extra: BindableField[] = [],
+): BindableField[] {
+    return [...BINDABLE_FIELDS[subjectType], ...extra].filter((field) =>
+        field.kinds.includes(kind),
+    );
 }
 
-export function bindingLabel(subjectType: CardSubjectType, binding: string, extra: BindableField[] = []): string {
-    return [...BINDABLE_FIELDS[subjectType], ...extra].find((field) => field.value === binding)?.label ?? binding;
+export function bindingLabel(
+    subjectType: CardSubjectType,
+    binding: string,
+    extra: BindableField[] = [],
+): string {
+    return (
+        [...BINDABLE_FIELDS[subjectType], ...extra].find(
+            (field) => field.value === binding,
+        )?.label ?? binding
+    );
 }

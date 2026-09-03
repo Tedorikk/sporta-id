@@ -14,7 +14,12 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
+import {
+    Field,
+    FieldError,
+    FieldGroup,
+    FieldLabel,
+} from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { UploadImage } from '@/components/upload-image';
@@ -45,16 +50,21 @@ interface SpeakerFormDialogProps {
     trigger: ReactNode;
 }
 
-export function SpeakerFormDialog({ event, speaker, trigger }: SpeakerFormDialogProps) {
+export function SpeakerFormDialog({
+    event,
+    speaker,
+    trigger,
+}: SpeakerFormDialogProps) {
     const isEditing = Boolean(speaker);
     const [open, setOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
-    const { control, handleSubmit, reset, setError } = useForm<SpeakerFormValues>({
-        resolver: zodResolver(speakerSchema),
-        defaultValues: toDefaultValues(speaker),
-        mode: 'onChange',
-    });
+    const { control, handleSubmit, reset, setError } =
+        useForm<SpeakerFormValues>({
+            resolver: zodResolver(speakerSchema),
+            defaultValues: toDefaultValues(speaker),
+            mode: 'onChange',
+        });
 
     const onSubmit = (data: SpeakerFormValues) => {
         const options = {
@@ -68,9 +78,17 @@ export function SpeakerFormDialog({ event, speaker, trigger }: SpeakerFormDialog
         };
 
         if (isEditing && speaker) {
-            router.put(`/dashboard/events/${event.id}/speakers/${speaker.id}`, data, options);
+            router.put(
+                `/dashboard/events/${event.id}/speakers/${speaker.id}`,
+                data,
+                options,
+            );
         } else {
-            router.post(`/dashboard/events/${event.id}/speakers`, data, options);
+            router.post(
+                `/dashboard/events/${event.id}/speakers`,
+                data,
+                options,
+            );
         }
     };
 
@@ -89,8 +107,13 @@ export function SpeakerFormDialog({ event, speaker, trigger }: SpeakerFormDialog
             <DialogContent>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     <DialogHeader>
-                        <DialogTitle>{isEditing ? 'Edit Speaker' : 'Add Speaker'}</DialogTitle>
-                        <DialogDescription>Speakers can be reused across multiple meetings for this event.</DialogDescription>
+                        <DialogTitle>
+                            {isEditing ? 'Edit Speaker' : 'Add Speaker'}
+                        </DialogTitle>
+                        <DialogDescription>
+                            Speakers can be reused across multiple meetings for
+                            this event.
+                        </DialogDescription>
                     </DialogHeader>
 
                     <FieldGroup className="py-2">
@@ -98,22 +121,36 @@ export function SpeakerFormDialog({ event, speaker, trigger }: SpeakerFormDialog
                             name="photo"
                             control={control}
                             render={({ field, fieldState }) => (
-                                <Field data-invalid={fieldState.invalid} className="mx-auto w-24">
-                                    <FieldLabel htmlFor="photo">Photo</FieldLabel>
+                                <Field
+                                    data-invalid={fieldState.invalid}
+                                    className="mx-auto w-24"
+                                >
+                                    <FieldLabel htmlFor="photo">
+                                        Photo
+                                    </FieldLabel>
                                     <UploadImage
                                         {...field}
                                         ratio={1}
                                         value={field.value}
-                                        onChange={(value) => field.onChange(value ?? '')}
+                                        onChange={(value) =>
+                                            field.onChange(value ?? '')
+                                        }
                                         onError={(error) =>
                                             setError('photo', {
                                                 type: 'manual',
-                                                message: typeof error === 'string' ? error : 'Upload failed',
+                                                message:
+                                                    typeof error === 'string'
+                                                        ? error
+                                                        : 'Upload failed',
                                             })
                                         }
                                         enableCrop
                                     />
-                                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                                    {fieldState.invalid && (
+                                        <FieldError
+                                            errors={[fieldState.error]}
+                                        />
+                                    )}
                                 </Field>
                             )}
                         />
@@ -125,7 +162,11 @@ export function SpeakerFormDialog({ event, speaker, trigger }: SpeakerFormDialog
                                 <Field data-invalid={fieldState.invalid}>
                                     <FieldLabel htmlFor="name">Name</FieldLabel>
                                     <Input id="name" {...field} />
-                                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                                    {fieldState.invalid && (
+                                        <FieldError
+                                            errors={[fieldState.error]}
+                                        />
+                                    )}
                                 </Field>
                             )}
                         />
@@ -136,10 +177,21 @@ export function SpeakerFormDialog({ event, speaker, trigger }: SpeakerFormDialog
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
                                     <FieldLabel htmlFor="title">
-                                        Title <span className="font-normal text-muted-foreground">(role, company, etc.)</span>
+                                        Title{' '}
+                                        <span className="font-normal text-muted-foreground">
+                                            (role, company, etc.)
+                                        </span>
                                     </FieldLabel>
-                                    <Input id="title" placeholder="e.g. CTO, Acme Inc." {...field} />
-                                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                                    <Input
+                                        id="title"
+                                        placeholder="e.g. CTO, Acme Inc."
+                                        {...field}
+                                    />
+                                    {fieldState.invalid && (
+                                        <FieldError
+                                            errors={[fieldState.error]}
+                                        />
+                                    )}
                                 </Field>
                             )}
                         />
@@ -150,10 +202,17 @@ export function SpeakerFormDialog({ event, speaker, trigger }: SpeakerFormDialog
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
                                     <FieldLabel htmlFor="bio">
-                                        Bio <span className="font-normal text-muted-foreground">(Optional)</span>
+                                        Bio{' '}
+                                        <span className="font-normal text-muted-foreground">
+                                            (Optional)
+                                        </span>
                                     </FieldLabel>
                                     <Textarea id="bio" rows={3} {...field} />
-                                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                                    {fieldState.invalid && (
+                                        <FieldError
+                                            errors={[fieldState.error]}
+                                        />
+                                    )}
                                 </Field>
                             )}
                         />
@@ -161,7 +220,11 @@ export function SpeakerFormDialog({ event, speaker, trigger }: SpeakerFormDialog
 
                     <DialogFooter>
                         <Button type="submit" disabled={isSaving}>
-                            {isSaving ? 'Saving…' : isEditing ? 'Save changes' : 'Add speaker'}
+                            {isSaving
+                                ? 'Saving…'
+                                : isEditing
+                                  ? 'Save changes'
+                                  : 'Add speaker'}
                         </Button>
                     </DialogFooter>
                 </form>

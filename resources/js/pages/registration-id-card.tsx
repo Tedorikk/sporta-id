@@ -32,7 +32,12 @@ export default function RegistrationIdCard({ registration, template }: Props) {
             <Head title={`${registration.name} — ${typeLabel} ID Card`} />
 
             <div className="flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10 print:bg-white print:p-0">
-                <RegistrationIdCardCard registration={registration} template={template} qrDataUrl={qrDataUrl} cardRef={cardRef} />
+                <RegistrationIdCardCard
+                    registration={registration}
+                    template={template}
+                    qrDataUrl={qrDataUrl}
+                    cardRef={cardRef}
+                />
 
                 <IdCardActions
                     targetRef={cardRef}

@@ -1,5 +1,19 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowRight, Calendar, Facebook, Instagram, LayoutGrid, Mic, MessageCircle, Phone, Swords, Ticket, Trophy, Users, Youtube } from 'lucide-react';
+import {
+    ArrowRight,
+    Calendar,
+    Facebook,
+    Instagram,
+    LayoutGrid,
+    Mic,
+    MessageCircle,
+    Phone,
+    Swords,
+    Ticket,
+    Trophy,
+    Users,
+    Youtube,
+} from 'lucide-react';
 import { BasketballCategorySection } from '@/components/public/basketball-category-section';
 import { MatchesCalendar } from '@/components/public/matches-calendar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -30,21 +44,36 @@ const STATUS_STYLE: Record<string, string> = {
     past: 'bg-neutral-400 text-neutral-950',
 };
 
-const SOCIAL_LINKS: { key: keyof Event; label: string; icon: typeof Instagram }[] = [
+const SOCIAL_LINKS: {
+    key: keyof Event;
+    label: string;
+    icon: typeof Instagram;
+}[] = [
     { key: 'instagram_url', label: 'Instagram', icon: Instagram },
     { key: 'facebook_url', label: 'Facebook', icon: Facebook },
     { key: 'youtube_url', label: 'YouTube', icon: Youtube },
     { key: 'whatsapp_url', label: 'WhatsApp', icon: MessageCircle },
 ];
 
-export default function EventShow({ event, categories, meetings, registrationCategories }: Props) {
+export default function EventShow({
+    event,
+    categories,
+    meetings,
+    registrationCategories,
+}: Props) {
     const hasCategories = Boolean(categories && categories.length > 0);
     const hasMeetings = meetings.length > 0;
     const hasRegistration = registrationCategories.length > 0;
-    const totalTeams = categories?.reduce((sum, c) => sum + c.teams.length, 0) ?? 0;
-    const totalMatches = categories?.reduce((sum, c) => sum + c.matches.length, 0) ?? 0;
-    const totalPools = categories?.reduce((sum, c) => sum + c.pools.length, 0) ?? 0;
-    const calendarMatches = categories?.flatMap((c) => c.matches.map((match) => ({ match, categoryName: c.name }))) ?? [];
+    const totalTeams =
+        categories?.reduce((sum, c) => sum + c.teams.length, 0) ?? 0;
+    const totalMatches =
+        categories?.reduce((sum, c) => sum + c.matches.length, 0) ?? 0;
+    const totalPools =
+        categories?.reduce((sum, c) => sum + c.pools.length, 0) ?? 0;
+    const calendarMatches =
+        categories?.flatMap((c) =>
+            c.matches.map((match) => ({ match, categoryName: c.name })),
+        ) ?? [];
 
     const stats = [
         { label: 'Categories', value: categories?.length ?? 0, icon: Trophy },
@@ -53,7 +82,9 @@ export default function EventShow({ event, categories, meetings, registrationCat
         { label: 'Matches', value: totalMatches, icon: Swords },
     ].filter((stat) => stat.value > 0);
 
-    const activeSocialLinks = SOCIAL_LINKS.filter((social) => Boolean(event[social.key]));
+    const activeSocialLinks = SOCIAL_LINKS.filter((social) =>
+        Boolean(event[social.key]),
+    );
 
     return (
         <>
@@ -89,7 +120,8 @@ export default function EventShow({ event, categories, meetings, registrationCat
                         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-white/80">
                             <div className="flex items-center gap-2">
                                 <Calendar className="h-4 w-4" />
-                                {formatDate(event.start_date)} – {formatDate(event.end_date)}
+                                {formatDate(event.start_date)} –{' '}
+                                {formatDate(event.end_date)}
                             </div>
                             {event.contact_person && (
                                 <a
@@ -103,7 +135,9 @@ export default function EventShow({ event, categories, meetings, registrationCat
                         </div>
 
                         {event.description && (
-                            <p className="max-w-2xl text-sm text-white/70 sm:text-base">{event.description}</p>
+                            <p className="max-w-2xl text-sm text-white/70 sm:text-base">
+                                {event.description}
+                            </p>
                         )}
 
                         {activeSocialLinks.length > 0 && (
@@ -138,8 +172,12 @@ export default function EventShow({ event, categories, meetings, registrationCat
                                             className="flex items-center gap-2 rounded-xl border-2 border-white/15 bg-white/5 px-3 py-2"
                                         >
                                             <Icon className="h-4 w-4 text-white/50" />
-                                            <span className="text-sm font-bold tabular-nums">{stat.value}</span>
-                                            <span className="text-xs text-white/50 uppercase">{stat.label}</span>
+                                            <span className="text-sm font-bold tabular-nums">
+                                                {stat.value}
+                                            </span>
+                                            <span className="text-xs text-white/50 uppercase">
+                                                {stat.label}
+                                            </span>
                                         </div>
                                     );
                                 })}
@@ -159,11 +197,19 @@ export default function EventShow({ event, categories, meetings, registrationCat
                                 {registrationCategories.map((category) => {
                                     const details = (
                                         <div className="flex flex-col gap-1">
-                                            <span className="text-lg font-bold text-white">{category.name}</span>
-                                            <span className="text-xl font-black text-white">{formatRupiah(category.price)}</span>
+                                            <span className="text-lg font-bold text-white">
+                                                {category.name}
+                                            </span>
+                                            <span className="text-xl font-black text-white">
+                                                {formatRupiah(category.price)}
+                                            </span>
                                             <span className="text-xs text-white/50">
-                                                {category.subject_type === 'team' ? 'Per team' : 'Per person'}
-                                                {category.slots_left !== null && category.is_available
+                                                {category.subject_type ===
+                                                'team'
+                                                    ? 'Per team'
+                                                    : 'Per person'}
+                                                {category.slots_left !== null &&
+                                                category.is_available
                                                     ? ` · ${category.slots_left} slot${category.slots_left === 1 ? '' : 's'} left`
                                                     : ''}
                                             </span>
@@ -178,7 +224,10 @@ export default function EventShow({ event, categories, meetings, registrationCat
                                             >
                                                 {details}
                                                 <span className="rounded-full border-2 border-white/20 px-4 py-2 text-xs font-bold tracking-wide text-white/60 uppercase">
-                                                    {UNAVAILABLE_LABEL[category.unavailable_reason ?? ''] ?? 'Unavailable'}
+                                                    {UNAVAILABLE_LABEL[
+                                                        category.unavailable_reason ??
+                                                            ''
+                                                    ] ?? 'Unavailable'}
                                                 </span>
                                             </div>
                                         );
@@ -201,14 +250,22 @@ export default function EventShow({ event, categories, meetings, registrationCat
                             </div>
 
                             <p className="text-xs text-white/50">
-                                Prices are per registration and include the event entry described above. Paid
-                                registrations are settled online through Midtrans (bank transfer / virtual account,
-                                e-wallet, QRIS, or card) right after you submit the form. See our{' '}
-                                <Link href="/terms" className="text-red-400 underline-offset-2 hover:underline">
+                                Prices are per registration and include the
+                                event entry described above. Paid registrations
+                                are settled online through Midtrans (bank
+                                transfer / virtual account, e-wallet, QRIS, or
+                                card) right after you submit the form. See our{' '}
+                                <Link
+                                    href="/terms"
+                                    className="text-red-400 underline-offset-2 hover:underline"
+                                >
                                     Terms &amp; Conditions
                                 </Link>{' '}
                                 and{' '}
-                                <Link href="/refund-policy" className="text-red-400 underline-offset-2 hover:underline">
+                                <Link
+                                    href="/refund-policy"
+                                    className="text-red-400 underline-offset-2 hover:underline"
+                                >
                                     Refund Policy
                                 </Link>
                                 .
@@ -218,7 +275,9 @@ export default function EventShow({ event, categories, meetings, registrationCat
 
                     {calendarMatches.length > 0 && (
                         <div className="flex flex-col gap-6">
-                            <h2 className="text-2xl font-black tracking-tight uppercase">Match Schedule</h2>
+                            <h2 className="text-2xl font-black tracking-tight uppercase">
+                                Match Schedule
+                            </h2>
                             <MatchesCalendar matches={calendarMatches} />
                         </div>
                     )}
@@ -236,27 +295,61 @@ export default function EventShow({ event, categories, meetings, registrationCat
                                         className="flex flex-col gap-3 rounded-2xl border-2 border-white/10 bg-white/5 p-5 sm:flex-row sm:items-center sm:justify-between"
                                     >
                                         <div className="flex flex-col gap-1">
-                                            <span className="text-lg font-bold text-white">{meeting.title}</span>
-                                            <span className="text-sm text-white/50">
-                                                {formatDateTime(meeting.scheduled_at)}
-                                                {meeting.ends_at ? ` – ${formatDateTime(meeting.ends_at)}` : ''}
-                                                {meeting.location ? ` · ${meeting.location}` : ''}
+                                            <span className="text-lg font-bold text-white">
+                                                {meeting.title}
                                             </span>
-                                            {meeting.description && <p className="max-w-xl text-sm text-white/60">{meeting.description}</p>}
+                                            <span className="text-sm text-white/50">
+                                                {formatDateTime(
+                                                    meeting.scheduled_at,
+                                                )}
+                                                {meeting.ends_at
+                                                    ? ` – ${formatDateTime(meeting.ends_at)}`
+                                                    : ''}
+                                                {meeting.location
+                                                    ? ` · ${meeting.location}`
+                                                    : ''}
+                                            </span>
+                                            {meeting.description && (
+                                                <p className="max-w-xl text-sm text-white/60">
+                                                    {meeting.description}
+                                                </p>
+                                            )}
                                         </div>
                                         {meeting.speaker && (
                                             <div className="flex items-center gap-3">
                                                 <Avatar>
                                                     <AvatarImage
-                                                        src={meeting.speaker.photo ? formatImageUrl(meeting.speaker.photo) : undefined}
-                                                        alt={meeting.speaker.name}
+                                                        src={
+                                                            meeting.speaker
+                                                                .photo
+                                                                ? formatImageUrl(
+                                                                      meeting
+                                                                          .speaker
+                                                                          .photo,
+                                                                  )
+                                                                : undefined
+                                                        }
+                                                        alt={
+                                                            meeting.speaker.name
+                                                        }
                                                     />
-                                                    <AvatarFallback>{meeting.speaker.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                                                    <AvatarFallback>
+                                                        {meeting.speaker.name
+                                                            .slice(0, 2)
+                                                            .toUpperCase()}
+                                                    </AvatarFallback>
                                                 </Avatar>
                                                 <div className="flex flex-col">
-                                                    <span className="text-sm font-semibold text-white">{meeting.speaker.name}</span>
+                                                    <span className="text-sm font-semibold text-white">
+                                                        {meeting.speaker.name}
+                                                    </span>
                                                     {meeting.speaker.title && (
-                                                        <span className="text-xs text-white/50">{meeting.speaker.title}</span>
+                                                        <span className="text-xs text-white/50">
+                                                            {
+                                                                meeting.speaker
+                                                                    .title
+                                                            }
+                                                        </span>
                                                     )}
                                                 </div>
                                             </div>
@@ -270,7 +363,9 @@ export default function EventShow({ event, categories, meetings, registrationCat
                     {hasCategories ? (
                         <div className="flex flex-col gap-6">
                             <div className="flex flex-wrap items-center justify-between gap-3">
-                                <h2 className="text-2xl font-black tracking-tight uppercase">Categories &amp; Matches</h2>
+                                <h2 className="text-2xl font-black tracking-tight uppercase">
+                                    Categories &amp; Matches
+                                </h2>
                                 {categories && categories.length > 1 && (
                                     <div className="flex flex-wrap gap-2">
                                         {categories.map((category) => (
@@ -286,8 +381,14 @@ export default function EventShow({ event, categories, meetings, registrationCat
                                 )}
                             </div>
                             {categories?.map((category) => (
-                                <div key={category.id} id={`category-${category.id}`} className="scroll-mt-24">
-                                    <BasketballCategorySection category={category} />
+                                <div
+                                    key={category.id}
+                                    id={`category-${category.id}`}
+                                    className="scroll-mt-24"
+                                >
+                                    <BasketballCategorySection
+                                        category={category}
+                                    />
                                 </div>
                             ))}
                         </div>
@@ -296,7 +397,10 @@ export default function EventShow({ event, categories, meetings, registrationCat
                         !hasRegistration && (
                             <p className="text-center text-sm text-white/40">
                                 Details for this event will be posted soon.{' '}
-                                <Link href="/events" className="text-red-400 hover:underline">
+                                <Link
+                                    href="/events"
+                                    className="text-red-400 hover:underline"
+                                >
                                     Browse other events
                                 </Link>
                                 .

@@ -15,7 +15,7 @@ class PlayerController extends Controller
     {
         $validated = $this->validated($request, $team);
 
-        // create() on a BelongsToMany relationship automatically creates the 
+        // create() on a BelongsToMany relationship automatically creates the
         // Player record AND inserts the pivot record connecting them to the team.
         $team->players()->create($validated);
 

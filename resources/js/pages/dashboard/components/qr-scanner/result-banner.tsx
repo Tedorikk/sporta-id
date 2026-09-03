@@ -22,7 +22,12 @@ interface ResultBannerProps {
  * The parent should remount this (e.g. via a `key` tied to a scan sequence
  * number) so the entrance animation replays on every scan, not just the first.
  */
-export function ResultBanner({ variant, icon: Icon, title, subtitle }: ResultBannerProps) {
+export function ResultBanner({
+    variant,
+    icon: Icon,
+    title,
+    subtitle,
+}: ResultBannerProps) {
     return (
         <div
             className={cn(
@@ -32,7 +37,9 @@ export function ResultBanner({ variant, icon: Icon, title, subtitle }: ResultBan
         >
             <Icon className="h-14 w-14 shrink-0" />
             <div>
-                <p className="text-2xl font-extrabold tracking-wide uppercase">{title}</p>
+                <p className="text-2xl font-extrabold tracking-wide uppercase">
+                    {title}
+                </p>
                 {subtitle && <p className="text-base opacity-90">{subtitle}</p>}
             </div>
         </div>

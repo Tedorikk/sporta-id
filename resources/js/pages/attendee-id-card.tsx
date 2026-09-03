@@ -40,7 +40,9 @@ export default function AttendeeIdCard({ attendee, template }: Props) {
         status: attendee.status,
         qrDataUrl,
         eventName: attendee.event?.name,
-        eventLogo: attendee.event?.logo ? formatImageUrl(attendee.event.logo) : undefined,
+        eventLogo: attendee.event?.logo
+            ? formatImageUrl(attendee.event.logo)
+            : undefined,
         appLogo: APP_LOGO_URL,
     };
 

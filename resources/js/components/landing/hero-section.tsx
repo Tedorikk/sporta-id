@@ -7,10 +7,23 @@ export function HeroSection() {
             style={{ clipPath: 'polygon(0 0, 100% 0, 100% 92%, 0 100%)' }}
         >
             <div className="pointer-events-none absolute inset-0 opacity-10">
-                <svg className="h-full w-full" xmlns="http://www.w3.org/2000/svg">
+                <svg
+                    className="h-full w-full"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
                     <defs>
-                        <pattern id="hero-grid" width="28" height="28" patternUnits="userSpaceOnUse">
-                            <path d="M 28 0 L 0 0 0 28" fill="none" stroke="white" strokeWidth="0.5" />
+                        <pattern
+                            id="hero-grid"
+                            width="28"
+                            height="28"
+                            patternUnits="userSpaceOnUse"
+                        >
+                            <path
+                                d="M 28 0 L 0 0 0 28"
+                                fill="none"
+                                stroke="white"
+                                strokeWidth="0.5"
+                            />
                         </pattern>
                     </defs>
                     <rect width="100%" height="100%" fill="url(#hero-grid)" />
@@ -18,7 +31,10 @@ export function HeroSection() {
             </div>
             <div className="absolute top-1/2 -right-24 h-72 w-72 -translate-y-1/2 rotate-12 border-8 border-white/10" />
 
-            <div className="relative mx-auto flex max-w-6xl flex-col items-start gap-6 px-6 py-24" id="about">
+            <div
+                className="relative mx-auto flex max-w-6xl flex-col items-start gap-6 px-6 py-24"
+                id="about"
+            >
                 <span className="rounded-full border-2 border-white/40 bg-white/10 px-4 py-1 text-xs font-bold tracking-[0.3em] uppercase">
                     Sporta Indonesia
                 </span>
@@ -26,8 +42,9 @@ export function HeroSection() {
                     Support Your <span className="text-red-300">Talent</span>.
                 </h1>
                 <p className="max-w-lg text-lg text-white/80">
-                    Based in Pontianak, West Kalimantan, we design and organize sports and arts events across
-                    Indonesia and beyond — helping athletes and communities grow, one event at a time.
+                    Based in Pontianak, West Kalimantan, we design and organize
+                    sports and arts events across Indonesia and beyond — helping
+                    athletes and communities grow, one event at a time.
                 </p>
                 <div className="flex flex-wrap gap-4 pt-2">
                     <a

@@ -13,7 +13,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import type { BasketballEventCategory } from '@/types/basketball-event-category';
 import type { Event } from '@/types/event';
 import type { GameMatch, MatchStatus } from '@/types/game-match';
@@ -40,7 +46,11 @@ export function ScoreDialog({
         setSaving(true);
         router.patch(
             `/dashboard/events/${event.id}/basketball-categories/${category.id}/matches/${match.id}/score`,
-            { home_score: Number(homeScore), away_score: Number(awayScore), status },
+            {
+                home_score: Number(homeScore),
+                away_score: Number(awayScore),
+                status,
+            },
             {
                 preserveScroll: true,
                 onSuccess: () => setOpen(false),
@@ -52,7 +62,11 @@ export function ScoreDialog({
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1 px-2 text-xs"
+                >
                     <Edit2 className="h-3 w-3" />
                     Score
                 </Button>
@@ -67,33 +81,42 @@ export function ScoreDialog({
 
                 <div className="grid grid-cols-3 items-center gap-3">
                     <div className="flex flex-col items-center gap-1">
-                        <span className="text-xs font-medium text-muted-foreground truncate max-w-full">{homeName}</span>
+                        <span className="max-w-full truncate text-xs font-medium text-muted-foreground">
+                            {homeName}
+                        </span>
                         <Input
                             id="home-score"
                             type="number"
                             min={0}
                             value={homeScore}
                             onChange={(e) => setHomeScore(e.target.value)}
-                            className="text-center text-xl font-bold h-14"
+                            className="h-14 text-center text-xl font-bold"
                         />
                     </div>
-                    <div className="flex items-center justify-center text-muted-foreground font-bold text-lg pt-5">vs</div>
+                    <div className="flex items-center justify-center pt-5 text-lg font-bold text-muted-foreground">
+                        vs
+                    </div>
                     <div className="flex flex-col items-center gap-1">
-                        <span className="text-xs font-medium text-muted-foreground truncate max-w-full">{awayName}</span>
+                        <span className="max-w-full truncate text-xs font-medium text-muted-foreground">
+                            {awayName}
+                        </span>
                         <Input
                             id="away-score"
                             type="number"
                             min={0}
                             value={awayScore}
                             onChange={(e) => setAwayScore(e.target.value)}
-                            className="text-center text-xl font-bold h-14"
+                            className="h-14 text-center text-xl font-bold"
                         />
                     </div>
                 </div>
 
                 <div className="flex flex-col gap-1.5">
                     <Label htmlFor="match-status">Status</Label>
-                    <Select value={status} onValueChange={(v) => setStatus(v as MatchStatus)}>
+                    <Select
+                        value={status}
+                        onValueChange={(v) => setStatus(v as MatchStatus)}
+                    >
                         <SelectTrigger id="match-status">
                             <SelectValue />
                         </SelectTrigger>
@@ -106,9 +129,13 @@ export function ScoreDialog({
                 </div>
 
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                    <Button variant="outline" onClick={() => setOpen(false)}>
+                        Cancel
+                    </Button>
                     <Button onClick={handleSave} disabled={saving}>
-                        {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                        {saving && (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        )}
                         Save Score
                     </Button>
                 </DialogFooter>

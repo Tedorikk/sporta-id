@@ -30,7 +30,9 @@ export function IssueSummaryBadge({ summary }: { summary: ReviewSummary }) {
             <Badge variant="destructive" className="gap-1">
                 <AlertCircle className="h-3 w-3" />
                 {summary.errors} error{summary.errors === 1 ? '' : 's'}
-                {summary.warnings > 0 ? `, ${summary.warnings} warning${summary.warnings === 1 ? '' : 's'}` : ''}
+                {summary.warnings > 0
+                    ? `, ${summary.warnings} warning${summary.warnings === 1 ? '' : 's'}`
+                    : ''}
             </Badge>
         );
     }
@@ -59,9 +61,19 @@ export function IssueList({ issues }: { issues: ReviewIssue[] }) {
                 const Icon = SEVERITY_ICON[issue.severity];
 
                 return (
-                    <li key={`${issue.code}-${i}`} className="flex items-start gap-1.5 text-xs">
-                        <Icon className={cn('mt-0.5 h-3.5 w-3.5 shrink-0', SEVERITY_TEXT[issue.severity])} />
-                        <span className="text-muted-foreground">{issue.message}</span>
+                    <li
+                        key={`${issue.code}-${i}`}
+                        className="flex items-start gap-1.5 text-xs"
+                    >
+                        <Icon
+                            className={cn(
+                                'mt-0.5 h-3.5 w-3.5 shrink-0',
+                                SEVERITY_TEXT[issue.severity],
+                            )}
+                        />
+                        <span className="text-muted-foreground">
+                            {issue.message}
+                        </span>
                     </li>
                 );
             })}

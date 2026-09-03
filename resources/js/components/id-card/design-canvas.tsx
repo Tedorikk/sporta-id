@@ -10,7 +10,11 @@ import {
     roundBox,
     snapMove,
 } from '@/components/id-card/canvas-geometry';
-import type { Box, ResizeHandle, SnapGuide } from '@/components/id-card/canvas-geometry';
+import type {
+    Box,
+    ResizeHandle,
+    SnapGuide,
+} from '@/components/id-card/canvas-geometry';
 import { ElementContent } from '@/components/id-card/id-card-renderer';
 import type { IdCardData } from '@/components/id-card/id-card-renderer';
 import type { CardCanvas, CardElement } from '@/types/card-template';
@@ -56,7 +60,12 @@ export function DesignCanvas({
     const [hoveredId, setHoveredId] = useState<string | null>(null);
 
     const beginGesture = useCallback(
-        (e: ReactPointerEvent, mode: 'move' | 'resize', ids: string[], handle: ResizeHandle | null) => {
+        (
+            e: ReactPointerEvent,
+            mode: 'move' | 'resize',
+            ids: string[],
+            handle: ResizeHandle | null,
+        ) => {
             e.preventDefault();
             e.stopPropagation();
 
@@ -70,7 +79,14 @@ export function DesignCanvas({
 
             // The gesture origin lives in a ref, so it survives every re-render
             // the drag itself triggers — the bug the old closure-based helpers hit.
-            interaction.current = { mode, handle, pointerX: e.clientX, pointerY: e.clientY, boxes, moved: false };
+            interaction.current = {
+                mode,
+                handle,
+                pointerX: e.clientX,
+                pointerY: e.clientY,
+                boxes,
+                moved: false,
+            };
             setActive(true);
         },
         [elements],
@@ -102,7 +118,13 @@ export function DesignCanvas({
 
             const ids = Object.keys(current.boxes);
             const targets =
-                snapEnabled && !e.altKey ? collectSnapTargets(canvas, elements, ids.length === 1 ? ids[0] : null) : undefined;
+                snapEnabled && !e.altKey
+                    ? collectSnapTargets(
+                          canvas,
+                          elements,
+                          ids.length === 1 ? ids[0] : null,
+                      )
+                    : undefined;
             const updates: Record<string, Box> = {};
             let nextGuides: SnapGuide[] = [];
 
@@ -111,8 +133,14 @@ export function DesignCanvas({
                 // so a multi-selection keeps its relative layout.
                 const primaryId = ids[0];
                 const primaryStart = current.boxes[primaryId];
-                const moved = { ...primaryStart, x: primaryStart.x + dx, y: primaryStart.y + dy };
-                const snapped = targets ? snapMove(moved, targets, zoom) : { box: moved, guides: [] };
+                const moved = {
+                    ...primaryStart,
+                    x: primaryStart.x + dx,
+                    y: primaryStart.y + dy,
+                };
+                const snapped = targets
+                    ? snapMove(moved, targets, zoom)
+                    : { box: moved, guides: [] };
 
                 nextGuides = snapped.guides;
 
@@ -121,15 +149,25 @@ export function DesignCanvas({
 
                 for (const id of ids) {
                     const start = current.boxes[id];
-                    updates[id] = roundBox({ ...start, x: start.x + appliedDx, y: start.y + appliedDy });
+                    updates[id] = roundBox({
+                        ...start,
+                        x: start.x + appliedDx,
+                        y: start.y + appliedDy,
+                    });
                 }
             } else if (current.handle) {
                 for (const id of ids) {
-                    const result = resizeBox(current.boxes[id], dx, dy, current.handle, {
-                        targets: ids.length === 1 ? targets : undefined,
-                        scale: zoom,
-                        keepAspect: e.shiftKey,
-                    });
+                    const result = resizeBox(
+                        current.boxes[id],
+                        dx,
+                        dy,
+                        current.handle,
+                        {
+                            targets: ids.length === 1 ? targets : undefined,
+                            scale: zoom,
+                            keepAspect: e.shiftKey,
+                        },
+                    );
 
                     updates[id] = roundBox(result.box);
                     nextGuides = result.guides;
@@ -157,9 +195,20 @@ export function DesignCanvas({
         };
         // Re-subscribing when these change is harmless: the gesture origin lives
         // in `interaction.current`, which outlives any listener swap.
-    }, [active, canvas, elements, zoom, snapEnabled, onGestureStart, onGeometryChange]);
+    }, [
+        active,
+        canvas,
+        elements,
+        zoom,
+        snapEnabled,
+        onGestureStart,
+        onGeometryChange,
+    ]);
 
-    function handleElementPointerDown(e: ReactPointerEvent, element: CardElement) {
+    function handleElementPointerDown(
+        e: ReactPointerEvent,
+        element: CardElement,
+    ) {
         if (element.locked || element.hidden) {
             return;
         }
@@ -170,7 +219,9 @@ export function DesignCanvas({
         let ids: string[];
 
         if (additive) {
-            ids = alreadySelected ? selectedIds.filter((id) => id !== element.id) : [...selectedIds, element.id];
+            ids = alreadySelected
+                ? selectedIds.filter((id) => id !== element.id)
+                : [...selectedIds, element.id];
         } else {
             ids = alreadySelected ? selectedIds : [element.id];
         }
@@ -179,14 +230,20 @@ export function DesignCanvas({
 
         if (ids.length > 0) {
             // Put the grabbed element first so it drives snapping.
-            beginGesture(e, 'move', [element.id, ...ids.filter((id) => id !== element.id)], null);
+            beginGesture(
+                e,
+                'move',
+                [element.id, ...ids.filter((id) => id !== element.id)],
+                null,
+            );
         }
     }
 
     const sorted = [...elements].sort((a, b) => a.zIndex - b.zIndex);
     const showSelection = selectedIds.length > 0;
     const selectionBoxes = elements.filter((el) => selectedIds.includes(el.id));
-    const singleSelection = selectionBoxes.length === 1 ? selectionBoxes[0] : null;
+    const singleSelection =
+        selectionBoxes.length === 1 ? selectionBoxes[0] : null;
 
     return (
         <div
@@ -212,7 +269,8 @@ export function DesignCanvas({
                     transform: `scale(${zoom})`,
                     transformOrigin: 'top left',
                     background: canvas.background || '#ffffff',
-                    boxShadow: '0 18px 50px -12px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(15, 23, 42, 0.08)',
+                    boxShadow:
+                        '0 18px 50px -12px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(15, 23, 42, 0.08)',
                     borderRadius: 2,
                     overflow: 'hidden',
                     touchAction: 'none',
@@ -236,15 +294,22 @@ export function DesignCanvas({
 
                 {sorted.map((element) => {
                     const isSelected = selectedIds.includes(element.id);
-                    const isHovered = hoveredId === element.id && !isSelected && !active;
+                    const isHovered =
+                        hoveredId === element.id && !isSelected && !active;
 
                     return (
                         <div
                             key={element.id}
                             data-element-id={element.id}
-                            onPointerDown={(e) => handleElementPointerDown(e, element)}
+                            onPointerDown={(e) =>
+                                handleElementPointerDown(e, element)
+                            }
                             onPointerEnter={() => setHoveredId(element.id)}
-                            onPointerLeave={() => setHoveredId((prev) => (prev === element.id ? null : prev))}
+                            onPointerLeave={() =>
+                                setHoveredId((prev) =>
+                                    prev === element.id ? null : prev,
+                                )
+                            }
                             style={{
                                 position: 'absolute',
                                 left: element.x,
@@ -252,10 +317,14 @@ export function DesignCanvas({
                                 width: element.width,
                                 height: element.height,
                                 zIndex: element.zIndex,
-                                transform: element.rotation ? `rotate(${element.rotation}deg)` : undefined,
+                                transform: element.rotation
+                                    ? `rotate(${element.rotation}deg)`
+                                    : undefined,
                                 opacity: element.hidden ? 0.25 : 1,
                                 cursor: element.locked ? 'default' : 'move',
-                                outline: isHovered ? `${1 / zoom}px solid rgba(37, 99, 235, 0.5)` : undefined,
+                                outline: isHovered
+                                    ? `${1 / zoom}px solid rgba(37, 99, 235, 0.5)`
+                                    : undefined,
                             }}
                         >
                             <ElementContent element={element} data={data} />
@@ -279,7 +348,6 @@ export function DesignCanvas({
                     pointerEvents: 'none',
                 }}
             >
-
                 {/* Snap guides */}
                 {guides.map((guide) => (
                     <div
@@ -291,8 +359,18 @@ export function DesignCanvas({
                             pointerEvents: 'none',
                             background: '#ec4899',
                             ...(guide.axis === 'x'
-                                ? { left: guide.position, top: 0, width: 1 / zoom, height: '100%' }
-                                : { top: guide.position, left: 0, height: 1 / zoom, width: '100%' }),
+                                ? {
+                                      left: guide.position,
+                                      top: 0,
+                                      width: 1 / zoom,
+                                      height: '100%',
+                                  }
+                                : {
+                                      top: guide.position,
+                                      left: 0,
+                                      height: 1 / zoom,
+                                      width: '100%',
+                                  }),
                         }}
                     />
                 ))}
@@ -335,7 +413,14 @@ export function DesignCanvas({
                         {RESIZE_HANDLES.map((handle) => (
                             <div
                                 key={handle}
-                                onPointerDown={(e) => beginGesture(e, 'resize', [singleSelection.id], handle)}
+                                onPointerDown={(e) =>
+                                    beginGesture(
+                                        e,
+                                        'resize',
+                                        [singleSelection.id],
+                                        handle,
+                                    )
+                                }
                                 style={{
                                     position: 'absolute',
                                     left: HANDLE_ANCHOR[handle].left,
@@ -364,11 +449,15 @@ export function DesignCanvas({
                     className="pointer-events-none absolute rounded bg-primary px-1.5 py-0.5 text-[11px] font-medium text-primary-foreground tabular-nums"
                     style={{
                         left: singleSelection.x * zoom,
-                        top: (singleSelection.y + singleSelection.height) * zoom + 6,
+                        top:
+                            (singleSelection.y + singleSelection.height) *
+                                zoom +
+                            6,
                         zIndex: 10001,
                     }}
                 >
-                    {Math.round(singleSelection.width)} × {Math.round(singleSelection.height)}
+                    {Math.round(singleSelection.width)} ×{' '}
+                    {Math.round(singleSelection.height)}
                 </div>
             )}
         </div>

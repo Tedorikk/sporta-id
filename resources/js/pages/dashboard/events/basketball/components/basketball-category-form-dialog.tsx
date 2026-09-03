@@ -1,8 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from '@inertiajs/react';
 import { Loader2 } from 'lucide-react';
-import { useState  } from 'react';
-import type {ReactNode} from 'react';
+import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -69,10 +69,7 @@ function optionalIntField(min?: number) {
 function optionalDecimalField() {
     return z
         .string()
-        .refine(
-            (v) => v === '' || !Number.isNaN(Number(v)),
-            'Must be a number',
-        )
+        .refine((v) => v === '' || !Number.isNaN(Number(v)), 'Must be a number')
         .transform((v) => (v === '' ? null : Number(v)))
         .refine((v) => v === null || v >= 0, 'Cannot be negative');
 }
@@ -87,8 +84,7 @@ const CATEGORY_FORMATS = [
     {
         value: 'round_robin',
         label: 'Round Robin',
-        description:
-            'Every team plays every other team. No pools are created.',
+        description: 'Every team plays every other team. No pools are created.',
     },
 ];
 
@@ -103,10 +99,7 @@ const categorySchema = z
         price: optionalDecimalField(),
         quota: optionalIntField(1),
         status: z.string().min(1),
-        format: z.enum([
-            'pool_stage',
-            'round_robin'
-        ])
+        format: z.enum(['pool_stage', 'round_robin']),
     })
     .refine(
         (data) => data.max_team === null || data.max_team >= data.min_team,
@@ -131,7 +124,9 @@ const categorySchema = z
 type CategoryFormInput = z.input<typeof categorySchema>;
 type CategoryFormOutput = z.output<typeof categorySchema>;
 
-function toDefaultValues(category?: BasketballEventCategory): CategoryFormInput {
+function toDefaultValues(
+    category?: BasketballEventCategory,
+): CategoryFormInput {
     return {
         name: category?.name ?? '',
         min_team: String(category?.min_team ?? 2),
@@ -148,7 +143,9 @@ function toDefaultValues(category?: BasketballEventCategory): CategoryFormInput 
         price: category?.price != null ? String(category.price) : '',
         quota: category?.quota != null ? String(category.quota) : '',
         status: category?.status ?? 'PENDING',
-        format: category?.format ? (category.format as 'pool_stage' | 'round_robin') : 'pool_stage'
+        format: category?.format
+            ? (category.format as 'pool_stage' | 'round_robin')
+            : 'pool_stage',
     };
 }
 
@@ -191,8 +188,8 @@ export function BasketballCategoryFormDialog({
                 setOpen(false);
 
                 if (!isEditing) {
-reset(toDefaultValues());
-}
+                    reset(toDefaultValues());
+                }
             },
         };
 
@@ -218,8 +215,8 @@ reset(toDefaultValues());
                 setOpen(next);
 
                 if (!next) {
-reset(toDefaultValues(category));
-}
+                    reset(toDefaultValues(category));
+                }
             }}
         >
             <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -291,7 +288,9 @@ reset(toDefaultValues(category));
                                     </Select>
 
                                     {fieldState.invalid && (
-                                        <FieldError errors={[fieldState.error]} />
+                                        <FieldError
+                                            errors={[fieldState.error]}
+                                        />
                                     )}
                                 </Field>
                             )}
@@ -418,7 +417,10 @@ reset(toDefaultValues(category));
                                             id="max_player_per_coach"
                                             type="number"
                                             aria-invalid={fieldState.invalid}
-                                            disabled={isSaving || format === 'round_robin'}
+                                            disabled={
+                                                isSaving ||
+                                                format === 'round_robin'
+                                            }
                                         />
                                         {fieldState.invalid && (
                                             <FieldError
@@ -512,9 +514,7 @@ reset(toDefaultValues(category));
                                                     (option) => (
                                                         <SelectItem
                                                             key={option.value}
-                                                            value={
-                                                                option.value
-                                                            }
+                                                            value={option.value}
                                                             className="cursor-pointer"
                                                         >
                                                             {option.label}
@@ -542,8 +542,8 @@ reset(toDefaultValues(category));
                             {isSaving
                                 ? 'Saving...'
                                 : isEditing
-                                    ? 'Save Changes'
-                                    : 'Add Category'}
+                                  ? 'Save Changes'
+                                  : 'Add Category'}
                         </Button>
                     </DialogFooter>
                 </form>

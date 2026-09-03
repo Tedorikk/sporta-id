@@ -13,7 +13,9 @@ export function TeamsGrid({ teams }: Props) {
 
     return (
         <div className="flex flex-col gap-3">
-            <h4 className="text-sm font-bold tracking-wide text-white/70 uppercase">Teams ({teams.length})</h4>
+            <h4 className="text-sm font-bold tracking-wide text-white/70 uppercase">
+                Teams ({teams.length})
+            </h4>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
                 {teams.map((team) => (
                     <div
@@ -31,7 +33,9 @@ export function TeamsGrid({ teams }: Props) {
                                 <Shield className="h-4 w-4" />
                             </span>
                         )}
-                        <span className="truncate text-sm font-semibold text-white/85">{team.name}</span>
+                        <span className="truncate text-sm font-semibold text-white/85">
+                            {team.name}
+                        </span>
                     </div>
                 ))}
             </div>
