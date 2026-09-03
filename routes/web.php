@@ -10,6 +10,7 @@ use App\Http\Controllers\BracketController;
 use App\Http\Controllers\CardTemplateController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ContactMessageController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentUploadController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventMatchController;
@@ -114,7 +115,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified', 'organization.current'])->group(function () {
-    Route::inertia('dashboard', 'dashboard/page')->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // --- Events -------------------------------------------------------
     Route::prefix('dashboard/events')->group(function () {
