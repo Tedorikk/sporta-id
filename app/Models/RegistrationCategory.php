@@ -59,16 +59,19 @@ class RegistrationCategory extends Model
         });
     }
 
+    /** @return BelongsTo<Event, $this> */
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
     }
 
+    /** @return HasMany<Registration, $this> */
     public function registrations(): HasMany
     {
         return $this->hasMany(Registration::class);
     }
 
+    /** @return HasOne<BasketballEventCategory, $this> */
     public function basketballCategory(): HasOne
     {
         return $this->hasOne(BasketballEventCategory::class);

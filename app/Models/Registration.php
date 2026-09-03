@@ -69,21 +69,25 @@ class Registration extends Model
             : static::where('qr_token', $identifier)->first();
     }
 
+    /** @return BelongsTo<RegistrationCategory, $this> */
     public function registrationCategory(): BelongsTo
     {
         return $this->belongsTo(RegistrationCategory::class);
     }
 
+    /** @return BelongsTo<Event, $this> */
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
     }
 
+    /** @return BelongsTo<Team, $this> */
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
     }
 
+    /** @return HasMany<Payment, $this> */
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
@@ -94,6 +98,7 @@ class Registration extends Model
         return $this->payments->sortByDesc('id')->first();
     }
 
+    /** @return HasMany<MeetingCheckIn, $this> */
     public function meetingCheckIns(): HasMany
     {
         return $this->hasMany(MeetingCheckIn::class);

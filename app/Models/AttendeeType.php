@@ -23,11 +23,13 @@ class AttendeeType extends Model
         'is_active' => 'boolean',
     ];
 
+    /** @return BelongsTo<Event, $this> */
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
     }
 
+    /** @return HasMany<Attendee, $this> */
     public function attendees(): HasMany
     {
         return $this->hasMany(Attendee::class);

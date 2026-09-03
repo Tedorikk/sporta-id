@@ -20,16 +20,19 @@ class Meeting extends Model
         'ends_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<Event, $this> */
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
     }
 
+    /** @return BelongsTo<Speaker, $this> */
     public function speaker(): BelongsTo
     {
         return $this->belongsTo(Speaker::class);
     }
 
+    /** @return HasMany<MeetingCheckIn, $this> */
     public function checkIns(): HasMany
     {
         return $this->hasMany(MeetingCheckIn::class);

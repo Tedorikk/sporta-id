@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\BasketballEvent;
 use App\Models\BasketballEventCategory;
 use App\Models\Event;
-use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class BasketballEventCategoryController extends Controller
 {
@@ -55,13 +55,7 @@ class BasketballEventCategoryController extends Controller
         return [
             'name' => ['required', 'string', 'max:255'],
 
-            'format' => [
-                'required',
-                Rule::in([
-                    'pool_stage',
-                    'round_robin',
-                ]),
-            ],
+            'format' => ['required', Rule::in(BasketballEventCategory::FORMATS)],
 
             'min_team' => ['required', 'integer', 'min:2'],
             'max_team' => ['nullable', 'integer', 'gte:min_team'],

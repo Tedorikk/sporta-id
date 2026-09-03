@@ -1,8 +1,10 @@
 import type { Event } from './event';
+import type { Payment } from './payment';
 import type { RegistrationCategory } from './registration-category';
 import type { Team } from './team';
 
-export type RegistrationStatus = 'pending_payment' | 'confirmed' | 'rejected' | 'cancelled' | 'expired';
+export type RegistrationStatus =
+    'pending_payment' | 'confirmed' | 'rejected' | 'cancelled' | 'expired';
 
 export interface Registration {
     id: number;
@@ -21,6 +23,8 @@ export interface Registration {
     registration_category?: RegistrationCategory;
     event?: Event;
     team?: Team | null;
+    /** The settled payment, else the latest attempt. Attached by RegistrationCategoryController::show. */
+    payment?: Payment | null;
 }
 
 export interface PaginatedRegistrations {

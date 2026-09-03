@@ -42,6 +42,6 @@ class PaidEventRegistrationSeeder extends Seeder
             ],
         ]);
 
-        $this->command?->info("Seeded \"{$event->name}\" (event #{$event->id}) with a paid 5K registration category.");
+        $this->command->info("Seeded \"{$event->name}\" (event #{$event->id}) with a paid 5K registration category.");
     }
 }

@@ -53,6 +53,7 @@ class User extends Authenticatable implements PasskeyUser
 
     /**
      * @return BelongsToMany<Organization, $this>
+     * @return BelongsToMany<Organization, $this>
      */
     public function organizations(): BelongsToMany
     {
@@ -62,6 +63,7 @@ class User extends Authenticatable implements PasskeyUser
     }
 
     /**
+     * @return BelongsTo<Organization, $this>
      * @return BelongsTo<Organization, $this>
      */
     public function currentOrganization(): BelongsTo

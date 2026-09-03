@@ -34,7 +34,7 @@ return new class extends Migration
 
         // An organization with no owner can never be administered, so fall back
         // to the oldest account when no user matches the configured admin email.
-        $ownerId = $users->firstWhere('email', $adminEmail)?->id ?? $users->first()?->id;
+        $ownerId = $users->firstWhere('email', $adminEmail)->id ?? $users->first()?->id;
 
         // Every pre-tenancy user was a trusted admin with full access, so the
         // lowest role that preserves their existing capabilities is `admin`.

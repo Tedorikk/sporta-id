@@ -49,6 +49,7 @@ class Payment extends Model
         'status' => self::STATUS_PENDING,
     ];
 
+    /** @return BelongsTo<Registration, $this> */
     public function registration(): BelongsTo
     {
         return $this->belongsTo(Registration::class);

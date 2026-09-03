@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\Payment;
 use App\Models\RegistrationCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -86,12 +87,28 @@ class RegistrationCategoryController extends Controller
         $filters = $request->only(['search', 'status']);
 
         $registrations = $registrationCategory->registrations()
-            ->with('team')
+            ->with([
+                'team',
+                // The settled payment if there is one, else the most recent
+                // attempt — enough for an organizer to reconcile a disputed
+                // payment without opening the Midtrans dashboard.
+                'payments' => fn ($query) => $query->latest('id'),
+            ])
             ->when($filters['search'] ?? null, fn ($q, $search) => $q->where('name', 'like', "%{$search}%"))
             ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('status', $status))
             ->latest()
             ->paginate(15)
             ->withQueryString();
+
+        $registrations->getCollection()->transform(function ($registration) {
+            $payment = $registration->payments->firstWhere('status', Payment::STATUS_SETTLEMENT)
+                ?? $registration->payments->first();
+
+            $registration->unsetRelation('payments');
+            $registration->setAttribute('payment', $payment);
+
+            return $registration;
+        });
 
         return Inertia::render('dashboard/events/registration-categories/show', [
             'event' => $event,

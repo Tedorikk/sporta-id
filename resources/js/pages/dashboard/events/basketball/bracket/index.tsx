@@ -10,14 +10,13 @@ import {
     Play,
 } from 'lucide-react';
 import { useState } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import events from '@/routes/events';
 import type { BasketballEventCategory } from '@/types/basketball-event-category';
 import type { Event } from '@/types/event';
-import type { GameMatch, MatchStatus } from '@/types/game-match';
+import type { GameMatch } from '@/types/game-match';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -42,38 +41,60 @@ const ROUND_LABELS: Record<string, string> = {
 // ─── MatchSlot ───────────────────────────────────────────────────────────────
 
 function MatchSlot({ match }: { match: GameMatch }) {
-    const homeName = match.homeTeam?.name ?? 'TBD';
-    const awayName = match.awayTeam?.name ?? 'TBD';
+    const homeName = match.home_team?.name ?? 'TBD';
+    const awayName = match.away_team?.name ?? 'TBD';
     const isCompleted = match.status === 'finished';
 
-    const homeWon = isCompleted && match.home_score !== null && match.away_score !== null
-        && match.home_score > match.away_score;
-    const awayWon = isCompleted && match.home_score !== null && match.away_score !== null
-        && match.away_score > match.home_score;
+    const homeWon =
+        isCompleted &&
+        match.home_score !== null &&
+        match.away_score !== null &&
+        match.home_score > match.away_score;
+    const awayWon =
+        isCompleted &&
+        match.home_score !== null &&
+        match.away_score !== null &&
+        match.away_score > match.home_score;
 
     return (
-        <div className="flex flex-col gap-0 rounded-lg border overflow-hidden shadow-sm min-w-[180px]">
+        <div className="flex min-w-[180px] flex-col gap-0 overflow-hidden rounded-lg border shadow-sm">
             {/* Home team */}
-            <div className={`flex items-center justify-between gap-2 px-3 py-2 border-b ${homeWon ? 'bg-primary/10' : 'bg-card'}`}>
-                <span className={`text-sm truncate ${homeWon ? 'font-semibold text-primary' : match.homeTeam ? '' : 'text-muted-foreground italic'}`}>
-                    {match.homeTeam ? homeName : 'TBD'}
+            <div
+                className={`flex items-center justify-between gap-2 border-b px-3 py-2 ${homeWon ? 'bg-primary/10' : 'bg-card'}`}
+            >
+                <span
+                    className={`truncate text-sm ${homeWon ? 'font-semibold text-primary' : match.home_team ? '' : 'text-muted-foreground italic'}`}
+                >
+                    {match.home_team ? homeName : 'TBD'}
                 </span>
-                <span className={`text-sm font-bold tabular-nums min-w-[1.5rem] text-right ${homeWon ? 'text-primary' : 'text-muted-foreground'}`}>
-                    {isCompleted && match.home_score !== null ? match.home_score : '—'}
+                <span
+                    className={`min-w-[1.5rem] text-right text-sm font-bold tabular-nums ${homeWon ? 'text-primary' : 'text-muted-foreground'}`}
+                >
+                    {isCompleted && match.home_score !== null
+                        ? match.home_score
+                        : '—'}
                 </span>
             </div>
             {/* Away team */}
-            <div className={`flex items-center justify-between gap-2 px-3 py-2 ${awayWon ? 'bg-primary/10' : 'bg-card'}`}>
-                <span className={`text-sm truncate ${awayWon ? 'font-semibold text-primary' : match.awayTeam ? '' : 'text-muted-foreground italic'}`}>
-                    {match.awayTeam ? awayName : 'TBD'}
+            <div
+                className={`flex items-center justify-between gap-2 px-3 py-2 ${awayWon ? 'bg-primary/10' : 'bg-card'}`}
+            >
+                <span
+                    className={`truncate text-sm ${awayWon ? 'font-semibold text-primary' : match.away_team ? '' : 'text-muted-foreground italic'}`}
+                >
+                    {match.away_team ? awayName : 'TBD'}
                 </span>
-                <span className={`text-sm font-bold tabular-nums min-w-[1.5rem] text-right ${awayWon ? 'text-primary' : 'text-muted-foreground'}`}>
-                    {isCompleted && match.away_score !== null ? match.away_score : '—'}
+                <span
+                    className={`min-w-[1.5rem] text-right text-sm font-bold tabular-nums ${awayWon ? 'text-primary' : 'text-muted-foreground'}`}
+                >
+                    {isCompleted && match.away_score !== null
+                        ? match.away_score
+                        : '—'}
                 </span>
             </div>
 
             {/* Status indicator */}
-            <div className="flex items-center justify-between px-3 py-1 bg-muted/40 text-xs text-muted-foreground border-t">
+            <div className="flex items-center justify-between border-t bg-muted/40 px-3 py-1 text-xs text-muted-foreground">
                 <span>
                     {match.match_number ? `#${match.match_number}` : ''}
                 </span>
@@ -103,13 +124,18 @@ function BracketRound({
     isFinal: boolean;
 }) {
     return (
-        <div className="flex flex-col gap-2 min-w-[200px]">
-            <div className={`text-center text-xs font-semibold uppercase tracking-wider px-2 py-1 rounded-md ${isFinal ? 'bg-amber-500/15 text-amber-600' : 'bg-muted text-muted-foreground'
-                }`}>
-                {isFinal && <Trophy className="inline h-3 w-3 mr-1" />}
+        <div className="flex min-w-[200px] flex-col gap-2">
+            <div
+                className={`rounded-md px-2 py-1 text-center text-xs font-semibold tracking-wider uppercase ${
+                    isFinal
+                        ? 'bg-amber-500/15 text-amber-600'
+                        : 'bg-muted text-muted-foreground'
+                }`}
+            >
+                {isFinal && <Trophy className="mr-1 inline h-3 w-3" />}
                 {label}
             </div>
-            <div className="flex flex-col justify-around h-full gap-4">
+            <div className="flex h-full flex-col justify-around gap-4">
                 {matches.map((m) => (
                     <MatchSlot key={m.id} match={m} />
                 ))}
@@ -133,11 +159,15 @@ function GenerateBracketSection({
     const [generating, setGenerating] = useState(false);
 
     const handleGenerate = () => {
-        if (!confirm(hasBracket
-            ? 'This will delete the existing bracket and regenerate. Continue?'
-            : 'Generate the knockout bracket?')) {
-return;
-}
+        if (
+            !confirm(
+                hasBracket
+                    ? 'This will delete the existing bracket and regenerate. Continue?'
+                    : 'Generate the knockout bracket?',
+            )
+        ) {
+            return;
+        }
 
         setGenerating(true);
         router.post(
@@ -153,7 +183,9 @@ return;
     return (
         <div className="flex items-end gap-3">
             <div className="flex flex-col gap-1">
-                <Label htmlFor="advance-per-pool" className="text-xs">Advance per pool</Label>
+                <Label htmlFor="advance-per-pool" className="text-xs">
+                    Advance per pool
+                </Label>
                 <Input
                     id="advance-per-pool"
                     type="number"
@@ -164,11 +196,17 @@ return;
                     className="h-8 w-20 text-sm"
                 />
             </div>
-            <Button size="sm" variant={hasBracket ? 'outline' : 'default'} onClick={handleGenerate} disabled={generating}>
-                {generating
-                    ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    : <RefreshCw className="h-4 w-4 mr-2" />
-                }
+            <Button
+                size="sm"
+                variant={hasBracket ? 'outline' : 'default'}
+                onClick={handleGenerate}
+                disabled={generating}
+            >
+                {generating ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                )}
                 {hasBracket ? 'Regenerate Bracket' : 'Generate Bracket'}
             </Button>
         </div>
@@ -186,16 +224,16 @@ export default function BracketIndex({ event, category, bracket }: Props) {
         const bi = ROUND_ORDER.indexOf(b);
 
         if (ai === -1 && bi === -1) {
-return a.localeCompare(b);
-}
+            return a.localeCompare(b);
+        }
 
         if (ai === -1) {
-return 1;
-}
+            return 1;
+        }
 
         if (bi === -1) {
-return -1;
-}
+            return -1;
+        }
 
         return ai - bi;
     });
@@ -207,25 +245,34 @@ return -1;
             <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
                 {/* Header */}
                 <div className="flex items-start gap-4">
-                    <Button variant="outline" size="icon" className="mt-1 h-9 w-9 shrink-0" asChild>
-                        <Link href={`/dashboard/events/${event.id}/basketball-categories/${category.id}/matches`}>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="mt-1 h-9 w-9 shrink-0"
+                        asChild
+                    >
+                        <Link
+                            href={`/dashboard/events/${event.id}/basketball-categories/${category.id}/matches`}
+                        >
                             <ChevronLeft className="h-4 w-4" />
                         </Link>
                     </Button>
-                    <div className="flex-1 min-w-0">
-                        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
                             <Trophy className="h-6 w-6 text-amber-500" />
                             Bracket
                         </h1>
-                        <p className="text-sm text-muted-foreground mt-0.5">
+                        <p className="mt-0.5 text-sm text-muted-foreground">
                             {event.name} &middot; {category.name}
                         </p>
                     </div>
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href={`/dashboard/events/${event.id}/basketball-categories/${category.id}/matches`}>
-                                <LayoutGrid className="h-4 w-4 mr-2" />
+                            <Link
+                                href={`/dashboard/events/${event.id}/basketball-categories/${category.id}/matches`}
+                            >
+                                <LayoutGrid className="mr-2 h-4 w-4" />
                                 Matches
                             </Link>
                         </Button>
@@ -251,8 +298,8 @@ return -1;
 
                 {/* Bracket visualization */}
                 {hasBracket ? (
-                    <div className="rounded-xl border bg-card p-6 shadow-sm overflow-x-auto">
-                        <div className="flex items-start gap-8 min-w-max">
+                    <div className="overflow-x-auto rounded-xl border bg-card p-6 shadow-sm">
+                        <div className="flex min-w-max items-start gap-8">
                             {sortedRounds.map((round) => (
                                 <BracketRound
                                     key={round}
@@ -264,11 +311,12 @@ return -1;
                         </div>
                     </div>
                 ) : (
-                    <div className="py-20 text-center border border-dashed rounded-xl text-muted-foreground">
-                        <Trophy className="mx-auto h-10 w-10 mb-3 opacity-30" />
+                    <div className="rounded-xl border border-dashed py-20 text-center text-muted-foreground">
+                        <Trophy className="mx-auto mb-3 h-10 w-10 opacity-30" />
                         <p className="text-sm font-medium">No bracket yet</p>
-                        <p className="text-sm mt-1 max-w-sm mx-auto">
-                            All pool stage matches must be completed before the knockout bracket can be generated.
+                        <p className="mx-auto mt-1 max-w-sm text-sm">
+                            All pool stage matches must be completed before the
+                            knockout bracket can be generated.
                         </p>
                     </div>
                 )}

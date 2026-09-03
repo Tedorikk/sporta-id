@@ -105,48 +105,57 @@ class Event extends Model
         });
     }
 
+    /** @return BelongsTo<Organization, $this> */
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class);
     }
 
     // Relasi Polymorphic
+    /** @return MorphTo<Model, $this> */
     public function specific(): MorphTo
     {
         return $this->morphTo(__FUNCTION__, 'eventable_type', 'eventable_id');
     }
 
     // Relasi ke Modul Turnamen
+    /** @return HasMany<Team, $this> */
     public function teams(): HasMany
     {
         return $this->hasMany(Team::class);
     }
 
+    /** @return HasMany<Attendee, $this> */
     public function attendees(): HasMany
     {
         return $this->hasMany(Attendee::class);
     }
 
+    /** @return HasMany<AttendeeType, $this> */
     public function attendeeTypes(): HasMany
     {
         return $this->hasMany(AttendeeType::class);
     }
 
+    /** @return HasMany<CardTemplate, $this> */
     public function cardTemplates(): HasMany
     {
         return $this->hasMany(CardTemplate::class);
     }
 
+    /** @return HasMany<RegistrationCategory, $this> */
     public function registrationCategories(): HasMany
     {
         return $this->hasMany(RegistrationCategory::class);
     }
 
+    /** @return HasMany<Speaker, $this> */
     public function speakers(): HasMany
     {
         return $this->hasMany(Speaker::class);
     }
 
+    /** @return HasMany<Meeting, $this> */
     public function meetings(): HasMany
     {
         return $this->hasMany(Meeting::class);
@@ -155,6 +164,8 @@ class Event extends Model
     /**
      * Pools are scoped to BasketballEventCategory, not directly to Event.
      * Path: events → basketball_events → basketball_event_categories → pools
+     *
+     * @return HasManyThrough<Pool, BasketballEventCategory, $this>
      */
     public function pools(): HasManyThrough
     {
@@ -171,6 +182,8 @@ class Event extends Model
     /**
      * Matches are also scoped to BasketballEventCategory.
      * Path: events → basketball_events → basketball_event_categories → matches
+     *
+     * @return HasManyThrough<GameMatch, BasketballEventCategory, $this>
      */
     public function matches(): HasManyThrough
     {

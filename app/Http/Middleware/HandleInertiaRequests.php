@@ -52,7 +52,7 @@ class HandleInertiaRequests extends Middleware
                         'id' => $organization->id,
                         'name' => $organization->name,
                         'slug' => $organization->slug,
-                        'role' => $organization->pivot->role,
+                        'role' => $organization->pivot->getAttribute('role'),
                     ]),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',

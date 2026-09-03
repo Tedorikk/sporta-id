@@ -7,8 +7,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Support\Str;
 
+/**
+ * Present whenever the model is loaded through User::organizations(), which
+ * carries the member's role on the pivot.
+ *
+ * @property-read Pivot $pivot
+ */
 class Organization extends Model
 {
     /** @use HasFactory<OrganizationFactory> */
@@ -49,6 +56,7 @@ class Organization extends Model
 
     /**
      * @return BelongsToMany<User, $this>
+     * @return BelongsToMany<User, $this>
      */
     public function users(): BelongsToMany
     {
@@ -59,6 +67,7 @@ class Organization extends Model
 
     /**
      * @return HasMany<Event, $this>
+     * @return HasMany<Event, $this>
      */
     public function events(): HasMany
     {
@@ -66,6 +75,7 @@ class Organization extends Model
     }
 
     /**
+     * @return BelongsToMany<User, $this>
      * @return BelongsToMany<User, $this>
      */
     public function owners(): BelongsToMany

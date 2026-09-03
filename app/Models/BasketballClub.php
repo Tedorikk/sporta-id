@@ -11,6 +11,7 @@ class BasketballClub extends Model
         'name',
     ];
 
+    /** @return HasMany<Player, $this> */
     public function player(): HasMany
     {
         return $this->hasMany(Player::class);

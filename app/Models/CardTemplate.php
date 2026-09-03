@@ -32,16 +32,19 @@ class CardTemplate extends Model
         'is_default' => 'boolean',
     ];
 
+    /** @return BelongsTo<Event, $this> */
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
     }
 
+    /** @return BelongsTo<AttendeeType, $this> */
     public function attendeeType(): BelongsTo
     {
         return $this->belongsTo(AttendeeType::class);
     }
 
+    /** @return BelongsTo<RegistrationCategory, $this> */
     public function registrationCategory(): BelongsTo
     {
         return $this->belongsTo(RegistrationCategory::class);

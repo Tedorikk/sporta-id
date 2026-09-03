@@ -32,6 +32,7 @@ use App\Http\Controllers\PublicEventController;
 use App\Http\Controllers\RegistrationCategoryController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\RegistrationQrController;
+use App\Http\Controllers\RegistrationRefundController;
 use App\Http\Controllers\SpeakerController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamQrController;
@@ -144,6 +145,9 @@ Route::middleware(['auth', 'verified', 'organization.current'])->group(function 
             Route::resource('attendee-types', AttendeeTypeController::class)
                 ->names('attendee-types')
                 ->except(['create', 'edit', 'show']);
+
+            Route::post('registrations/{registration}/refund', [RegistrationRefundController::class, 'store'])
+                ->name('registrations.refund');
 
             Route::get('registration-categories/builder', [RegistrationCategoryController::class, 'builder'])
                 ->name('registration_categories.builder');

@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { CheckCircle2, Shield } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import QRCode from 'qrcode';
 import { useEffect, useRef, useState } from 'react';
 import { IdCardActions } from '@/components/id-card-actions';
@@ -11,12 +11,6 @@ import type { Player } from '@/types/player';
 interface Props {
     player: Player;
 }
-
-const STATUS_STYLE = {
-    verified: { label: 'Verified', bg: 'bg-emerald-500', text: 'text-white' },
-    pending: { label: 'Pending', bg: 'bg-amber-400', text: 'text-amber-900' },
-    rejected: { label: 'Rejected', bg: 'bg-rose-500', text: 'text-white' },
-} as const;
 
 export default function PlayerIdCard({ player }: Props) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -35,7 +29,6 @@ export default function PlayerIdCard({ player }: Props) {
         }).then(setQrDataUrl);
     }, [idCardUrl]);
 
-    const status = team ? STATUS_STYLE[team.status] : null;
     const isPlayerRole = player.role === 'player';
 
     return (
@@ -45,13 +38,13 @@ export default function PlayerIdCard({ player }: Props) {
             <div className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10 print:bg-white print:p-0">
                 <div className="pointer-events-none absolute inset-0 overflow-hidden print:hidden">
                     <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-red-600/10 blur-3xl" />
-                    <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-red-900/20 blur-3xl" />
+                    <div className="absolute -right-40 -bottom-40 h-96 w-96 rounded-full bg-red-900/20 blur-3xl" />
                 </div>
 
                 <div
                     id="player-id-card"
                     ref={cardRef}
-                    className="relative z-10 w-full max-w-sm overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl print:shadow-none print:rounded-none print:border-0"
+                    className="relative z-10 w-full max-w-sm overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl print:rounded-none print:border-0 print:shadow-none"
                 >
                     <div className="relative h-40 overflow-hidden bg-white print:bg-white">
                         <img
@@ -92,7 +85,8 @@ export default function PlayerIdCard({ player }: Props) {
                     <div
                         className="pointer-events-none absolute inset-x-0 top-40 bottom-0 opacity-[0.04] print:hidden"
                         style={{
-                            backgroundImage: 'radial-gradient(currentColor 1px, transparent 1px)',
+                            backgroundImage:
+                                'radial-gradient(currentColor 1px, transparent 1px)',
                             backgroundSize: '14px 14px',
                             color: '#dc2626',
                         }}
@@ -137,7 +131,7 @@ export default function PlayerIdCard({ player }: Props) {
                                 </div>
                             )}
                             <div className="flex min-w-0 flex-col gap-1">
-                                <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                                <span className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
                                     Team
                                 </span>
                                 <span className="truncate text-sm font-semibold text-slate-800">
@@ -164,7 +158,9 @@ export default function PlayerIdCard({ player }: Props) {
                                             src={qrDataUrl}
                                             alt="Player QR Code"
                                             className="h-44 w-44"
-                                            ref={canvasRef as unknown as React.RefObject<HTMLImageElement>}
+                                            ref={
+                                                canvasRef as unknown as React.RefObject<HTMLImageElement>
+                                            }
                                         />
                                     </div>
                                 </div>
@@ -174,14 +170,17 @@ export default function PlayerIdCard({ player }: Props) {
                                 </div>
                             )}
                             <p className="text-center text-[10px] text-slate-400">
-                                Scan to verify this {isPlayerRole ? 'player' : 'member'}'s identity
+                                Scan to verify this{' '}
+                                {isPlayerRole ? 'player' : 'member'}'s identity
                             </p>
                         </div>
 
                         <div className="w-full border-t border-slate-100 pt-3 text-center text-[10px] text-slate-400">
                             ID Card by{' '}
-                            <span className="font-semibold text-red-600">Sporta Indonesia</span> ·{' '}
-                            {new Date().getFullYear()}
+                            <span className="font-semibold text-red-600">
+                                Sporta Indonesia
+                            </span>{' '}
+                            · {new Date().getFullYear()}
                         </div>
                     </div>
                 </div>

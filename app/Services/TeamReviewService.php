@@ -180,7 +180,7 @@ class TeamReviewService
                 foreach ($issues as $issue) {
                     $rows[] = [
                         'team' => $team->name,
-                        'member' => $player?->name ?? "Player #{$playerId}",
+                        'member' => $player->name ?? "Player #{$playerId}",
                         'role' => $player ? str_replace('_', ' ', ucfirst($player->role)) : '-',
                         'severity' => $issue['severity'],
                         'issue' => $issue['message'],

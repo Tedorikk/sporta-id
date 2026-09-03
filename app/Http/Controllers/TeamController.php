@@ -185,7 +185,7 @@ class TeamController extends Controller
             'basketball_event_category_id' => [
                 'nullable',
                 Rule::exists('basketball_event_categories', 'id')
-                    ->where('basketball_event_id', $event->specific?->id),
+                    ->where('basketball_event_id', $event->specific?->getKey()),
             ],
         ]);
     }

@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class GameMatch extends Model
 {
@@ -21,21 +20,25 @@ class GameMatch extends Model
         'scheduled_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<BasketballEventCategory, $this> */
     public function category(): BelongsTo
     {
         return $this->belongsTo(BasketballEventCategory::class, 'basketball_event_category_id');
     }
 
+    /** @return BelongsTo<Pool, $this> */
     public function pool(): BelongsTo
     {
         return $this->belongsTo(Pool::class);
     }
 
+    /** @return BelongsTo<Team, $this> */
     public function homeTeam(): BelongsTo
     {
         return $this->belongsTo(Team::class, 'home_team_id');
     }
 
+    /** @return BelongsTo<Team, $this> */
     public function awayTeam(): BelongsTo
     {
         return $this->belongsTo(Team::class, 'away_team_id');
@@ -50,4 +53,3 @@ class GameMatch extends Model
         return $this->home_score > $this->away_score ? $this->home_team_id : $this->away_team_id;
     }
 }
-

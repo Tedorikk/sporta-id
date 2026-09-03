@@ -1,12 +1,15 @@
 import type { Team } from './team';
 
-export type PlayerRole = 'player' | 'coach' | 'assistant_coach' | 'manager' | 'officer';
+/** Mirrors Player::ROLES — the server validates against that list. */
+export type PlayerRole =
+    'player' | 'coach' | 'assistant_coach' | 'manager' | 'medic' | 'officer';
 
 export const PLAYER_ROLES: { value: PlayerRole; label: string }[] = [
     { value: 'player', label: 'Player' },
     { value: 'coach', label: 'Coach' },
     { value: 'assistant_coach', label: 'Assistant Coach' },
     { value: 'manager', label: 'Manager' },
+    { value: 'medic', label: 'Medic' },
     { value: 'officer', label: 'Officer' },
 ];
 

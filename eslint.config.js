@@ -95,7 +95,11 @@ export default [
             '@stylistic': stylistic,
         },
         rules: {
-            '@stylistic/brace-style': ['error', '1tbs', { allowSingleLine: false }],
+            '@stylistic/brace-style': [
+                'error',
+                '1tbs',
+                { allowSingleLine: false },
+            ],
             '@stylistic/padding-line-between-statements': [
                 'error',
                 ...paddingAroundControl,
@@ -107,6 +111,12 @@ export default [
             'vendor',
             'node_modules',
             'public',
+            // Agent worktrees carry their own vendor/ and public/build/, which the
+            // relative patterns above don't reach. Git-excluded, so CI never sees
+            // them, but they make a local lint run unusable.
+            '.claude',
+            // Node build scripts, not browser app source.
+            'docs',
             'bootstrap/ssr',
             'tailwind.config.js',
             'vite.config.ts',
@@ -123,7 +133,11 @@ export default [
         },
         rules: {
             curly: ['error', 'all'],
-            '@stylistic/brace-style': ['error', '1tbs', { allowSingleLine: false }],
+            '@stylistic/brace-style': [
+                'error',
+                '1tbs',
+                { allowSingleLine: false },
+            ],
         },
     },
 ];

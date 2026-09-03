@@ -36,16 +36,19 @@ class MeetingCheckIn extends Model
         'scanned_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<Meeting, $this> */
     public function meeting(): BelongsTo
     {
         return $this->belongsTo(Meeting::class);
     }
 
+    /** @return BelongsTo<Registration, $this> */
     public function registration(): BelongsTo
     {
         return $this->belongsTo(Registration::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function checkedInBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'checked_in_by');

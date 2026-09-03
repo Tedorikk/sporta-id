@@ -15,11 +15,13 @@ class MatchCheckIn extends Model
         'scanned_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<GameMatch, $this> */
     public function match(): BelongsTo
     {
         return $this->belongsTo(GameMatch::class, 'match_id');
     }
 
+    /** @return BelongsTo<Player, $this> */
     public function player(): BelongsTo
     {
         return $this->belongsTo(Player::class);

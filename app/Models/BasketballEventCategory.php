@@ -12,6 +12,16 @@ class BasketballEventCategory extends Model
 {
     use HasFactory;
 
+    public const FORMAT_ROUND_ROBIN = 'round_robin';
+
+    public const FORMAT_POOL_STAGE = 'pool_stage';
+
+    /** Mirrors the `format` enum on basketball_event_categories. */
+    public const FORMATS = [
+        self::FORMAT_ROUND_ROBIN,
+        self::FORMAT_POOL_STAGE,
+    ];
+
     protected $fillable = [
         'basketball_event_id', 'registration_category_id', 'name', 'slug', 'format', 'win_points', 'loss_points',
         'min_team', 'max_team', 'min_player_per_team', 'max_player_per_team',
@@ -42,26 +52,31 @@ class BasketballEventCategory extends Model
         });
     }
 
+    /** @return BelongsTo<BasketballEvent, $this> */
     public function basketballEvent(): BelongsTo
     {
         return $this->belongsTo(BasketballEvent::class);
     }
 
+    /** @return BelongsTo<RegistrationCategory, $this> */
     public function registrationCategory(): BelongsTo
     {
         return $this->belongsTo(RegistrationCategory::class);
     }
 
+    /** @return HasMany<Team, $this> */
     public function teams(): HasMany
     {
         return $this->hasMany(Team::class);
     }
 
+    /** @return HasMany<Pool, $this> */
     public function pools(): HasMany
     {
         return $this->hasMany(Pool::class);
     }
 
+    /** @return HasMany<GameMatch, $this> */
     public function matches(): HasMany
     {
         return $this->hasMany(GameMatch::class);

@@ -15,11 +15,13 @@ class Speaker extends Model
         'event_id', 'name', 'photo', 'title', 'bio',
     ];
 
+    /** @return BelongsTo<Event, $this> */
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
     }
 
+    /** @return HasMany<Meeting, $this> */
     public function meetings(): HasMany
     {
         return $this->hasMany(Meeting::class);

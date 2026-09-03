@@ -20,32 +20,38 @@ class Team extends Model
         'basketball_event_category_id' => 'integer',
     ];
 
+    /** @return BelongsTo<Event, $this> */
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
     }
 
     // Changed from HasMany to BelongsToMany
+    /** @return BelongsToMany<Player, $this> */
     public function players(): BelongsToMany
     {
         return $this->belongsToMany(Player::class);
     }
 
+    /** @return BelongsToMany<Pool, $this> */
     public function pools(): BelongsToMany
     {
         return $this->belongsToMany(Pool::class);
     }
 
+    /** @return BelongsTo<BasketballEventCategory, $this> */
     public function basketballEventCategory(): BelongsTo
     {
         return $this->belongsTo(BasketballEventCategory::class, 'basketball_event_category_id', 'id');
     }
 
+    /** @return HasMany<GameMatch, $this> */
     public function homeMatches(): HasMany
     {
         return $this->hasMany(GameMatch::class, 'home_team_id');
     }
 
+    /** @return HasMany<GameMatch, $this> */
     public function awayMatches(): HasMany
     {
         return $this->hasMany(GameMatch::class, 'away_team_id');

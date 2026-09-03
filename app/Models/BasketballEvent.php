@@ -25,7 +25,8 @@ class BasketballEvent extends Model
         'registration_open' => true,
     ];
 
-    public function categories()
+    /** @return HasMany<BasketballEventCategory, $this> */
+    public function categories(): HasMany
     {
         return $this->hasMany(BasketballEventCategory::class);
     }
@@ -34,6 +35,4 @@ class BasketballEvent extends Model
     {
         return $this->morphOne(Event::class, 'specific');
     }
-
-    
 }

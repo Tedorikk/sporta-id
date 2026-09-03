@@ -35,11 +35,13 @@ class Attendee extends Model
         });
     }
 
+    /** @return BelongsTo<Event, $this> */
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
     }
 
+    /** @return BelongsTo<AttendeeType, $this> */
     public function attendeeType(): BelongsTo
     {
         return $this->belongsTo(AttendeeType::class);

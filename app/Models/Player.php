@@ -52,11 +52,13 @@ class Player extends Model
     }
 
     // Changed from team() to teams() and updated relation
+    /** @return BelongsToMany<Team, $this> */
     public function teams(): BelongsToMany
     {
         return $this->belongsToMany(Team::class);
     }
 
+    /** @return BelongsTo<BasketballClub, $this> */
     public function basketballClub(): BelongsTo
     {
         return $this->belongsTo(BasketballClub::class);

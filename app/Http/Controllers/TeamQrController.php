@@ -26,7 +26,7 @@ class TeamQrController extends Controller
         $organizationId = $request->user()->current_organization_id;
 
         $meetings = Meeting::with('event')
-            ->whereHas('event', fn ($q) => $q->forOrganization($organizationId))
+            ->whereRelation('event', 'organization_id', $organizationId)
             ->where('scheduled_at', '>=', now()->subHours(6))
             ->orderBy('scheduled_at')
             ->limit(50)
@@ -36,7 +36,7 @@ class TeamQrController extends Controller
 
         if ($request->filled('meeting')) {
             $preselectedMeeting = Meeting::with('event')
-                ->whereHas('event', fn ($q) => $q->forOrganization($organizationId))
+                ->whereRelation('event', 'organization_id', $organizationId)
                 ->find($request->query('meeting'), ['id', 'event_id', 'title', 'scheduled_at']);
         }
 
@@ -74,7 +74,7 @@ class TeamQrController extends Controller
             abort(403, 'Tim sudah didiskualifikasi dari turnamen');
         }
 
-        $team->next_match_today = $team->nextMatchToday();
+        $team->setAttribute('next_match_today', $team->nextMatchToday());
 
         return response()->json($team);
     }
