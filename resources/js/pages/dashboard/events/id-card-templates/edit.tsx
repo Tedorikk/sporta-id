@@ -31,6 +31,7 @@ import type { IdCardData } from '@/components/id-card/id-card-renderer';
 import { formDataBindings } from '@/components/id-card/id-card-renderer';
 import { InspectorPanel } from '@/components/id-card/inspector-panel';
 import { LayersPanel } from '@/components/id-card/layers-panel';
+import { ToolbarIcon } from '@/components/id-card/toolbar-icon';
 import {
     normalizeElement,
     useCardDesigner,
@@ -53,13 +54,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { formatImageUrl } from '@/lib/image-utils';
-import { cn } from '@/lib/utils';
 import type { Attendee } from '@/types/attendee';
 import type { AttendeeType } from '@/types/attendee-type';
 import type {
@@ -967,41 +962,5 @@ export default function CardTemplateEdit({
                 </aside>
             </div>
         </div>
-    );
-}
-
-function ToolbarIcon({
-    label,
-    icon: Icon,
-    onClick,
-    disabled,
-    active,
-}: {
-    label: string;
-    icon: typeof Undo2;
-    onClick: () => void;
-    disabled?: boolean;
-    active?: boolean;
-}) {
-    return (
-        <Tooltip>
-            <TooltipTrigger asChild>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label={label}
-                    aria-pressed={active}
-                    disabled={disabled}
-                    onClick={onClick}
-                    className={cn(
-                        'h-8 w-8',
-                        active && 'bg-primary/10 text-primary',
-                    )}
-                >
-                    <Icon className="h-4 w-4" />
-                </Button>
-            </TooltipTrigger>
-            <TooltipContent>{label}</TooltipContent>
-        </Tooltip>
     );
 }

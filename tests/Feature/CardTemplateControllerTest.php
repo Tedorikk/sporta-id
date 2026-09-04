@@ -296,7 +296,9 @@ test('the preview endpoint falls back to the generic template for a category wit
             'registration_category_id' => $this->category->id,
         ]))
         ->assertOk()
-        ->assertJsonPath('canvas.width', 380);
+        // The registration default is B3-shaped so it prints edge to edge.
+        ->assertJsonPath('canvas.width', 344)
+        ->assertJsonPath('canvas.height', 427);
 });
 
 test('the preview endpoint returns nothing for team-subject categories', function () {

@@ -18,6 +18,15 @@ export interface CanvasPreset {
 /** Sizes are CSS pixels at 96 DPI, so the printed dimensions in `hint` hold true. */
 export const CANVAS_PRESETS: CanvasPreset[] = [
     {
+        // Matches CardPrintLayout::CARD_SIZES['b3'] — design at this aspect and
+        // the batch print sheet fills each slot edge to edge with no letterboxing.
+        key: 'b3-portrait',
+        label: 'B3 badge',
+        hint: '91 × 113 mm · 5 per A4',
+        width: 344,
+        height: 427,
+    },
+    {
         key: 'badge-portrait',
         label: 'Event badge',
         hint: '3.5 × 5 in',

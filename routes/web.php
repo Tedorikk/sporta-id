@@ -16,6 +16,7 @@ use App\Http\Controllers\EventBulkActionController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventMatchController;
 use App\Http\Controllers\GameMatchController;
+use App\Http\Controllers\IdCardPrintController;
 use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\MeetingAttendanceController;
@@ -161,6 +162,8 @@ Route::middleware(['auth', 'verified', 'organization.current'])->group(function 
                 ->name('registration_categories.builder');
             Route::get('registration-categories/{registrationCategory}/responses/export', [RegistrationCategoryController::class, 'exportResponses'])
                 ->name('registration_categories.responses.export');
+            Route::get('registration-categories/{registrationCategory}/id-cards', [IdCardPrintController::class, 'registrationCategory'])
+                ->name('registration_categories.id-cards');
             Route::resource('registration-categories', RegistrationCategoryController::class)
                 ->names('registration_categories')
                 ->except(['create', 'edit']);

@@ -3,6 +3,7 @@ import {
     ChevronLeft,
     Download,
     ExternalLink,
+    Printer,
     Search,
     Undo2,
     Users,
@@ -166,6 +167,9 @@ export default function RegistrationCategoryShow({
         .flatMap((page) => page.fields)
         .filter((f) => !RESERVED_KEYS.includes(f.key));
 
+    // Batch print sheet for the whole category; append `?ids=` to reprint one card.
+    const idCardPrintUrl = `/dashboard/events/${event.id}/registration-categories/${registrationCategory.id}/id-cards`;
+
     useEffect(() => {
         const timeout = setTimeout(() => {
             if (search === (filters.search ?? '')) {
@@ -230,6 +234,18 @@ export default function RegistrationCategoryShow({
                         {registrations.total !== 1 ? 's' : ''}
                     </p>
                 </div>
+                {registrationCategory.subject_type === 'individual' && (
+                    <Button variant="outline" size="sm" asChild>
+                        <a
+                            href={idCardPrintUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            <Printer className="mr-2 h-4 w-4" />
+                            Print ID cards
+                        </a>
+                    </Button>
+                )}
                 <Button variant="outline" size="sm" asChild>
                     <a
                         href={`/dashboard/events/${event.id}/registration-categories/${registrationCategory.id}/responses/export`}
@@ -399,6 +415,25 @@ export default function RegistrationCategoryShow({
                                                 </a>
                                             </Button>
                                         )}
+                                        {registrationCategory.subject_type ===
+                                            'individual' &&
+                                            registration.status ===
+                                                'confirmed' && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    title="Print this ID card"
+                                                    asChild
+                                                >
+                                                    <a
+                                                        href={`${idCardPrintUrl}?ids=${registration.id}`}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                    >
+                                                        <Printer className="h-4 w-4" />
+                                                    </a>
+                                                </Button>
+                                            )}
                                         {registrationCategory.subject_type ===
                                             'team' &&
                                             registration.team_id && (
