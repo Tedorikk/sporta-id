@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Check, ChevronsUpDown, Search } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { LocalTime } from '@/components/local-time';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -8,7 +9,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from '@/components/ui/popover';
-import { formatDateTime } from '@/lib/format-date';
+
 import { cn } from '@/lib/utils';
 import type { Meeting } from '@/types/meeting';
 
@@ -160,7 +161,9 @@ export function MeetingCombobox({
                                     </span>
                                     <span className="truncate text-xs text-muted-foreground">
                                         {meeting.event?.name} ·{' '}
-                                        {formatDateTime(meeting.scheduled_at)}
+                                        <LocalTime
+                                            value={meeting.scheduled_at}
+                                        />
                                     </span>
                                 </span>
                             </button>

@@ -1,5 +1,6 @@
 import { Calendar, Trophy } from 'lucide-react';
-import { formatDateTime } from '@/lib/format-date';
+import { LocalTime } from '@/components/local-time';
+
 import type { BasketballEventCategory } from '@/types/basketball-event-category';
 import type { Event } from '@/types/event';
 import type { GameMatch } from '@/types/game-match';
@@ -91,7 +92,7 @@ export function MatchCard({
             {match.scheduled_at && (
                 <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
                     <Calendar className="h-3 w-3" />
-                    {formatDateTime(match.scheduled_at)}
+                    <LocalTime value={match.scheduled_at} />
                 </span>
             )}
 

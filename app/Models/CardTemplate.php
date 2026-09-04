@@ -56,8 +56,53 @@ class CardTemplate extends Model
      */
     public static function fallbackTemplate(string $subjectType): array
     {
+        $design = $subjectType === self::SUBJECT_REGISTRATION
+            ? self::registrationDefaultDesign()
+            : self::classicDefaultDesign();
+
+        return ['subject_type' => $subjectType] + $design;
+    }
+
+    /**
+     * The registration default is shaped like a B3 badge — 344 x 427 px is
+     * 91 x 113 mm at 96 DPI — so the batch print sheet fills each slot edge to
+     * edge before an organizer ever opens the designer. Keep it in step with
+     * CardPrintLayout::CARD_SIZES['b3'] and the 'b3-portrait' canvas preset.
+     *
+     * @return array<string, mixed>
+     */
+    private static function registrationDefaultDesign(): array
+    {
         return [
-            'subject_type' => $subjectType,
+            'canvas' => [
+                'width' => 344,
+                'height' => 427,
+                'background' => '#ffffff',
+            ],
+            'elements' => [
+                ['id' => 'photo', 'kind' => 'image', 'binding' => 'photo', 'x' => 117, 'y' => 24, 'width' => 110, 'height' => 110, 'rotation' => 0, 'zIndex' => 1, 'style' => ['borderRadius' => 16, 'objectFit' => 'cover', 'background' => '#e2e8f0']],
+                // Two lines of headroom at this size: most long names wrap
+                // rather than shrink, and only the extreme ones scale down.
+                ['id' => 'name', 'kind' => 'text', 'binding' => 'name', 'x' => 20, 'y' => 144, 'width' => 304, 'height' => 50, 'rotation' => 0, 'zIndex' => 1, 'style' => ['fontSize' => 20, 'fontWeight' => 700, 'textAlign' => 'center', 'color' => '#0f172a']],
+                ['id' => 'type', 'kind' => 'text', 'binding' => 'typeLabel', 'x' => 20, 'y' => 196, 'width' => 304, 'height' => 20, 'rotation' => 0, 'zIndex' => 1, 'style' => ['fontSize' => 13, 'fontWeight' => 600, 'textAlign' => 'center', 'color' => '#dc2626']],
+                // A registration has no organization to show, so this line
+                // carries the event name instead of always rendering blank.
+                ['id' => 'event', 'kind' => 'text', 'binding' => 'eventName', 'x' => 20, 'y' => 218, 'width' => 304, 'height' => 16, 'rotation' => 0, 'zIndex' => 1, 'style' => ['fontSize' => 11, 'textAlign' => 'center', 'color' => '#475569']],
+                ['id' => 'qr', 'kind' => 'qr', 'binding' => 'qrDataUrl', 'x' => 99, 'y' => 244, 'width' => 146, 'height' => 146, 'rotation' => 0, 'zIndex' => 1, 'style' => ['borderRadius' => 8]],
+                ['id' => 'footer', 'kind' => 'text', 'binding' => null, 'staticText' => 'Sporta Indonesia', 'x' => 20, 'y' => 396, 'width' => 304, 'height' => 16, 'rotation' => 0, 'zIndex' => 1, 'style' => ['fontSize' => 10, 'textAlign' => 'center', 'color' => '#94a3b8']],
+            ],
+        ];
+    }
+
+    /**
+     * Attendee, player and team cards keep the original portrait layout —
+     * none of them has a print sheet to match yet.
+     *
+     * @return array<string, mixed>
+     */
+    private static function classicDefaultDesign(): array
+    {
+        return [
             'canvas' => [
                 'width' => 380,
                 'height' => 560,

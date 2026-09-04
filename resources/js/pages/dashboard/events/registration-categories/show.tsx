@@ -3,11 +3,13 @@ import {
     ChevronLeft,
     Download,
     ExternalLink,
+    Printer,
     Search,
     Undo2,
     Users,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { LocalTime } from '@/components/local-time';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,7 +38,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { formatRupiah } from '@/lib/format-currency';
-import { formatDateTime } from '@/lib/format-date';
+
 import type { Event } from '@/types/event';
 import type { Payment, PaymentStatus } from '@/types/payment';
 import type {
@@ -105,7 +107,7 @@ function PaymentCell({ payment }: { payment: Payment | null }) {
             )}
             {payment.paid_at && (
                 <span className="text-xs text-muted-foreground">
-                    {formatDateTime(payment.paid_at)}
+                    <LocalTime value={payment.paid_at} />
                 </span>
             )}
         </div>
@@ -164,6 +166,9 @@ export default function RegistrationCategoryShow({
     const customFields = (registrationCategory.form_pages ?? [])
         .flatMap((page) => page.fields)
         .filter((f) => !RESERVED_KEYS.includes(f.key));
+
+    // Batch print sheet for the whole category; append `?ids=` to reprint one card.
+    const idCardPrintUrl = `/dashboard/events/${event.id}/registration-categories/${registrationCategory.id}/id-cards`;
 
     useEffect(() => {
         const timeout = setTimeout(() => {
@@ -229,6 +234,18 @@ export default function RegistrationCategoryShow({
                         {registrations.total !== 1 ? 's' : ''}
                     </p>
                 </div>
+                {registrationCategory.subject_type === 'individual' && (
+                    <Button variant="outline" size="sm" asChild>
+                        <a
+                            href={idCardPrintUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            <Printer className="mr-2 h-4 w-4" />
+                            Print ID cards
+                        </a>
+                    </Button>
+                )}
                 <Button variant="outline" size="sm" asChild>
                     <a
                         href={`/dashboard/events/${event.id}/registration-categories/${registrationCategory.id}/responses/export`}
@@ -377,9 +394,9 @@ export default function RegistrationCategoryShow({
                                         </TableCell>
                                     )}
                                     <TableCell className="text-muted-foreground">
-                                        {formatDateTime(
-                                            registration.created_at,
-                                        )}
+                                        <LocalTime
+                                            value={registration.created_at}
+                                        />
                                     </TableCell>
                                     <TableCell>
                                         {registrationCategory.subject_type ===
@@ -398,6 +415,25 @@ export default function RegistrationCategoryShow({
                                                 </a>
                                             </Button>
                                         )}
+                                        {registrationCategory.subject_type ===
+                                            'individual' &&
+                                            registration.status ===
+                                                'confirmed' && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    title="Print this ID card"
+                                                    asChild
+                                                >
+                                                    <a
+                                                        href={`${idCardPrintUrl}?ids=${registration.id}`}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                    >
+                                                        <Printer className="h-4 w-4" />
+                                                    </a>
+                                                </Button>
+                                            )}
                                         {registrationCategory.subject_type ===
                                             'team' &&
                                             registration.team_id && (

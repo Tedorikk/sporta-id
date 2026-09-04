@@ -1,98 +1,100 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
-    Plus,
-    Search,
-    LayoutGrid,
-    Calendar as CalendarIcon,
-    MapPin,
-    Phone,
     CalendarDays,
-    Clock,
-    CheckCircle2,
-    Archive,
-    Megaphone,
+    Calendar as CalendarIcon,
+    LayoutGrid,
+    Plus,
+    Rows3,
+    Search,
 } from 'lucide-react';
-import { useState, useEffect, useMemo } from 'react';
-import { Badge } from '@/components/ui/badge';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardHeader,
-    CardTitle,
-    CardDescription,
-    CardContent,
-    CardFooter,
-} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     Select,
-    SelectTrigger,
-    SelectValue,
     SelectContent,
     SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from '@/components/ui/select';
-import { formatImageUrl } from '@/lib/image-utils';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { usePersistedPreferences } from '@/hooks/use-persisted-preferences';
 import eventRoutes from '@/routes/events';
 import type {
     Event,
-    PaginatedEvents,
     EventFilters,
-    EventStatus,
+    EventSort,
+    EventSortColumn,
     EventStats,
+    PaginatedEvents,
 } from '@/types/event';
+import { EventBulkActions } from './partials/event-bulk-actions';
+import { EventFacetTiles } from './partials/event-facet-tiles';
+import { EventFilterChips } from './partials/event-filter-chips';
+import { EventPeekPanel } from './partials/event-peek-panel';
+import {
+    DEFAULT_TABLE_PREFERENCES,
+    EventTableOptions,
+} from './partials/event-table-options';
 import EventsCalendar from './partials/events-calendar';
+import { EventsGrid } from './partials/events-grid';
+import { EventsPagination } from './partials/events-pagination';
+import { EventsTable } from './partials/events-table';
 
-type ViewMode = 'grid' | 'calendar';
+type ViewMode = 'table' | 'grid' | 'calendar';
 
 interface Props {
     view: ViewMode;
     events: Event[] | PaginatedEvents;
     filters: EventFilters;
+    sort: EventSort;
     categories: string[];
     stats: EventStats;
+    has_any_events: boolean;
     month?: string;
 }
 
-const STATUS_STYLES: Record<EventStatus, string> = {
-    upcoming:
-        'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-    ongoing:
-        'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
-    past: 'bg-muted text-muted-foreground',
+/** Dates read newest-first; names read A–Z. */
+const DEFAULT_DIRECTION: Record<EventSortColumn, 'asc' | 'desc'> = {
+    name: 'asc',
+    start_date: 'desc',
+    end_date: 'desc',
 };
 
-function formatDateRange(start: string, end: string) {
-    const s = new Date(start);
-    const e = new Date(end);
-    const opts: Intl.DateTimeFormatOptions = {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    };
+function currentMonth() {
+    const d = new Date();
 
-    if (start === end) {
-        return s.toLocaleDateString(undefined, opts);
-    }
-
-    return `${s.toLocaleDateString(undefined, opts)} – ${e.toLocaleDateString(undefined, opts)}`;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
 export default function EventsIndex({
     view,
     events,
     filters,
+    sort,
     categories,
     stats,
+    has_any_events: hasAnyEvents,
     month,
 }: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
+    /** Selection is per page: any navigation clears it rather than carrying stale ids. */
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [pendingIds, setPendingIds] = useState<number[]>([]);
+    const [isBulkWorking, setIsBulkWorking] = useState(false);
+    /** Held as an id, not the row itself, so the panel re-reads fresh props after a write. */
+    const [peekId, setPeekId] = useState<number | null>(null);
+    const [tablePreferences, updateTablePreferences] = usePersistedPreferences(
+        'events-table-preferences',
+        DEFAULT_TABLE_PREFERENCES,
+    );
 
-    const isPaginated = view === 'grid';
+    const isPaginated = view !== 'calendar';
     const list: Event[] = isPaginated
         ? (events as PaginatedEvents).data
         : (events as Event[]);
     const pagination = isPaginated ? (events as PaginatedEvents) : null;
-    const links = isPaginated ? (events as PaginatedEvents).links : [];
 
     // debounce search input -> query string
     useEffect(() => {
@@ -101,96 +103,141 @@ export default function EventsIndex({
                 return;
             }
 
-            updateQuery({ search: search || undefined, page: undefined });
+            updateQuery({ search: search || null, page: undefined });
         }, 350);
 
         return () => clearTimeout(timeout);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [search]);
 
-    function updateQuery(partial: Record<string, string | undefined>) {
+    /** Unset facets are dropped so the address bar shows only what is actually applied. */
+    function compact(
+        params: Record<string, string | number | null | undefined>,
+    ): Record<string, string | number> {
+        return Object.fromEntries(
+            Object.entries(params).filter(
+                (entry): entry is [string, string | number] =>
+                    entry[1] !== null &&
+                    entry[1] !== undefined &&
+                    entry[1] !== '',
+            ),
+        );
+    }
+
+    function updateQuery(
+        partial: Partial<EventFilters> & {
+            view?: ViewMode;
+            month?: string | null;
+            sort?: EventSortColumn;
+            direction?: 'asc' | 'desc';
+            page?: number;
+        },
+    ) {
+        setSelectedIds([]);
         router.get(
             eventRoutes.index().url,
-            {
+            compact({
                 view,
                 month,
+                sort: sort.column,
+                direction: sort.direction,
                 ...filters,
                 ...partial,
-            },
+            }),
             { preserveState: true, preserveScroll: true, replace: true },
         );
     }
 
     function switchView(next: ViewMode) {
+        setSelectedIds([]);
         router.get(
             eventRoutes.index().url,
-            {
+            compact({
                 ...filters,
+                sort: sort.column,
+                direction: sort.direction,
                 view: next,
-                month:
-                    next === 'calendar' ? (month ?? currentMonth()) : undefined,
-            },
+                month: next === 'calendar' ? (month ?? currentMonth()) : null,
+            }),
             { preserveState: true },
         );
     }
 
-    function currentMonth() {
-        const d = new Date();
-
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    function setPublication(ids: number[], isPublished: boolean) {
+        router.patch(
+            '/dashboard/events/publication',
+            { ids, is_published: isPublished },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onStart: () => setPendingIds(ids),
+                onFinish: () => setPendingIds([]),
+            },
+        );
     }
 
-    const hasActiveFilters = !!(
-        filters.search ||
-        filters.category ||
-        filters.status
-    );
+    function bulkPublication(isPublished: boolean) {
+        router.patch(
+            '/dashboard/events/publication',
+            { ids: selectedIds, is_published: isPublished },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onStart: () => setIsBulkWorking(true),
+                onSuccess: () => setSelectedIds([]),
+                onFinish: () => setIsBulkWorking(false),
+            },
+        );
+    }
+
+    function bulkDelete() {
+        router.delete('/dashboard/events', {
+            data: { ids: selectedIds },
+            preserveScroll: true,
+            preserveState: true,
+            onStart: () => setIsBulkWorking(true),
+            onSuccess: () => setSelectedIds([]),
+            onFinish: () => setIsBulkWorking(false),
+        });
+    }
+
+    function goToPage(page: number) {
+        updateQuery({ page });
+    }
+
+    function toggleSort(column: EventSortColumn) {
+        const direction =
+            sort.column === column
+                ? sort.direction === 'asc'
+                    ? 'desc'
+                    : 'asc'
+                : DEFAULT_DIRECTION[column];
+
+        updateQuery({ sort: column, direction, page: undefined });
+    }
+
+    function clearFilters() {
+        setSearch('');
+        updateQuery({
+            search: null,
+            category: null,
+            lifecycle: null,
+            timing: null,
+            page: undefined,
+        });
+    }
+
+    const peekEvent = list.find((event) => event.id === peekId) ?? null;
 
     const summary = useMemo(() => {
-        if (isPaginated && pagination) {
+        if (pagination) {
             return pagination.total === 0
                 ? 'No events found'
                 : `Showing ${pagination.from}–${pagination.to} of ${pagination.total} events`;
         }
 
         return `${list.length} event${list.length === 1 ? '' : 's'} this month`;
-    }, [isPaginated, pagination, list.length]);
-
-    const statCards = [
-        {
-            label: 'Total events',
-            value: stats.total,
-            icon: CalendarDays,
-            iconClass: 'bg-muted text-foreground',
-        },
-        {
-            label: 'Published',
-            value: stats.published,
-            icon: Megaphone,
-            iconClass:
-                'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
-        },
-        {
-            label: 'Upcoming',
-            value: stats.upcoming,
-            icon: Clock,
-            iconClass:
-                'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-        },
-        {
-            label: 'Ongoing',
-            value: stats.ongoing,
-            icon: CheckCircle2,
-            iconClass:
-                'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
-        },
-        {
-            label: 'Past',
-            value: stats.past,
-            icon: Archive,
-            iconClass: 'bg-muted text-muted-foreground',
-        },
-    ];
+    }, [pagination, list.length]);
 
     return (
         <>
@@ -218,31 +265,14 @@ export default function EventsIndex({
                     </Button>
                 </section>
 
-                <section
-                    id="stats"
-                    className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
-                >
-                    {statCards.map(
-                        ({ label, value, icon: Icon, iconClass }) => (
-                            <Card key={label}>
-                                <CardContent className="flex items-center gap-3 py-2">
-                                    <div
-                                        className={`flex size-9 items-center justify-center rounded-md ${iconClass}`}
-                                    >
-                                        <Icon className="size-4.5" />
-                                    </div>
-                                    <div>
-                                        <p className="text-2xl leading-none font-semibold">
-                                            {value}
-                                        </p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {label}
-                                        </p>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ),
-                    )}
+                <section id="facets">
+                    <EventFacetTiles
+                        stats={stats}
+                        filters={filters}
+                        onChange={(partial) =>
+                            updateQuery({ ...partial, page: undefined })
+                        }
+                    />
                 </section>
 
                 <section
@@ -250,8 +280,12 @@ export default function EventsIndex({
                     className="flex flex-wrap items-center gap-3"
                 >
                     <div className="relative w-full max-w-xs">
+                        <Label htmlFor="event-search" className="sr-only">
+                            Search events
+                        </Label>
                         <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
+                            id="event-search"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Search events..."
@@ -263,12 +297,12 @@ export default function EventsIndex({
                         value={filters.category ?? 'all'}
                         onValueChange={(v) =>
                             updateQuery({
-                                category: v === 'all' ? undefined : v,
+                                category: v === 'all' ? null : v,
                                 page: undefined,
                             })
                         }
                     >
-                        <SelectTrigger className="w-40">
+                        <SelectTrigger className="w-40" aria-label="Category">
                             <SelectValue placeholder="Category" />
                         </SelectTrigger>
                         <SelectContent>
@@ -281,67 +315,63 @@ export default function EventsIndex({
                         </SelectContent>
                     </Select>
 
-                    <Select
-                        value={filters.status ?? 'all'}
-                        onValueChange={(v) =>
-                            updateQuery({
-                                status: v === 'all' ? undefined : v,
-                                page: undefined,
-                            })
-                        }
-                    >
-                        <SelectTrigger className="w-40">
-                            <SelectValue placeholder="Status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All statuses</SelectItem>
-                            <SelectItem value="upcoming">Upcoming</SelectItem>
-                            <SelectItem value="ongoing">Ongoing</SelectItem>
-                            <SelectItem value="past">Past</SelectItem>
-                            <SelectItem value="published">Published</SelectItem>
-                            <SelectItem value="draft">Draft</SelectItem>
-                        </SelectContent>
-                    </Select>
-
-                    {hasActiveFilters && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                                setSearch('');
-                                updateQuery({
-                                    search: undefined,
-                                    category: undefined,
-                                    status: undefined,
-                                    page: undefined,
-                                });
-                            }}
-                        >
-                            Clear filters
-                        </Button>
+                    {view === 'table' && (
+                        <div className="ml-auto">
+                            <EventTableOptions
+                                preferences={tablePreferences}
+                                onChange={updateTablePreferences}
+                            />
+                        </div>
                     )}
 
-                    <div className="ml-auto flex items-center gap-1 rounded-md border p-1">
-                        <Button
-                            variant={view === 'grid' ? 'secondary' : 'ghost'}
-                            size="sm"
-                            onClick={() => switchView('grid')}
-                            className="gap-1.5"
-                        >
+                    <ToggleGroup
+                        type="single"
+                        value={view}
+                        onValueChange={(next) =>
+                            next && switchView(next as ViewMode)
+                        }
+                        variant="outline"
+                        size="sm"
+                        aria-label="View"
+                        className={view === 'table' ? undefined : 'ml-auto'}
+                    >
+                        <ToggleGroupItem value="table" className="gap-1.5 px-3">
+                            <Rows3 className="size-4" /> Table
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="grid" className="gap-1.5 px-3">
                             <LayoutGrid className="size-4" /> Grid
-                        </Button>
-                        <Button
-                            variant={
-                                view === 'calendar' ? 'secondary' : 'ghost'
-                            }
-                            size="sm"
-                            onClick={() => switchView('calendar')}
-                            className="gap-1.5"
+                        </ToggleGroupItem>
+                        <ToggleGroupItem
+                            value="calendar"
+                            className="gap-1.5 px-3"
                         >
                             <CalendarIcon className="size-4" /> Calendar
-                        </Button>
-                    </div>
+                        </ToggleGroupItem>
+                    </ToggleGroup>
                 </section>
+
+                <EventFilterChips
+                    filters={filters}
+                    onRemove={(partial) => {
+                        if ('search' in partial) {
+                            setSearch('');
+                        }
+
+                        updateQuery({ ...partial, page: undefined });
+                    }}
+                    onClearAll={clearFilters}
+                />
+
+                {selectedIds.length > 0 && view === 'table' && (
+                    <EventBulkActions
+                        count={selectedIds.length}
+                        isWorking={isBulkWorking}
+                        onPublish={() => bulkPublication(true)}
+                        onUnpublish={() => bulkPublication(false)}
+                        onDelete={bulkDelete}
+                        onClear={() => setSelectedIds([])}
+                    />
+                )}
 
                 {view === 'calendar' ? (
                     <EventsCalendar
@@ -349,125 +379,108 @@ export default function EventsIndex({
                         month={month ?? currentMonth()}
                         filters={filters}
                     />
+                ) : list.length === 0 ? (
+                    <EmptyState
+                        hasAnyEvents={hasAnyEvents}
+                        onClearFilters={clearFilters}
+                    />
                 ) : (
                     <>
-                        <section
-                            id="index"
-                            className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
-                        >
-                            {list.length === 0 && (
-                                <div className="col-span-full flex flex-col items-center gap-2 py-16 text-muted-foreground">
-                                    <CalendarDays className="size-10 opacity-40" />
-                                    <p>No events match your filters.</p>
-                                </div>
-                            )}
-
-                            {list.map((event) => (
-                                <Card
-                                    key={event.id}
-                                    className="relative flex flex-col overflow-hidden pt-0"
-                                >
-                                    <div className="relative aspect-4/5 w-full">
-                                        <div className="absolute inset-0 z-10 bg-black/35" />
-                                        <img
-                                            src={
-                                                event.banner
-                                                    ? formatImageUrl(
-                                                          event.banner,
-                                                      )
-                                                    : undefined
-                                            }
-                                            alt="Event cover"
-                                            className="h-full w-full object-cover"
-                                        />
-                                        <div className="absolute top-3 left-3 z-20 flex gap-2">
-                                            <Badge
-                                                className={
-                                                    STATUS_STYLES[event.status]
-                                                }
-                                            >
-                                                {event.status}
-                                            </Badge>
-                                            {!event.is_published && (
-                                                <Badge
-                                                    variant="outline"
-                                                    className="bg-background/80"
-                                                >
-                                                    Draft
-                                                </Badge>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <CardHeader>
-                                        <CardTitle className="line-clamp-1">
-                                            {event.name}
-                                        </CardTitle>
-                                        <CardDescription className="line-clamp-2">
-                                            {event.description ||
-                                                'No description provided.'}
-                                        </CardDescription>
-                                    </CardHeader>
-
-                                    <CardContent className="flex flex-col gap-2 text-sm">
-                                        <div className="flex items-center gap-2 text-muted-foreground">
-                                            <CalendarDays className="size-4" />
-                                            {formatDateRange(
-                                                event.start_date,
-                                                event.end_date,
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-2 text-muted-foreground">
-                                            <MapPin className="size-4" />
-                                            {event.category}
-                                        </div>
-                                        <div className="flex items-center gap-2 text-muted-foreground">
-                                            <Phone className="size-4" />
-                                            {event.contact_person}
-                                        </div>
-                                    </CardContent>
-
-                                    <CardFooter>
-                                        <Button className="w-full" asChild>
-                                            <Link
-                                                href={`/dashboard/events/${event.id}`}
-                                            >
-                                                View Event
-                                            </Link>
-                                        </Button>
-                                    </CardFooter>
-                                </Card>
-                            ))}
-                        </section>
+                        {view === 'table' ? (
+                            <EventsTable
+                                events={list}
+                                sort={sort}
+                                onSort={toggleSort}
+                                selectedIds={selectedIds}
+                                onSelectedIdsChange={setSelectedIds}
+                                onTogglePublication={(event, published) =>
+                                    setPublication([event.id], published)
+                                }
+                                onPeek={(event) => setPeekId(event.id)}
+                                pendingIds={pendingIds}
+                                preferences={tablePreferences}
+                            />
+                        ) : (
+                            <EventsGrid
+                                events={list}
+                                onPeek={(event) => setPeekId(event.id)}
+                                onTogglePublication={(event, published) =>
+                                    setPublication([event.id], published)
+                                }
+                                pendingIds={pendingIds}
+                            />
+                        )}
 
                         {pagination && pagination.last_page > 1 && (
-                            <nav className="flex items-center justify-center gap-1 py-4">
-                                {links.map((link, i) => (
-                                    <Button
-                                        key={i}
-                                        variant={
-                                            link.active ? 'default' : 'outline'
-                                        }
-                                        size="sm"
-                                        disabled={!link.url}
-                                        onClick={() =>
-                                            link.url &&
-                                            router.visit(link.url, {
-                                                preserveState: true,
-                                                preserveScroll: true,
-                                            })
-                                        }
-                                        dangerouslySetInnerHTML={{
-                                            __html: link.label,
-                                        }}
-                                    />
-                                ))}
-                            </nav>
+                            <EventsPagination
+                                currentPage={pagination.current_page}
+                                lastPage={pagination.last_page}
+                                from={pagination.from}
+                                to={pagination.to}
+                                total={pagination.total}
+                                onNavigate={goToPage}
+                            />
                         )}
                     </>
                 )}
+
+                <EventPeekPanel
+                    event={peekEvent}
+                    isPublicationPending={
+                        peekId !== null && pendingIds.includes(peekId)
+                    }
+                    onOpenChange={(open) => !open && setPeekId(null)}
+                    onTogglePublication={(event, published) =>
+                        setPublication([event.id], published)
+                    }
+                />
             </div>
         </>
+    );
+}
+
+function EmptyState({
+    hasAnyEvents,
+    onClearFilters,
+}: {
+    hasAnyEvents: boolean;
+    onClearFilters: () => void;
+}) {
+    return (
+        <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed py-20 text-center">
+            <CalendarDays className="size-10 text-muted-foreground opacity-40" />
+            {hasAnyEvents ? (
+                <>
+                    <p className="font-medium">
+                        No events match these filters.
+                    </p>
+                    <p className="max-w-sm text-sm text-muted-foreground">
+                        Try a different combination, or start over.
+                    </p>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={onClearFilters}
+                    >
+                        Clear filters
+                    </Button>
+                </>
+            ) : (
+                <>
+                    <p className="font-medium">No events yet</p>
+                    <p className="max-w-sm text-sm text-muted-foreground">
+                        Create your first event to start taking registrations
+                        and issuing ID cards.
+                    </p>
+                    <Button size="sm" asChild>
+                        <Link href="/dashboard/events/create">
+                            <Plus className="mr-2 size-4" /> Create your first
+                            event
+                        </Link>
+                    </Button>
+                </>
+            )}
+        </div>
     );
 }
 

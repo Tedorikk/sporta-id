@@ -16,7 +16,7 @@ export interface Event {
     name: string;
     description: string | null;
     contact_person: string;
-    category: string;
+    category: string | null;
     is_published: boolean;
     start_date: string;
     end_date: string;
@@ -31,10 +31,12 @@ export interface Event {
     specific_type: 'BasketballEvent' | null;
     specific?: BasketballEventSpecific | null;
     /** Cheapest / dearest registration category price, for the "from Rp x" line on cards. Null when the event sells nothing yet. */
-    price_from?: string | null;
-    price_to?: string | null;
+    price_from?: string | number | null;
+    price_to?: string | number | null;
     /** The purchasable items themselves — sent to the landing page so it doubles as a price list. */
     registration_categories?: PublicRegistrationCategory[];
+    attendees_count?: number;
+    registration_categories_count?: number;
     teams_count?: number;
     pools_count?: number;
     matches_count?: number;
@@ -59,15 +61,30 @@ export interface PaginatedEvents {
     links: { url: string | null; label: string; active: boolean }[];
 }
 
+/** Publication state. Independent of {@link EventTiming} — a draft can be upcoming. */
+export type EventLifecycle = 'published' | 'draft';
+
+/** Position relative to today. Independent of {@link EventLifecycle}. */
+export type EventTiming = EventStatus;
+
 export interface EventFilters {
-    search?: string;
-    category?: string;
-    status?: string;
+    search: string | null;
+    category: string | null;
+    lifecycle: EventLifecycle | null;
+    timing: EventTiming | null;
+}
+
+export type EventSortColumn = 'name' | 'start_date' | 'end_date';
+
+export interface EventSort {
+    column: EventSortColumn;
+    direction: 'asc' | 'desc';
 }
 
 export interface EventStats {
     total: number;
     published: number;
+    draft: number;
     upcoming: number;
     ongoing: number;
     past: number;

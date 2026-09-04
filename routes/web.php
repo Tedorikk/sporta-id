@@ -12,9 +12,11 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentUploadController;
+use App\Http\Controllers\EventBulkActionController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventMatchController;
 use App\Http\Controllers\GameMatchController;
+use App\Http\Controllers\IdCardPrintController;
 use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\MeetingAttendanceController;
@@ -120,6 +122,12 @@ Route::middleware(['auth', 'verified', 'organization.current'])->group(function 
     // --- Events -------------------------------------------------------
     Route::prefix('dashboard/events')->group(function () {
         Route::get('/', [EventController::class, 'index'])->name('events.index');
+
+        // Registered before the {event} routes so the literal path wins the match.
+        Route::patch('publication', [EventBulkActionController::class, 'updatePublication'])
+            ->name('events.bulk.publication');
+        Route::delete('/', [EventBulkActionController::class, 'destroy'])
+            ->name('events.bulk.destroy');
         Route::inertia('create', 'dashboard/events/create')->name('events.create');
         Route::get('{event}', [EventController::class, 'show'])->middleware('event.org')->name('events.show');
         Route::get('{event}/edit', [EventController::class, 'edit'])->middleware('event.org')->name('events.edit');
@@ -154,6 +162,8 @@ Route::middleware(['auth', 'verified', 'organization.current'])->group(function 
                 ->name('registration_categories.builder');
             Route::get('registration-categories/{registrationCategory}/responses/export', [RegistrationCategoryController::class, 'exportResponses'])
                 ->name('registration_categories.responses.export');
+            Route::get('registration-categories/{registrationCategory}/id-cards', [IdCardPrintController::class, 'registrationCategory'])
+                ->name('registration_categories.id-cards');
             Route::resource('registration-categories', RegistrationCategoryController::class)
                 ->names('registration_categories')
                 ->except(['create', 'edit']);

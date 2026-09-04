@@ -1,3 +1,4 @@
+import { APP_LOCALE } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
 
 export type ScanHistoryVariant = 'success' | 'warning' | 'danger';
@@ -36,7 +37,10 @@ function relativeTime(date: Date) {
         return `${minutes}m ago`;
     }
 
-    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    return date.toLocaleTimeString(APP_LOCALE, {
+        hour: 'numeric',
+        minute: '2-digit',
+    });
 }
 
 /** A running log of the last several scans so staff can catch duplicates or a misread without re-scanning. */

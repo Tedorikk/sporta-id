@@ -1,5 +1,6 @@
 import { Calendar, Shield, Trophy } from 'lucide-react';
-import { formatDateTime } from '@/lib/format-date';
+import { LocalTime } from '@/components/local-time';
+
 import { formatImageUrl } from '@/lib/image-utils';
 import type { GameMatch } from '@/types/game-match';
 import type { Team } from '@/types/team';
@@ -112,7 +113,7 @@ export function MatchRow({
                 {match.scheduled_at && (
                     <span className="flex items-center gap-1 text-xs text-white/40">
                         <Calendar className="h-3 w-3" />
-                        {formatDateTime(match.scheduled_at)}
+                        <LocalTime value={match.scheduled_at} />
                     </span>
                 )}
                 <span

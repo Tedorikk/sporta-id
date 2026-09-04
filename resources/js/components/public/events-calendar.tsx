@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { APP_LOCALE } from '@/lib/format-date';
 
 interface CalendarEvent {
     id: number;
@@ -58,7 +59,7 @@ export function EventsCalendar({ events }: Props) {
         return cells;
     }, [events, year, month]);
 
-    const monthLabel = cursor.toLocaleDateString(undefined, {
+    const monthLabel = cursor.toLocaleDateString(APP_LOCALE, {
         month: 'long',
         year: 'numeric',
     });

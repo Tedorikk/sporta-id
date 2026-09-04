@@ -11,10 +11,11 @@ import {
     Users,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { LocalTime } from '@/components/local-time';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatRupiah } from '@/lib/format-currency';
-import { formatDate, formatDateTime } from '@/lib/format-date';
+import { formatDate } from '@/lib/format-date';
 import { dashboard } from '@/routes';
 import type { Event } from '@/types/event';
 import type { RegistrationStatus } from '@/types/registration';
@@ -358,9 +359,11 @@ export default function Dashboard({
                                                 )}
                                             </Badge>
                                             <span className="text-[11px] text-muted-foreground">
-                                                {formatDateTime(
-                                                    registration.created_at,
-                                                )}
+                                                <LocalTime
+                                                    value={
+                                                        registration.created_at
+                                                    }
+                                                />
                                             </span>
                                         </div>
                                     </li>

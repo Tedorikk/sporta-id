@@ -153,3 +153,37 @@
         font-family: var(--font-heading);
     }
 }
+
+/*
+ * Placeholder shown where an event has no banner yet. The motion is a slow
+ * breathing glow and drifting dots rather than a left-to-right shimmer, which
+ * would read as "still loading" instead of "nothing uploaded".
+ */
+@theme {
+    --animate-banner-glow: banner-glow 6s ease-in-out infinite;
+    --animate-banner-drift: banner-drift 7s ease-in-out infinite;
+}
+
+@keyframes banner-glow {
+    0%,
+    100% {
+        opacity: 0.35;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.6;
+        transform: scale(1.12);
+    }
+}
+
+@keyframes banner-drift {
+    0%,
+    100% {
+        opacity: 0.35;
+        transform: translateY(0);
+    }
+    50% {
+        opacity: 0.8;
+        transform: translateY(-10px);
+    }
+}
