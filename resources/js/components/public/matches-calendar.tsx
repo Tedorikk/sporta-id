@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { APP_LOCALE } from '@/lib/format-date';
 import type { GameMatch } from '@/types/game-match';
 import { MatchRow } from './match-row';
 
@@ -99,7 +100,7 @@ export function MatchesCalendar({ matches }: Props) {
         return null;
     }
 
-    const monthLabel = cursor.toLocaleDateString(undefined, {
+    const monthLabel = cursor.toLocaleDateString(APP_LOCALE, {
         month: 'long',
         year: 'numeric',
     });

@@ -9,6 +9,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { APP_LOCALE } from '@/lib/format-date';
 import events from '@/routes/events';
 import type { Event } from '@/types/event';
 import type { GameMatch, MatchStatus } from '@/types/game-match';
@@ -38,7 +39,7 @@ function dayLabel(key: string) {
         return 'Unscheduled';
     }
 
-    return new Date(key).toLocaleDateString(undefined, {
+    return new Date(key).toLocaleDateString(APP_LOCALE, {
         weekday: 'long',
         day: 'numeric',
         month: 'long',

@@ -8,6 +8,7 @@ import {
     Users,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { LocalTime } from '@/components/local-time';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,7 +37,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { formatRupiah } from '@/lib/format-currency';
-import { formatDateTime } from '@/lib/format-date';
+
 import type { Event } from '@/types/event';
 import type { Payment, PaymentStatus } from '@/types/payment';
 import type {
@@ -105,7 +106,7 @@ function PaymentCell({ payment }: { payment: Payment | null }) {
             )}
             {payment.paid_at && (
                 <span className="text-xs text-muted-foreground">
-                    {formatDateTime(payment.paid_at)}
+                    <LocalTime value={payment.paid_at} />
                 </span>
             )}
         </div>
@@ -377,9 +378,9 @@ export default function RegistrationCategoryShow({
                                         </TableCell>
                                     )}
                                     <TableCell className="text-muted-foreground">
-                                        {formatDateTime(
-                                            registration.created_at,
-                                        )}
+                                        <LocalTime
+                                            value={registration.created_at}
+                                        />
                                     </TableCell>
                                     <TableCell>
                                         {registrationCategory.subject_type ===

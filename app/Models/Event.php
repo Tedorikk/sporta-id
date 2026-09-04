@@ -89,18 +89,32 @@ class Event extends Model
         return $query->when($category, fn ($q) => $q->where('category', $category));
     }
 
-    public function scopeStatus(Builder $query, ?string $status): Builder
+    /**
+     * Publication state. Deliberately separate from {@see scopeTiming()}: an event
+     * can be a draft that starts next week, so the two must stay combinable.
+     */
+    public function scopeLifecycle(Builder $query, ?string $lifecycle): Builder
     {
-        return $query->when($status, function ($q) use ($status) {
+        return $query->when($lifecycle, fn ($q) => match ($lifecycle) {
+            'published' => $q->where('is_published', true),
+            'draft' => $q->where('is_published', false),
+            default => $q,
+        });
+    }
+
+    /**
+     * Where the event sits relative to today. Orthogonal to {@see scopeLifecycle()}.
+     */
+    public function scopeTiming(Builder $query, ?string $timing): Builder
+    {
+        return $query->when($timing, function ($q) use ($timing) {
             $today = now()->startOfDay();
 
-            match ($status) {
-                'published' => $q->where('is_published', true),
-                'draft' => $q->where('is_published', false),
+            return match ($timing) {
                 'upcoming' => $q->where('start_date', '>', $today),
                 'ongoing' => $q->where('start_date', '<=', $today)->where('end_date', '>=', $today),
                 'past' => $q->where('end_date', '<', $today),
-                default => null,
+                default => $q,
             };
         });
     }

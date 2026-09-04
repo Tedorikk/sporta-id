@@ -8,6 +8,7 @@ import {
     HoverCardContent,
     HoverCardTrigger,
 } from '@/components/ui/hover-card';
+import { APP_LOCALE, formatDate } from '@/lib/format-date';
 import events from '@/routes/events';
 import type { Event, EventFilters } from '@/types/event';
 
@@ -75,7 +76,7 @@ export default function EventsCalendar({
     }
 
     const monthLabel = new Date(year, monthNum - 1, 1).toLocaleDateString(
-        undefined,
+        APP_LOCALE,
         {
             month: 'long',
             year: 'numeric',
@@ -178,13 +179,13 @@ export default function EventsCalendar({
                                                                 {e.name}
                                                             </h4>
                                                             <p className="mt-0.5 text-[10px] text-muted-foreground">
-                                                                {new Date(
+                                                                {formatDate(
                                                                     e.start_date,
-                                                                ).toLocaleDateString()}{' '}
+                                                                )}{' '}
                                                                 –{' '}
-                                                                {new Date(
+                                                                {formatDate(
                                                                     e.end_date,
-                                                                ).toLocaleDateString()}
+                                                                )}
                                                             </p>
                                                         </div>
 
@@ -200,12 +201,14 @@ export default function EventsCalendar({
                                                             >
                                                                 {e.status}
                                                             </Badge>
-                                                            <Badge
-                                                                variant="outline"
-                                                                className="text-[10px]"
-                                                            >
-                                                                {e.category}
-                                                            </Badge>
+                                                            {e.category && (
+                                                                <Badge
+                                                                    variant="outline"
+                                                                    className="text-[10px]"
+                                                                >
+                                                                    {e.category}
+                                                                </Badge>
+                                                            )}
                                                             {!e.is_published && (
                                                                 <Badge
                                                                     variant="destructive"

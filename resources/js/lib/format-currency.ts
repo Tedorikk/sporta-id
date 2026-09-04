@@ -1,4 +1,4 @@
-export function formatRupiah(price: string | null): string {
+export function formatRupiah(price: string | number | null): string {
     if (!price || Number(price) === 0) {
         return 'Free';
     }
@@ -16,8 +16,8 @@ export function formatRupiah(price: string | null): string {
  * all — the card then shows no price rather than a misleading "Free".
  */
 export function formatPriceRange(
-    from?: string | null,
-    to?: string | null,
+    from?: string | number | null,
+    to?: string | number | null,
 ): string | null {
     if (from === null || from === undefined) {
         return null;

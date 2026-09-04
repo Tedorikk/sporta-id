@@ -20,7 +20,7 @@ class PublicEventController extends Controller
         $filters = $request->only(['search', 'category']);
 
         $events = Event::query()
-            ->status('published')
+            ->lifecycle('published')
             ->search($filters['search'] ?? null)
             ->category($filters['category'] ?? null)
             // Same price range as the landing page — the catalogue has to state

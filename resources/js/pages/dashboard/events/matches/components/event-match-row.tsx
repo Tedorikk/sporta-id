@@ -1,6 +1,7 @@
 import { Trophy } from 'lucide-react';
+import { LocalTime } from '@/components/local-time';
 import { Badge } from '@/components/ui/badge';
-import { formatDateTime } from '@/lib/format-date';
+
 import {
     StatusBadge,
     ROUND_LABELS,
@@ -56,7 +57,7 @@ export function EventMatchRow({
                 )}
                 {match.scheduled_at && (
                     <span className="text-muted-foreground">
-                        {formatDateTime(match.scheduled_at)}
+                        <LocalTime value={match.scheduled_at} />
                     </span>
                 )}
             </div>

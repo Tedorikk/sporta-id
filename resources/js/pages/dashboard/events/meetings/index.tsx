@@ -8,8 +8,9 @@ import {
     Trash2,
 } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
+import { LocalTime } from '@/components/local-time';
 import { Button } from '@/components/ui/button';
-import { formatDateTime } from '@/lib/format-date';
+
 import type { Event } from '@/types/event';
 import type { Meeting } from '@/types/meeting';
 import type { Speaker } from '@/types/speaker';
@@ -21,14 +22,18 @@ interface Props {
     speakers: Speaker[];
 }
 
-function formatMeetingTime(meeting: Meeting) {
-    const start = formatDateTime(meeting.scheduled_at);
-
-    if (!meeting.ends_at) {
-        return start;
-    }
-
-    return `${start} – ${formatDateTime(meeting.ends_at)}`;
+function MeetingTime({ meeting }: { meeting: Meeting }) {
+    return (
+        <>
+            <LocalTime value={meeting.scheduled_at} />
+            {meeting.ends_at && (
+                <>
+                    {' – '}
+                    <LocalTime value={meeting.ends_at} />
+                </>
+            )}
+        </>
+    );
 }
 
 export default function MeetingsIndex({ event, meetings, speakers }: Props) {
@@ -104,7 +109,7 @@ export default function MeetingsIndex({ event, meetings, speakers }: Props) {
                                 {meeting.title}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                                {formatMeetingTime(meeting)}
+                                <MeetingTime meeting={meeting} />
                                 {meeting.location
                                     ? ` · ${meeting.location}`
                                     : ''}

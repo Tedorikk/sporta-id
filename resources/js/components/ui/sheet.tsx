@@ -46,13 +46,16 @@ function SheetContent({
   className,
   children,
   side = "right",
+  overlay = true,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: "top" | "right" | "bottom" | "left"
+  /** Set false alongside <Sheet modal={false}> for a panel that leaves the page usable. */
+  overlay?: boolean
 }) {
   return (
     <SheetPortal>
-      <SheetOverlay />
+      {overlay && <SheetOverlay />}
       <SheetPrimitive.Content
         data-slot="sheet-content"
         className={cn(

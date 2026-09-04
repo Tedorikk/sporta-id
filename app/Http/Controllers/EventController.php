@@ -5,27 +5,50 @@ namespace App\Http\Controllers;
 use App\Models\BasketballEvent;
 use App\Models\Event;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 class EventController extends Controller
 {
+    /** Columns the list may be ordered by. Anything else falls back to the default. */
+    private const SORTABLE = ['name', 'start_date', 'end_date'];
+
+    private const PER_PAGE = ['table' => 25, 'grid' => 9];
+
     public function index(Request $request)
     {
         Gate::authorize('viewAny', Event::class);
 
-        $view = $request->input('view', 'grid');
+        $view = in_array($request->input('view'), ['table', 'grid', 'calendar'], true)
+            ? $request->input('view')
+            : 'table';
 
-        $filters = $request->only(['search', 'category', 'status']);
+        $filters = [
+            'search' => $request->input('search') ?: null,
+            'category' => $request->input('category') ?: null,
+            'lifecycle' => in_array($request->input('lifecycle'), ['published', 'draft'], true)
+                ? $request->input('lifecycle')
+                : null,
+            'timing' => in_array($request->input('timing'), ['upcoming', 'ongoing', 'past'], true)
+                ? $request->input('timing')
+                : null,
+        ];
+
+        $sort = in_array($request->input('sort'), self::SORTABLE, true)
+            ? $request->input('sort')
+            : 'start_date';
+        $direction = $request->input('direction') === 'asc' ? 'asc' : 'desc';
 
         $organizationId = $request->user()->current_organization_id;
 
-        $base = Event::query()
+        // Rebuilt per use: Eloquent builders are stateful, so sharing one between the
+        // list query and the six facet counts would leak constraints between them.
+        $scoped = fn () => Event::query()
             ->forOrganization($organizationId)
-            ->search($filters['search'] ?? null)
-            ->category($filters['category'] ?? null)
-            ->status($filters['status'] ?? null);
+            ->search($filters['search'])
+            ->category($filters['category']);
 
         $categories = Event::query()
             ->forOrganization($organizationId)
@@ -34,14 +57,20 @@ class EventController extends Controller
             ->orderBy('category')
             ->pluck('category');
 
-        $stats = $this->computeStats(clone $base);
+        $stats = $this->computeStats($scoped, $filters);
+
+        // Distinguishes "this organization has no events yet" (show onboarding) from
+        // "these filters matched nothing" (show a way back). Both render as empty.
+        $hasAnyEvents = Event::query()->forOrganization($organizationId)->exists();
 
         if ($view === 'calendar') {
             $month = $request->input('month', now()->format('Y-m'));
             $start = Carbon::parse($month.'-01')->startOfMonth();
             $end = $start->copy()->endOfMonth();
 
-            $events = (clone $base)
+            $events = $scoped()
+                ->lifecycle($filters['lifecycle'])
+                ->timing($filters['timing'])
                 ->where(function ($q) use ($start, $end) {
                     $q->whereBetween('start_date', [$start, $end])
                         ->orWhereBetween('end_date', [$start, $end])
@@ -58,45 +87,55 @@ class EventController extends Controller
                 'month' => $start->format('Y-m'),
                 'events' => $events,
                 'filters' => $filters,
+                'sort' => ['column' => $sort, 'direction' => $direction],
                 'categories' => $categories,
                 'stats' => $stats,
+                'has_any_events' => $hasAnyEvents,
             ]);
         }
 
-        $events = (clone $base)
-            ->orderBy('start_date', 'desc')
-            ->paginate(9)
+        $events = $scoped()
+            ->lifecycle($filters['lifecycle'])
+            ->timing($filters['timing'])
+            ->withCount(['attendees', 'registrationCategories'])
+            // Feeds the quick-view panel's price line without a second request.
+            ->withMin('registrationCategories as price_from', 'price')
+            ->withMax('registrationCategories as price_to', 'price')
+            ->orderBy($sort, $direction)
+            ->paginate(self::PER_PAGE[$view])
             ->withQueryString();
 
         return Inertia::render('dashboard/events/index', [
-            'view' => 'grid',
+            'view' => $view,
             'events' => $events,
             'filters' => $filters,
+            'sort' => ['column' => $sort, 'direction' => $direction],
             'categories' => $categories,
             'stats' => $stats,
+            'has_any_events' => $hasAnyEvents,
         ]);
     }
 
-    private function computeStats($query): array
+    /**
+     * Facet counts for the filter tiles.
+     *
+     * Each facet is counted with the *other* facet applied, so a tile always predicts
+     * the number of rows clicking it will actually produce and users never land on a
+     * zero-result dead end.
+     *
+     * @param  callable(): Builder<Event>  $scoped
+     * @param  array{search: ?string, category: ?string, lifecycle: ?string, timing: ?string}  $filters
+     * @return array{total: int, published: int, draft: int, upcoming: int, ongoing: int, past: int}
+     */
+    private function computeStats(callable $scoped, array $filters): array
     {
-        $today = now()->startOfDay();
-
-        // clone once per branch so each count query doesn't leak into the next
-        $total = (clone $query)->count();
-        $published = (clone $query)->where('is_published', true)->count();
-        $upcoming = (clone $query)->where('start_date', '>', $today)->count();
-        $ongoing = (clone $query)
-            ->where('start_date', '<=', $today)
-            ->where('end_date', '>=', $today)
-            ->count();
-        $past = (clone $query)->where('end_date', '<', $today)->count();
-
         return [
-            'total' => $total,
-            'published' => $published,
-            'upcoming' => $upcoming,
-            'ongoing' => $ongoing,
-            'past' => $past,
+            'total' => $scoped()->count(),
+            'published' => $scoped()->timing($filters['timing'])->lifecycle('published')->count(),
+            'draft' => $scoped()->timing($filters['timing'])->lifecycle('draft')->count(),
+            'upcoming' => $scoped()->lifecycle($filters['lifecycle'])->timing('upcoming')->count(),
+            'ongoing' => $scoped()->lifecycle($filters['lifecycle'])->timing('ongoing')->count(),
+            'past' => $scoped()->lifecycle($filters['lifecycle'])->timing('past')->count(),
         ];
     }
 

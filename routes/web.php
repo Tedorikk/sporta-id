@@ -12,6 +12,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentUploadController;
+use App\Http\Controllers\EventBulkActionController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventMatchController;
 use App\Http\Controllers\GameMatchController;
@@ -120,6 +121,12 @@ Route::middleware(['auth', 'verified', 'organization.current'])->group(function 
     // --- Events -------------------------------------------------------
     Route::prefix('dashboard/events')->group(function () {
         Route::get('/', [EventController::class, 'index'])->name('events.index');
+
+        // Registered before the {event} routes so the literal path wins the match.
+        Route::patch('publication', [EventBulkActionController::class, 'updatePublication'])
+            ->name('events.bulk.publication');
+        Route::delete('/', [EventBulkActionController::class, 'destroy'])
+            ->name('events.bulk.destroy');
         Route::inertia('create', 'dashboard/events/create')->name('events.create');
         Route::get('{event}', [EventController::class, 'show'])->middleware('event.org')->name('events.show');
         Route::get('{event}/edit', [EventController::class, 'edit'])->middleware('event.org')->name('events.edit');
