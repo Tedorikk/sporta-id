@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react';
 import { LocalTime } from '@/components/local-time';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -48,6 +49,7 @@ import type {
     RegistrationStatus,
 } from '@/types/registration';
 import type { RegistrationCategory } from '@/types/registration-category';
+import { PrintSelectionBar } from './components/print-selection-bar';
 
 interface Props {
     event: Event;
@@ -137,6 +139,7 @@ export default function RegistrationCategoryShow({
     const [refunding, setRefunding] = useState<Registration | null>(null);
     const [refundNote, setRefundNote] = useState('');
     const [isRefunding, setIsRefunding] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
     const isPaidCategory =
         Boolean(registrationCategory.price) &&
@@ -167,8 +170,45 @@ export default function RegistrationCategoryShow({
         .flatMap((page) => page.fields)
         .filter((f) => !RESERVED_KEYS.includes(f.key));
 
-    // Batch print sheet for the whole category; append `?ids=` to reprint one card.
+    // Batch print sheet for the whole category; append `?ids=` to narrow it.
     const idCardPrintUrl = `/dashboard/events/${event.id}/registration-categories/${registrationCategory.id}/id-cards`;
+
+    // Only individual categories have a template-driven card, and only a
+    // confirmed registration is ever issued one — so those are the only rows
+    // worth offering a checkbox for.
+    const canPrintCards = registrationCategory.subject_type === 'individual';
+    const printableIds = registrations.data
+        .filter((registration) => registration.status === 'confirmed')
+        .map((registration) => registration.id);
+    const selectedOnPage = printableIds.filter((id) =>
+        selectedIds.includes(id),
+    );
+    const headerState =
+        selectedOnPage.length === 0
+            ? false
+            : selectedOnPage.length === printableIds.length
+              ? true
+              : 'indeterminate';
+
+    // Selection survives paging and filtering, so an organizer can gather people
+    // from several pages into one sheet. Both toggles update functionally: two
+    // ticks landing in one batch would otherwise read the same stale array and
+    // the first would be lost.
+    function toggleAll(checked: boolean) {
+        setSelectedIds((current) =>
+            checked
+                ? [...new Set([...current, ...printableIds])]
+                : current.filter((id) => !printableIds.includes(id)),
+        );
+    }
+
+    function toggleOne(id: number, checked: boolean) {
+        setSelectedIds((current) =>
+            checked
+                ? [...current, id]
+                : current.filter((selected) => selected !== id),
+        );
+    }
 
     useEffect(() => {
         const timeout = setTimeout(() => {
@@ -291,6 +331,14 @@ export default function RegistrationCategoryShow({
                 </Select>
             </div>
 
+            {selectedIds.length > 0 && (
+                <PrintSelectionBar
+                    count={selectedIds.length}
+                    printUrl={`${idCardPrintUrl}?ids=${selectedIds.join(',')}`}
+                    onClear={() => setSelectedIds([])}
+                />
+            )}
+
             {registrations.data.length === 0 ? (
                 <EmptyState />
             ) : (
@@ -298,6 +346,18 @@ export default function RegistrationCategoryShow({
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                {canPrintCards && (
+                                    <TableHead className="w-10">
+                                        <Checkbox
+                                            checked={headerState}
+                                            disabled={printableIds.length === 0}
+                                            onCheckedChange={(checked) =>
+                                                toggleAll(checked === true)
+                                            }
+                                            aria-label="Select every confirmed registrant on this page"
+                                        />
+                                    </TableHead>
+                                )}
                                 <TableHead>Name</TableHead>
                                 <TableHead>Email</TableHead>
                                 <TableHead>Phone</TableHead>
@@ -320,7 +380,36 @@ export default function RegistrationCategoryShow({
                         </TableHeader>
                         <TableBody>
                             {registrations.data.map((registration) => (
-                                <TableRow key={registration.id}>
+                                <TableRow
+                                    key={registration.id}
+                                    data-state={
+                                        selectedIds.includes(registration.id)
+                                            ? 'selected'
+                                            : undefined
+                                    }
+                                >
+                                    {canPrintCards && (
+                                        <TableCell>
+                                            <Checkbox
+                                                checked={selectedIds.includes(
+                                                    registration.id,
+                                                )}
+                                                // A card is only issued once a
+                                                // registration is confirmed.
+                                                disabled={
+                                                    registration.status !==
+                                                    'confirmed'
+                                                }
+                                                onCheckedChange={(checked) =>
+                                                    toggleOne(
+                                                        registration.id,
+                                                        checked === true,
+                                                    )
+                                                }
+                                                aria-label={`Select ${registration.name}`}
+                                            />
+                                        </TableCell>
+                                    )}
                                     <TableCell className="font-medium">
                                         {registration.name}
                                     </TableCell>
