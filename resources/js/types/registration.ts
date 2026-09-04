@@ -16,6 +16,8 @@ export interface Registration {
     phone: string | null;
     photo: string | null;
     qr_token: string;
+    /** Short human-comparable code printed on the card; see Registration::generateVerificationCode. */
+    verification_code: string | null;
     form_data: Record<string, unknown> | null;
     status: RegistrationStatus;
     expires_at: string | null;

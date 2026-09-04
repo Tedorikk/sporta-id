@@ -37,7 +37,7 @@ class IdCardPrintController extends Controller
             ->where('status', Registration::STATUS_CONFIRMED)
             ->when($ids !== [], fn ($query) => $query->whereIn('id', $ids))
             ->orderBy('name')
-            ->get(['id', 'name', 'email', 'phone', 'photo', 'qr_token', 'form_data', 'status']);
+            ->get(['id', 'name', 'email', 'phone', 'photo', 'qr_token', 'verification_code', 'form_data', 'status']);
 
         return Inertia::render('id-card-print', [
             'event' => $event,

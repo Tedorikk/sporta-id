@@ -36,6 +36,7 @@ use App\Http\Controllers\RegistrationCategoryController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\RegistrationQrController;
 use App\Http\Controllers\RegistrationRefundController;
+use App\Http\Controllers\RegistrationVerificationCodeController;
 use App\Http\Controllers\SpeakerController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamQrController;
@@ -157,6 +158,8 @@ Route::middleware(['auth', 'verified', 'organization.current'])->group(function 
 
             Route::post('registrations/{registration}/refund', [RegistrationRefundController::class, 'store'])
                 ->name('registrations.refund');
+            Route::patch('registrations/{registration}/verification-code', [RegistrationVerificationCodeController::class, 'update'])
+                ->name('registrations.verification-code');
 
             Route::get('registration-categories/builder', [RegistrationCategoryController::class, 'builder'])
                 ->name('registration_categories.builder');

@@ -37,6 +37,7 @@ export function RegistrationIdCardCard({
         status: registration.status,
         email: registration.email ?? undefined,
         phone: registration.phone ?? undefined,
+        verificationCode: registration.verification_code ?? undefined,
         qrDataUrl,
         eventName: registration.event?.name,
         eventLogo: registration.event?.logo

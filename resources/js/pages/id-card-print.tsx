@@ -263,6 +263,8 @@ export default function IdCardPrint({
                     status: registration.status,
                     email: registration.email ?? undefined,
                     phone: registration.phone ?? undefined,
+                    verificationCode:
+                        registration.verification_code ?? undefined,
                     qrDataUrl: qrCodes[registration.qr_token] ?? '',
                     eventName: event.name,
                     eventLogo: event.logo

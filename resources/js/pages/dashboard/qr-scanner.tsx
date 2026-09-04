@@ -1254,6 +1254,19 @@ export default function QrScanner({ meetings, preselectedMeeting }: Props) {
                             }
                         />
 
+                        {/* Same check the public page offers, for staff working
+                            the door with this scanner instead of a phone camera. */}
+                        {result.data.verification_code && (
+                            <div className="rounded-lg border bg-muted/40 px-4 py-3">
+                                <p className="text-[11px] font-semibold tracking-widest text-muted-foreground uppercase">
+                                    Code on the card
+                                </p>
+                                <p className="font-mono text-2xl font-bold tracking-[0.2em]">
+                                    {result.data.verification_code}
+                                </p>
+                            </div>
+                        )}
+
                         <ResultContactFooter
                             email={result.data.email}
                             phone={result.data.phone}

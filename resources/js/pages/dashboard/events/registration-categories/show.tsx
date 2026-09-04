@@ -4,6 +4,7 @@ import {
     Download,
     ExternalLink,
     Printer,
+    RefreshCw,
     Search,
     Undo2,
     Users,
@@ -140,6 +141,8 @@ export default function RegistrationCategoryShow({
     const [refundNote, setRefundNote] = useState('');
     const [isRefunding, setIsRefunding] = useState(false);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [recoding, setRecoding] = useState<Registration | null>(null);
+    const [isRecoding, setIsRecoding] = useState(false);
 
     const isPaidCategory =
         Boolean(registrationCategory.price) &&
@@ -161,6 +164,26 @@ export default function RegistrationCategoryShow({
                     setIsRefunding(false);
                     setRefunding(null);
                     setRefundNote('');
+                },
+            },
+        );
+    };
+
+    const submitNewCode = () => {
+        if (!recoding) {
+            return;
+        }
+
+        setIsRecoding(true);
+
+        router.patch(
+            `/dashboard/events/${event.id}/registrations/${recoding.id}/verification-code`,
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    setIsRecoding(false);
+                    setRecoding(null);
                 },
             },
         );
@@ -540,6 +563,22 @@ export default function RegistrationCategoryShow({
                                                     </a>
                                                 </Button>
                                             )}
+                                        {canPrintCards &&
+                                            registration.status ===
+                                                'confirmed' && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    title="Issue a new verification code"
+                                                    onClick={() =>
+                                                        setRecoding(
+                                                            registration,
+                                                        )
+                                                    }
+                                                >
+                                                    <RefreshCw className="h-4 w-4" />
+                                                </Button>
+                                            )}
                                         {registration.payment?.status ===
                                             'settlement' && (
                                             <Button
@@ -581,6 +620,47 @@ export default function RegistrationCategoryShow({
                     ))}
                 </nav>
             )}
+
+            <Dialog
+                open={recoding !== null}
+                onOpenChange={(open) => !open && setRecoding(null)}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>
+                            Issue a new verification code?
+                        </DialogTitle>
+                        <DialogDescription>
+                            <strong>{recoding?.name}</strong>&apos;s card
+                            currently verifies as{' '}
+                            <span className="font-mono font-semibold text-foreground">
+                                {recoding?.verification_code ?? '—'}
+                            </span>
+                            . Issuing a new one is how you retire a badge that
+                            was lost or copied.
+                            <br />
+                            <br />
+                            Every card already printed carries the old code, so
+                            those cards will stop matching when scanned.{' '}
+                            <strong>Reprint this card afterwards.</strong> The
+                            registration itself is untouched.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setRecoding(null)}
+                            disabled={isRecoding}
+                        >
+                            Cancel
+                        </Button>
+                        <Button onClick={submitNewCode} disabled={isRecoding}>
+                            {isRecoding ? 'Issuing…' : 'Issue new code'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <Dialog
                 open={refunding !== null}

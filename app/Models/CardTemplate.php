@@ -88,8 +88,11 @@ class CardTemplate extends Model
                 // A registration has no organization to show, so this line
                 // carries the event name instead of always rendering blank.
                 ['id' => 'event', 'kind' => 'text', 'binding' => 'eventName', 'x' => 20, 'y' => 218, 'width' => 304, 'height' => 16, 'rotation' => 0, 'zIndex' => 1, 'style' => ['fontSize' => 11, 'textAlign' => 'center', 'color' => '#475569']],
-                ['id' => 'qr', 'kind' => 'qr', 'binding' => 'qrDataUrl', 'x' => 99, 'y' => 244, 'width' => 146, 'height' => 146, 'rotation' => 0, 'zIndex' => 1, 'style' => ['borderRadius' => 8]],
-                ['id' => 'footer', 'kind' => 'text', 'binding' => null, 'staticText' => 'Sporta Indonesia', 'x' => 20, 'y' => 396, 'width' => 304, 'height' => 16, 'rotation' => 0, 'zIndex' => 1, 'style' => ['fontSize' => 10, 'textAlign' => 'center', 'color' => '#94a3b8']],
+                ['id' => 'qr', 'kind' => 'qr', 'binding' => 'qrDataUrl', 'x' => 102, 'y' => 236, 'width' => 140, 'height' => 140, 'rotation' => 0, 'zIndex' => 1, 'style' => ['borderRadius' => 8]],
+                // Printed right under the QR, because the page that QR opens
+                // shows the same code — the two are meant to be read together.
+                ['id' => 'code', 'kind' => 'text', 'binding' => 'verificationCode', 'x' => 20, 'y' => 380, 'width' => 304, 'height' => 22, 'rotation' => 0, 'zIndex' => 1, 'style' => ['fontSize' => 14, 'fontWeight' => 700, 'letterSpacing' => 2, 'textAlign' => 'center', 'color' => '#0f172a']],
+                ['id' => 'footer', 'kind' => 'text', 'binding' => null, 'staticText' => 'Sporta Indonesia', 'x' => 20, 'y' => 404, 'width' => 304, 'height' => 14, 'rotation' => 0, 'zIndex' => 1, 'style' => ['fontSize' => 9, 'textAlign' => 'center', 'color' => '#94a3b8']],
             ],
         ];
     }
