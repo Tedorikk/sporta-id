@@ -53,6 +53,15 @@ const PAPER_SHADOW =
 /** Aspect ratios within this much of each other fill a slot without visible margins. */
 const ASPECT_TOLERANCE = 0.01;
 
+/**
+ * Millimetres trimmed off each sheet when printing. Browsers lay out in
+ * fractional pixels and paginate in whole ones, so a box sized to exactly the
+ * paper can measure a hair taller than the page it is meant to fill and push a
+ * blank sheet out of the printer. This is well inside the empty margin the
+ * layout already leaves, so nothing moves and nothing is cut.
+ */
+const SHEET_UNDERSIZE = 0.5;
+
 interface Props {
     event: Event;
     registrationCategory: RegistrationCategory;
@@ -292,8 +301,26 @@ export default function IdCardPrint({
                         `.print-sheet { print-color-adjust: exact; -webkit-print-color-adjust: exact; }`,
                         `@media print {`,
                         `  html, body { background: #fff; margin: 0; padding: 0; }`,
-                        `  .print-sheet { box-shadow: none !important; border-radius: 0 !important; break-after: page; }`,
-                        `  .print-sheet:last-child { break-after: auto; }`,
+                        // Spelled out rather than left to the Tailwind print:
+                        // variants, so the stack the sheets sit in cannot
+                        // contribute a stray gap or scroll box to the paginator.
+                        `  .print-sheets { display: block !important; gap: 0 !important; padding: 0 !important; overflow: visible !important; }`,
+                        `  .print-sheet {`,
+                        `    box-shadow: none !important;`,
+                        `    border-radius: 0 !important;`,
+                        `    overflow: hidden;`,
+                        `    break-inside: avoid;`,
+                        // A sheet sized to exactly the page can round a fraction
+                        // of a pixel past it and spill a near-blank page after
+                        // itself. A hair under cannot, and the trim comes out of
+                        // the margin the layout already leaves empty.
+                        `    width: ${size.paper.width - SHEET_UNDERSIZE}mm !important;`,
+                        `    height: ${size.paper.height - SHEET_UNDERSIZE}mm !important;`,
+                        `  }`,
+                        // Break *before* each sheet but the first. Breaking after
+                        // every sheet leaves a trailing break with nothing behind
+                        // it, which is one blank page at the end of the job.
+                        `  .print-sheet + .print-sheet { break-before: page; }`,
                         `}`,
                     ].join('\n')}
                 </style>
@@ -413,7 +440,7 @@ export default function IdCardPrint({
                         </span>
                     </div>
 
-                    <div className="flex min-h-0 flex-1 flex-col items-center gap-10 overflow-auto p-10 print:block print:overflow-visible print:p-0">
+                    <div className="print-sheets flex min-h-0 flex-1 flex-col items-center gap-10 overflow-auto p-10">
                         {sheets.map((sheet, sheetIndex) => (
                             <div
                                 key={sheetIndex}
