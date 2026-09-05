@@ -78,18 +78,21 @@ test('the B3 on A4 option advertises five per sheet', function () {
         ->and($option['card']['width'])->toBe(91.0);
 });
 
-test('the default registration card is shaped like a B3 card', function () {
+test('every default card with a print sheet is shaped like a B3 card', function () {
     $card = CardPrintLayout::CARD_SIZES['b3'];
-    $canvas = CardTemplate::fallbackTemplate(CardTemplate::SUBJECT_REGISTRATION)['canvas'];
 
-    // Drift here is what makes a printed sheet letterbox, so the two shapes are
+    // Drift here is what makes a printed sheet letterbox, so the shapes are
     // pinned together: the print page warns above a 0.01 difference in ratio.
-    expect(abs($canvas['width'] / $canvas['height'] - $card['width'] / $card['height']))
-        ->toBeLessThan(0.01);
+    foreach ([CardTemplate::SUBJECT_REGISTRATION, CardTemplate::SUBJECT_ATTENDEE] as $subject) {
+        $canvas = CardTemplate::fallbackTemplate($subject)['canvas'];
+
+        expect(abs($canvas['width'] / $canvas['height'] - $card['width'] / $card['height']))
+            ->toBeLessThan(0.01);
+    }
 });
 
-test('attendee, player and team cards keep the original portrait default', function () {
-    foreach (['attendee', 'player', 'team'] as $subject) {
+test('player and team cards keep the original portrait default', function () {
+    foreach (['player', 'team'] as $subject) {
         $canvas = CardTemplate::fallbackTemplate($subject)['canvas'];
 
         expect($canvas['width'])->toBe(380)

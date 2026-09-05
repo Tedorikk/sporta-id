@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ChevronLeft, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ChevronLeft, Pencil, Plus, Printer, Trash2 } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -89,6 +89,23 @@ export default function AttendeeTypesIndex({ event, attendeeTypes }: Props) {
                             <span className="text-xs text-muted-foreground">
                                 {type.attendees_count} attendee(s)
                             </span>
+
+                            {type.attendees_count > 0 && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    title={`Print ${type.label} ID cards`}
+                                    asChild
+                                >
+                                    <a
+                                        href={`/dashboard/events/${event.id}/attendee-types/${type.id}/id-cards`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                    >
+                                        <Printer className="h-4 w-4" />
+                                    </a>
+                                </Button>
+                            )}
 
                             <AttendeeTypeFormDialog
                                 event={event}

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Attendee;
 use App\Models\CardTemplate;
 use App\Models\Event;
 use App\Models\Registration;
@@ -129,12 +130,92 @@ test('the print sheet carries each card\'s code', function () {
         ]))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->where('registrations.0.verification_code', $registration->verification_code)
+            ->where('cards.0.data.verificationCode', $registration->verification_code)
         );
 });
 
 test('the default card prints the code', function () {
     $default = CardTemplate::fallbackTemplate(CardTemplate::SUBJECT_REGISTRATION);
+
+    expect(collect($default['elements'])->pluck('binding'))->toContain('verificationCode');
+});
+
+// --- Attendees: the same code, on passes for people who never registered ---
+
+function codedAttendee(?Event $event = null, string $status = Attendee::STATUS_ACTIVE): Attendee
+{
+    $event ??= Event::factory()->create();
+
+    return Attendee::create([
+        'event_id' => $event->id,
+        'attendee_type_id' => $event->attendeeTypes()->where('key', 'guest')->firstOrFail()->id,
+        'name' => 'Bianca Ali',
+        'status' => $status,
+    ]);
+}
+
+test('a new attendee is given a verification code too', function () {
+    expect(codedAttendee()->verification_code)->toMatch('/^[A-Z2-9]{3}-[A-Z2-9]{3}$/');
+});
+
+test('an attendee card page shows the code to check against', function () {
+    $attendee = codedAttendee();
+
+    $this->get(route('attendees.id-card', $attendee))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('attendee-id-card')
+            ->where('attendee.verification_code', $attendee->verification_code)
+            ->where('attendee.status', Attendee::STATUS_ACTIVE)
+        );
+});
+
+test('a revoked pass still resolves, so the page can say it is not valid', function () {
+    $attendee = codedAttendee(status: Attendee::STATUS_REVOKED);
+
+    $this->get(route('attendees.id-card', $attendee))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('attendee.status', Attendee::STATUS_REVOKED));
+});
+
+test('an organizer can issue an attendee a new code', function () {
+    $attendee = codedAttendee();
+    $user = organizerOf($attendee->event);
+    $old = $attendee->verification_code;
+
+    $this->actingAs($user)
+        ->patch(route('attendees.verification-code', [$attendee->event_id, $attendee]))
+        ->assertRedirect();
+
+    expect($attendee->fresh()->verification_code)->not->toBe($old);
+});
+
+test('an attendee cannot be re-coded through another event', function () {
+    $attendee = codedAttendee();
+    $otherEvent = Event::factory()->create();
+    $old = $attendee->verification_code;
+
+    $this->actingAs(organizerOf($otherEvent))
+        ->patch(route('attendees.verification-code', [$otherEvent, $attendee]))
+        ->assertNotFound();
+
+    expect($attendee->fresh()->verification_code)->toBe($old);
+});
+
+test('the attendee print sheet carries each pass\'s code', function () {
+    $attendee = codedAttendee();
+    $user = organizerOf($attendee->event);
+
+    $this->actingAs($user)
+        ->get(route('attendee-types.id-cards', [$attendee->event_id, $attendee->attendee_type_id]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('cards.0.data.verificationCode', $attendee->verification_code)
+        );
+});
+
+test('the default attendee card prints the code', function () {
+    $default = CardTemplate::fallbackTemplate(CardTemplate::SUBJECT_ATTENDEE);
 
     expect(collect($default['elements'])->pluck('binding'))->toContain('verificationCode');
 });

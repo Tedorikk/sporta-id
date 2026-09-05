@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { APP_LOGO_URL } from '@/components/id-card/card-presets';
 import { IdCardRenderer } from '@/components/id-card/id-card-renderer';
 import type { IdCardData } from '@/components/id-card/id-card-renderer';
+import { VerifiedBanner } from '@/components/id-card/verified-banner';
 import { IdCardActions } from '@/components/id-card-actions';
 import { formatImageUrl } from '@/lib/image-utils';
 import type { Attendee } from '@/types/attendee';
@@ -38,6 +39,7 @@ export default function AttendeeIdCard({ attendee, template }: Props) {
         organization: attendee.organization ?? undefined,
         title: attendee.title ?? undefined,
         status: attendee.status,
+        verificationCode: attendee.verification_code ?? undefined,
         qrDataUrl,
         eventName: attendee.event?.name,
         eventLogo: attendee.event?.logo
@@ -50,7 +52,20 @@ export default function AttendeeIdCard({ attendee, template }: Props) {
         <>
             <Head title={`${attendee.name} — ${typeLabel} ID Card`} />
 
-            <div className="flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10 print:bg-white print:p-0">
+            <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-neutral-950 px-4 py-10 print:bg-white print:p-0">
+                {/*
+                 * Unlike a registration, a revoked pass still resolves here —
+                 * so this has a real failing state rather than a 404, which is
+                 * what someone on a door needs to see.
+                 */}
+                <VerifiedBanner
+                    valid={attendee.status === 'active'}
+                    name={attendee.name}
+                    subtitle={typeLabel}
+                    code={attendee.verification_code}
+                    invalidNote="This pass has been revoked. Do not admit on this card."
+                />
+
                 <div
                     id="attendee-id-card"
                     ref={cardRef}

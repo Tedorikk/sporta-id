@@ -3,6 +3,7 @@ import {
     AlertCircle,
     ChevronLeft,
     ExternalLink,
+    RefreshCw,
     Palette,
     Pencil,
     Plus,
@@ -16,6 +17,14 @@ import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialo
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -24,7 +33,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import type { AttendeeStatus, PaginatedAttendees } from '@/types/attendee';
+import type {
+    Attendee,
+    AttendeeStatus,
+    PaginatedAttendees,
+} from '@/types/attendee';
 import type { AttendeeType } from '@/types/attendee-type';
 import type { Event } from '@/types/event';
 import { AttendeeFormDialog } from './components/attendee-form-dialog';
@@ -65,6 +78,28 @@ export default function AttendeesIndex({
     filters,
 }: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
+    const [recoding, setRecoding] = useState<Attendee | null>(null);
+    const [isRecoding, setIsRecoding] = useState(false);
+
+    const submitNewCode = () => {
+        if (!recoding) {
+            return;
+        }
+
+        setIsRecoding(true);
+
+        router.patch(
+            `/dashboard/events/${event.id}/attendees/${recoding.id}/verification-code`,
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    setIsRecoding(false);
+                    setRecoding(null);
+                },
+            },
+        );
+    };
 
     useEffect(() => {
         const timeout = setTimeout(() => {
@@ -279,6 +314,17 @@ export default function AttendeesIndex({
                                     </a>
                                 </Button>
 
+                                {attendee.status === 'active' && (
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        title="Issue a new verification code"
+                                        onClick={() => setRecoding(attendee)}
+                                    >
+                                        <RefreshCw className="h-4 w-4" />
+                                    </Button>
+                                )}
+
                                 <AttendeeFormDialog
                                     event={event}
                                     attendee={attendee}
@@ -309,6 +355,47 @@ export default function AttendeesIndex({
                     ))}
                 </div>
             )}
+
+            <Dialog
+                open={recoding !== null}
+                onOpenChange={(open) => !open && setRecoding(null)}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>
+                            Issue a new verification code?
+                        </DialogTitle>
+                        <DialogDescription>
+                            <strong>{recoding?.name}</strong>&apos;s pass
+                            currently verifies as{' '}
+                            <span className="font-mono font-semibold text-foreground">
+                                {recoding?.verification_code ?? '—'}
+                            </span>
+                            . Issuing a new one is how you retire a badge that
+                            was lost or copied.
+                            <br />
+                            <br />
+                            Every card already printed carries the old code, so
+                            those cards will stop matching when scanned.{' '}
+                            <strong>Reprint this card afterwards.</strong> The
+                            pass itself stays active.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setRecoding(null)}
+                            disabled={isRecoding}
+                        >
+                            Cancel
+                        </Button>
+                        <Button onClick={submitNewCode} disabled={isRecoding}>
+                            {isRecoding ? 'Issuing…' : 'Issue new code'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

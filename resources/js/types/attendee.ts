@@ -19,6 +19,8 @@ export interface Attendee {
     email: string | null;
     phone: string | null;
     qr_token: string;
+    /** Short human-comparable code printed on the card; see HasVerificationCode. */
+    verification_code: string | null;
     status: AttendeeStatus;
     notes: string | null;
     created_at: string;

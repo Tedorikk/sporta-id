@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\HasVerificationCode;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,6 +12,7 @@ use Illuminate\Support\Str;
 class Registration extends Model
 {
     use HasFactory;
+    use HasVerificationCode;
 
     public const STATUS_PENDING_PAYMENT = 'pending_payment';
 
@@ -29,14 +31,6 @@ class Registration extends Model
         self::STATUS_CANCELLED,
         self::STATUS_EXPIRED,
     ];
-
-    /**
-     * Alphabet for verification codes: digits and capitals with the pairs a
-     * person misreads off a printed badge removed — 0/O, 1/I/L. Someone at a
-     * door is comparing two strings by eye, so an ambiguous glyph costs more
-     * than the handful of combinations it buys.
-     */
-    private const CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 
     protected $fillable = [
         'registration_category_id', 'event_id', 'team_id', 'name', 'email',
@@ -64,38 +58,6 @@ class Registration extends Model
                 $registration->status = self::STATUS_PENDING_PAYMENT;
             }
         });
-    }
-
-    /**
-     * Short code printed on the ID card and shown again on the page the card's
-     * QR opens, so whoever is working the door can check that the badge in
-     * their hand is the one the record describes.
-     *
-     * It is not a secret and it is not what authenticates the scan — the
-     * qr_token in the URL does that. This exists so a card that was copied,
-     * altered or printed from a stale sheet fails an eyeball comparison.
-     * Collisions between two registrations are therefore harmless: each card's
-     * code is only ever compared against its own record.
-     */
-    public static function generateVerificationCode(): string
-    {
-        $pick = fn (int $length) => collect(range(1, $length))
-            ->map(fn () => self::CODE_ALPHABET[random_int(0, strlen(self::CODE_ALPHABET) - 1)])
-            ->implode('');
-
-        // Grouped, because two three-character runs are far easier to compare
-        // by eye than one run of six.
-        return $pick(3).'-'.$pick(3);
-    }
-
-    /** Issues a fresh code, which stops every card printed before now verifying. */
-    public function rotateVerificationCode(): string
-    {
-        $code = self::generateVerificationCode();
-
-        $this->forceFill(['verification_code' => $code])->save();
-
-        return $code;
     }
 
     /**

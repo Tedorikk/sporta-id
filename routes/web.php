@@ -36,10 +36,10 @@ use App\Http\Controllers\RegistrationCategoryController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\RegistrationQrController;
 use App\Http\Controllers\RegistrationRefundController;
-use App\Http\Controllers\RegistrationVerificationCodeController;
 use App\Http\Controllers\SpeakerController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamQrController;
+use App\Http\Controllers\VerificationCodeController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LandingController::class, 'index'])->name('home');
@@ -152,14 +152,18 @@ Route::middleware(['auth', 'verified', 'organization.current'])->group(function 
             Route::resource('attendees', AttendeeController::class)
                 ->except(['create', 'edit', 'show']);
 
+            Route::get('attendee-types/{attendeeType}/id-cards', [IdCardPrintController::class, 'attendeeType'])
+                ->name('attendee-types.id-cards');
             Route::resource('attendee-types', AttendeeTypeController::class)
                 ->names('attendee-types')
                 ->except(['create', 'edit', 'show']);
 
             Route::post('registrations/{registration}/refund', [RegistrationRefundController::class, 'store'])
                 ->name('registrations.refund');
-            Route::patch('registrations/{registration}/verification-code', [RegistrationVerificationCodeController::class, 'update'])
+            Route::patch('registrations/{registration}/verification-code', [VerificationCodeController::class, 'registration'])
                 ->name('registrations.verification-code');
+            Route::patch('attendees/{attendee}/verification-code', [VerificationCodeController::class, 'attendee'])
+                ->name('attendees.verification-code');
 
             Route::get('registration-categories/builder', [RegistrationCategoryController::class, 'builder'])
                 ->name('registration_categories.builder');

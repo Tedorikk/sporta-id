@@ -10,10 +10,7 @@ import QRCode from 'qrcode';
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { APP_LOGO_URL } from '@/components/id-card/card-presets';
-import {
-    formDataBindings,
-    IdCardRenderer,
-} from '@/components/id-card/id-card-renderer';
+import { IdCardRenderer } from '@/components/id-card/id-card-renderer';
 import type { IdCardData } from '@/components/id-card/id-card-renderer';
 import { ToolbarIcon } from '@/components/id-card/toolbar-icon';
 import { Button } from '@/components/ui/button';
@@ -29,8 +26,6 @@ import { formatImageUrl } from '@/lib/image-utils';
 import type { PrintSize, PrintSlot } from '@/types/card-print';
 import type { CardTemplate } from '@/types/card-template';
 import type { Event } from '@/types/event';
-import type { Registration } from '@/types/registration';
-import type { RegistrationCategory } from '@/types/registration-category';
 
 /**
  * Batch ID card printing — the output side of the ID card designer, and
@@ -62,11 +57,29 @@ const ASPECT_TOLERANCE = 0.01;
  */
 const SHEET_UNDERSIZE = 0.5;
 
+/**
+ * One person's card. The controller has already resolved every binding a
+ * design can reference except the two only a browser can produce — the QR
+ * image and the app logo — so this page never has to know whether it is
+ * printing registrants or guest passes.
+ */
+interface PrintableCard {
+    id: number;
+    /** Path the card's QR points at; the origin is prepended here. */
+    url: string;
+    data: IdCardData;
+}
+
 interface Props {
     event: Event;
-    registrationCategory: RegistrationCategory;
+    subject: {
+        title: string;
+        emptyNote: string;
+        backUrl: string;
+        designerUrl: string;
+    };
     template: CardTemplate;
-    registrations: Registration[];
+    cards: PrintableCard[];
     sizes: PrintSize[];
 }
 
@@ -177,9 +190,9 @@ function CardSlot({
 
 export default function IdCardPrint({
     event,
-    registrationCategory,
+    subject,
     template,
-    registrations,
+    cards,
     sizes,
 }: Props) {
     const [sizeKey, setSizeKey] = useState(sizes[0]?.key ?? '');
@@ -193,12 +206,12 @@ export default function IdCardPrint({
         let cancelled = false;
 
         Promise.all(
-            registrations.map(
-                async (registration) =>
+            cards.map(
+                async (card) =>
                     [
-                        registration.qr_token,
+                        card.id,
                         await QRCode.toDataURL(
-                            `${window.location.origin}/registrations/${registration.qr_token}/id-card`,
+                            `${window.location.origin}${card.url}`,
                             {
                                 width: 280,
                                 margin: 1,
@@ -217,11 +230,9 @@ export default function IdCardPrint({
         return () => {
             cancelled = true;
         };
-    }, [registrations]);
+    }, [cards]);
 
-    const isReady =
-        registrations.length > 0 &&
-        registrations.every((registration) => qrCodes[registration.qr_token]);
+    const isReady = cards.length > 0 && cards.every((card) => qrCodes[card.id]);
 
     // "Print automatically": once every QR code is drawn and every photo has
     // decoded, open the print dialog unprompted. Skipping the decode wait sends
@@ -251,36 +262,27 @@ export default function IdCardPrint({
         };
     }, [isReady]);
 
-    const cards = useMemo(
+    // Everything subject-specific arrived resolved; only the QR image, the
+    // event and the app logo are added here, because only a browser can make
+    // the first and only this page knows the asset URL of the last.
+    const printable = useMemo(
         () =>
-            registrations.map((registration) => ({
-                registration,
+            cards.map((card) => ({
+                id: card.id,
                 data: {
-                    name: registration.name,
-                    photo: registration.photo ?? undefined,
-                    typeLabel: registrationCategory.name,
-                    organization: undefined,
-                    status: registration.status,
-                    email: registration.email ?? undefined,
-                    phone: registration.phone ?? undefined,
-                    verificationCode:
-                        registration.verification_code ?? undefined,
-                    qrDataUrl: qrCodes[registration.qr_token] ?? '',
+                    ...card.data,
+                    qrDataUrl: qrCodes[card.id] ?? '',
                     eventName: event.name,
                     eventLogo: event.logo
                         ? formatImageUrl(event.logo)
                         : undefined,
                     appLogo: APP_LOGO_URL,
-                    ...formDataBindings(registration.form_data),
                 } satisfies IdCardData,
             })),
-        [registrations, registrationCategory.name, event, qrCodes],
+        [cards, event, qrCodes],
     );
 
-    const sheets = size ? chunk(cards, size.per_sheet) : [];
-
-    const categoryUrl = `/dashboard/events/${event.id}/registration-categories/${registrationCategory.id}`;
-    const designerUrl = `/dashboard/events/${event.id}/id-card-templates/builder?subject_type=registration&registration_category_id=${registrationCategory.id}`;
+    const sheets = size ? chunk(printable, size.per_sheet) : [];
 
     // A design drawn at a different shape than the paper size can only be
     // centred with blank margins — say so here rather than letting it turn up
@@ -294,7 +296,7 @@ export default function IdCardPrint({
 
     return (
         <div className="flex h-svh flex-col print:block print:h-auto">
-            <Head title={`Print ID cards · ${registrationCategory.name}`} />
+            <Head title={`Print ID cards · ${subject.title}`} />
 
             {size && (
                 <style>
@@ -335,18 +337,17 @@ export default function IdCardPrint({
                     className="h-9 w-9 shrink-0"
                     asChild
                 >
-                    <Link href={categoryUrl} aria-label="Back to registrations">
+                    <Link href={subject.backUrl} aria-label="Back">
                         <ChevronLeft className="h-5 w-5" />
                     </Link>
                 </Button>
 
                 <div className="flex min-w-0 flex-col">
                     <h1 className="truncate text-sm font-semibold">
-                        {registrationCategory.name} ID cards
+                        {subject.title} ID cards
                     </h1>
                     <p className="truncate text-[11px] text-muted-foreground">
-                        {registrations.length} confirmed registrant
-                        {registrations.length === 1 ? '' : 's'}
+                        {cards.length} card{cards.length === 1 ? '' : 's'}
                         {sheets.length > 0 &&
                             ` · ${sheets.length} sheet${sheets.length === 1 ? '' : 's'}`}
                     </p>
@@ -376,7 +377,7 @@ export default function IdCardPrint({
                     />
 
                     <Button variant="ghost" size="sm" asChild>
-                        <Link href={designerUrl}>
+                        <Link href={subject.designerUrl}>
                             <PenSquare className="h-4 w-4" /> Edit design
                         </Link>
                     </Button>
@@ -408,7 +409,7 @@ export default function IdCardPrint({
                     {template.canvas.height} px, so each card prints centred
                     with blank margins. Pick the {size.card.label} preset in the{' '}
                     <Link
-                        href={designerUrl}
+                        href={subject.designerUrl}
                         className="font-medium underline underline-offset-2"
                     >
                         card designer
@@ -417,16 +418,14 @@ export default function IdCardPrint({
                 </div>
             )}
 
-            {registrations.length === 0 || !size ? (
+            {cards.length === 0 || !size ? (
                 <div className="flex flex-1 items-center justify-center bg-muted/40 px-4 print:hidden">
                     <div className="max-w-sm text-center">
                         <p className="text-sm font-medium">
                             Nothing to print yet
                         </p>
                         <p className="mt-1 text-sm text-muted-foreground">
-                            ID cards are only issued to confirmed registrations.
-                            As soon as a registration is confirmed, its card
-                            shows up here.
+                            {subject.emptyNote}
                         </p>
                     </div>
                 </div>
@@ -457,7 +456,7 @@ export default function IdCardPrint({
                             >
                                 {sheet.map((card, cardIndex) => (
                                     <CardSlot
-                                        key={card.registration.id}
+                                        key={card.id}
                                         slot={size.slots[cardIndex]}
                                         size={size}
                                         showCutGuides={showCutGuides}

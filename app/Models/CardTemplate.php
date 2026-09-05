@@ -56,22 +56,28 @@ class CardTemplate extends Model
      */
     public static function fallbackTemplate(string $subjectType): array
     {
-        $design = $subjectType === self::SUBJECT_REGISTRATION
-            ? self::registrationDefaultDesign()
-            : self::classicDefaultDesign();
+        $design = match ($subjectType) {
+            // A registration has no organization to show on its third line, so
+            // it carries the event name; an attendee is usually a guest of some
+            // company or a tenant of some booth, so it carries theirs.
+            self::SUBJECT_REGISTRATION => self::badgeDefaultDesign('eventName'),
+            self::SUBJECT_ATTENDEE => self::badgeDefaultDesign('organization'),
+            default => self::classicDefaultDesign(),
+        };
 
         return ['subject_type' => $subjectType] + $design;
     }
 
     /**
-     * The registration default is shaped like a B3 badge — 344 x 427 px is
-     * 91 x 113 mm at 96 DPI — so the batch print sheet fills each slot edge to
-     * edge before an organizer ever opens the designer. Keep it in step with
-     * CardPrintLayout::CARD_SIZES['b3'] and the 'b3-portrait' canvas preset.
+     * The default for every subject that has a batch print sheet is shaped like
+     * a B3 badge — 344 x 427 px is 91 x 113 mm at 96 DPI — so the sheet fills
+     * each slot edge to edge before an organizer ever opens the designer. Keep
+     * it in step with CardPrintLayout::CARD_SIZES['b3'] and the 'b3-portrait'
+     * canvas preset.
      *
      * @return array<string, mixed>
      */
-    private static function registrationDefaultDesign(): array
+    private static function badgeDefaultDesign(string $thirdLineBinding): array
     {
         return [
             'canvas' => [
@@ -85,9 +91,7 @@ class CardTemplate extends Model
                 // rather than shrink, and only the extreme ones scale down.
                 ['id' => 'name', 'kind' => 'text', 'binding' => 'name', 'x' => 20, 'y' => 144, 'width' => 304, 'height' => 50, 'rotation' => 0, 'zIndex' => 1, 'style' => ['fontSize' => 20, 'fontWeight' => 700, 'textAlign' => 'center', 'color' => '#0f172a']],
                 ['id' => 'type', 'kind' => 'text', 'binding' => 'typeLabel', 'x' => 20, 'y' => 196, 'width' => 304, 'height' => 20, 'rotation' => 0, 'zIndex' => 1, 'style' => ['fontSize' => 13, 'fontWeight' => 600, 'textAlign' => 'center', 'color' => '#dc2626']],
-                // A registration has no organization to show, so this line
-                // carries the event name instead of always rendering blank.
-                ['id' => 'event', 'kind' => 'text', 'binding' => 'eventName', 'x' => 20, 'y' => 218, 'width' => 304, 'height' => 16, 'rotation' => 0, 'zIndex' => 1, 'style' => ['fontSize' => 11, 'textAlign' => 'center', 'color' => '#475569']],
+                ['id' => 'subtitle', 'kind' => 'text', 'binding' => $thirdLineBinding, 'x' => 20, 'y' => 218, 'width' => 304, 'height' => 16, 'rotation' => 0, 'zIndex' => 1, 'style' => ['fontSize' => 11, 'textAlign' => 'center', 'color' => '#475569']],
                 ['id' => 'qr', 'kind' => 'qr', 'binding' => 'qrDataUrl', 'x' => 102, 'y' => 236, 'width' => 140, 'height' => 140, 'rotation' => 0, 'zIndex' => 1, 'style' => ['borderRadius' => 8]],
                 // Printed right under the QR, because the page that QR opens
                 // shows the same code — the two are meant to be read together.

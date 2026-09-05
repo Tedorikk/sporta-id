@@ -87,6 +87,11 @@ export const BINDABLE_FIELDS: Record<CardSubjectType, BindableField[]> = {
             kinds: ['text'],
         },
         { value: 'status', label: 'Status', kinds: ['text'] },
+        {
+            value: 'verificationCode',
+            label: 'Verification Code',
+            kinds: ['text'],
+        },
         { value: 'eventName', label: 'Event Name', kinds: ['text'] },
         { value: 'photo', label: 'Photo', kinds: ['image'] },
         { value: 'eventLogo', label: 'Event Logo', kinds: ['image'] },
