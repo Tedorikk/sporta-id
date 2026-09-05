@@ -12,6 +12,7 @@ import {
     Users,
     ClipboardList,
     Mic,
+    Trophy,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -111,6 +112,12 @@ export default function ShowEvent({ event }: { event: Event }) {
                         <Link href={`/dashboard/events/${event.id}/meetings`}>
                             <Mic className="mr-2 h-4 w-4" />
                             Meetings & Speakers
+                        </Link>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href={`/dashboard/events/${event.id}/awards`}>
+                            <Trophy className="mr-2 h-4 w-4" />
+                            Awards &amp; Voting
                         </Link>
                     </Button>
                     <Button variant="outline" size="sm" asChild>

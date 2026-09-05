@@ -3,6 +3,8 @@
 use App\Http\Controllers\AttendeeController;
 use App\Http\Controllers\AttendeeQrController;
 use App\Http\Controllers\AttendeeTypeController;
+use App\Http\Controllers\AwardController;
+use App\Http\Controllers\AwardNomineeController;
 use App\Http\Controllers\BasketballClubController;
 use App\Http\Controllers\BasketballEventCategoryController;
 use App\Http\Controllers\BasketballEventController;
@@ -40,6 +42,7 @@ use App\Http\Controllers\SpeakerController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamQrController;
 use App\Http\Controllers\VerificationCodeController;
+use App\Http\Controllers\VoteController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LandingController::class, 'index'])->name('home');
@@ -79,6 +82,15 @@ Route::post('events/{event}/registration-categories/{registrationCategory}/regis
 Route::get('registrations/{registration:qr_token}/status', [RegistrationController::class, 'status'])->name('registrations.status');
 Route::post('registrations/{registration:qr_token}/pay', [RegistrationController::class, 'pay'])
     ->middleware('throttle:20,1')->name('registrations.pay');
+
+// --- Public award voting (shareable, no auth required) --------------------
+// Identified voters arrive with ?token=<qr_token> from their own ID card.
+Route::get('events/{event}/awards/{award}/vote', [VoteController::class, 'create'])->name('votes.create');
+Route::post('events/{event}/awards/{award}/vote', [VoteController::class, 'store'])
+    ->middleware('throttle:10,1')->name('votes.store');
+Route::get('votes/{vote}/status', [VoteController::class, 'status'])->name('votes.status');
+Route::post('votes/{vote}/pay', [VoteController::class, 'pay'])
+    ->middleware('throttle:20,1')->name('votes.pay');
 
 // --- Midtrans payment notification webhook (server-to-server, no session) --
 Route::post('webhooks/midtrans', [PaymentNotificationController::class, 'handle'])->name('webhooks.midtrans');
@@ -173,6 +185,13 @@ Route::middleware(['auth', 'verified', 'organization.current'])->group(function 
                 ->name('registration_categories.id-cards');
             Route::resource('registration-categories', RegistrationCategoryController::class)
                 ->names('registration_categories')
+                ->except(['create', 'edit']);
+
+            Route::post('awards/{award}/nominees', [AwardNomineeController::class, 'store'])
+                ->name('awards.nominees.store');
+            Route::delete('awards/{award}/nominees/{nominee}', [AwardNomineeController::class, 'destroy'])
+                ->name('awards.nominees.destroy');
+            Route::resource('awards', AwardController::class)
                 ->except(['create', 'edit']);
 
             Route::resource('speakers', SpeakerController::class)

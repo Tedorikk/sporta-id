@@ -3,26 +3,24 @@
 namespace App\Services\Midtrans;
 
 use App\Models\Payment;
-use App\Models\Registration;
-use App\Services\RegistrationConfirmationNotifier;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Applies a Midtrans transaction status (whether it arrived via the webhook
  * or was pulled on demand via MidtransClient::getStatus()) to a Payment and
- * its Registration. This is the only place either of those ever changes as
- * a result of a payment event — client-side Snap callbacks only drive UI
- * redirects, since client state can't be trusted for money.
+ * whatever that payment was for. This is the only place either of those ever
+ * changes as a result of a payment event — client-side Snap callbacks only
+ * drive UI redirects, since client state can't be trusted for money.
+ *
+ * What "paid" means is the payable's own business: see {@see Payable}.
  */
 class PaymentReconciler
 {
-    public function __construct(private readonly RegistrationConfirmationNotifier $notifier) {}
-
     public function reconcile(Payment $payment, array $transaction): void
     {
-        $confirmed = DB::transaction(function () use ($payment, $transaction) {
+        $settled = DB::transaction(function () use ($payment, $transaction) {
             $payment = Payment::whereKey($payment->id)->lockForUpdate()->first();
-            $registration = Registration::whereKey($payment->registration_id)->lockForUpdate()->first();
 
             $paymentStatus = $this->resolvePaymentStatus($transaction);
 
@@ -34,39 +32,40 @@ class PaymentReconciler
                 'paid_at' => $paymentStatus === Payment::STATUS_SETTLEMENT ? now() : $payment->paid_at,
             ]);
 
-            // Only act on a registration that's still awaiting this outcome —
-            // keeps a retried/duplicate notification (or re-running the manual
-            // reconcile command) from double-releasing quota.
-            if ($registration->status !== Registration::STATUS_PENDING_PAYMENT) {
+            $payable = $this->lockPayable($payment);
+
+            if ($payable === null) {
                 return null;
             }
 
-            if ($paymentStatus === Payment::STATUS_SETTLEMENT) {
-                $registration->update(['status' => Registration::STATUS_CONFIRMED, 'expires_at' => null]);
-
-                return $registration;
-            }
-
-            if ($paymentStatus === Payment::STATUS_PENDING) {
-                return null;
-            }
-
-            $registration->update([
-                'status' => $paymentStatus === Payment::STATUS_EXPIRE ? Registration::STATUS_EXPIRED : Registration::STATUS_REJECTED,
-            ]);
-            $registration->registrationCategory()->decrement('registered_count');
-
-            return null;
+            return $payable->applyPaymentStatus($payment, $paymentStatus) ? $payable : null;
         });
 
-        // Outside the transaction: a registration that just went from awaiting
-        // payment to confirmed is the paid equivalent of a free registration
-        // being created, and until now it notified nobody — not the payer, not
-        // the organizers. The guard above means a replayed webhook won't
-        // re-send.
-        if ($confirmed !== null) {
-            $this->notifier->notify($confirmed);
+        // Outside the transaction: mail and other side effects must not run
+        // inside it, and the guard in applyPaymentStatus() means a replayed
+        // webhook never gets this far twice.
+        $settled?->handlePaymentSettled();
+    }
+
+    /**
+     * Loads the paid-for record with its row locked, so two notifications for
+     * the same order can't both decide they were the one that settled it.
+     */
+    private function lockPayable(Payment $payment): ?Payable
+    {
+        if ($payment->payable_type === null || $payment->payable_id === null) {
+            return null;
         }
+
+        $class = Relation::getMorphedModel($payment->payable_type) ?? $payment->payable_type;
+
+        if (! is_string($class) || ! class_exists($class)) {
+            return null;
+        }
+
+        $payable = $class::query()->whereKey($payment->payable_id)->lockForUpdate()->first();
+
+        return $payable instanceof Payable ? $payable : null;
     }
 
     private function resolvePaymentStatus(array $transaction): string

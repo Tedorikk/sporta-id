@@ -7,6 +7,7 @@ use App\Models\Event;
 use App\Models\Payment;
 use App\Models\Registration;
 use App\Models\RegistrationCategory;
+use App\Models\Vote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Inertia\Inertia;
@@ -40,9 +41,18 @@ class DashboardController extends Controller
         $events = Event::query()->forOrganization($organizationId);
 
         $registrations = fn () => Registration::query()->whereIn('event_id', $eventIds);
+        // Revenue spans everything payable at one of these events: paid
+        // registrations, and paid votes (which reach an event through their
+        // award rather than directly).
         $payments = fn (string $status) => Payment::query()
             ->where('status', $status)
-            ->whereHas('registration', fn ($query) => $query->whereIn('event_id', $eventIds));
+            ->whereHasMorph(
+                'payable',
+                [Registration::class, Vote::class],
+                fn ($query, string $type) => $type === Vote::class
+                    ? $query->whereHas('award', fn ($award) => $award->whereIn('event_id', $eventIds))
+                    : $query->whereIn('event_id', $eventIds)
+            );
 
         return [
             'events_ongoing' => (clone $events)

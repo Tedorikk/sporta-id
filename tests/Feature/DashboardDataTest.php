@@ -42,7 +42,8 @@ test('the dashboard reports counts and settled revenue for the current organizat
     dashboardRegistration($category, Registration::STATUS_PENDING_PAYMENT);
 
     Payment::create([
-        'registration_id' => $confirmed->id,
+        'payable_type' => Registration::class,
+        'payable_id' => $confirmed->id,
         'order_id' => 'REG-1-AAA111',
         'amount' => 150000,
         'status' => Payment::STATUS_SETTLEMENT,
@@ -67,7 +68,8 @@ test('a pending payment is never counted as revenue', function () {
     $registration = dashboardRegistration($category, Registration::STATUS_PENDING_PAYMENT);
 
     Payment::create([
-        'registration_id' => $registration->id,
+        'payable_type' => Registration::class,
+        'payable_id' => $registration->id,
         'order_id' => 'REG-1-BBB222',
         'amount' => 150000,
         'status' => Payment::STATUS_PENDING,

@@ -3,13 +3,16 @@
 namespace App\Models;
 
 use App\Concerns\HasVerificationCode;
+use App\Services\Midtrans\Payable;
+use App\Services\RegistrationConfirmationNotifier;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
-class Registration extends Model
+class Registration extends Model implements Payable
 {
     use HasFactory;
     use HasVerificationCode;
@@ -93,10 +96,10 @@ class Registration extends Model
         return $this->belongsTo(Team::class);
     }
 
-    /** @return HasMany<Payment, $this> */
-    public function payments(): HasMany
+    /** @return MorphMany<Payment, $this> */
+    public function payments(): MorphMany
     {
-        return $this->hasMany(Payment::class);
+        return $this->morphMany(Payment::class, 'payable');
     }
 
     public function latestPayment(): ?Payment
@@ -108,5 +111,69 @@ class Registration extends Model
     public function meetingCheckIns(): HasMany
     {
         return $this->hasMany(MeetingCheckIn::class);
+    }
+
+    /**
+     * What a payment outcome means for a registration. Only a registration
+     * still awaiting this outcome may transition, which keeps a retried or
+     * duplicated notification from double-releasing quota.
+     */
+    public function applyPaymentStatus(Payment $payment, string $paymentStatus): bool
+    {
+        if ($this->status !== self::STATUS_PENDING_PAYMENT) {
+            return false;
+        }
+
+        if ($paymentStatus === Payment::STATUS_SETTLEMENT) {
+            $this->update(['status' => self::STATUS_CONFIRMED, 'expires_at' => null]);
+
+            return true;
+        }
+
+        if ($paymentStatus === Payment::STATUS_PENDING) {
+            return false;
+        }
+
+        $this->update([
+            'status' => $paymentStatus === Payment::STATUS_EXPIRE ? self::STATUS_EXPIRED : self::STATUS_REJECTED,
+        ]);
+        $this->registrationCategory()->decrement('registered_count');
+
+        return false;
+    }
+
+    /**
+     * A registration that just went from awaiting payment to confirmed is the
+     * paid equivalent of a free registration being created, so it notifies the
+     * payer and the organizers.
+     */
+    public function handlePaymentSettled(): void
+    {
+        app(RegistrationConfirmationNotifier::class)->notify($this);
+    }
+
+    public function midtransItemDetails(Payment $payment): array
+    {
+        $this->loadMissing(['event', 'registrationCategory']);
+
+        return [[
+            'id' => (string) $this->registration_category_id,
+            'name' => Str::limit(
+                trim(($this->event?->name ? $this->event->name.' — ' : '').$this->registrationCategory?->name),
+                50,
+                ''
+            ),
+            'price' => (int) $payment->amount,
+            'quantity' => 1,
+        ]];
+    }
+
+    public function midtransCustomerDetails(): array
+    {
+        return [
+            'first_name' => $this->name,
+            'email' => $this->email,
+            'phone' => $this->phone,
+        ];
     }
 }

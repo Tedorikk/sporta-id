@@ -200,7 +200,7 @@ test('a paid category creates a pending-payment registration with a snap token',
         // Quota is reserved immediately, same as a free registration.
         ->and($category->fresh()->registered_count)->toBe(1);
 
-    $payment = Payment::where('registration_id', $registration->id)->firstOrFail();
+    $payment = $registration->payments()->firstOrFail();
 
     expect($payment->snap_token)->toBe('snap-token-abc')
         ->and((float) $payment->amount)->toBe(150000.0);

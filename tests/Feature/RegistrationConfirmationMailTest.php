@@ -130,7 +130,7 @@ test('settlement emails the registrant and notifies the organizers', function ()
     // Nothing goes out while the payment is still pending.
     Mail::assertNothingQueued();
 
-    $payment = Payment::where('registration_id', $registration->id)->firstOrFail();
+    $payment = $registration->payments()->firstOrFail();
 
     app(PaymentReconciler::class)->reconcile($payment, [
         'order_id' => $payment->order_id,

@@ -32,7 +32,8 @@ function makeUnreconciledPendingPayment(): array
     ]);
 
     $payment = Payment::create([
-        'registration_id' => $registration->id,
+        'payable_type' => Registration::class,
+        'payable_id' => $registration->id,
         'order_id' => 'REG-'.$registration->id.'-test',
         'amount' => '100000.00',
     ]);

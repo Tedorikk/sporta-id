@@ -151,13 +151,14 @@ class RegistrationController extends Controller
 
     private function createPayment(Registration $registration, RegistrationCategory $registrationCategory): Payment
     {
-        $payment = Payment::create([
-            'registration_id' => $registration->id,
+        $payment = $registration->payments()->create([
             'order_id' => 'REG-'.$registration->id.'-'.Str::random(6),
             'amount' => $registrationCategory->price,
         ]);
 
-        $payment->snap_token = $this->midtrans->createSnapTransaction($payment, $registration);
+        $payment->setRelation('payable', $registration);
+
+        $payment->snap_token = $this->midtrans->createSnapTransaction($payment);
         $payment->save();
 
         return $payment;

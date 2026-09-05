@@ -175,6 +175,12 @@ class Event extends Model
         return $this->hasMany(Meeting::class);
     }
 
+    /** @return HasMany<Award, $this> */
+    public function awards(): HasMany
+    {
+        return $this->hasMany(Award::class);
+    }
+
     /**
      * Pools are scoped to BasketballEventCategory, not directly to Event.
      * Path: events → basketball_events → basketball_event_categories → pools

@@ -32,7 +32,8 @@ function settledRegistration(): Registration
     ]);
 
     Payment::create([
-        'registration_id' => $registration->id,
+        'payable_type' => Registration::class,
+        'payable_id' => $registration->id,
         'order_id' => 'REG-'.$registration->id.'-ABC123',
         'amount' => 150000,
         'status' => Payment::STATUS_SETTLEMENT,

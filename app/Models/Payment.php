@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Payment extends Model
 {
@@ -35,7 +35,7 @@ class Payment extends Model
     ];
 
     protected $fillable = [
-        'registration_id', 'order_id', 'amount', 'status', 'midtrans_transaction_id',
+        'payable_type', 'payable_id', 'order_id', 'amount', 'status', 'midtrans_transaction_id',
         'payment_type', 'snap_token', 'raw_notification', 'paid_at',
     ];
 
@@ -49,9 +49,13 @@ class Payment extends Model
         'status' => self::STATUS_PENDING,
     ];
 
-    /** @return BelongsTo<Registration, $this> */
-    public function registration(): BelongsTo
+    /**
+     * What was paid for — a Registration, or a batch of votes on a paid award.
+     *
+     * @return MorphTo<Model, $this>
+     */
+    public function payable(): MorphTo
     {
-        return $this->belongsTo(Registration::class);
+        return $this->morphTo();
     }
 }
