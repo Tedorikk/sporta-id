@@ -178,3 +178,124 @@ test('only an owner can delete an empty organization', function () {
 
     expect(Organization::whereKey($organization->id)->exists())->toBeTrue();
 });
+
+test('an admin can create a brand new account inside the organization', function () {
+    $organization = Organization::factory()->create();
+    $admin = memberOf($organization, Organization::ROLE_ADMIN);
+
+    $this->actingAs($admin)
+        ->post(route('organizations.members.accounts.store', $organization), [
+            'name' => 'Fresh Staffer',
+            'email' => 'fresh@example.com',
+            'password' => 'correct-horse-battery',
+            'password_confirmation' => 'correct-horse-battery',
+            'role' => Organization::ROLE_MEMBER,
+        ])->assertRedirect();
+
+    $created = User::where('email', 'fresh@example.com')->firstOrFail();
+
+    expect($created->name)->toBe('Fresh Staffer')
+        ->and($created->roleIn($organization))->toBe(Organization::ROLE_MEMBER)
+        ->and($created->current_organization_id)->toBe($organization->id)
+        ->and($created->email_verified_at)->not->toBeNull();
+});
+
+test('a created account can sign in with the password the manager set', function () {
+    $organization = Organization::factory()->create();
+    $owner = memberOf($organization);
+
+    $this->actingAs($owner)
+        ->post(route('organizations.members.accounts.store', $organization), [
+            'name' => 'Fresh Staffer',
+            'email' => 'fresh@example.com',
+            'password' => 'correct-horse-battery',
+            'password_confirmation' => 'correct-horse-battery',
+            'role' => Organization::ROLE_MEMBER,
+        ])->assertRedirect();
+
+    expect(auth()->validate([
+        'email' => 'fresh@example.com',
+        'password' => 'correct-horse-battery',
+    ]))->toBeTrue();
+});
+
+test('creating an account with an email already in use is rejected', function () {
+    $organization = Organization::factory()->create();
+    $owner = memberOf($organization);
+    User::factory()->create(['email' => 'taken@example.com']);
+
+    $this->actingAs($owner)
+        ->post(route('organizations.members.accounts.store', $organization), [
+            'name' => 'Duplicate',
+            'email' => 'taken@example.com',
+            'password' => 'correct-horse-battery',
+            'password_confirmation' => 'correct-horse-battery',
+            'role' => Organization::ROLE_MEMBER,
+        ])->assertSessionHasErrors('email');
+
+    expect(User::where('email', 'taken@example.com')->count())->toBe(1);
+});
+
+test('creating an account with a mismatched confirmation is rejected', function () {
+    $organization = Organization::factory()->create();
+    $owner = memberOf($organization);
+
+    $this->actingAs($owner)
+        ->post(route('organizations.members.accounts.store', $organization), [
+            'name' => 'Fresh Staffer',
+            'email' => 'fresh@example.com',
+            'password' => 'correct-horse-battery',
+            'password_confirmation' => 'something-else',
+            'role' => Organization::ROLE_MEMBER,
+        ])->assertSessionHasErrors('password');
+
+    expect(User::where('email', 'fresh@example.com')->exists())->toBeFalse();
+});
+
+test('an admin cannot create an account as an owner', function () {
+    $organization = Organization::factory()->create();
+    $admin = memberOf($organization, Organization::ROLE_ADMIN);
+
+    $this->actingAs($admin)
+        ->post(route('organizations.members.accounts.store', $organization), [
+            'name' => 'Fresh Staffer',
+            'email' => 'fresh@example.com',
+            'password' => 'correct-horse-battery',
+            'password_confirmation' => 'correct-horse-battery',
+            'role' => Organization::ROLE_OWNER,
+        ])->assertSessionHasErrors('role');
+
+    expect(User::where('email', 'fresh@example.com')->exists())->toBeFalse();
+});
+
+test('a plain member cannot create an account', function () {
+    $organization = Organization::factory()->create();
+    $member = memberOf($organization, Organization::ROLE_MEMBER);
+
+    $this->actingAs($member)
+        ->post(route('organizations.members.accounts.store', $organization), [
+            'name' => 'Fresh Staffer',
+            'email' => 'fresh@example.com',
+            'password' => 'correct-horse-battery',
+            'password_confirmation' => 'correct-horse-battery',
+            'role' => Organization::ROLE_MEMBER,
+        ])->assertForbidden();
+
+    expect(User::where('email', 'fresh@example.com')->exists())->toBeFalse();
+});
+
+test('an outsider cannot create an account in an organization they do not belong to', function () {
+    $organization = Organization::factory()->create();
+    $outsider = memberOf(Organization::factory()->create());
+
+    $this->actingAs($outsider)
+        ->post(route('organizations.members.accounts.store', $organization), [
+            'name' => 'Fresh Staffer',
+            'email' => 'fresh@example.com',
+            'password' => 'correct-horse-battery',
+            'password_confirmation' => 'correct-horse-battery',
+            'role' => Organization::ROLE_MEMBER,
+        ])->assertForbidden();
+
+    expect(User::where('email', 'fresh@example.com')->exists())->toBeFalse();
+});

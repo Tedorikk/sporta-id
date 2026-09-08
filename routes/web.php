@@ -25,6 +25,7 @@ use App\Http\Controllers\MeetingAttendanceController;
 use App\Http\Controllers\MeetingCheckInController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\OrganizationController;
+use App\Http\Controllers\OrganizationMemberAccountController;
 use App\Http\Controllers\OrganizationMemberController;
 use App\Http\Controllers\OrganizationSwitchController;
 use App\Http\Controllers\PaymentNotificationController;
@@ -124,6 +125,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('dashboard/organizations/{organization}/members')->name('organizations.members.')->group(function () {
         Route::get('/', [OrganizationMemberController::class, 'index'])->name('index');
         Route::post('/', [OrganizationMemberController::class, 'store'])->name('store');
+        Route::post('accounts', [OrganizationMemberAccountController::class, 'store'])->name('accounts.store');
         Route::patch('{user}', [OrganizationMemberController::class, 'update'])->name('update');
         Route::delete('{user}', [OrganizationMemberController::class, 'destroy'])->name('destroy');
     });

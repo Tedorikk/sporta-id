@@ -36,6 +36,16 @@ class OrganizationPolicy
     }
 
     /**
+     * Creating an account reaches past this organization — the user it makes
+     * can be added anywhere afterwards — so it stays its own ability rather
+     * than folding into addMember, even though both sit with managers today.
+     */
+    public function createMemberAccount(User $user, Organization $organization): bool
+    {
+        return $user->hasOrganizationRole($organization, Organization::MANAGER_ROLES);
+    }
+
+    /**
      * Only an owner may grant or revoke the owner role, and the last owner may
      * not be demoted — otherwise the organization becomes unadministrable.
      */
