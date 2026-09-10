@@ -510,7 +510,14 @@ function SidebarMenuButton({
       data-sidebar="menu-button"
       data-size={size}
       data-active={isActive}
-      className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
+      className={cn(
+        sidebarMenuButtonVariants({ variant, size }),
+        // The mobile drawer is touched, not pointed at: 32px rows are below
+        // any thumb-target guidance. Desktop keeps its denser rows — isMobile
+        // is only ever true when the sidebar renders as a Sheet.
+        isMobile && size === "default" && "h-11",
+        className
+      )}
       {...props}
     />
   )
