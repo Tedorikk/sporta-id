@@ -20,9 +20,9 @@ export default function ContactMessagesIndex({ messages }: Props) {
     return (
         <>
             <Head title="Contact Messages" />
-            <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl px-12 py-4">
-                <div>
-                    <h1 className="scroll-m-20 text-4xl font-bold tracking-tight text-balance">
+            <div className="flex h-full min-w-0 flex-1 flex-col gap-4 rounded-xl px-4 py-4 sm:gap-6 sm:px-6 lg:px-12">
+                <div className="min-w-0">
+                    <h1 className="scroll-m-20 text-2xl font-bold tracking-tight text-balance sm:text-3xl lg:text-4xl">
                         Contact Messages
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">

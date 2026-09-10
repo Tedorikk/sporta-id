@@ -83,16 +83,20 @@ function StatTile({
     hint?: string;
 }) {
     return (
-        <div className="flex flex-col gap-1 rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border">
-            <div className="flex items-center gap-2 text-muted-foreground">
-                <Icon className="h-4 w-4" />
-                <span className="text-xs font-medium tracking-wide uppercase">
+        <div className="flex min-w-0 flex-col gap-0.5 rounded-xl border border-sidebar-border/70 p-3 sm:gap-1 sm:p-4 dark:border-sidebar-border">
+            <div className="flex items-center gap-1.5 text-muted-foreground sm:gap-2">
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="truncate text-[11px] font-medium tracking-wide uppercase sm:text-xs">
                     {label}
                 </span>
             </div>
-            <span className="text-2xl font-bold tabular-nums">{value}</span>
+            <span className="text-xl font-bold break-words tabular-nums sm:text-2xl">
+                {value}
+            </span>
             {hint && (
-                <span className="text-xs text-muted-foreground">{hint}</span>
+                <span className="text-[11px] text-muted-foreground sm:text-xs">
+                    {hint}
+                </span>
             )}
         </div>
     );
@@ -108,11 +112,18 @@ function Panel({
     children: React.ReactNode;
 }) {
     return (
-        <section className="flex flex-col rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-            <header className="flex items-center justify-between border-b border-sidebar-border/70 px-4 py-3 dark:border-sidebar-border">
-                <h2 className="text-sm font-semibold">{title}</h2>
+        <section className="flex min-w-0 flex-col rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
+            <header className="flex items-center justify-between gap-2 border-b border-sidebar-border/70 px-3 py-2 sm:px-4 sm:py-3 dark:border-sidebar-border">
+                <h2 className="min-w-0 truncate text-sm font-semibold">
+                    {title}
+                </h2>
                 {action && (
-                    <Button variant="ghost" size="sm" asChild>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="shrink-0"
+                        asChild
+                    >
                         <Link href={action.href}>
                             {action.label}
                             <ArrowRight className="ml-1 h-3.5 w-3.5" />
@@ -120,7 +131,7 @@ function Panel({
                     </Button>
                 )}
             </header>
-            <div className="flex-1 p-4">{children}</div>
+            <div className="min-w-0 flex-1 p-3 sm:p-4">{children}</div>
         </section>
     );
 }
@@ -166,8 +177,8 @@ export default function Dashboard({
         <>
             <Head title="Dashboard" />
 
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4">
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="flex h-full min-w-0 flex-1 flex-col gap-3 p-3 sm:gap-4 sm:p-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
                     <StatTile
                         icon={CalendarClock}
                         label="Events"
@@ -205,7 +216,7 @@ export default function Dashboard({
                 </div>
 
                 {alerts.length > 0 && (
-                    <section className="flex flex-col gap-2 rounded-xl border border-amber-500/40 bg-amber-50 p-4 dark:bg-amber-950/20">
+                    <section className="flex flex-col gap-2 rounded-xl border border-amber-500/40 bg-amber-50 p-3 sm:p-4 dark:bg-amber-950/20">
                         <h2 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
                             Needs attention
                         </h2>
@@ -215,17 +226,19 @@ export default function Dashboard({
                             return (
                                 <div
                                     key={alert.text}
-                                    className="flex items-center gap-2 text-sm text-amber-900 dark:text-amber-200"
+                                    className="flex items-start gap-2 text-[13px] text-amber-900 sm:text-sm dark:text-amber-200"
                                 >
-                                    <Icon className="h-4 w-4 shrink-0" />
-                                    {alert.text}
+                                    <Icon className="mt-0.5 h-4 w-4 shrink-0" />
+                                    <span className="min-w-0">
+                                        {alert.text}
+                                    </span>
                                 </div>
                             );
                         })}
                     </section>
                 )}
 
-                <div className="grid flex-1 gap-4 lg:grid-cols-2">
+                <div className="grid min-w-0 flex-1 grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2">
                     <Panel
                         title="Happening now & next"
                         action={{
@@ -264,9 +277,9 @@ export default function Dashboard({
                                         <li key={event.id}>
                                             <Link
                                                 href={`/dashboard/events/${event.id}`}
-                                                className="flex flex-col gap-2 rounded-lg border border-transparent p-2 transition hover:border-sidebar-border/70 hover:bg-muted/50"
+                                                className="flex flex-col gap-2 rounded-lg border border-transparent p-2 transition hover:border-sidebar-border/70 hover:bg-muted/50 active:bg-muted/50"
                                             >
-                                                <div className="flex items-start justify-between gap-3">
+                                                <div className="flex items-start justify-between gap-2 sm:gap-3">
                                                     <div className="flex min-w-0 flex-col">
                                                         <span className="truncate text-sm font-semibold">
                                                             {event.name}
@@ -281,7 +294,7 @@ export default function Dashboard({
                                                             )}
                                                         </span>
                                                     </div>
-                                                    <div className="flex shrink-0 items-center gap-2">
+                                                    <div className="flex shrink-0 flex-wrap items-center justify-end gap-1 sm:gap-2">
                                                         {!event.is_published && (
                                                             <Badge variant="outline">
                                                                 Draft
@@ -333,7 +346,7 @@ export default function Dashboard({
                                 {recentRegistrations.map((registration) => (
                                     <li
                                         key={registration.id}
-                                        className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
+                                        className="flex flex-col gap-1 py-2.5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
                                     >
                                         <div className="flex min-w-0 flex-col">
                                             <span className="truncate text-sm font-medium">
@@ -344,7 +357,7 @@ export default function Dashboard({
                                                 {registration.event_name}
                                             </span>
                                         </div>
-                                        <div className="flex shrink-0 flex-col items-end gap-1">
+                                        <div className="flex shrink-0 items-center justify-between gap-2 sm:flex-col sm:items-end sm:gap-1">
                                             <Badge
                                                 variant={
                                                     STATUS_VARIANT[
@@ -373,19 +386,33 @@ export default function Dashboard({
                     </Panel>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                    <Button asChild size="sm">
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+                    <Button
+                        asChild
+                        size="sm"
+                        className="col-span-2 h-10 sm:h-8"
+                    >
                         <Link href="/dashboard/events/create">
                             <Ticket className="mr-1 h-4 w-4" />
                             New event
                         </Link>
                     </Button>
-                    <Button asChild size="sm" variant="outline">
+                    <Button
+                        asChild
+                        size="sm"
+                        variant="outline"
+                        className="h-10 sm:h-8"
+                    >
                         <Link href="/dashboard/qr-scanner">
                             Open QR scanner
                         </Link>
                     </Button>
-                    <Button asChild size="sm" variant="outline">
+                    <Button
+                        asChild
+                        size="sm"
+                        variant="outline"
+                        className="h-10 sm:h-8"
+                    >
                         <Link href="/dashboard/contact-messages">
                             Contact messages
                         </Link>

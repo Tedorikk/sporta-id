@@ -75,7 +75,7 @@ export default function AwardsIndex({ event, awards }: Props) {
                     <Link
                         key={award.id}
                         href={`/dashboard/events/${event.id}/awards/${award.id}`}
-                        className="flex items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-muted/50"
+                        className="flex flex-col gap-2 px-3 py-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-4"
                     >
                         <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">

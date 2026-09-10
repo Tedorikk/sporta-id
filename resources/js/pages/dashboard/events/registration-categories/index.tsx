@@ -81,10 +81,10 @@ export default function RegistrationCategoriesIndex({
                 {registrationCategories.map((category) => (
                     <div
                         key={category.id}
-                        className="flex items-center justify-between gap-4 px-4 py-3"
+                        className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-4"
                     >
-                        <div>
-                            <div className="flex items-center gap-2">
+                        <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
                                 <p className="text-sm font-medium">
                                     {category.name}
                                 </p>
@@ -112,10 +112,10 @@ export default function RegistrationCategoriesIndex({
                             </p>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex shrink-0 items-center justify-between gap-2 sm:justify-start">
                             <Link
                                 href={`/dashboard/events/${event.id}/registration-categories/${category.id}`}
-                                className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                                className="text-xs whitespace-nowrap text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
                             >
                                 {category.registrations_count ?? 0}{' '}
                                 registration(s)

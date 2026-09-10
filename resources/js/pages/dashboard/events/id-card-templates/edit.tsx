@@ -9,6 +9,7 @@ import {
     Magnet,
     Maximize2,
     Minus,
+    Monitor,
     Plus,
     QrCode,
     Redo2,
@@ -54,6 +55,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { useIsNarrowerThan } from '@/hooks/use-mobile';
 import { formatImageUrl } from '@/lib/image-utils';
 import type { Attendee } from '@/types/attendee';
 import type { AttendeeType } from '@/types/attendee-type';
@@ -204,6 +206,12 @@ export default function CardTemplateEdit({
     const [qrPreview, setQrPreview] = useState('');
     const [saving, setSaving] = useState(false);
     const [zoom, setZoom] = useState(1);
+    /**
+     * The designer is a three-rail drag-and-drop canvas; below lg the rails
+     * collapse into ~200px scroll panes and the card renders at 17%, which is
+     * not something you can lay out a badge in. Offer the way back instead.
+     */
+    const isTooNarrowToDesign = useIsNarrowerThan(1024);
     const [showGrid, setShowGrid] = useState(false);
     const [snapEnabled, setSnapEnabled] = useState(true);
     const viewportRef = useRef<HTMLDivElement>(null);
@@ -631,6 +639,39 @@ export default function CardTemplateEdit({
                     (c) => c.id === registrationCategoryId,
                 )?.name ?? 'All registration categories')
               : SUBJECT_LABEL[subjectType];
+
+    if (isTooNarrowToDesign) {
+        return (
+            <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-4 px-4 py-16 text-center">
+                <Head title={`Card Designer · ${event.name}`} />
+
+                <div className="rounded-full bg-muted p-3 text-muted-foreground">
+                    <Monitor className="h-6 w-6" />
+                </div>
+
+                <div className="space-y-1.5">
+                    <h1 className="text-lg font-semibold tracking-tight">
+                        Open the card designer on a larger screen
+                    </h1>
+                    <p className="text-sm text-muted-foreground">
+                        Laying out a badge needs the drag-and-drop canvas and
+                        both side rails, which don&apos;t fit on a phone or a
+                        portrait tablet. Everything else about this event works
+                        here.
+                    </p>
+                </div>
+
+                <Button variant="outline" asChild>
+                    <Link
+                        href={`/dashboard/events/${event.id}/id-card-templates`}
+                    >
+                        <ChevronLeft className="mr-1 h-4 w-4" />
+                        Back to templates
+                    </Link>
+                </Button>
+            </div>
+        );
+    }
 
     return (
         <div className="flex h-[calc(100svh-4rem)] flex-col">

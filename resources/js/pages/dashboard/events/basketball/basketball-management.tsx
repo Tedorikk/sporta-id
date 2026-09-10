@@ -109,13 +109,15 @@ function PoolCard({
     };
 
     return (
-        <div className="flex flex-col gap-3 rounded-lg border p-4">
+        <div className="flex min-w-0 flex-col gap-3 rounded-lg border p-3 sm:p-4">
             <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2">
-                    <LayoutGrid className="h-4 w-4 text-primary" />
-                    <span className="font-medium">{pool.name}</span>
+                <div className="flex min-w-0 items-center gap-2">
+                    <LayoutGrid className="h-4 w-4 shrink-0 text-primary" />
+                    <span className="min-w-0 truncate font-medium">
+                        {pool.name}
+                    </span>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex shrink-0 items-center gap-1">
                     <Badge variant="secondary">
                         {assignedTeams.length} team
                         {assignedTeams.length === 1 ? '' : 's'}
@@ -182,7 +184,7 @@ function PoolCard({
                         value={selectedTeamId}
                         onValueChange={setSelectedTeamId}
                     >
-                        <SelectTrigger className="h-8 flex-1 text-sm">
+                        <SelectTrigger className="h-8 min-w-0 flex-1 text-sm">
                             <SelectValue placeholder="Assign a team…" />
                         </SelectTrigger>
                         <SelectContent>
@@ -248,11 +250,11 @@ function CategoryPools({
 
     return (
         <div className="mt-2 flex flex-col gap-3 border-t pt-3">
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-xs font-medium text-muted-foreground">
                     {pools.length} pool{pools.length === 1 ? '' : 's'}
                 </span>
-                <div className="flex items-center gap-1.5">
+                <div className="ml-auto flex items-center gap-1.5">
                     {pools.length > 0 && (
                         <DeleteConfirmationDialog
                             trigger={
@@ -300,7 +302,7 @@ function CategoryPools({
             </div>
 
             {pools.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground sm:text-sm">
                     No pools yet — create one to start grouping teams for
                     bracket play.
                 </p>
@@ -365,34 +367,42 @@ export function BasketballManagement({
     };
 
     return (
-        <section className="flex flex-col gap-6 rounded-xl border bg-card p-6 shadow-sm md:p-8">
+        <section className="flex flex-col gap-5 rounded-xl border bg-card p-4 shadow-sm sm:gap-6 sm:p-6 md:p-8">
             {event.specific_type === 'BasketballEvent' ? (
                 <>
-                    <h2 className="border-b pb-4 text-xl font-semibold tracking-tight">
+                    <h2 className="border-b pb-4 text-lg font-semibold tracking-tight sm:text-xl">
                         Basketball Tournament Management
                     </h2>
 
-                    {/* Teams & Matches — event-level overview links */}
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-1">
-                        <Link
-                            href={`/dashboard/events/${event.id}/teams`}
-                            className="flex flex-col gap-2 rounded-lg border p-4 transition hover:border-primary/50 hover:bg-muted"
-                        >
-                            <Users className="h-5 w-5 text-primary" />
-                            <span className="font-medium">Teams</span>
-                            <span className="text-sm text-muted-foreground">
-                                {event.teams_count ?? 0} registered teams
+                    {/* Teams & Matches — event-level overview links. Reads as a
+                        single row on a phone; the stacked card only earns its
+                        height once there is room for it. */}
+                    <Link
+                        href={`/dashboard/events/${event.id}/teams`}
+                        className="flex items-center gap-3 rounded-lg border p-3 transition hover:border-primary/50 hover:bg-muted sm:flex-col sm:items-start sm:gap-2 sm:p-4"
+                    >
+                        <Users className="h-5 w-5 shrink-0 text-primary" />
+                        <span className="font-medium">Teams</span>
+                        <span className="ml-auto text-sm text-muted-foreground sm:ml-0">
+                            {event.teams_count ?? 0}
+                            <span className="hidden sm:inline">
+                                {' '}
+                                registered teams
                             </span>
-                        </Link>
-                    </div>
+                            <span className="sr-only sm:hidden">
+                                {' '}
+                                registered teams
+                            </span>
+                        </span>
+                    </Link>
 
                     {/* Match Categories — the flow starts here: a category
                         defines format + team limits, teams register into
                         it, and (for pool_stage categories) pools are
                         managed inline right below it. */}
-                    <div className="flex flex-col gap-4 border-t pt-6">
-                        <div className="flex items-center justify-between gap-2">
-                            <div>
+                    <div className="flex flex-col gap-4 border-t pt-5 sm:pt-6">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+                            <div className="min-w-0">
                                 <h3 className="font-medium">
                                     Match Categories
                                 </h3>
@@ -404,7 +414,10 @@ export function BasketballManagement({
                             <BasketballCategoryFormDialog
                                 event={event}
                                 trigger={
-                                    <Button size="sm">
+                                    <Button
+                                        size="sm"
+                                        className="w-full shrink-0 sm:w-auto"
+                                    >
                                         <Plus className="mr-2 h-4 w-4" />
                                         Add Category
                                     </Button>
@@ -440,10 +453,10 @@ export function BasketballManagement({
                                     return (
                                         <div
                                             key={category.id}
-                                            className="flex flex-col gap-2 rounded-lg border p-4"
+                                            className="flex min-w-0 flex-col gap-2 rounded-lg border p-3 sm:p-4"
                                         >
                                             <div className="flex items-start justify-between gap-2">
-                                                <span className="font-medium">
+                                                <span className="min-w-0 font-medium break-words">
                                                     {category.name}
                                                 </span>
                                                 <div className="flex items-center gap-2">
@@ -480,7 +493,7 @@ export function BasketballManagement({
                                                     ).toLocaleString('id-ID')}
                                                 </p>
                                             )}
-                                            <div className="mt-1 flex items-center justify-between gap-1">
+                                            <div className="mt-1 flex flex-wrap items-center justify-between gap-1">
                                                 <div className="flex items-center gap-1">
                                                     <Button
                                                         variant="ghost"
@@ -512,7 +525,7 @@ export function BasketballManagement({
                                                         </Button>
                                                     )}
                                                 </div>
-                                                <div className="flex items-center gap-1">
+                                                <div className="ml-auto flex items-center gap-1">
                                                     <BasketballCategoryFormDialog
                                                         event={event}
                                                         category={category}

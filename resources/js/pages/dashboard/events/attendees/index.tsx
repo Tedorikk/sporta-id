@@ -133,7 +133,7 @@ export default function AttendeesIndex({
             <Head title={`Attendees · ${event.name}`} />
 
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-4">
+                <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                     <Button
                         variant="outline"
                         size="icon"
@@ -144,17 +144,17 @@ export default function AttendeesIndex({
                             <ChevronLeft className="h-5 w-5" />
                         </Link>
                     </Button>
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight">
+                    <div className="min-w-0">
+                        <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
                             Attendees
                         </h1>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="truncate text-sm text-muted-foreground">
                             {event.name}
                         </p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
                     <Button variant="outline" asChild>
                         <Link
                             href={`/dashboard/events/${event.id}/attendee-types`}
@@ -266,9 +266,12 @@ export default function AttendeesIndex({
             ) : (
                 <div className="divide-y rounded-lg border">
                     {attendees.data.map((attendee) => (
+                        // Controls drop below the name on a phone: kept inline
+                        // they take the whole row and truncate the name to an
+                        // initial.
                         <div
                             key={attendee.id}
-                            className="flex items-center justify-between gap-4 px-4 py-3"
+                            className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-4"
                         >
                             <div className="flex min-w-0 items-center gap-3">
                                 {attendee.photo ? (
@@ -297,7 +300,7 @@ export default function AttendeesIndex({
                                 </div>
                             </div>
 
-                            <div className="flex shrink-0 items-center gap-2">
+                            <div className="flex shrink-0 items-center justify-between gap-2 sm:justify-start">
                                 <Badge
                                     variant={STATUS_VARIANT[attendee.status]}
                                 >

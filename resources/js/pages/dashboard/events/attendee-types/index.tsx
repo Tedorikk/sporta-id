@@ -65,7 +65,7 @@ export default function AttendeeTypesIndex({ event, attendeeTypes }: Props) {
                 {attendeeTypes.map((type) => (
                     <div
                         key={type.id}
-                        className="flex items-center justify-between gap-4 px-4 py-3"
+                        className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-4"
                     >
                         <div className="flex items-center gap-3">
                             <span

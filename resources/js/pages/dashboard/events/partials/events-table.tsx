@@ -166,8 +166,9 @@ export function EventsTable({
     }
 
     return (
-        // Own scroll container so the header can actually freeze while comparing rows.
-        <div className="max-h-[calc(100vh-22rem)] overflow-auto rounded-xl border">
+        // Own scroll container so the header can actually freeze while comparing
+        // rows — and so the wide table scrolls here rather than the whole page.
+        <div className="max-h-[70vh] overflow-auto rounded-xl border sm:max-h-[calc(100vh-22rem)]">
             <Table>
                 <TableHeader className="sticky top-0 z-10 bg-background shadow-[inset_0_-1px_0_var(--border)]">
                     <TableRow className="hover:bg-transparent">

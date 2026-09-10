@@ -242,20 +242,20 @@ export default function EventsIndex({
     return (
         <>
             <Head title="Events" />
-            <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl px-12 py-4">
+            <div className="flex h-full min-w-0 flex-1 flex-col gap-4 rounded-xl px-4 py-4 sm:gap-6 sm:px-6 lg:px-12">
                 <section
                     id="overview"
-                    className="flex w-full flex-row items-start justify-between"
+                    className="flex w-full flex-col items-start justify-between gap-3 sm:flex-row sm:items-center"
                 >
-                    <div>
-                        <h1 className="scroll-m-20 text-4xl font-bold tracking-tight text-balance">
+                    <div className="min-w-0">
+                        <h1 className="scroll-m-20 text-2xl font-bold tracking-tight text-balance sm:text-3xl lg:text-4xl">
                             Overview
                         </h1>
                         <p className="mt-1 text-sm text-muted-foreground">
                             {summary}
                         </p>
                     </div>
-                    <Button asChild>
+                    <Button asChild className="w-full shrink-0 sm:w-auto">
                         <Link
                             href="/dashboard/events/create"
                             className="flex items-center gap-2"
@@ -279,7 +279,7 @@ export default function EventsIndex({
                     id="controls"
                     className="flex flex-wrap items-center gap-3"
                 >
-                    <div className="relative w-full max-w-xs">
+                    <div className="relative w-full sm:max-w-xs">
                         <Label htmlFor="event-search" className="sr-only">
                             Search events
                         </Label>
@@ -302,7 +302,10 @@ export default function EventsIndex({
                             })
                         }
                     >
-                        <SelectTrigger className="w-40" aria-label="Category">
+                        <SelectTrigger
+                            className="w-full sm:w-40"
+                            aria-label="Category"
+                        >
                             <SelectValue placeholder="Category" />
                         </SelectTrigger>
                         <SelectContent>
@@ -316,7 +319,7 @@ export default function EventsIndex({
                     </Select>
 
                     {view === 'table' && (
-                        <div className="ml-auto">
+                        <div className="sm:ml-auto">
                             <EventTableOptions
                                 preferences={tablePreferences}
                                 onChange={updateTablePreferences}
@@ -324,6 +327,8 @@ export default function EventsIndex({
                         </div>
                     )}
 
+                    {/* Labels are dropped on phones so all three views stay on
+                        one row next to the category select. */}
                     <ToggleGroup
                         type="single"
                         value={view}
@@ -333,19 +338,35 @@ export default function EventsIndex({
                         variant="outline"
                         size="sm"
                         aria-label="View"
-                        className={view === 'table' ? undefined : 'ml-auto'}
+                        className={
+                            view === 'table'
+                                ? 'ml-auto shrink-0 sm:ml-0'
+                                : 'ml-auto shrink-0'
+                        }
                     >
-                        <ToggleGroupItem value="table" className="gap-1.5 px-3">
-                            <Rows3 className="size-4" /> Table
+                        <ToggleGroupItem
+                            value="table"
+                            aria-label="Table"
+                            className="gap-1.5 px-3"
+                        >
+                            <Rows3 className="size-4" />
+                            <span className="hidden sm:inline">Table</span>
                         </ToggleGroupItem>
-                        <ToggleGroupItem value="grid" className="gap-1.5 px-3">
-                            <LayoutGrid className="size-4" /> Grid
+                        <ToggleGroupItem
+                            value="grid"
+                            aria-label="Grid"
+                            className="gap-1.5 px-3"
+                        >
+                            <LayoutGrid className="size-4" />
+                            <span className="hidden sm:inline">Grid</span>
                         </ToggleGroupItem>
                         <ToggleGroupItem
                             value="calendar"
+                            aria-label="Calendar"
                             className="gap-1.5 px-3"
                         >
-                            <CalendarIcon className="size-4" /> Calendar
+                            <CalendarIcon className="size-4" />
+                            <span className="hidden sm:inline">Calendar</span>
                         </ToggleGroupItem>
                     </ToggleGroup>
                 </section>

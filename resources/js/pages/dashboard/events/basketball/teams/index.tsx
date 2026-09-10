@@ -133,7 +133,7 @@ export default function TeamsIndex({
 
             {/* Header */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-4">
+                <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                     <Button
                         variant="outline"
                         size="icon"
@@ -144,17 +144,17 @@ export default function TeamsIndex({
                             <ChevronLeft className="h-5 w-5" />
                         </Link>
                     </Button>
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight">
+                    <div className="min-w-0">
+                        <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
                             Teams
                         </h1>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="truncate text-sm text-muted-foreground">
                             {event.name}
                         </p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex shrink-0 items-center gap-2 *:flex-1 sm:*:flex-none">
                     <Button
                         variant={reviewMode ? 'default' : 'outline'}
                         onClick={() => setReviewMode((v) => !v)}
@@ -284,8 +284,10 @@ export default function TeamsIndex({
             {teams.data.length === 0 ? (
                 <EmptyState hasCategories={categories.length > 0} />
             ) : (
-                <div className="overflow-hidden rounded-xl border bg-card">
-                    <table className="w-full text-sm">
+                // Scrolls itself rather than the page: the columns need more
+                // room than a phone has.
+                <div className="overflow-x-auto rounded-xl border bg-card">
+                    <table className="w-full min-w-[34rem] text-sm">
                         <thead className="border-b bg-muted/40 text-left text-muted-foreground">
                             <tr>
                                 <th className="px-4 py-3 font-medium">Team</th>
@@ -406,11 +408,11 @@ export default function TeamsIndex({
 
             {/* Pagination */}
             {teams.last_page > 1 && (
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
                     <span>
                         Showing {teams.from}–{teams.to} of {teams.total} teams
                     </span>
-                    <div className="flex gap-1">
+                    <div className="flex flex-wrap gap-1">
                         {teams.links.map((link, i) => (
                             <Button
                                 key={i}
