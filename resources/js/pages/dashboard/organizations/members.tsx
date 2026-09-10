@@ -1,5 +1,6 @@
 import { Form, Head, Link, router } from '@inertiajs/react';
-import { ChevronLeft, Trash2, UserPlus } from 'lucide-react';
+import { Check, ChevronLeft, Copy, Send, Trash2, UserPlus } from 'lucide-react';
+import { useState } from 'react';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +19,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { index as organizationsIndex } from '@/routes/organizations';
 import { destroy, store, update } from '@/routes/organizations/members';
 import { store as storeAccount } from '@/routes/organizations/members/accounts';
+import {
+    destroy as destroyInvitation,
+    store as storeInvitation,
+} from '@/routes/organizations/members/invitations';
 import type { Organization, OrganizationRole } from '@/types';
 
 type Member = {
@@ -69,22 +74,45 @@ function RoleField({
     );
 }
 
+type Invitation = {
+    id: number;
+    email: string;
+    role: OrganizationRole;
+    url: string;
+    expires_at: string;
+};
+
 interface Props {
     organization: Organization;
     members: Member[];
+    invitations: Invitation[];
     roles: OrganizationRole[];
     canManage: boolean;
     isOwner: boolean;
 }
 
+/** Matches OrganizationInvitation::EXPIRY_DAYS. */
+const inviteExpiryDays = 7;
+
 export default function OrganizationMembers({
     organization,
     members,
+    invitations,
     roles,
     canManage,
     isOwner,
 }: Props) {
     const ownerCount = members.filter((m) => m.role === 'owner').length;
+    const [copiedId, setCopiedId] = useState<number | null>(null);
+
+    // Mail delivery is best-effort, so the manager always has the option of
+    // passing the link on themselves.
+    const copyInviteLink = (invitation: Invitation) => {
+        void navigator.clipboard.writeText(invitation.url).then(() => {
+            setCopiedId(invitation.id);
+            setTimeout(() => setCopiedId(null), 2000);
+        });
+    };
 
     return (
         <div className="mx-auto flex h-full w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
@@ -120,10 +148,66 @@ export default function OrganizationMembers({
                     defaultValue="existing"
                     className="gap-0 rounded-lg border p-4"
                 >
-                    <TabsList className="grid w-full grid-cols-2 sm:w-80">
+                    <TabsList className="grid w-full grid-cols-3 sm:w-[30rem]">
                         <TabsTrigger value="existing">Add existing</TabsTrigger>
+                        <TabsTrigger value="invite">Send invite</TabsTrigger>
                         <TabsTrigger value="new">Create account</TabsTrigger>
                     </TabsList>
+
+                    <TabsContent value="invite" className="mt-4">
+                        <Form
+                            {...storeInvitation.form(organization.id)}
+                            resetOnSuccess
+                        >
+                            {({ processing, errors }) => (
+                                <div className="flex flex-col gap-4">
+                                    <p className="text-sm text-muted-foreground">
+                                        Emails a link that lets them set their
+                                        own password. The link is good for{' '}
+                                        {inviteExpiryDays} days and can be
+                                        revoked at any time.
+                                    </p>
+
+                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                                        <div className="grid flex-1 gap-2">
+                                            <Label htmlFor="invite-email">
+                                                Email
+                                            </Label>
+                                            <Input
+                                                id="invite-email"
+                                                name="email"
+                                                type="email"
+                                                required
+                                                placeholder="teammate@example.com"
+                                            />
+                                            <InputError
+                                                message={errors.email}
+                                            />
+                                        </div>
+
+                                        <RoleField
+                                            id="invite-role"
+                                            roles={roles}
+                                            isOwner={isOwner}
+                                            error={errors.role}
+                                        />
+
+                                        <Button
+                                            type="submit"
+                                            disabled={processing}
+                                        >
+                                            {processing ? (
+                                                <Spinner />
+                                            ) : (
+                                                <Send className="mr-2 size-4" />
+                                            )}
+                                            Send invite
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+                        </Form>
+                    </TabsContent>
 
                     <TabsContent value="existing" className="mt-4">
                         <Form {...store.form(organization.id)} resetOnSuccess>
@@ -265,6 +349,68 @@ export default function OrganizationMembers({
                         </Form>
                     </TabsContent>
                 </Tabs>
+            )}
+
+            {canManage && invitations.length > 0 && (
+                <div className="rounded-lg border">
+                    <p className="border-b px-4 py-3 text-sm font-medium">
+                        Pending invitations
+                    </p>
+                    <div className="divide-y">
+                        {invitations.map((invitation) => (
+                            <div
+                                key={invitation.id}
+                                className="flex items-center justify-between gap-4 px-4 py-3"
+                            >
+                                <div className="min-w-0">
+                                    <p className="truncate text-sm font-medium">
+                                        {invitation.email}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Invited as {invitation.role} · expires{' '}
+                                        {new Date(
+                                            invitation.expires_at,
+                                        ).toLocaleDateString()}
+                                    </p>
+                                </div>
+
+                                <div className="flex shrink-0 items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        aria-label={`Copy invite link for ${invitation.email}`}
+                                        onClick={() =>
+                                            copyInviteLink(invitation)
+                                        }
+                                    >
+                                        {copiedId === invitation.id ? (
+                                            <Check className="size-4" />
+                                        ) : (
+                                            <Copy className="size-4" />
+                                        )}
+                                    </Button>
+
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        aria-label={`Revoke invitation for ${invitation.email}`}
+                                        onClick={() =>
+                                            router.delete(
+                                                destroyInvitation.url([
+                                                    organization.id,
+                                                    invitation.id,
+                                                ]),
+                                                { preserveScroll: true },
+                                            )
+                                        }
+                                    >
+                                        <Trash2 className="size-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             )}
 
             <div className="divide-y rounded-lg border">

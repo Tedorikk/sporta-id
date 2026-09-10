@@ -20,11 +20,13 @@ use App\Http\Controllers\EventMatchController;
 use App\Http\Controllers\GameMatchController;
 use App\Http\Controllers\IdCardPrintController;
 use App\Http\Controllers\ImageUploadController;
+use App\Http\Controllers\InvitationAcceptanceController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\MeetingAttendanceController;
 use App\Http\Controllers\MeetingCheckInController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\OrganizationController;
+use App\Http\Controllers\OrganizationInvitationController;
 use App\Http\Controllers\OrganizationMemberAccountController;
 use App\Http\Controllers\OrganizationMemberController;
 use App\Http\Controllers\OrganizationSwitchController;
@@ -113,6 +115,11 @@ Route::post('public-upload/document', [DocumentUploadController::class, 'store']
 Route::delete('public-upload/document', [DocumentUploadController::class, 'destroy'])
     ->middleware('throttle:20,1')->name('public-upload.document.destroy');
 
+// --- Organization invitations (public: the invitee may have no account yet) --
+Route::get('invitations/{token}', [InvitationAcceptanceController::class, 'show'])->name('invitations.show');
+Route::post('invitations/{token}', [InvitationAcceptanceController::class, 'store'])
+    ->middleware('throttle:10,1')->name('invitations.accept');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     // Outside the organization.current middleware: a user with no organization
     // must be able to reach these to create or be added to one.
@@ -126,6 +133,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [OrganizationMemberController::class, 'index'])->name('index');
         Route::post('/', [OrganizationMemberController::class, 'store'])->name('store');
         Route::post('accounts', [OrganizationMemberAccountController::class, 'store'])->name('accounts.store');
+        Route::post('invitations', [OrganizationInvitationController::class, 'store'])->name('invitations.store');
+        Route::delete('invitations/{invitation}', [OrganizationInvitationController::class, 'destroy'])->name('invitations.destroy');
         Route::patch('{user}', [OrganizationMemberController::class, 'update'])->name('update');
         Route::delete('{user}', [OrganizationMemberController::class, 'destroy'])->name('destroy');
     });

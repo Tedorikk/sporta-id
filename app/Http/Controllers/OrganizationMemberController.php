@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Organization;
+use App\Models\OrganizationInvitation;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,6 +32,18 @@ class OrganizationMemberController extends Controller
                     'is_self' => $member->id === $request->user()->id,
                 ]),
             'roles' => Organization::ROLES,
+            // Only managers may invite, so only they are shown the outstanding
+            // offers — and the link, which is a credential of sorts.
+            'invitations' => $request->user()->hasOrganizationRole($organization, Organization::MANAGER_ROLES)
+                ? $organization->invitations()->pending()->latest()->get()
+                    ->map(fn (OrganizationInvitation $invitation) => [
+                        'id' => $invitation->id,
+                        'email' => $invitation->email,
+                        'role' => $invitation->role,
+                        'url' => $invitation->url(),
+                        'expires_at' => $invitation->expires_at->toIso8601String(),
+                    ])
+                : [],
         ]);
     }
 
