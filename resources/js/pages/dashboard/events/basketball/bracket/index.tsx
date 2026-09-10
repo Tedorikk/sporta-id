@@ -181,9 +181,12 @@ function GenerateBracketSection({
     };
 
     return (
-        <div className="flex items-end gap-3">
-            <div className="flex flex-col gap-1">
-                <Label htmlFor="advance-per-pool" className="text-xs">
+        <div className="flex shrink-0 items-end gap-3">
+            <div className="flex shrink-0 flex-col gap-1">
+                <Label
+                    htmlFor="advance-per-pool"
+                    className="text-xs whitespace-nowrap"
+                >
                     Advance per pool
                 </Label>
                 <Input
@@ -201,6 +204,7 @@ function GenerateBracketSection({
                 variant={hasBracket ? 'outline' : 'default'}
                 onClick={handleGenerate}
                 disabled={generating}
+                className="min-w-0 flex-1 sm:flex-none"
             >
                 {generating ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -244,11 +248,11 @@ export default function BracketIndex({ event, category, bracket }: Props) {
 
             <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
                 {/* Header */}
-                <div className="flex items-start gap-4">
+                <div className="flex min-w-0 items-start gap-3 sm:gap-4">
                     <Button
                         variant="outline"
                         size="icon"
-                        className="mt-1 h-9 w-9 shrink-0"
+                        className="mt-0.5 h-9 w-9 shrink-0 sm:mt-1"
                         asChild
                     >
                         <Link
@@ -258,8 +262,8 @@ export default function BracketIndex({ event, category, bracket }: Props) {
                         </Link>
                     </Button>
                     <div className="min-w-0 flex-1">
-                        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-                            <Trophy className="h-6 w-6 text-amber-500" />
+                        <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight sm:text-2xl">
+                            <Trophy className="h-5 w-5 shrink-0 text-amber-500 sm:h-6 sm:w-6" />
                             Bracket
                         </h1>
                         <p className="mt-0.5 text-sm text-muted-foreground">
@@ -267,7 +271,7 @@ export default function BracketIndex({ event, category, bracket }: Props) {
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex shrink-0 items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
                             <Link
                                 href={`/dashboard/events/${event.id}/basketball-categories/${category.id}/matches`}
@@ -280,8 +284,8 @@ export default function BracketIndex({ event, category, bracket }: Props) {
                 </div>
 
                 {/* Generate controls */}
-                <div className="flex items-center justify-between gap-4 rounded-xl border bg-card p-4 shadow-sm">
-                    <div>
+                <div className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                    <div className="min-w-0">
                         <p className="text-sm font-medium">Knockout Bracket</p>
                         <p className="text-xs text-muted-foreground">
                             {hasBracket

@@ -298,29 +298,35 @@ export default function RegistrationCategoryBuilder({
                 title={`${isEditing ? 'Edit' : 'New'} Registration Category · ${event.name}`}
             />
 
-            <div className="flex items-center gap-4">
-                <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-10 w-10 shrink-0"
-                    asChild
-                >
-                    <Link
-                        href={`/dashboard/events/${event.id}/registration-categories`}
-                        aria-label="Back to registration categories"
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-10 w-10 shrink-0"
+                        asChild
                     >
-                        <ChevronLeft className="h-5 w-5" />
-                    </Link>
-                </Button>
-                <div className="flex-1">
-                    <h1 className="text-2xl font-bold tracking-tight">
-                        {details.name || 'Untitled category'}
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        {event.name}
-                    </p>
+                        <Link
+                            href={`/dashboard/events/${event.id}/registration-categories`}
+                            aria-label="Back to registration categories"
+                        >
+                            <ChevronLeft className="h-5 w-5" />
+                        </Link>
+                    </Button>
+                    <div className="min-w-0 flex-1">
+                        <h1 className="truncate text-xl font-bold tracking-tight sm:text-2xl">
+                            {details.name || 'Untitled category'}
+                        </h1>
+                        <p className="truncate text-sm text-muted-foreground">
+                            {event.name}
+                        </p>
+                    </div>
                 </div>
-                <Button onClick={handleSave} disabled={isSaving}>
+                <Button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="w-full shrink-0 sm:ml-auto sm:w-auto"
+                >
                     {isSaving && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}

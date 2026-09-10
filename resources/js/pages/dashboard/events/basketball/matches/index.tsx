@@ -75,28 +75,31 @@ export default function MatchesIndex({
             <Head title={`Matches — ${category.name}`} />
 
             <div className="mx-auto flex h-full w-full max-w-5xl flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
-                {/* Header */}
-                <div className="flex items-start gap-4">
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        className="mt-1 h-9 w-9 shrink-0"
-                        asChild
-                    >
-                        <Link href={`/dashboard/events/${event.id}`}>
-                            <ChevronLeft className="h-4 w-4" />
-                        </Link>
-                    </Button>
-                    <div className="min-w-0 flex-1">
-                        <h1 className="text-2xl font-bold tracking-tight">
-                            Matches
-                        </h1>
-                        <p className="mt-0.5 text-sm text-muted-foreground">
-                            {event.name} &middot; {category.name}
-                        </p>
+                {/* Header — the action cluster is too wide to sit beside the
+                    title on a phone, so it drops to its own row. */}
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:gap-4">
+                    <div className="flex min-w-0 items-start gap-3 lg:gap-4">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="mt-0.5 h-9 w-9 shrink-0 lg:mt-1"
+                            asChild
+                        >
+                            <Link href={`/dashboard/events/${event.id}`}>
+                                <ChevronLeft className="h-4 w-4" />
+                            </Link>
+                        </Button>
+                        <div className="min-w-0 flex-1">
+                            <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+                                Matches
+                            </h1>
+                            <p className="mt-0.5 text-sm text-muted-foreground">
+                                {event.name} &middot; {category.name}
+                            </p>
+                        </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 lg:ml-auto lg:shrink-0">
                         {!isRoundRobin && (
                             <Button variant="outline" size="sm" asChild>
                                 <Link
@@ -132,18 +135,22 @@ export default function MatchesIndex({
                 </div>
 
                 {/* Stats bar */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
                     {stats.map(({ label, value, icon }) => (
                         <div
                             key={label}
-                            className="flex items-center gap-3 rounded-lg border bg-card px-4 py-3 shadow-sm"
+                            className="flex min-w-0 items-center gap-2 rounded-lg border bg-card px-3 py-2.5 shadow-sm sm:gap-3 sm:px-4 sm:py-3"
                         >
-                            <div className="rounded-md bg-muted p-2 text-muted-foreground">
+                            {/* Three tiles across a phone leaves no room for
+                                both the icon and a full label — the label wins. */}
+                            <div className="hidden shrink-0 rounded-md bg-muted p-1.5 text-muted-foreground sm:block sm:p-2">
                                 {icon}
                             </div>
-                            <div>
-                                <p className="text-xl font-bold">{value}</p>
-                                <p className="text-xs text-muted-foreground">
+                            <div className="min-w-0">
+                                <p className="text-lg font-bold sm:text-xl">
+                                    {value}
+                                </p>
+                                <p className="truncate text-xs text-muted-foreground">
                                     {label}
                                 </p>
                             </div>
@@ -153,7 +160,7 @@ export default function MatchesIndex({
 
                 {/* Round Robin — group matches flat */}
                 {isRoundRobin && (
-                    <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm">
+                    <section className="flex min-w-0 flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm sm:p-5">
                         <div className="flex items-center justify-between">
                             <h2 className="font-semibold">
                                 Group Stage Matches
@@ -194,19 +201,22 @@ export default function MatchesIndex({
                         return (
                             <section
                                 key={pool.id}
-                                className="flex flex-col gap-4 rounded-xl border bg-card p-5 shadow-sm"
+                                className="flex min-w-0 flex-col gap-4 rounded-xl border bg-card p-4 shadow-sm sm:p-5"
                             >
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <LayoutGrid className="h-4 w-4 text-primary" />
-                                        <h2 className="font-semibold">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex min-w-0 items-center gap-2">
+                                        <LayoutGrid className="h-4 w-4 shrink-0 text-primary" />
+                                        <h2 className="truncate font-semibold">
                                             {pool.name}
                                         </h2>
-                                        <Badge variant="secondary">
+                                        <Badge
+                                            variant="secondary"
+                                            className="shrink-0"
+                                        >
                                             {pMatches.length} matches
                                         </Badge>
                                     </div>
-                                    <div className="flex gap-2">
+                                    <div className="flex shrink-0 gap-2 *:flex-1 sm:*:flex-none">
                                         <GeneratePoolButton
                                             event={event}
                                             category={category}
@@ -260,7 +270,7 @@ export default function MatchesIndex({
 
                 {/* Pool Stage — matches created without a pool assigned */}
                 {!isRoundRobin && ungroupedMatches.length > 0 && (
-                    <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm">
+                    <section className="flex min-w-0 flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm sm:p-5">
                         <div className="flex items-center justify-between">
                             <h2 className="font-semibold">Ungrouped Matches</h2>
                             <Badge variant="secondary">

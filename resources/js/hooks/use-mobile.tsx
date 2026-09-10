@@ -1,36 +1,66 @@
-import { useSyncExternalStore } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 
 const MOBILE_BREAKPOINT = 768;
 
-const mql =
-    typeof window === 'undefined'
-        ? undefined
-        : window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
+/**
+ * One MediaQueryList per breakpoint, shared across every caller — creating a
+ * fresh one per render would resubscribe on each pass.
+ */
+const queries = new Map<number, MediaQueryList>();
 
-function mediaQueryListener(callback: (event: MediaQueryListEvent) => void) {
-    if (!mql) {
-        return () => {};
+function queryFor(maxWidth: number): MediaQueryList | undefined {
+    if (typeof window === 'undefined') {
+        return undefined;
     }
 
-    mql.addEventListener('change', callback);
+    let query = queries.get(maxWidth);
 
-    return () => {
-        mql.removeEventListener('change', callback);
-    };
-}
+    if (!query) {
+        // 0.02 rather than 1: viewports are not always whole pixels (zoom,
+        // fractional device ratios), and `max-width: 1023px` misses a 1023.33px
+        // viewport that is still below Tailwind's lg. This mirrors the
+        // `min-width` breakpoint exactly.
+        query = window.matchMedia(`(max-width: ${maxWidth - 0.02}px)`);
+        queries.set(maxWidth, query);
+    }
 
-function isSmallerThanBreakpoint(): boolean {
-    return mql?.matches ?? false;
+    return query;
 }
 
 function getServerSnapshot(): boolean {
     return false;
 }
 
-export function useIsMobile(): boolean {
-    return useSyncExternalStore(
-        mediaQueryListener,
-        isSmallerThanBreakpoint,
-        getServerSnapshot,
+/**
+ * True while the viewport is narrower than `maxWidth`. Pass a Tailwind
+ * breakpoint so the JS branch and the CSS agree on where the cut is.
+ */
+export function useIsNarrowerThan(maxWidth: number): boolean {
+    const subscribe = useCallback(
+        (callback: () => void) => {
+            const query = queryFor(maxWidth);
+
+            if (!query) {
+                return () => {};
+            }
+
+            query.addEventListener('change', callback);
+
+            return () => {
+                query.removeEventListener('change', callback);
+            };
+        },
+        [maxWidth],
     );
+
+    const getSnapshot = useCallback(
+        () => queryFor(maxWidth)?.matches ?? false,
+        [maxWidth],
+    );
+
+    return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
+export function useIsMobile(): boolean {
+    return useIsNarrowerThan(MOBILE_BREAKPOINT);
 }

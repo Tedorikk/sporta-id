@@ -40,14 +40,15 @@ export function MatchCard({
         match.away_score > match.home_score;
 
     return (
-        <div className="flex items-center gap-3 rounded-lg border bg-card px-4 py-3 shadow-sm">
-            {match.match_number && (
-                <span className="w-5 shrink-0 text-xs text-muted-foreground">
-                    #{match.match_number}
-                </span>
-            )}
-
+        // The matchup gets the full width on a phone; the meta and controls
+        // drop to a second line rather than squeezing the team names to nothing.
+        <div className="flex flex-col gap-2 rounded-lg border bg-card px-3 py-3 shadow-sm sm:flex-row sm:items-center sm:gap-3 sm:px-4">
             <div className="flex min-w-0 flex-1 items-center gap-2">
+                {match.match_number && (
+                    <span className="w-5 shrink-0 text-xs text-muted-foreground">
+                        #{match.match_number}
+                    </span>
+                )}
                 <span
                     className={`flex-1 truncate text-right text-sm font-medium ${homeWon ? 'text-primary' : ''}`}
                 >
@@ -89,28 +90,34 @@ export function MatchCard({
                 </span>
             </div>
 
-            {match.scheduled_at && (
-                <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
-                    <LocalTime value={match.scheduled_at} />
-                </span>
-            )}
+            <div className="flex shrink-0 flex-wrap items-center gap-1 sm:gap-2">
+                {match.scheduled_at && (
+                    <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+                        <Calendar className="h-3 w-3" />
+                        <LocalTime value={match.scheduled_at} />
+                    </span>
+                )}
 
-            <div className="flex shrink-0 items-center gap-1">
-                <StatusBadge status={match.status} />
-                <EditMatchDialog
-                    event={event}
-                    category={category}
-                    pools={pools}
-                    teams={teams}
-                    match={match}
-                />
-                <ScoreDialog event={event} category={category} match={match} />
-                <DeleteMatchButton
-                    event={event}
-                    category={category}
-                    match={match}
-                />
+                <div className="ml-auto flex shrink-0 items-center gap-1 sm:ml-0">
+                    <StatusBadge status={match.status} />
+                    <EditMatchDialog
+                        event={event}
+                        category={category}
+                        pools={pools}
+                        teams={teams}
+                        match={match}
+                    />
+                    <ScoreDialog
+                        event={event}
+                        category={category}
+                        match={match}
+                    />
+                    <DeleteMatchButton
+                        event={event}
+                        category={category}
+                        match={match}
+                    />
+                </div>
             </div>
         </div>
     );

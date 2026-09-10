@@ -112,7 +112,7 @@ export default function OrganizationsIndex({ organizations }: Props) {
                     {organizations.map((organization) => (
                         <div
                             key={organization.id}
-                            className="flex items-center justify-between gap-4 px-4 py-3"
+                            className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-4"
                         >
                             <div className="flex items-center gap-3">
                                 <div className="flex size-9 items-center justify-center rounded-lg bg-muted">

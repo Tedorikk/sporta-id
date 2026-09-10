@@ -96,7 +96,7 @@ export function EventFacetTiles({ stats, filters, onChange }: Props) {
     ];
 
     return (
-        <div className="grid gap-4 lg:grid-cols-[3fr_4fr]">
+        <div className="grid min-w-0 gap-4 lg:grid-cols-[3fr_4fr]">
             <FacetGroup
                 legend="Publication"
                 tiles={lifecycleTiles}
@@ -129,8 +129,9 @@ function FacetGroup<T extends string>({
             <legend className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
                 {legend}
             </legend>
-            {/* Wraps rather than squeezing: a truncated count label defeats the point. */}
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(8.5rem,1fr))] gap-2">
+            {/* Wraps rather than squeezing: a truncated count label defeats the point.
+                The narrower phone track keeps two tiles per row at 375px. */}
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(7rem,1fr))] gap-2 sm:grid-cols-[repeat(auto-fit,minmax(8.5rem,1fr))]">
                 {tiles.map(({ value, label, count, icon: Icon, iconClass }) => {
                     const isActive = active === value;
                     // An empty tile leads nowhere, so it stops being a target — unless it
@@ -145,7 +146,7 @@ function FacetGroup<T extends string>({
                             disabled={isDeadEnd}
                             onClick={() => onSelect(isActive ? null : value)}
                             className={cn(
-                                'flex items-center gap-3 rounded-xl border bg-card px-3 py-2.5 text-left transition-colors',
+                                'flex items-center gap-2 rounded-xl border bg-card px-2.5 py-2.5 text-left transition-colors sm:gap-3 sm:px-3',
                                 'hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
                                 isActive &&
                                     'border-primary bg-accent ring-1 ring-primary',
@@ -154,14 +155,14 @@ function FacetGroup<T extends string>({
                         >
                             <span
                                 className={cn(
-                                    'flex size-9 shrink-0 items-center justify-center rounded-md',
+                                    'flex size-8 shrink-0 items-center justify-center rounded-md sm:size-9',
                                     iconClass,
                                 )}
                             >
                                 <Icon className="size-4.5" />
                             </span>
                             <span className="min-w-0">
-                                <span className="block text-2xl leading-none font-semibold">
+                                <span className="block text-xl leading-none font-semibold sm:text-2xl">
                                     {count}
                                 </span>
                                 <span className="mt-1 block truncate text-xs text-muted-foreground">

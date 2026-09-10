@@ -71,7 +71,7 @@ export default function SpeakersIndex({ event, speakers }: Props) {
                 {speakers.map((speaker) => (
                     <div
                         key={speaker.id}
-                        className="flex items-center justify-between gap-4 px-4 py-3"
+                        className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-4"
                     >
                         <div className="flex items-center gap-3">
                             <Avatar>

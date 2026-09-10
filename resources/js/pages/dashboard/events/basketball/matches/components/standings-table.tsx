@@ -13,7 +13,7 @@ export function StandingsTable({
 
     return (
         <div className="overflow-x-auto">
-            <table className="w-full text-xs">
+            <table className="w-full min-w-[22rem] text-xs">
                 <thead>
                     <tr className="border-b">
                         <th className="pr-3 pb-2 text-left font-medium text-muted-foreground">

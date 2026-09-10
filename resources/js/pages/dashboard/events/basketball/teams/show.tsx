@@ -232,19 +232,19 @@ export default function ShowTeam({
 
             {/* Header */}
             <section className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex items-start gap-4">
+                <div className="flex min-w-0 items-start gap-3 sm:gap-4">
                     <Button
                         variant="outline"
                         size="icon"
-                        className="mt-1 h-10 w-10 shrink-0"
+                        className="mt-0.5 h-10 w-10 shrink-0 sm:mt-1"
                         asChild
                     >
                         <Link href={`/dashboard/events/${event.id}/teams`}>
                             <ChevronLeft className="h-5 w-5" />
                         </Link>
                     </Button>
-                    <div className="flex flex-col gap-2">
-                        <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex min-w-0 flex-col gap-2">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                             {team.logo ? (
                                 <img
                                     src={team.logo}
@@ -256,7 +256,7 @@ export default function ShowTeam({
                                     {team.name.substring(0, 2).toUpperCase()}
                                 </div>
                             )}
-                            <h1 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+                            <h1 className="min-w-0 text-xl font-extrabold tracking-tight break-words text-foreground sm:text-2xl lg:text-3xl">
                                 {team.name}
                             </h1>
                             {team.basketball_event_category && (
@@ -286,7 +286,7 @@ export default function ShowTeam({
                         </p>
                     </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex shrink-0 flex-wrap items-center gap-2 *:flex-1 sm:*:flex-none">
                     <Button
                         variant={reviewMode ? 'default' : 'outline'}
                         onClick={() => setReviewMode((v) => !v)}
@@ -338,53 +338,57 @@ export default function ShowTeam({
                         to access their ID card.
                     </p>
                 </div>
-                <div className="flex w-full max-w-md items-center gap-2 sm:w-auto">
+                {/* The URL gets its own row on a phone — sharing a link you
+                    cannot read defeats the point. */}
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:max-w-md sm:flex-row sm:items-center">
                     <input
                         type="text"
                         readOnly
                         value={shareUrl}
-                        className="flex h-9 w-full shrink rounded-md border border-input bg-background px-3 py-1 font-mono text-xs shadow-sm transition-colors select-all file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex h-9 w-full min-w-0 shrink rounded-md border border-input bg-background px-3 py-1 font-mono text-xs shadow-sm transition-colors select-all file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                     />
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={handleCopy}
-                        className="shrink-0"
-                    >
-                        {copied ? (
-                            <>
-                                <Check className="mr-1.5 h-3.5 w-3.5 text-emerald-600" />
-                                Copied!
-                            </>
-                        ) : (
-                            <>
-                                <Copy className="mr-1.5 h-3.5 w-3.5" />
-                                Copy Link
-                            </>
-                        )}
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        asChild
-                        className="shrink-0"
-                    >
-                        <a
-                            href={shareUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={handleCopy}
+                            className="flex-1 shrink-0 sm:flex-none"
                         >
-                            Open
-                        </a>
-                    </Button>
+                            {copied ? (
+                                <>
+                                    <Check className="mr-1.5 h-3.5 w-3.5 text-emerald-600" />
+                                    Copied!
+                                </>
+                            ) : (
+                                <>
+                                    <Copy className="mr-1.5 h-3.5 w-3.5" />
+                                    Copy Link
+                                </>
+                            )}
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                            className="flex-1 shrink-0 sm:flex-none"
+                        >
+                            <a
+                                href={shareUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                Open
+                            </a>
+                        </Button>
+                    </div>
                 </div>
             </section>
 
             {/* Roster */}
-            <section className="flex flex-col gap-4 rounded-xl border bg-card p-6 shadow-sm">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-xl font-semibold tracking-tight">
+            <section className="flex min-w-0 flex-col gap-4 rounded-xl border bg-card p-4 shadow-sm sm:p-6">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="min-w-0">
+                        <h2 className="text-lg font-semibold tracking-tight sm:text-xl">
                             Roster
                         </h2>
                         <p className="text-sm text-muted-foreground">
@@ -392,13 +396,16 @@ export default function ShowTeam({
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center lg:shrink-0">
                         <AddExistingPlayerDialog
                             event={event}
                             team={team}
                             clubs={clubs}
                             trigger={
-                                <Button variant="outline">
+                                <Button
+                                    variant="outline"
+                                    className="w-full sm:w-auto"
+                                >
                                     <Users className="mr-2 h-4 w-4" />
                                     Add Existing Player
                                 </Button>
@@ -408,7 +415,7 @@ export default function ShowTeam({
                             event={event}
                             team={team}
                             trigger={
-                                <Button>
+                                <Button className="w-full sm:w-auto">
                                     <Plus className="mr-2 h-4 w-4" />
                                     Add Team Member
                                 </Button>

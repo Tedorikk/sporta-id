@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { formatDate } from '@/lib/format-date';
 import { formatImageUrl } from '@/lib/image-utils';
+import { cn } from '@/lib/utils';
 import events from '@/routes/events';
 import type { Event } from '@/types/event';
 import { BasketballManagement } from './basketball/basketball-management';
@@ -58,27 +59,34 @@ export default function ShowEvent({ event }: { event: Event }) {
     };
 
     return (
-        <div className="mx-auto flex h-full w-full max-w-6xl flex-1 flex-col gap-8 overflow-x-hidden px-4 py-6 md:px-8 md:py-8">
+        <div className="mx-auto flex h-full w-full max-w-6xl min-w-0 flex-1 flex-col gap-6 overflow-x-hidden px-4 py-6 sm:gap-8 md:px-8 md:py-8">
             <Head title={event.name} />
 
             {/* Header Section */}
             <section
                 id="header"
-                className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
+                className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"
             >
-                <div className="flex items-start gap-4">
+                {/* The toolbar only shares a row with the title from lg. Below
+                    that it is far wider than the space available — at md the
+                    fixed sidebar leaves ~425px, which squeezed the title to
+                    66px and broke it over seven lines — so it stacks instead.
+                    On the shared row the floor keeps the title readable: 20rem
+                    fits one line of most names, and a longer name already
+                    exceeds it, so the toolbar wraps into what is left. */}
+                <div className="flex min-w-0 items-start gap-3 sm:gap-4 lg:min-w-80">
                     <Button
                         variant="outline"
                         size="icon"
-                        className="mt-1 h-10 w-10 shrink-0"
+                        className="mt-0.5 h-10 w-10 shrink-0 sm:mt-1"
                         asChild
                     >
                         <Link href="/dashboard/events">
                             <ChevronLeft className="h-5 w-5" />
                         </Link>
                     </Button>
-                    <div className="flex flex-col gap-2">
-                        <h1 className="text-3xl font-extrabold tracking-tight text-balance text-foreground sm:text-4xl">
+                    <div className="flex min-w-0 flex-col gap-2">
+                        <h1 className="text-2xl font-extrabold tracking-tight text-balance break-words text-foreground sm:text-3xl lg:text-4xl">
                             {event.name}
                         </h1>
                         <div className="flex items-center gap-3">
@@ -166,8 +174,10 @@ export default function ShowEvent({ event }: { event: Event }) {
                 </div>
             </section>
 
-            <div className="grid grid-cols-1 gap-8">
-                {event.category === 'BASKETBALL' && (
+            {/* Rendered only for basketball: an empty wrapper still costs a
+                gap, which reads as dead space on a phone. */}
+            {event.category === 'BASKETBALL' && (
+                <div className="grid min-w-0 grid-cols-1 gap-8">
                     <BasketballManagement
                         key={event.id}
                         event={event}
@@ -175,13 +185,20 @@ export default function ShowEvent({ event }: { event: Event }) {
                         pools={event.pools ?? []}
                         teams={event.teams}
                     />
-                )}
-            </div>
+                </div>
+            )}
 
             {/* Main Content Grid */}
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-                {/* Left Column (Main Event Content) */}
-                <div className="flex flex-col gap-8 lg:col-span-2">
+            <div className="grid min-w-0 grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-3">
+                {/* Left Column (Main Event Content). With no banner it holds
+                    nothing, so it is dropped below lg rather than contributing
+                    an empty row; on lg it stays put to keep the sidebar right. */}
+                <div
+                    className={cn(
+                        'flex min-w-0 flex-col gap-8 lg:col-span-2',
+                        !event.banner && 'hidden lg:flex',
+                    )}
+                >
                     {event.banner && (
                         <section
                             id="banner"
@@ -198,12 +215,12 @@ export default function ShowEvent({ event }: { event: Event }) {
                 </div>
 
                 {/* Right Column (Sidebar Sticky Metadata) */}
-                <div className="flex flex-col gap-6 lg:col-span-1">
+                <div className="flex min-w-0 flex-col gap-6 lg:col-span-1">
                     <section
                         id="details"
-                        className="flex flex-col gap-4 rounded-xl border bg-card p-6 shadow-sm md:p-8"
+                        className="flex flex-col gap-4 rounded-xl border bg-card p-5 shadow-sm sm:p-6 md:p-8"
                     >
-                        <h2 className="border-b pb-4 text-xl font-semibold tracking-tight">
+                        <h2 className="border-b pb-4 text-lg font-semibold tracking-tight sm:text-xl">
                             About this event
                         </h2>
                         <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none leading-relaxed whitespace-pre-wrap text-muted-foreground">
@@ -214,14 +231,14 @@ export default function ShowEvent({ event }: { event: Event }) {
                             )}
                         </div>
                     </section>
-                    <div className="sticky top-6 flex flex-col gap-6 rounded-xl border bg-card shadow-sm">
-                        <div className="border-b p-6 pb-4">
+                    <div className="sticky top-6 flex min-w-0 flex-col gap-5 rounded-xl border bg-card shadow-sm sm:gap-6">
+                        <div className="border-b p-5 pb-4 sm:p-6 sm:pb-4">
                             <h3 className="font-semibold tracking-tight">
                                 Information
                             </h3>
                         </div>
 
-                        <div className="flex flex-col gap-6 p-6 pt-0">
+                        <div className="flex flex-col gap-5 p-5 pt-0 sm:gap-6 sm:p-6 sm:pt-0">
                             {/* Date Block */}
                             <div className="flex items-start gap-4">
                                 <div className="rounded-md bg-primary/10 p-2 text-primary">
@@ -274,7 +291,7 @@ export default function ShowEvent({ event }: { event: Event }) {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex flex-col gap-2 border-t p-6 pt-4">
+                        <div className="flex flex-col gap-2 border-t p-5 pt-4 sm:p-6 sm:pt-4">
                             <Button
                                 variant="outline"
                                 className="w-full justify-center"
