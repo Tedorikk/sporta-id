@@ -37,6 +37,14 @@ function uid() {
     return crypto.randomUUID();
 }
 
+/**
+ * Trims each choice and drops the blanks a half-finished row leaves behind, so
+ * a respondent never sees an empty option.
+ */
+function cleanOptions(options: string[] | undefined): string[] {
+    return (options ?? []).map((o) => o.trim()).filter(Boolean);
+}
+
 function slugify(label: string, existing: string[]): string {
     const base =
         label
@@ -187,6 +195,20 @@ export default function RegistrationCategoryBuilder({
             return;
         }
 
+        const emptyChoiceField = allFields.find(
+            (f) =>
+                OPTION_FIELD_TYPES.includes(f.type) &&
+                cleanOptions(f.options).length === 0,
+        );
+
+        if (emptyChoiceField) {
+            toast.error(
+                `"${emptyChoiceField.label}" needs at least one option.`,
+            );
+
+            return;
+        }
+
         // Cast: form_pages/form_branding/form_settings are plain JSON-serializable
         // objects, but their literal-union style types don't structurally satisfy
         // Inertia's FormDataConvertible index signature.
@@ -204,7 +226,9 @@ export default function RegistrationCategoryBuilder({
                     const { _uid, ...rest } = field;
                     void _uid;
 
-                    return rest;
+                    return OPTION_FIELD_TYPES.includes(rest.type)
+                        ? { ...rest, options: cleanOptions(rest.options) }
+                        : rest;
                 }),
             })),
             form_branding: branding,

@@ -35,6 +35,7 @@ import {
     RESERVED_FIELD_KEYS,
 } from '@/types/registration-category';
 import type { RegistrationField } from '@/types/registration-category';
+import { OptionEditor } from './option-editor';
 
 export interface DraftField extends RegistrationField {
     _uid: string;
@@ -166,6 +167,11 @@ function SortableFieldRow({
                             Required
                         </Badge>
                     )}
+                    {OPTION_FIELD_TYPES.includes(field.type) && (
+                        <span className="text-[10px] text-muted-foreground">
+                            {(field.options ?? []).length} options
+                        </span>
+                    )}
                 </button>
 
                 <Button
@@ -274,21 +280,10 @@ function SortableFieldRow({
                     </div>
 
                     {OPTION_FIELD_TYPES.includes(field.type) && (
-                        <Field>
-                            <FieldLabel>Options (comma separated)</FieldLabel>
-                            <Input
-                                value={(field.options ?? []).join(', ')}
-                                onChange={(e) =>
-                                    onChange({
-                                        options: e.target.value
-                                            .split(',')
-                                            .map((o) => o.trim())
-                                            .filter(Boolean),
-                                    })
-                                }
-                                placeholder="S, M, L, XL"
-                            />
-                        </Field>
+                        <OptionEditor
+                            options={field.options ?? []}
+                            onChange={(options) => onChange({ options })}
+                        />
                     )}
 
                     {field.type === 'number' && (
