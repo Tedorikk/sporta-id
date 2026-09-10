@@ -809,9 +809,13 @@ export default function RegisterDynamic({
                                     {isTeam ? 'Per team' : 'Per person'}
                                 </span>
                             </div>
-                            <span className="shrink-0 text-lg font-black text-neutral-900">
-                                {formatRupiah(registrationCategory.price)}
-                            </span>
+                            {/* A free category gets no price tag — a bare
+                                "Free" beside the category name is clutter. */}
+                            {!isFreeCategory && (
+                                <span className="shrink-0 text-lg font-black text-neutral-900">
+                                    {formatRupiah(registrationCategory.price)}
+                                </span>
+                            )}
                         </div>
                         {!isFreeCategory && (
                             <p className="mt-2 text-xs text-neutral-500">
