@@ -15,7 +15,9 @@ return new class extends Migration
             // email and phone below are a snapshot either way, so a deleted
             // registration never erases someone from the start list.
             $table->foreignId('registration_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('bib_number');
+            // Nullable: entries exist from the moment someone registers, but
+            // bibs are usually allocated in one pass much closer to race day.
+            $table->string('bib_number')->nullable();
             $table->string('name');
             $table->string('email')->nullable();
             $table->string('phone')->nullable();

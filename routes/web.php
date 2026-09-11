@@ -8,6 +8,7 @@ use App\Http\Controllers\AwardNomineeController;
 use App\Http\Controllers\BasketballClubController;
 use App\Http\Controllers\BasketballEventCategoryController;
 use App\Http\Controllers\BasketballEventController;
+use App\Http\Controllers\BibAssignmentController;
 use App\Http\Controllers\BracketController;
 use App\Http\Controllers\CardTemplateController;
 use App\Http\Controllers\ContactController;
@@ -37,6 +38,7 @@ use App\Http\Controllers\PlayerQrController;
 use App\Http\Controllers\PlayerRegistrationController;
 use App\Http\Controllers\PoolController;
 use App\Http\Controllers\PublicEventController;
+use App\Http\Controllers\RaceParticipantController;
 use App\Http\Controllers\RegistrationCategoryController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\RegistrationQrController;
@@ -231,6 +233,15 @@ Route::middleware(['auth', 'verified', 'organization.current'])->group(function 
             });
 
             Route::get('matches', [EventMatchController::class, 'index'])->name('events.matches.index');
+
+            Route::prefix('running-categories/{category}')->group(function () {
+                Route::post('bibs', [BibAssignmentController::class, 'store'])->name('race_bibs.assign');
+
+                Route::get('participants', [RaceParticipantController::class, 'index'])->name('race_participants.index');
+                Route::post('participants', [RaceParticipantController::class, 'store'])->name('race_participants.store');
+                Route::put('participants/{participant}', [RaceParticipantController::class, 'update'])->name('race_participants.update');
+                Route::delete('participants/{participant}', [RaceParticipantController::class, 'destroy'])->name('race_participants.destroy');
+            });
 
             Route::prefix('basketball-categories/{category}')->group(function () {
                 Route::post('pools/auto-assign', [PoolController::class, 'autoAssign'])->name('pools.auto-assign');
