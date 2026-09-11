@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class EventController extends Controller
@@ -231,7 +232,7 @@ class EventController extends Controller
             'name' => ['required', 'string', 'min:5', 'max:255'],
             'description' => ['nullable', 'string'],
             'contact_person' => ['required', 'string', 'regex:/^\+[1-9]\d{1,14}$/'],
-            'category' => ['required', 'string'],
+            'category' => ['required', Rule::in(Event::CATEGORIES)],
             'is_published' => ['required', 'boolean'],
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],

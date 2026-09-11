@@ -41,6 +41,8 @@ use App\Http\Controllers\RegistrationCategoryController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\RegistrationQrController;
 use App\Http\Controllers\RegistrationRefundController;
+use App\Http\Controllers\RunningEventCategoryController;
+use App\Http\Controllers\RunningEventController;
 use App\Http\Controllers\SpeakerController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamQrController;
@@ -172,6 +174,11 @@ Route::middleware(['auth', 'verified', 'organization.current'])->group(function 
                 ->names('basketball_categories')
                 ->except(['index', 'create', 'edit', 'show']);
 
+            Route::resource('running-categories', RunningEventCategoryController::class)
+                ->parameters(['running-categories' => 'category'])
+                ->names('running_categories')
+                ->except(['index', 'create', 'edit', 'show']);
+
             Route::resource('attendees', AttendeeController::class)
                 ->except(['create', 'edit', 'show']);
 
@@ -252,6 +259,10 @@ Route::middleware(['auth', 'verified', 'organization.current'])->group(function 
 
     Route::resource('events', EventController::class)->only(['store', 'update', 'destroy'])
         ->middleware('event.org');
+    Route::post('events/{event}/running', [RunningEventController::class, 'store'])
+        ->middleware('event.org')->name('events.running.store');
+    Route::put('events/{event}/running', [RunningEventController::class, 'update'])
+        ->middleware('event.org')->name('events.running.update');
     Route::post('events/{event}/basketball', [BasketballEventController::class, 'store'])
         ->middleware('event.org')->name('events.basketball.store');
     Route::put('events/{event}/basketball', [BasketballEventController::class, 'update'])
