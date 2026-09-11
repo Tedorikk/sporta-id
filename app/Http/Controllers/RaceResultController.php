@@ -101,7 +101,7 @@ class RaceResultController extends Controller
         return response()->streamDownload(function () use ($category, $rankByParticipant) {
             $handle = fopen('php://output', 'w');
 
-            fputcsv($handle, ['Rank', 'Bib', 'Name', 'Status', 'Time']);
+            fputcsv($handle, ['Rank', 'Bib', 'Name', 'Status', 'Time'], escape: '');
 
             $category->participants()
                 ->orderBy('id')
@@ -113,7 +113,7 @@ class RaceResultController extends Controller
                             $participant->name,
                             $participant->status,
                             RaceTime::format($participant->duration_seconds),
-                        ]);
+                        ], escape: '');
                     }
                 });
 

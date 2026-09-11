@@ -233,7 +233,9 @@ export function RunningManagement({
                         </p>
                     </div>
                     <Button
-                        onClick={() => router.post(`/events/${event.id}/running`)}
+                        onClick={() =>
+                            router.post(`/events/${event.id}/running`)
+                        }
                     >
                         Set Up Race
                     </Button>

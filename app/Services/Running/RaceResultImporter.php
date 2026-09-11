@@ -34,7 +34,9 @@ class RaceResultImporter
             return ['updated' => 0, 'skipped' => 0, 'errors' => ['The file could not be read.']];
         }
 
-        $header = fgetcsv($handle);
+        // escape: '' keeps the reader RFC 4180-compliant and silences PHP 8.4's
+        // deprecation of the implicit escape character.
+        $header = fgetcsv($handle, escape: '');
 
         if ($header === false || $header === null) {
             fclose($handle);
@@ -62,7 +64,7 @@ class RaceResultImporter
         $errors = [];
         $line = 1;
 
-        while (($row = fgetcsv($handle)) !== false) {
+        while (($row = fgetcsv($handle, escape: '')) !== false) {
             $line++;
 
             if ($this->isBlank($row)) {
