@@ -76,8 +76,8 @@ export function FieldList({ fields, onChange }: FieldListProps) {
     if (fields.length === 0) {
         return (
             <p className="rounded-md border border-dashed py-8 text-center text-sm text-muted-foreground">
-                No fields on this page yet — add one from the palette on the
-                left.
+                No fields of your own on this page yet — add one from the
+                palette on the left.
             </p>
         );
     }

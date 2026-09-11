@@ -17,6 +17,7 @@ import {
     REGISTRATION_FIELD_TYPES,
     isInputField,
 } from '@/types/registration-category';
+import { BuiltInFieldRow } from './components/builder/built-in-field-row';
 import type { DraftField } from './components/builder/field-list';
 import { FieldList } from './components/builder/field-list';
 import { FieldPalette } from './components/builder/field-palette';
@@ -114,6 +115,16 @@ export default function RegistrationCategoryBuilder({
     const [isSaving, setIsSaving] = useState(false);
 
     const activePage = pages.find((p) => p._uid === activeUid) ?? pages[0];
+
+    // Mirrors what register-dynamic.tsx injects on its own: the name field
+    // always opens page one, and a paid category gets an email field appended
+    // to page one unless the organizer placed one themselves.
+    const isFirstPage = activePage != null && activePage === pages[0];
+    const isPaid = Number(details.price) > 0;
+    const hasOwnEmailField = pages.some((p) =>
+        p.fields.some((f) => f.key === 'email'),
+    );
+    const showsAutoEmail = isFirstPage && isPaid && !hasOwnEmailField;
 
     function applyTemplate(template: FormTemplate) {
         const draft: DraftPage[] = template.pages.map((page) => ({
@@ -380,12 +391,34 @@ export default function RegistrationCategoryBuilder({
                     />
 
                     {activePage ? (
-                        <FieldList
-                            fields={activePage.fields}
-                            onChange={(fields) =>
-                                updatePageFields(activePage._uid, fields)
-                            }
-                        />
+                        <>
+                            {isFirstPage && (
+                                <BuiltInFieldRow
+                                    label={
+                                        details.subject_type === 'team'
+                                            ? 'Team Name'
+                                            : 'Full Name'
+                                    }
+                                    typeLabel="Text"
+                                    note="Always the first question on the form. Every registration needs a name, so this field can't be edited or removed."
+                                />
+                            )}
+
+                            <FieldList
+                                fields={activePage.fields}
+                                onChange={(fields) =>
+                                    updatePageFields(activePage._uid, fields)
+                                }
+                            />
+
+                            {showsAutoEmail && (
+                                <BuiltInFieldRow
+                                    label="Email Address"
+                                    typeLabel="Email"
+                                    note="Added automatically because this category is paid — the receipt and confirmation are sent here. Add your own Email field to choose where it appears."
+                                />
+                            )}
+                        </>
                     ) : (
                         <p className="rounded-md border border-dashed py-8 text-center text-sm text-muted-foreground">
                             Add a page to get started.
