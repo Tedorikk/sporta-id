@@ -132,11 +132,26 @@ class RegistrationCategory extends Model
         ];
     }
 
-    /** Flattens fields across every page — used by validation, CSV export, and table columns. */
+    /**
+     * Field types that only show text on the form and never collect a value.
+     * Mirrors DISPLAY_ONLY_FIELD_TYPES in resources/js/types/registration-category.ts.
+     */
+    public const DISPLAY_ONLY_TYPES = ['description'];
+
+    /** Flattens fields across every page, display-only blocks included — the form's layout order. */
     public function allFields(): array
     {
         return collect($this->form_pages ?? [])
             ->flatMap(fn (array $page) => $page['fields'] ?? [])
+            ->values()
+            ->all();
+    }
+
+    /** Only the fields that carry an answer — used by validation, CSV export, and table columns. */
+    public function inputFields(): array
+    {
+        return collect($this->allFields())
+            ->reject(fn (array $field) => in_array($field['type'] ?? null, self::DISPLAY_ONLY_TYPES, true))
             ->values()
             ->all();
     }

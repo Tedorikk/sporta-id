@@ -7,6 +7,7 @@ import {
     FileText,
     Hash,
     Image,
+    Info,
     Mail,
     Phone,
     PenLine,
@@ -34,6 +35,7 @@ const PALETTE: {
     { type: 'signature', label: 'Signature', icon: PenLine },
     { type: 'file', label: 'Photo', icon: Image },
     { type: 'document', label: 'Document', icon: FileText },
+    { type: 'description', label: 'Description', icon: Info },
 ];
 
 interface FieldPaletteProps {

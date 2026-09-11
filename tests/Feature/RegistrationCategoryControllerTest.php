@@ -185,6 +185,28 @@ test('a document upload field type is accepted', function () {
     expect($category->allFields()[0]['type'])->toBe('document');
 });
 
+test('a description block field type is accepted and excluded from input fields', function () {
+    $event = Event::factory()->create();
+    $user = organizerOf($event);
+
+    $this->actingAs($user)
+        ->post(route('registration_categories.store', $event), categoryPayload([
+            'form_pages' => [
+                ['key' => 'page-1', 'title' => 'Details', 'fields' => [
+                    ['key' => 'intro', 'label' => 'Before you start', 'type' => 'description', 'required' => false, 'help_text' => 'Have your ID ready.'],
+                    ['key' => 'coach_name', 'label' => 'Coach', 'type' => 'text', 'required' => true],
+                ]],
+            ],
+        ]))
+        ->assertRedirect(route('registration_categories.index', $event));
+
+    $category = RegistrationCategory::firstOrFail();
+
+    expect($category->allFields())->toHaveCount(2)
+        ->and($category->inputFields())->toHaveCount(1)
+        ->and($category->inputFields()[0]['key'])->toBe('coach_name');
+});
+
 test('an organizer can update a registration category', function () {
     $event = Event::factory()->create();
     $user = organizerOf($event);

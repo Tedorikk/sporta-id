@@ -50,7 +50,7 @@ class RegistrationCategoryController extends Controller
     {
         abort_unless($registrationCategory->event_id === $event->id, 404);
 
-        $fields = $registrationCategory->allFields();
+        $fields = $registrationCategory->inputFields();
         $filename = Str::slug($registrationCategory->name).'-registrations.csv';
 
         return response()->streamDownload(function () use ($registrationCategory, $fields) {
@@ -186,12 +186,12 @@ class RegistrationCategoryController extends Controller
             'form_pages.*.fields.*.label' => ['required', 'string', 'max:255'],
             'form_pages.*.fields.*.type' => ['required', Rule::in([
                 'text', 'number', 'email', 'phone', 'date', 'select', 'radio', 'checkbox',
-                'textarea', 'rating', 'signature', 'file', 'document',
+                'textarea', 'rating', 'signature', 'file', 'document', 'description',
             ])],
             'form_pages.*.fields.*.required' => ['nullable', 'boolean'],
             'form_pages.*.fields.*.options' => ['nullable', 'array'],
             'form_pages.*.fields.*.options.*' => ['string', 'max:255'],
-            'form_pages.*.fields.*.help_text' => ['nullable', 'string', 'max:500'],
+            'form_pages.*.fields.*.help_text' => ['nullable', 'string', 'max:2000'],
             'form_pages.*.fields.*.min' => ['nullable', 'numeric'],
             'form_pages.*.fields.*.max' => ['nullable', 'numeric'],
             'form_pages.*.fields.*.error_message' => ['nullable', 'string', 'max:255'],

@@ -33,6 +33,7 @@ import {
     OPTION_FIELD_TYPES,
     REGISTRATION_FIELD_TYPES,
     RESERVED_FIELD_KEYS,
+    isInputField,
 } from '@/types/registration-category';
 import type { RegistrationField } from '@/types/registration-category';
 import { OptionEditor } from './option-editor';
@@ -127,6 +128,9 @@ function SortableFieldRow({
 
     const style = { transform: CSS.Transform.toString(transform), transition };
     const isReserved = RESERVED_FIELD_KEYS.includes(field.key);
+    // A description block has no answer, so key / required / error message
+    // are meaningless for it — the editor collapses to heading + body text.
+    const isDisplayOnly = !isInputField(field);
     const typeLabel =
         REGISTRATION_FIELD_TYPES.find((t) => t.value === field.type)?.label ??
         field.type;
@@ -204,37 +208,45 @@ function SortableFieldRow({
                 <FieldGroup className="border-t px-3 py-3">
                     <div className="grid grid-cols-2 gap-2">
                         <Field>
-                            <FieldLabel>Label</FieldLabel>
+                            <FieldLabel>
+                                {isDisplayOnly ? 'Heading' : 'Label'}
+                            </FieldLabel>
                             <Input
                                 value={field.label}
                                 onChange={(e) =>
                                     onChange({ label: e.target.value })
                                 }
-                                placeholder="e.g. Shirt Size"
-                            />
-                        </Field>
-                        <Field>
-                            <FieldLabel>
-                                Key{' '}
-                                {isReserved && (
-                                    <span className="font-normal text-muted-foreground">
-                                        (built-in)
-                                    </span>
-                                )}
-                            </FieldLabel>
-                            <Input
-                                value={field.key}
-                                disabled={isReserved}
-                                onChange={(e) =>
-                                    onChange({
-                                        key: e.target.value
-                                            .toLowerCase()
-                                            .replace(/[^a-z0-9_]/g, '_'),
-                                    })
+                                placeholder={
+                                    isDisplayOnly
+                                        ? 'e.g. Before you continue'
+                                        : 'e.g. Shirt Size'
                                 }
-                                placeholder="key, e.g. shirt_size"
                             />
                         </Field>
+                        {!isDisplayOnly && (
+                            <Field>
+                                <FieldLabel>
+                                    Key{' '}
+                                    {isReserved && (
+                                        <span className="font-normal text-muted-foreground">
+                                            (built-in)
+                                        </span>
+                                    )}
+                                </FieldLabel>
+                                <Input
+                                    value={field.key}
+                                    disabled={isReserved}
+                                    onChange={(e) =>
+                                        onChange({
+                                            key: e.target.value
+                                                .toLowerCase()
+                                                .replace(/[^a-z0-9_]/g, '_'),
+                                        })
+                                    }
+                                    placeholder="key, e.g. shirt_size"
+                                />
+                            </Field>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
@@ -242,11 +254,15 @@ function SortableFieldRow({
                             <FieldLabel>Type</FieldLabel>
                             <Select
                                 value={field.type}
-                                onValueChange={(value) =>
-                                    onChange({
-                                        type: value as DraftField['type'],
-                                    })
-                                }
+                                onValueChange={(value) => {
+                                    const type = value as DraftField['type'];
+
+                                    onChange(
+                                        isInputField({ type })
+                                            ? { type }
+                                            : { type, required: false },
+                                    );
+                                }}
                             >
                                 <SelectTrigger className="w-full">
                                     <SelectValue />
@@ -263,20 +279,24 @@ function SortableFieldRow({
                                 </SelectContent>
                             </Select>
                         </Field>
-                        <Field
-                            orientation="horizontal"
-                            className="items-center pt-6"
-                        >
-                            <Checkbox
-                                checked={field.required}
-                                onCheckedChange={(checked) =>
-                                    onChange({ required: Boolean(checked) })
-                                }
-                            />
-                            <FieldLabel className="font-normal">
-                                Required
-                            </FieldLabel>
-                        </Field>
+                        {!isDisplayOnly && (
+                            <Field
+                                orientation="horizontal"
+                                className="items-center pt-6"
+                            >
+                                <Checkbox
+                                    checked={field.required}
+                                    onCheckedChange={(checked) =>
+                                        onChange({
+                                            required: Boolean(checked),
+                                        })
+                                    }
+                                />
+                                <FieldLabel className="font-normal">
+                                    Required
+                                </FieldLabel>
+                            </Field>
+                        )}
                     </div>
 
                     {OPTION_FIELD_TYPES.includes(field.type) && (
@@ -339,28 +359,46 @@ function SortableFieldRow({
                         </Field>
                     )}
 
-                    <Field>
-                        <FieldLabel>Help text</FieldLabel>
-                        <Input
-                            value={field.help_text ?? ''}
-                            onChange={(e) =>
-                                onChange({ help_text: e.target.value })
-                            }
-                            placeholder="Optional hint shown under the field"
-                        />
-                    </Field>
+                    {isDisplayOnly ? (
+                        <Field>
+                            <FieldLabel>Text</FieldLabel>
+                            <Textarea
+                                value={field.help_text ?? ''}
+                                onChange={(e) =>
+                                    onChange({ help_text: e.target.value })
+                                }
+                                placeholder="Instructions, notes or context shown to the participant. Nothing to fill in."
+                                className="min-h-24"
+                            />
+                        </Field>
+                    ) : (
+                        <>
+                            <Field>
+                                <FieldLabel>Help text</FieldLabel>
+                                <Input
+                                    value={field.help_text ?? ''}
+                                    onChange={(e) =>
+                                        onChange({ help_text: e.target.value })
+                                    }
+                                    placeholder="Optional hint shown under the field"
+                                />
+                            </Field>
 
-                    <Field>
-                        <FieldLabel>Custom error message</FieldLabel>
-                        <Textarea
-                            value={field.error_message ?? ''}
-                            onChange={(e) =>
-                                onChange({ error_message: e.target.value })
-                            }
-                            placeholder="Shown instead of the default message when this field fails validation"
-                            className="min-h-16"
-                        />
-                    </Field>
+                            <Field>
+                                <FieldLabel>Custom error message</FieldLabel>
+                                <Textarea
+                                    value={field.error_message ?? ''}
+                                    onChange={(e) =>
+                                        onChange({
+                                            error_message: e.target.value,
+                                        })
+                                    }
+                                    placeholder="Shown instead of the default message when this field fails validation"
+                                    className="min-h-16"
+                                />
+                            </Field>
+                        </>
+                    )}
                 </FieldGroup>
             )}
         </div>

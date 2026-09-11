@@ -13,7 +13,8 @@ export type RegistrationFieldType =
     | 'rating'
     | 'signature'
     | 'file'
-    | 'document';
+    | 'document'
+    | 'description';
 
 export interface RegistrationField {
     key: string;
@@ -21,6 +22,7 @@ export interface RegistrationField {
     type: RegistrationFieldType;
     required: boolean;
     options?: string[];
+    /** For `description` blocks this is the body text shown under the heading. */
     help_text?: string | null;
     /** number type only */
     min?: number | null;
@@ -102,10 +104,24 @@ export const REGISTRATION_FIELD_TYPES: {
     { value: 'signature', label: 'Signature' },
     { value: 'file', label: 'Photo upload' },
     { value: 'document', label: 'Document upload (PDF, Word)' },
+    { value: 'description', label: 'Description' },
 ];
 
 /** Field types where `options` (comma-separated choices) apply. */
 export const OPTION_FIELD_TYPES: RegistrationFieldType[] = ['select', 'radio'];
+
+/**
+ * Field types that only display text on the form and never collect a value —
+ * skipped by validation, submission, exports and any "pick a field" list.
+ * Mirrors RegistrationCategory::DISPLAY_ONLY_TYPES.
+ */
+export const DISPLAY_ONLY_FIELD_TYPES: RegistrationFieldType[] = [
+    'description',
+];
+
+export function isInputField(field: Pick<RegistrationField, 'type'>): boolean {
+    return !DISPLAY_ONLY_FIELD_TYPES.includes(field.type);
+}
 
 /** Mirrors RegistrationController::RESERVED_KEYS — these already have dedicated fixed bindings. */
 export const RESERVED_FIELD_KEYS = ['name', 'email', 'phone', 'photo'];

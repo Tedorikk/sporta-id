@@ -9,7 +9,7 @@
 - Status: {{ str($registration->status)->headline() }}
 
 @if (! empty($registration->form_data))
-@foreach ($registration->registrationCategory->allFields() as $field)
+@foreach ($registration->registrationCategory->inputFields() as $field)
 @continue(! array_key_exists($field['key'], $registration->form_data ?? []))
 - {{ $field['label'] }}: {{ $registration->form_data[$field['key']] }}
 @endforeach

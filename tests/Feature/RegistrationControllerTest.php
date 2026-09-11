@@ -115,6 +115,27 @@ test('a document field accepts an uploaded file url', function () {
         ->toBe(['id_proof' => 'http://localhost/storage/uploads/documents/example.pdf']);
 });
 
+test('a description block is never validated or stored', function () {
+    $category = makeRegistrationCategory([
+        'form_pages' => [
+            ['key' => 'page-1', 'title' => 'Details', 'fields' => [
+                // `required` is meaningless on a text-only block; it must not
+                // turn into a "please fill in" rejection.
+                ['key' => 'rules', 'label' => 'Read this first', 'type' => 'description', 'required' => true, 'help_text' => 'Bring your ID on race day.'],
+                ['key' => 'shirt_size', 'label' => 'Shirt Size', 'type' => 'select', 'required' => true, 'options' => ['S', 'M', 'L']],
+            ]],
+        ],
+    ]);
+
+    $this->post(route('registrations.store', [$category->event, $category]), [
+        'name' => 'Jane Doe',
+        'form_data' => ['shirt_size' => 'M', 'rules' => 'sneaky value'],
+    ])->assertOk();
+
+    expect(Registration::where('name', 'Jane Doe')->firstOrFail()->form_data)
+        ->toBe(['shirt_size' => 'M']);
+});
+
 test('an email-typed field rejects an invalid email', function () {
     $category = makeRegistrationCategory();
 

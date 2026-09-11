@@ -50,6 +50,7 @@ import type {
     RegistrationStatus,
 } from '@/types/registration';
 import type { RegistrationCategory } from '@/types/registration-category';
+import { isInputField } from '@/types/registration-category';
 import { PrintSelectionBar } from './components/print-selection-bar';
 
 interface Props {
@@ -191,7 +192,7 @@ export default function RegistrationCategoryShow({
 
     const customFields = (registrationCategory.form_pages ?? [])
         .flatMap((page) => page.fields)
-        .filter((f) => !RESERVED_KEYS.includes(f.key));
+        .filter((f) => isInputField(f) && !RESERVED_KEYS.includes(f.key));
 
     // Batch print sheet for the whole category; append `?ids=` to narrow it.
     const idCardPrintUrl = `/dashboard/events/${event.id}/registration-categories/${registrationCategory.id}/id-cards`;

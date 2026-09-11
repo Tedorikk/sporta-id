@@ -174,7 +174,7 @@ class RegistrationController extends Controller
         ];
         $messages = [];
 
-        foreach ($registrationCategory->allFields() as $field) {
+        foreach ($registrationCategory->inputFields() as $field) {
             $key = $field['key'];
 
             if ($key === 'name') {

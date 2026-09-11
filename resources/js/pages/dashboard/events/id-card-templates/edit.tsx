@@ -69,6 +69,7 @@ import { BINDABLE_FIELDS } from '@/types/card-template';
 import type { Event } from '@/types/event';
 import type { Registration } from '@/types/registration';
 import type { RegistrationCategory } from '@/types/registration-category';
+import { isInputField } from '@/types/registration-category';
 
 interface Props {
     event: Event;
@@ -272,7 +273,11 @@ export default function CardTemplateEdit({
         );
 
         return fields
-            .filter((field) => !RESERVED_FIELD_KEYS.includes(field.key))
+            .filter(
+                (field) =>
+                    isInputField(field) &&
+                    !RESERVED_FIELD_KEYS.includes(field.key),
+            )
             .map((field) => ({
                 value: `form_data.${field.key}`,
                 label: field.label,

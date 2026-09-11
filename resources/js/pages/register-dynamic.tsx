@@ -43,6 +43,7 @@ import type {
     RegistrationCategory,
     RegistrationField,
 } from '@/types/registration-category';
+import { isInputField } from '@/types/registration-category';
 
 interface Props {
     event: Event;
@@ -294,12 +295,16 @@ function withRequiredEmail(pages: FormPage[], isPaid: boolean): FormPage[] {
 }
 const PHONE_REGEX = /^[0-9+\-\s()]{6,25}$/;
 
-function allFieldsOf(pages: FormPage[]): RegistrationField[] {
-    return pages.flatMap((page) => page.fields);
+/**
+ * Every field that actually collects an answer. Description blocks live in
+ * `page.fields` for ordering, but have no value to validate, default or send.
+ */
+function inputFieldsOf(pages: FormPage[]): RegistrationField[] {
+    return pages.flatMap((page) => page.fields.filter(isInputField));
 }
 
 function buildSchema(pages: FormPage[]) {
-    const fields = allFieldsOf(pages);
+    const fields = inputFieldsOf(pages);
     const shape: Record<string, z.ZodTypeAny> = {
         name: z.string().min(1, 'Input a name').max(255),
     };
@@ -388,7 +393,7 @@ function buildSchema(pages: FormPage[]) {
 function defaultValuesFor(pages: FormPage[]) {
     const defaults: Record<string, string | boolean> = { name: '' };
 
-    allFieldsOf(pages).forEach((f) => {
+    inputFieldsOf(pages).forEach((f) => {
         if (f.key === 'name') {
             return;
         }
@@ -483,6 +488,34 @@ function ChoiceGroup({
                     </label>
                 );
             })}
+        </div>
+    );
+}
+
+/**
+ * Read-only text the organizer dropped between questions — instructions,
+ * a note, a warning. Styled as a callout with the form's accent so it reads
+ * as guidance rather than as a question that's missing its input.
+ */
+function DescriptionBlock({ field }: { field: RegistrationField }) {
+    const body = field.help_text?.trim();
+
+    return (
+        <div
+            role="note"
+            className="rounded-md border-l-4 border-[var(--accent)] bg-[var(--accent)]/5 px-4 py-3 text-sm"
+        >
+            {field.label && <p className="font-semibold">{field.label}</p>}
+            {body && (
+                <p
+                    className={cn(
+                        'whitespace-pre-line text-neutral-700',
+                        field.label && 'mt-1',
+                    )}
+                >
+                    {body}
+                </p>
+            )}
         </div>
     );
 }
@@ -655,7 +688,7 @@ export default function RegisterDynamic({
         };
         const formData = payload.form_data as Record<string, string | boolean>;
 
-        allFieldsOf(pages).forEach((f) => {
+        inputFieldsOf(pages).forEach((f) => {
             if (f.key === 'name') {
                 return;
             }
@@ -691,7 +724,7 @@ export default function RegisterDynamic({
         }
 
         const keys = currentPage.fields
-            .filter((f) => f.key !== 'name')
+            .filter((f) => isInputField(f) && f.key !== 'name')
             .map((f) => f.key) as never[];
         const namesToCheck =
             pageIndex === 0 ? (['name', ...keys] as never[]) : keys;
@@ -905,248 +938,277 @@ export default function RegisterDynamic({
 
                             {(currentPage?.fields ?? [])
                                 .filter((f) => f.key !== 'name')
-                                .map((f) => (
-                                    <Controller
-                                        key={f.key}
-                                        name={f.key as never}
-                                        control={control}
-                                        render={({ field, fieldState }) => (
-                                            <Field
-                                                data-invalid={
-                                                    fieldState.invalid
-                                                }
-                                            >
-                                                <FieldLabel htmlFor={f.key}>
-                                                    {f.label}
-                                                    {!f.required && (
-                                                        <span className="font-normal text-muted-foreground">
-                                                            {' '}
-                                                            (Optional)
-                                                        </span>
-                                                    )}
-                                                </FieldLabel>
+                                .map((f) =>
+                                    !isInputField(f) ? (
+                                        <DescriptionBlock
+                                            key={f.key}
+                                            field={f}
+                                        />
+                                    ) : (
+                                        <Controller
+                                            key={f.key}
+                                            name={f.key as never}
+                                            control={control}
+                                            render={({ field, fieldState }) => (
+                                                <Field
+                                                    data-invalid={
+                                                        fieldState.invalid
+                                                    }
+                                                >
+                                                    <FieldLabel htmlFor={f.key}>
+                                                        {f.label}
+                                                        {!f.required && (
+                                                            <span className="font-normal text-muted-foreground">
+                                                                {' '}
+                                                                (Optional)
+                                                            </span>
+                                                        )}
+                                                    </FieldLabel>
 
-                                                {f.type === 'file' ? (
-                                                    <UploadImage
-                                                        value={
-                                                            field.value as string
-                                                        }
-                                                        ratio={4 / 5}
-                                                        uploadUrl="/public-upload/image"
-                                                        deleteUrl="/public-upload/image"
-                                                        onChange={(value) =>
-                                                            field.onChange(
-                                                                value ?? '',
-                                                            )
-                                                        }
-                                                        onError={(error) =>
-                                                            setError(
-                                                                f.key as never,
-                                                                {
-                                                                    type: 'manual',
-                                                                    message:
-                                                                        typeof error ===
-                                                                        'string'
-                                                                            ? error
-                                                                            : 'Upload failed',
-                                                                },
-                                                            )
-                                                        }
-                                                        enableCrop
-                                                        className="rounded-2xl border-2 border-black"
-                                                    />
-                                                ) : f.type === 'document' ? (
-                                                    <UploadDocument
-                                                        value={
-                                                            field.value as string
-                                                        }
-                                                        uploadUrl="/public-upload/document"
-                                                        deleteUrl="/public-upload/document"
-                                                        onChange={(value) =>
-                                                            field.onChange(
-                                                                value ?? '',
-                                                            )
-                                                        }
-                                                        onError={(error) =>
-                                                            setError(
-                                                                f.key as never,
-                                                                {
-                                                                    type: 'manual',
-                                                                    message:
-                                                                        typeof error ===
-                                                                        'string'
-                                                                            ? error
-                                                                            : 'Upload failed',
-                                                                },
-                                                            )
-                                                        }
-                                                        className="rounded-2xl border-2 border-black"
-                                                    />
-                                                ) : f.type === 'signature' ? (
-                                                    <SignaturePad
-                                                        value={
-                                                            field.value as string
-                                                        }
-                                                        disabled={isSaving}
-                                                        onChange={(value) =>
-                                                            field.onChange(
-                                                                value ?? '',
-                                                            )
-                                                        }
-                                                        onError={(error) =>
-                                                            setError(
-                                                                f.key as never,
-                                                                {
-                                                                    type: 'manual',
-                                                                    message:
-                                                                        error,
-                                                                },
-                                                            )
-                                                        }
-                                                    />
-                                                ) : f.type === 'rating' ? (
-                                                    <RatingInput
-                                                        value={
-                                                            field.value as string
-                                                        }
-                                                        onChange={
-                                                            field.onChange
-                                                        }
-                                                        max={f.max_rating ?? 5}
-                                                        disabled={isSaving}
-                                                    />
-                                                ) : f.type === 'textarea' ? (
-                                                    <Textarea
-                                                        {...field}
-                                                        id={f.key}
-                                                        value={
-                                                            field.value as string
-                                                        }
-                                                        disabled={isSaving}
-                                                        style={controlStyle}
-                                                        className="border-2 border-black focus-visible:ring-[var(--accent)]"
-                                                    />
-                                                ) : f.type === 'select' ? (
-                                                    <Select
-                                                        value={
-                                                            field.value as string
-                                                        }
-                                                        onValueChange={
-                                                            field.onChange
-                                                        }
-                                                        disabled={isSaving}
-                                                    >
-                                                        <SelectTrigger
+                                                    {f.type === 'file' ? (
+                                                        <UploadImage
+                                                            value={
+                                                                field.value as string
+                                                            }
+                                                            ratio={4 / 5}
+                                                            uploadUrl="/public-upload/image"
+                                                            deleteUrl="/public-upload/image"
+                                                            onChange={(value) =>
+                                                                field.onChange(
+                                                                    value ?? '',
+                                                                )
+                                                            }
+                                                            onError={(error) =>
+                                                                setError(
+                                                                    f.key as never,
+                                                                    {
+                                                                        type: 'manual',
+                                                                        message:
+                                                                            typeof error ===
+                                                                            'string'
+                                                                                ? error
+                                                                                : 'Upload failed',
+                                                                    },
+                                                                )
+                                                            }
+                                                            enableCrop
+                                                            className="rounded-2xl border-2 border-black"
+                                                        />
+                                                    ) : f.type ===
+                                                      'document' ? (
+                                                        <UploadDocument
+                                                            value={
+                                                                field.value as string
+                                                            }
+                                                            uploadUrl="/public-upload/document"
+                                                            deleteUrl="/public-upload/document"
+                                                            onChange={(value) =>
+                                                                field.onChange(
+                                                                    value ?? '',
+                                                                )
+                                                            }
+                                                            onError={(error) =>
+                                                                setError(
+                                                                    f.key as never,
+                                                                    {
+                                                                        type: 'manual',
+                                                                        message:
+                                                                            typeof error ===
+                                                                            'string'
+                                                                                ? error
+                                                                                : 'Upload failed',
+                                                                    },
+                                                                )
+                                                            }
+                                                            className="rounded-2xl border-2 border-black"
+                                                        />
+                                                    ) : f.type ===
+                                                      'signature' ? (
+                                                        <SignaturePad
+                                                            value={
+                                                                field.value as string
+                                                            }
+                                                            disabled={isSaving}
+                                                            onChange={(value) =>
+                                                                field.onChange(
+                                                                    value ?? '',
+                                                                )
+                                                            }
+                                                            onError={(error) =>
+                                                                setError(
+                                                                    f.key as never,
+                                                                    {
+                                                                        type: 'manual',
+                                                                        message:
+                                                                            error,
+                                                                    },
+                                                                )
+                                                            }
+                                                        />
+                                                    ) : f.type === 'rating' ? (
+                                                        <RatingInput
+                                                            value={
+                                                                field.value as string
+                                                            }
+                                                            onChange={
+                                                                field.onChange
+                                                            }
+                                                            max={
+                                                                f.max_rating ??
+                                                                5
+                                                            }
+                                                            disabled={isSaving}
+                                                        />
+                                                    ) : f.type ===
+                                                      'textarea' ? (
+                                                        <Textarea
+                                                            {...field}
                                                             id={f.key}
+                                                            value={
+                                                                field.value as string
+                                                            }
+                                                            disabled={isSaving}
                                                             style={controlStyle}
-                                                            className="w-full cursor-pointer border-2 border-black font-semibold focus-visible:ring-[var(--accent)]"
+                                                            className="border-2 border-black focus-visible:ring-[var(--accent)]"
+                                                        />
+                                                    ) : f.type === 'select' ? (
+                                                        <Select
+                                                            value={
+                                                                field.value as string
+                                                            }
+                                                            onValueChange={
+                                                                field.onChange
+                                                            }
+                                                            disabled={isSaving}
                                                         >
-                                                            <SelectValue placeholder="Select an option" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {(
+                                                            <SelectTrigger
+                                                                id={f.key}
+                                                                style={
+                                                                    controlStyle
+                                                                }
+                                                                className="w-full cursor-pointer border-2 border-black font-semibold focus-visible:ring-[var(--accent)]"
+                                                            >
+                                                                <SelectValue placeholder="Select an option" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {(
+                                                                    f.options ??
+                                                                    []
+                                                                ).map(
+                                                                    (
+                                                                        option,
+                                                                    ) => (
+                                                                        <SelectItem
+                                                                            key={
+                                                                                option
+                                                                            }
+                                                                            value={
+                                                                                option
+                                                                            }
+                                                                            className="cursor-pointer"
+                                                                        >
+                                                                            {
+                                                                                option
+                                                                            }
+                                                                        </SelectItem>
+                                                                    ),
+                                                                )}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    ) : f.type === 'radio' ? (
+                                                        <ChoiceGroup
+                                                            name={f.key}
+                                                            label={f.label}
+                                                            options={
                                                                 f.options ?? []
-                                                            ).map((option) => (
-                                                                <SelectItem
-                                                                    key={option}
-                                                                    value={
-                                                                        option
-                                                                    }
-                                                                    className="cursor-pointer"
-                                                                >
-                                                                    {option}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                ) : f.type === 'radio' ? (
-                                                    <ChoiceGroup
-                                                        name={f.key}
-                                                        label={f.label}
-                                                        options={
-                                                            f.options ?? []
-                                                        }
-                                                        value={
-                                                            field.value as string
-                                                        }
-                                                        onChange={
-                                                            field.onChange
-                                                        }
-                                                        disabled={isSaving}
-                                                        controlStyle={
-                                                            controlStyle
-                                                        }
-                                                        invalid={
-                                                            fieldState.invalid
-                                                        }
-                                                    />
-                                                ) : f.type === 'checkbox' ? (
-                                                    <BooleanChoice
-                                                        id={f.key}
-                                                        label={
-                                                            f.help_text ?? 'Yes'
-                                                        }
-                                                        checked={
-                                                            field.value as boolean
-                                                        }
-                                                        onChange={
-                                                            field.onChange
-                                                        }
-                                                        disabled={isSaving}
-                                                        controlStyle={
-                                                            controlStyle
-                                                        }
-                                                    />
-                                                ) : (
-                                                    <Input
-                                                        {...field}
-                                                        id={f.key}
-                                                        value={
-                                                            field.value as string
-                                                        }
-                                                        type={
-                                                            f.type === 'date'
-                                                                ? 'date'
-                                                                : f.type ===
-                                                                    'number'
-                                                                  ? 'text'
-                                                                  : f.type ===
-                                                                      'email'
-                                                                    ? 'email'
-                                                                    : 'text'
-                                                        }
-                                                        inputMode={
-                                                            f.type === 'number'
-                                                                ? 'decimal'
-                                                                : undefined
-                                                        }
-                                                        aria-invalid={
-                                                            fieldState.invalid
-                                                        }
-                                                        autoComplete="off"
-                                                        disabled={isSaving}
-                                                        style={controlStyle}
-                                                        className="border-2 border-black focus-visible:ring-[var(--accent)]"
-                                                    />
-                                                )}
-
-                                                {f.help_text &&
-                                                    f.type !== 'checkbox' && (
-                                                        <FieldDescription>
-                                                            {f.help_text}
-                                                        </FieldDescription>
+                                                            }
+                                                            value={
+                                                                field.value as string
+                                                            }
+                                                            onChange={
+                                                                field.onChange
+                                                            }
+                                                            disabled={isSaving}
+                                                            controlStyle={
+                                                                controlStyle
+                                                            }
+                                                            invalid={
+                                                                fieldState.invalid
+                                                            }
+                                                        />
+                                                    ) : f.type ===
+                                                      'checkbox' ? (
+                                                        <BooleanChoice
+                                                            id={f.key}
+                                                            label={
+                                                                f.help_text ??
+                                                                'Yes'
+                                                            }
+                                                            checked={
+                                                                field.value as boolean
+                                                            }
+                                                            onChange={
+                                                                field.onChange
+                                                            }
+                                                            disabled={isSaving}
+                                                            controlStyle={
+                                                                controlStyle
+                                                            }
+                                                        />
+                                                    ) : (
+                                                        <Input
+                                                            {...field}
+                                                            id={f.key}
+                                                            value={
+                                                                field.value as string
+                                                            }
+                                                            type={
+                                                                f.type ===
+                                                                'date'
+                                                                    ? 'date'
+                                                                    : f.type ===
+                                                                        'number'
+                                                                      ? 'text'
+                                                                      : f.type ===
+                                                                          'email'
+                                                                        ? 'email'
+                                                                        : 'text'
+                                                            }
+                                                            inputMode={
+                                                                f.type ===
+                                                                'number'
+                                                                    ? 'decimal'
+                                                                    : undefined
+                                                            }
+                                                            aria-invalid={
+                                                                fieldState.invalid
+                                                            }
+                                                            autoComplete="off"
+                                                            disabled={isSaving}
+                                                            style={controlStyle}
+                                                            className="border-2 border-black focus-visible:ring-[var(--accent)]"
+                                                        />
                                                     )}
-                                                {fieldState.invalid && (
-                                                    <FieldError
-                                                        errors={[
-                                                            fieldState.error,
-                                                        ]}
-                                                    />
-                                                )}
-                                            </Field>
-                                        )}
-                                    />
-                                ))}
+
+                                                    {f.help_text &&
+                                                        f.type !==
+                                                            'checkbox' && (
+                                                            <FieldDescription>
+                                                                {f.help_text}
+                                                            </FieldDescription>
+                                                        )}
+                                                    {fieldState.invalid && (
+                                                        <FieldError
+                                                            errors={[
+                                                                fieldState.error,
+                                                            ]}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            )}
+                                        />
+                                    ),
+                                )}
 
                             <div className="mt-2 flex gap-2">
                                 {!isFirstPage && (

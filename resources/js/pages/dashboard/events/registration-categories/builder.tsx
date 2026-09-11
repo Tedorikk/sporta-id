@@ -15,6 +15,7 @@ import type {
 import {
     OPTION_FIELD_TYPES,
     REGISTRATION_FIELD_TYPES,
+    isInputField,
 } from '@/types/registration-category';
 import type { DraftField } from './components/builder/field-list';
 import { FieldList } from './components/builder/field-list';
@@ -261,7 +262,9 @@ export default function RegistrationCategoryBuilder({
     const fieldOptions = [
         ...DUPLICATE_FIELD_RESERVED_OPTIONS,
         ...pages.flatMap((p) =>
-            p.fields.map((f) => ({ value: f.key, label: f.label || f.key })),
+            p.fields
+                .filter(isInputField)
+                .map((f) => ({ value: f.key, label: f.label || f.key })),
         ),
     ];
 
