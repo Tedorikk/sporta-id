@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BasketballEvent;
 use App\Models\Event;
+use App\Models\RunningEvent;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -145,6 +146,24 @@ class EventController extends Controller
         $event->load('specific');
 
         $extra = [];
+
+        if ($event->specific instanceof RunningEvent) {
+            $extra = [
+                // The sign-up forms a distance may be linked to, for the
+                // distance dialog's picker.
+                'registration_category_options' => $event->registrationCategories()
+                    ->orderBy('name')
+                    ->get(['id', 'name']),
+                'running_categories' => $event->specific->categories()
+                    ->with('registrationCategory:id,name')
+                    ->withCount([
+                        'participants',
+                        'participants as finishers_count' => fn ($query) => $query->finishers(),
+                    ])
+                    ->orderBy('distance_meters')
+                    ->get(),
+            ];
+        }
 
         if ($event->specific instanceof BasketballEvent) {
             $event->specific->load('categories');

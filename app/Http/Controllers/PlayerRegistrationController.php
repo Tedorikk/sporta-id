@@ -30,7 +30,10 @@ class PlayerRegistrationController extends Controller
 
         // The generic registration_categories system supersedes the basketball
         // form below, so it wins whenever the event sells through it.
-        $categories = $event->registrationCategories()->orderBy('name')->get();
+        $categories = $event->registrationCategories()
+            ->with('runningCategory.runningEvent')
+            ->orderBy('name')
+            ->get();
 
         if ($categories->isNotEmpty()) {
             $available = $categories->filter(

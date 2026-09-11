@@ -12,7 +12,9 @@ class LandingController extends Controller
     {
         $events = Event::query()
             ->where('is_published', true)
-            ->with(['registrationCategories' => fn ($query) => $query->orderBy('name')])
+            ->with(['registrationCategories' => fn ($query) => $query
+                ->with('runningCategory.runningEvent')
+                ->orderBy('name')])
             // Price range powers the "from Rp x" line on every event card — a
             // visitor (and Midtrans's reviewer) must be able to see what an
             // event costs before clicking into it.

@@ -26,11 +26,13 @@ import { cn } from '@/lib/utils';
 import events from '@/routes/events';
 import type { Event } from '@/types/event';
 import { BasketballManagement } from './basketball/basketball-management';
+import { RunningManagement } from './running/running-management';
 
 export default function ShowEvent({ event }: { event: Event }) {
     const [isDeleting, setIsDeleting] = useState(false);
     const [isTogglingRegistration, setIsTogglingRegistration] = useState(false);
     const registrationOpen = event.specific?.registration_open ?? true;
+    const isRace = event.category === 'RUNNING';
 
     const handleDelete = () => {
         setIsDeleting(true);
@@ -49,7 +51,7 @@ export default function ShowEvent({ event }: { event: Event }) {
     const handleToggleRegistration = (checked: boolean) => {
         setIsTogglingRegistration(true);
         router.put(
-            `/events/${event.id}/basketball`,
+            `/events/${event.id}/${isRace ? 'running' : 'basketball'}`,
             { registration_open: checked },
             {
                 preserveScroll: true,
@@ -154,25 +156,44 @@ export default function ShowEvent({ event }: { event: Event }) {
                                 <Link2 className="mr-2 h-4 w-4" />
                                 Copy Registration Link
                             </Button>
-                            <div className="flex items-center gap-2 rounded-md border px-3 py-2">
-                                <Switch
-                                    id="registration-toggle"
-                                    checked={registrationOpen}
-                                    onCheckedChange={handleToggleRegistration}
-                                    disabled={isTogglingRegistration}
-                                />
-                                <label
-                                    htmlFor="registration-toggle"
-                                    className="cursor-pointer text-sm font-medium select-none"
-                                >
-                                    Registration{' '}
-                                    {registrationOpen ? 'Open' : 'Closed'}
-                                </label>
-                            </div>
                         </>
+                    )}
+                    {/* Both modules carry a master switch for entries; only a
+                        module that has actually been set up can answer for it. */}
+                    {event.specific && (
+                        <div className="flex items-center gap-2 rounded-md border px-3 py-2">
+                            <Switch
+                                id="registration-toggle"
+                                checked={registrationOpen}
+                                onCheckedChange={handleToggleRegistration}
+                                disabled={isTogglingRegistration}
+                            />
+                            <label
+                                htmlFor="registration-toggle"
+                                className="cursor-pointer text-sm font-medium select-none"
+                            >
+                                Registration{' '}
+                                {registrationOpen ? 'Open' : 'Closed'}
+                            </label>
+                        </div>
                     )}
                 </div>
             </section>
+
+            {/* Rendered only for a race, for the same reason as the
+                basketball block below. */}
+            {isRace && (
+                <div className="grid min-w-0 grid-cols-1 gap-8">
+                    <RunningManagement
+                        key={event.id}
+                        event={event}
+                        categories={event.running_categories ?? []}
+                        registrationCategories={
+                            event.registration_category_options ?? []
+                        }
+                    />
+                </div>
+            )}
 
             {/* Rendered only for basketball: an empty wrapper still costs a
                 gap, which reads as dead space on a phone. */}

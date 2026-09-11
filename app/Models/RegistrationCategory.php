@@ -77,6 +77,12 @@ class RegistrationCategory extends Model
         return $this->hasOne(BasketballEventCategory::class);
     }
 
+    /** @return HasOne<RunningEventCategory, $this> */
+    public function runningCategory(): HasOne
+    {
+        return $this->hasOne(RunningEventCategory::class);
+    }
+
     public function isFree(): bool
     {
         return $this->price === null || (float) $this->price === 0.0;
@@ -85,6 +91,14 @@ class RegistrationCategory extends Model
     public function isOpen(): bool
     {
         if (! $this->registration_open) {
+            return false;
+        }
+
+        // A race closes entries for every one of its distances at once, so
+        // the switch on the running event outranks this category's own.
+        $this->loadMissing('runningCategory.runningEvent');
+
+        if ($this->runningCategory?->runningEvent?->registration_open === false) {
             return false;
         }
 
