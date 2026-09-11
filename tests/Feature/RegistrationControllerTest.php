@@ -200,6 +200,11 @@ test('a paid category creates a pending-payment registration with a snap token',
     ]);
 
     $category = makeRegistrationCategory(['price' => '150000']);
+    // Midtrans caps an item name at 50 characters, and the event name is what
+    // gets prepended to the category name — so a faker-generated event name
+    // long enough to truncate "5K Run" away would fail the assertion below
+    // for reasons that have nothing to do with what this test is about.
+    $category->event->update(['name' => 'Sporta City Run']);
 
     $this->post(route('registrations.store', [$category->event, $category]), [
         'name' => 'Jane Doe',
