@@ -58,6 +58,9 @@ class HandleInertiaRequests extends Middleware
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'flash' => [
                 'toast' => fn () => $request->session()->get('toast'),
+                // Per-row failures from a bulk upload: too many to be a toast,
+                // and they belong next to the upload control that produced them.
+                'import_errors' => fn () => $request->session()->get('import_errors'),
             ],
         ];
     }

@@ -39,6 +39,7 @@ use App\Http\Controllers\PlayerRegistrationController;
 use App\Http\Controllers\PoolController;
 use App\Http\Controllers\PublicEventController;
 use App\Http\Controllers\RaceParticipantController;
+use App\Http\Controllers\RaceResultController;
 use App\Http\Controllers\RegistrationCategoryController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\RegistrationQrController;
@@ -236,6 +237,11 @@ Route::middleware(['auth', 'verified', 'organization.current'])->group(function 
 
             Route::prefix('running-categories/{category}')->group(function () {
                 Route::post('bibs', [BibAssignmentController::class, 'store'])->name('race_bibs.assign');
+
+                Route::get('results', [RaceResultController::class, 'index'])->name('race_results.index');
+                Route::get('results/export', [RaceResultController::class, 'export'])->name('race_results.export');
+                Route::post('results/import', [RaceResultController::class, 'import'])->name('race_results.import');
+                Route::patch('results/{participant}', [RaceResultController::class, 'update'])->name('race_results.update');
 
                 Route::get('participants', [RaceParticipantController::class, 'index'])->name('race_participants.index');
                 Route::post('participants', [RaceParticipantController::class, 'store'])->name('race_participants.store');
