@@ -18,6 +18,11 @@ import { RegistrationIdCardCard } from '@/components/id-card/registration-id-car
 import { TeamIdCardCard } from '@/components/id-card/team-id-card-card';
 import { IdCardActions } from '@/components/id-card-actions';
 import { PublicPageHeader } from '@/components/public/public-page-header';
+import {
+    RosterBlock,
+    defaultRoster,
+    rosterSchema,
+} from '@/components/public/roster-block';
 import { SignaturePad } from '@/components/signature-pad';
 import { Button } from '@/components/ui/button';
 import {
@@ -51,7 +56,7 @@ import type {
     RegistrationCategory,
     RegistrationField,
 } from '@/types/registration-category';
-import { isInputField } from '@/types/registration-category';
+import { isInputField, isRosterField } from '@/types/registration-category';
 
 interface Props {
     event: Event;
@@ -331,6 +336,10 @@ function inputFieldsOf(pages: FormPage[]): RegistrationField[] {
     return pages.flatMap((page) => page.fields.filter(isInputField));
 }
 
+function rosterFieldOf(pages: FormPage[]): RegistrationField | undefined {
+    return pages.flatMap((page) => page.fields).find(isRosterField);
+}
+
 function buildSchema(pages: FormPage[]) {
     const fields = inputFieldsOf(pages);
     const shape: Record<string, z.ZodTypeAny> = {
@@ -344,6 +353,12 @@ function buildSchema(pages: FormPage[]) {
 
         shape[f.key] = f.type === 'checkbox' ? z.boolean() : z.string();
     });
+
+    const roster = rosterFieldOf(pages);
+
+    if (roster) {
+        shape.roster = rosterSchema(roster);
+    }
 
     return z.object(shape).superRefine((data, ctx) => {
         fields.forEach((f) => {
@@ -419,7 +434,7 @@ function buildSchema(pages: FormPage[]) {
 }
 
 function defaultValuesFor(pages: FormPage[]) {
-    const defaults: Record<string, string | boolean> = { name: '' };
+    const defaults: Record<string, unknown> = { name: '' };
 
     inputFieldsOf(pages).forEach((f) => {
         if (f.key === 'name') {
@@ -428,6 +443,12 @@ function defaultValuesFor(pages: FormPage[]) {
 
         defaults[f.key] = f.type === 'checkbox' ? false : '';
     });
+
+    const roster = rosterFieldOf(pages);
+
+    if (roster) {
+        defaults.roster = defaultRoster(roster);
+    }
 
     return defaults;
 }
@@ -665,11 +686,18 @@ export default function RegisterDynamic({
     const schema = useMemo(() => buildSchema(pages), [pages]);
     type FormValues = z.infer<typeof schema>;
 
-    const { control, handleSubmit, setError, trigger } = useForm<FormValues>({
+    const {
+        control,
+        handleSubmit,
+        setError,
+        trigger,
+        formState: { errors },
+    } = useForm<FormValues>({
         resolver: zodResolver(schema),
         defaultValues: defaultValuesFor(pages) as FormValues,
         mode: 'onChange',
     });
+    const rosterField = rosterFieldOf(pages);
 
     const isTeam = registrationCategory.subject_type === 'team';
     const isFreeCategory =
@@ -705,16 +733,13 @@ export default function RegisterDynamic({
     const onSubmit = (data: FormValues) => {
         setIsSaving(true);
 
-        const raw = data as Record<string, string | boolean>;
-        const payload: Record<
-            string,
-            string | boolean | Record<string, string | boolean>
-        > = {
+        const raw = data as Record<string, unknown>;
+        const payload: Record<string, unknown> = {
             name: raw.name,
             form_data: {},
             website: honeypot,
         };
-        const formData = payload.form_data as Record<string, string | boolean>;
+        const formData = payload.form_data as Record<string, unknown>;
 
         inputFieldsOf(pages).forEach((f) => {
             if (f.key === 'name') {
@@ -728,9 +753,15 @@ export default function RegisterDynamic({
             }
         });
 
+        // The roster block's members go up as their own array: the server
+        // turns them into the team sheet rather than storing them as answers.
+        if (rosterField) {
+            payload.roster = raw.roster;
+        }
+
         router.post(
             `/events/${event.id}/registration-categories/${registrationCategory.id}/register`,
-            payload,
+            payload as never,
             {
                 onFinish: () => setIsSaving(false),
                 onError: (errors) => {
@@ -753,9 +784,15 @@ export default function RegisterDynamic({
 
         const keys = currentPage.fields
             .filter((f) => isInputField(f) && f.key !== 'name')
-            .map((f) => f.key) as never[];
-        const namesToCheck =
-            pageIndex === 0 ? (['name', ...keys] as never[]) : keys;
+            .map((f) => f.key);
+
+        if (currentPage.fields.some(isRosterField)) {
+            keys.push('roster');
+        }
+
+        const namesToCheck = (
+            pageIndex === 0 ? ['name', ...keys] : keys
+        ) as never[];
         const valid = await trigger(namesToCheck);
 
         if (valid) {
@@ -967,7 +1004,24 @@ export default function RegisterDynamic({
                             {(currentPage?.fields ?? [])
                                 .filter((f) => f.key !== 'name')
                                 .map((f) =>
-                                    !isInputField(f) ? (
+                                    isRosterField(f) ? (
+                                        <RosterBlock
+                                            key={f.key}
+                                            field={f}
+                                            control={control}
+                                            errors={
+                                                (
+                                                    errors as Record<
+                                                        string,
+                                                        unknown
+                                                    >
+                                                ).roster as never
+                                            }
+                                            setError={setError}
+                                            disabled={isSaving}
+                                            controlStyle={controlStyle}
+                                        />
+                                    ) : !isInputField(f) ? (
                                         <DescriptionBlock
                                             key={f.key}
                                             field={f}

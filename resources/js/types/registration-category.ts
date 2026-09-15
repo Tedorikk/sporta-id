@@ -1,3 +1,5 @@
+import type { PlayerRole } from './player';
+
 export type RegistrationSubjectType = 'team' | 'individual';
 
 export type RegistrationFieldType =
@@ -14,7 +16,30 @@ export type RegistrationFieldType =
     | 'signature'
     | 'file'
     | 'document'
-    | 'description';
+    | 'description'
+    | 'roster';
+
+/** One role on a roster block and how many of it a team must/may enter. */
+export interface RosterSlot {
+    role: PlayerRole;
+    label: string;
+    min: number;
+    /** null = no cap (players still respect the tournament's max_player_per_team) */
+    max: number | null;
+}
+
+/** Mirrors RegistrationCategory::ROSTER_MEMBER_FIELD_TYPES. */
+export type RosterMemberFieldType =
+    'text' | 'number' | 'date' | 'select' | 'phone';
+
+/** An organiser-defined question asked of every roster member; answers land in players.extra. */
+export interface RosterMemberField {
+    key: string;
+    label: string;
+    type: RosterMemberFieldType;
+    required: boolean;
+    options?: string[];
+}
 
 export interface RegistrationField {
     key: string;
@@ -31,7 +56,58 @@ export interface RegistrationField {
     max_rating?: number | null;
     /** Overrides the generic "required" validation message for this field. */
     error_message?: string | null;
+    /** roster type only: the roles a team enters and how many of each */
+    slots?: RosterSlot[];
+    /** roster type only: extra questions per member */
+    member_fields?: RosterMemberField[];
 }
+
+/** What the public form submits per roster member; mirrors RosterService::memberRules(). */
+export interface RosterMemberInput {
+    role: PlayerRole;
+    name: string;
+    jersey_number: string;
+    position: string;
+    photo: string;
+    identity_card: string;
+    birthplace: string;
+    dob: string;
+    phone_number: string;
+    email: string;
+    certificate: string;
+    extra: Record<string, string>;
+}
+
+export function emptyRosterMember(
+    role: PlayerRole,
+    memberFields: RosterMemberField[] = [],
+): RosterMemberInput {
+    return {
+        role,
+        name: '',
+        jersey_number: '',
+        position: '',
+        photo: '',
+        identity_card: '',
+        birthplace: '',
+        dob: '',
+        phone_number: '',
+        email: '',
+        certificate: '',
+        extra: Object.fromEntries(memberFields.map((f) => [f.key, ''])),
+    };
+}
+
+export const ROSTER_MEMBER_FIELD_TYPES: {
+    value: RosterMemberFieldType;
+    label: string;
+}[] = [
+    { value: 'text', label: 'Text' },
+    { value: 'number', label: 'Number' },
+    { value: 'date', label: 'Date' },
+    { value: 'select', label: 'Dropdown' },
+    { value: 'phone', label: 'Phone' },
+];
 
 export interface FormPage {
     key: string;
@@ -155,6 +231,7 @@ export const REGISTRATION_FIELD_TYPES: {
     { value: 'file', label: 'Photo upload' },
     { value: 'document', label: 'Document upload (PDF, Word)' },
     { value: 'description', label: 'Description' },
+    { value: 'roster', label: 'Team roster' },
 ];
 
 /** Field types where `options` (comma-separated choices) apply. */
@@ -169,8 +246,20 @@ export const DISPLAY_ONLY_FIELD_TYPES: RegistrationFieldType[] = [
     'description',
 ];
 
+/**
+ * True for fields whose answer is a single form_data value. The roster block
+ * collects people, not an answer — its members become the team sheet — so it
+ * is neither an input field nor display-only; callers handle it explicitly.
+ */
 export function isInputField(field: Pick<RegistrationField, 'type'>): boolean {
-    return !DISPLAY_ONLY_FIELD_TYPES.includes(field.type);
+    return (
+        !DISPLAY_ONLY_FIELD_TYPES.includes(field.type) &&
+        field.type !== 'roster'
+    );
+}
+
+export function isRosterField(field: Pick<RegistrationField, 'type'>): boolean {
+    return field.type === 'roster';
 }
 
 /** Mirrors RegistrationController::RESERVED_KEYS — these already have dedicated fixed bindings. */

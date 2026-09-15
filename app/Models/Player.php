@@ -34,12 +34,13 @@ class Player extends Model
         // Removed 'team_id'
         'name', 'role', 'jersey_number', 'position',
         'photo', 'certificate', 'is_certificate_validated', 'phone_number', 'email', 'dob',
-        'birthplace', 'identity_card', 'qr_token', 'basketball_club_id',
+        'birthplace', 'identity_card', 'extra', 'qr_token', 'basketball_club_id',
     ];
 
     protected $casts = [
         'dob' => 'date:Y-m-d',
         'is_certificate_validated' => 'boolean',
+        'extra' => 'array',
     ];
 
     protected static function boot()

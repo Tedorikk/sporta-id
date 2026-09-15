@@ -73,6 +73,16 @@ class Team extends Model
     }
 
     /**
+     * The per-member questions this team's category asks on its roster block.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function rosterMemberFields(): array
+    {
+        return $this->basketballEventCategory?->registrationCategory?->rosterMemberFields() ?? [];
+    }
+
+    /**
      * Roster edits stop once the organiser has verified the team (the sheet
      * they reviewed must stay what they reviewed) or the category's roster
      * window has closed.

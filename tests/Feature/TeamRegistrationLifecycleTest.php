@@ -45,8 +45,7 @@ test('a team registering through a tournament category lands in that basketball 
     expect($registration->status)->toBe(Registration::STATUS_CONFIRMED)
         ->and($registration->team)->not->toBeNull()
         ->and($registration->team->status)->toBe(Team::STATUS_PENDING)
-        ->and($registration->team->basketball_event_category_id)->toBe($tournament->id)
-        ->and($registration->form_data['nama_rekening_pembayaran'])->toBe('Jane Doe');
+        ->and($registration->team->basketball_event_category_id)->toBe($tournament->id);
 });
 
 test('a team registering through a plain team category is created without a basketball category', function () {

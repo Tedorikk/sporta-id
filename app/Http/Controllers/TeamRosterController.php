@@ -35,6 +35,8 @@ class TeamRosterController extends Controller
             'registrationCategory' => $registration->registrationCategory->only('id', 'name'),
             'team' => $team->only('id', 'name', 'logo', 'status'),
             'members' => $team->players,
+            // The organiser's extra per-member questions, so the dialog can ask them.
+            'memberFields' => $team->rosterMemberFields(),
             'limits' => [
                 ...$this->roster->summary($team),
                 'closes_at' => $category->roster_closes_at ?? $registration->registrationCategory->closes_at,
@@ -51,7 +53,7 @@ class TeamRosterController extends Controller
         $validated = $request->validate(
             $this->roster->rules($request, $team, strict: true),
             $this->roster->messages(),
-            $this->roster->attributes(),
+            $this->roster->attributes($team->rosterMemberFields()),
         );
 
         $this->roster->assertHasRoomFor($team, $validated['role']);
@@ -73,7 +75,7 @@ class TeamRosterController extends Controller
         $validated = $request->validate(
             $this->roster->rules($request, $team, $player, strict: true),
             $this->roster->messages(),
-            $this->roster->attributes(),
+            $this->roster->attributes($team->rosterMemberFields()),
         );
 
         // Switching a staff member to a player counts against the cap.

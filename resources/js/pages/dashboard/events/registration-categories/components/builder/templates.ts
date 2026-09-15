@@ -16,8 +16,57 @@ export const BASKETBALL_TEAM_TEMPLATE: FormTemplate = {
     key: 'basketball_team',
     name: 'Basketball team entry',
     description:
-        'Payment proof and the paying account name; players are added to the roster after registering.',
+        'Team origin, officials and players (the roster), payment proof, and the paperwork.',
     pages: [
+        {
+            title: 'Data Tim',
+            fields: [
+                {
+                    key: 'asal_kabupaten_kota',
+                    label: 'Asal Kabupaten/Kota',
+                    type: 'text',
+                    required: true,
+                },
+            ],
+        },
+        {
+            title: 'Data Official & Peserta',
+            fields: [
+                {
+                    key: 'roster',
+                    label: 'Official & Pemain',
+                    type: 'roster',
+                    required: true,
+                    help_text:
+                        'Setiap anggota membutuhkan foto, kartu identitas, dan nomor WhatsApp.',
+                    slots: [
+                        { role: 'manager', label: 'Manager', min: 1, max: 1 },
+                        { role: 'coach', label: 'Coach', min: 1, max: 1 },
+                        {
+                            role: 'assistant_coach',
+                            label: 'Ass. Coach',
+                            min: 0,
+                            max: 1,
+                        },
+                        { role: 'player', label: 'Pemain', min: 7, max: 12 },
+                    ],
+                    member_fields: [
+                        {
+                            key: 'asal_sekolah',
+                            label: 'Asal Sekolah',
+                            type: 'text',
+                            required: true,
+                        },
+                        {
+                            key: 'kelas',
+                            label: 'Kelas',
+                            type: 'text',
+                            required: true,
+                        },
+                    ],
+                },
+            ],
+        },
         {
             title: 'Pembayaran',
             fields: [
@@ -33,6 +82,23 @@ export const BASKETBALL_TEAM_TEMPLATE: FormTemplate = {
                     label: 'Nama Rekening yang Melakukan Pembayaran',
                     type: 'text',
                     required: true,
+                },
+            ],
+        },
+        {
+            title: 'Dokumen',
+            fields: [
+                {
+                    key: 'surat_pernyataan',
+                    label: 'Surat Pernyataan',
+                    type: 'document',
+                    required: true,
+                },
+                {
+                    key: 'lisensi_tim_medis',
+                    label: 'Lisensi/Sertifikat Tim Medis',
+                    type: 'document',
+                    required: false,
                 },
             ],
         },

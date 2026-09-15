@@ -8,6 +8,7 @@ use App\Models\Payment;
 use App\Models\Registration;
 use App\Models\RegistrationCategory;
 use App\Models\Team;
+use App\Services\Basketball\RosterService;
 use App\Services\Midtrans\MidtransClient;
 use App\Services\RegistrationConfirmationNotifier;
 use Illuminate\Http\Request;
@@ -42,10 +43,11 @@ class RegistrationController extends Controller
         abort_unless($registrationCategory->event_id === $event->id, 404);
 
         $validated = $this->validated($request, $registrationCategory);
+        $roster = $this->validatedRoster($request, $registrationCategory);
 
         $this->guardAgainstDuplicate($validated, $registrationCategory);
 
-        $registration = DB::transaction(function () use ($validated, $event, $registrationCategory) {
+        $registration = DB::transaction(function () use ($validated, $roster, $event, $registrationCategory) {
             $category = RegistrationCategory::whereKey($registrationCategory->id)->lockForUpdate()->first();
 
             abort_unless($category->isOpen(), 403, 'Registration is closed for this category.');
@@ -62,6 +64,13 @@ class RegistrationController extends Controller
                     // shows up for pooling and standings once verified.
                     'basketball_event_category_id' => $category->basketballCategory?->id,
                 ]);
+
+                // The roster block's officials and players go straight onto
+                // the team sheet, so the entry is complete at registration;
+                // the captain's portal takes over for edits after this.
+                foreach ($roster as $member) {
+                    $team->players()->create($member);
+                }
             }
 
             $isFree = $category->isFree();
@@ -165,6 +174,33 @@ class RegistrationController extends Controller
         $payment->save();
 
         return $payment;
+    }
+
+    /**
+     * The roster block's members, validated against the block's slots and
+     * per-member questions; an empty array when the form has no block.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function validatedRoster(Request $request, RegistrationCategory $registrationCategory): array
+    {
+        $rosterField = $registrationCategory->rosterField();
+
+        if ($rosterField === null) {
+            return [];
+        }
+
+        $roster = app(RosterService::class);
+
+        $validated = $request->validate(
+            $roster->submissionRules($rosterField),
+            $roster->messages(),
+            $roster->attributes($rosterField['member_fields'] ?? []),
+        );
+
+        $roster->assertSubmissionFits($validated['roster'], $rosterField);
+
+        return $validated['roster'];
     }
 
     private function validated(Request $request, RegistrationCategory $registrationCategory): array

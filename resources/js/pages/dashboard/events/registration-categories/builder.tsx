@@ -184,14 +184,50 @@ export default function RegistrationCategoryBuilder({
 
         const newField: DraftField = {
             _uid: uid(),
-            key: slugify(label, existingKeys),
-            label,
+            key: type === 'roster' ? 'roster' : slugify(label, existingKeys),
+            label: type === 'roster' ? 'Official & Pemain' : label,
             type,
-            required: false,
+            required: type === 'roster',
             options: OPTION_FIELD_TYPES.includes(type)
                 ? ['Option 1', 'Option 2']
                 : undefined,
             max_rating: type === 'rating' ? 5 : undefined,
+            // A fresh roster block starts from the tournament's own player
+            // limits plus the usual bench of officials.
+            ...(type === 'roster'
+                ? {
+                      slots: [
+                          {
+                              role: 'manager' as const,
+                              label: 'Manager',
+                              min: 1,
+                              max: 1,
+                          },
+                          {
+                              role: 'coach' as const,
+                              label: 'Coach',
+                              min: 1,
+                              max: 1,
+                          },
+                          {
+                              role: 'assistant_coach' as const,
+                              label: 'Ass. Coach',
+                              min: 0,
+                              max: 1,
+                          },
+                          {
+                              role: 'player' as const,
+                              label: 'Pemain',
+                              min: Number(tournament.min_player_per_team) || 5,
+                              max:
+                                  tournament.max_player_per_team.trim() === ''
+                                      ? null
+                                      : Number(tournament.max_player_per_team),
+                          },
+                      ],
+                      member_fields: [],
+                  }
+                : {}),
         };
 
         updatePageFields(activePage._uid, [...activePage.fields, newField]);
@@ -416,7 +452,18 @@ export default function RegistrationCategoryBuilder({
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-[220px_1fr_360px]">
                 <div className="rounded-lg border p-3 lg:h-fit">
-                    <FieldPalette onAdd={addField} disabled={!activePage} />
+                    <FieldPalette
+                        onAdd={addField}
+                        disabled={!activePage}
+                        allowRoster={
+                            isBasketballEvent &&
+                            details.subject_type === 'team' &&
+                            tournamentEnabled &&
+                            !pages.some((p) =>
+                                p.fields.some((f) => f.type === 'roster'),
+                            )
+                        }
+                    />
                 </div>
 
                 <div className="min-w-0 space-y-3 rounded-lg border p-3">

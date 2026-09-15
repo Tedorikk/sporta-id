@@ -46,6 +46,7 @@ import { formatDateTime } from '@/lib/format-date';
 import type { Event } from '@/types/event';
 import type { Player, PlayerRole } from '@/types/player';
 import { PLAYER_ROLES, playerRoleLabel } from '@/types/player';
+import type { RosterMemberField } from '@/types/registration-category';
 
 interface Limits {
     players: number;
@@ -65,6 +66,8 @@ interface Props {
     registrationCategory: { id: number; name: string };
     team: { id: number; name: string; logo: string | null; status: string };
     members: Player[];
+    /** The organiser's extra per-member questions from the form's roster block. */
+    memberFields: RosterMemberField[];
     limits: Limits;
     lock: LockReason | null;
 }
@@ -104,9 +107,13 @@ type MemberForm = {
     phone_number: string;
     email: string;
     certificate: string;
+    extra: Record<string, string>;
 };
 
-function toForm(member?: Player): MemberForm {
+function toForm(
+    member: Player | undefined,
+    memberFields: RosterMemberField[],
+): MemberForm {
     return {
         name: member?.name ?? '',
         role: member?.role ?? 'player',
@@ -119,6 +126,9 @@ function toForm(member?: Player): MemberForm {
         phone_number: member?.phone_number ?? '',
         email: member?.email ?? '',
         certificate: member?.certificate ?? '',
+        extra: Object.fromEntries(
+            memberFields.map((f) => [f.key, member?.extra?.[f.key] ?? '']),
+        ),
     };
 }
 
@@ -130,18 +140,20 @@ function toForm(member?: Player): MemberForm {
 function MemberDialog({
     token,
     member,
+    memberFields,
     open,
     onOpenChange,
 }: {
     token: string;
     member: Player | null;
+    memberFields: RosterMemberField[];
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }) {
     const isEditing = member !== null;
     // Mounted with a `key` per member (see TeamRoster), so the initial values
     // here are always the right member's; closing just rolls back to them.
-    const form = useForm<MemberForm>(toForm(member ?? undefined));
+    const form = useForm<MemberForm>(toForm(member ?? undefined, memberFields));
     const { data, setData, errors, processing, reset, clearErrors } = form;
 
     function handleOpenChange(next: boolean) {
@@ -405,6 +417,101 @@ function MemberDialog({
                             </Field>
                         </div>
 
+                        {memberFields.length > 0 && (
+                            <div className="grid grid-cols-2 gap-3">
+                                {memberFields.map((mf) => {
+                                    const error = (
+                                        errors as Record<
+                                            string,
+                                            string | undefined
+                                        >
+                                    )[`extra.${mf.key}`];
+
+                                    return (
+                                        <Field
+                                            key={mf.key}
+                                            data-invalid={Boolean(error)}
+                                        >
+                                            <FieldLabel
+                                                htmlFor={`member_extra_${mf.key}`}
+                                            >
+                                                {mf.label}
+                                                {!mf.required && (
+                                                    <span className="font-normal text-muted-foreground">
+                                                        {' '}
+                                                        (Optional)
+                                                    </span>
+                                                )}
+                                            </FieldLabel>
+                                            {mf.type === 'select' ? (
+                                                <Select
+                                                    value={
+                                                        data.extra[mf.key] ?? ''
+                                                    }
+                                                    onValueChange={(value) =>
+                                                        setData('extra', {
+                                                            ...data.extra,
+                                                            [mf.key]: value,
+                                                        })
+                                                    }
+                                                    disabled={processing}
+                                                >
+                                                    <SelectTrigger
+                                                        id={`member_extra_${mf.key}`}
+                                                        className="w-full"
+                                                    >
+                                                        <SelectValue placeholder="Choose…" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {(mf.options ?? []).map(
+                                                            (option) => (
+                                                                <SelectItem
+                                                                    key={option}
+                                                                    value={
+                                                                        option
+                                                                    }
+                                                                >
+                                                                    {option}
+                                                                </SelectItem>
+                                                            ),
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                            ) : (
+                                                <Input
+                                                    id={`member_extra_${mf.key}`}
+                                                    type={
+                                                        mf.type === 'number'
+                                                            ? 'number'
+                                                            : mf.type === 'date'
+                                                              ? 'date'
+                                                              : mf.type ===
+                                                                  'phone'
+                                                                ? 'tel'
+                                                                : 'text'
+                                                    }
+                                                    value={
+                                                        data.extra[mf.key] ?? ''
+                                                    }
+                                                    onChange={(e) =>
+                                                        setData('extra', {
+                                                            ...data.extra,
+                                                            [mf.key]:
+                                                                e.target.value,
+                                                        })
+                                                    }
+                                                    disabled={processing}
+                                                />
+                                            )}
+                                            {error && (
+                                                <FieldError>{error}</FieldError>
+                                            )}
+                                        </Field>
+                                    );
+                                })}
+                            </div>
+                        )}
+
                         <Field data-invalid={Boolean(errors.identity_card)}>
                             <FieldLabel>Identity document</FieldLabel>
                             <FieldDescription>
@@ -508,6 +615,10 @@ function MemberRow({
                     {playerRoleLabel(member.role)}
                     {member.position ? ` · ${member.position}` : ''}
                     {member.phone_number ? ` · ${member.phone_number}` : ''}
+                    {Object.values(member.extra ?? {})
+                        .filter(Boolean)
+                        .map((v) => ` · ${v}`)
+                        .join('')}
                 </p>
             </div>
             <div className="flex shrink-0 items-center gap-1">
@@ -554,6 +665,7 @@ export default function TeamRoster({
     registrationCategory,
     team,
     members,
+    memberFields,
     limits,
     lock,
 }: Props) {
@@ -769,6 +881,7 @@ export default function TeamRoster({
                     }
                     token={registration.qr_token}
                     member={editing}
+                    memberFields={memberFields}
                     open={dialogOpen}
                     onOpenChange={setDialogOpen}
                 />

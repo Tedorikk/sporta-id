@@ -6,8 +6,10 @@ use App\Models\BasketballEvent;
 use App\Models\BasketballEventCategory;
 use App\Models\Event;
 use App\Models\Payment;
+use App\Models\Player;
 use App\Models\RegistrationCategory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -224,6 +226,40 @@ class RegistrationCategoryController extends Controller
         ]]);
     }
 
+    /**
+     * A roster block writes Player rows on a basketball team, so only a team
+     * category on a basketball event may carry one — and only one, since
+     * the members all land on the same team sheet.
+     */
+    private function validateRosterBlocks(Collection $fields, string $subjectType, Event $event): void
+    {
+        $rosterBlocks = $fields->where('type', RegistrationCategory::ROSTER_TYPE);
+
+        if ($rosterBlocks->isEmpty()) {
+            return;
+        }
+
+        if ($rosterBlocks->count() > 1) {
+            throw ValidationException::withMessages(['form_pages' => 'A form can only have one roster block.']);
+        }
+
+        if ($subjectType !== RegistrationCategory::SUBJECT_TEAM || ! $this->isBasketballEvent($event)) {
+            throw ValidationException::withMessages(['form_pages' => 'A roster block needs a team category on a basketball event.']);
+        }
+
+        $block = $rosterBlocks->first();
+
+        if (empty($block['slots'])) {
+            throw ValidationException::withMessages(['form_pages' => 'The roster block needs at least one slot (e.g. 5–12 players).']);
+        }
+
+        $memberKeys = collect($block['member_fields'] ?? [])->pluck('key');
+
+        if ($memberKeys->count() !== $memberKeys->unique()->count()) {
+            throw ValidationException::withMessages(['form_pages' => 'Roster member field keys must be unique.']);
+        }
+    }
+
     private function validated(Request $request, Event $event): array
     {
         $validated = $request->validate([
@@ -260,6 +296,7 @@ class RegistrationCategoryController extends Controller
             'form_pages.*.fields.*.type' => ['required', Rule::in([
                 'text', 'number', 'email', 'phone', 'date', 'select', 'radio', 'checkbox',
                 'textarea', 'rating', 'signature', 'file', 'document', 'description',
+                RegistrationCategory::ROSTER_TYPE,
             ])],
             'form_pages.*.fields.*.required' => ['nullable', 'boolean'],
             'form_pages.*.fields.*.options' => ['nullable', 'array'],
@@ -269,6 +306,21 @@ class RegistrationCategoryController extends Controller
             'form_pages.*.fields.*.max' => ['nullable', 'numeric'],
             'form_pages.*.fields.*.error_message' => ['nullable', 'string', 'max:255'],
             'form_pages.*.fields.*.max_rating' => ['nullable', 'integer', 'min:1', 'max:10'],
+
+            // Roster block: which roles, how many of each, and the extra
+            // questions asked per member (their answers land in players.extra).
+            'form_pages.*.fields.*.slots' => ['nullable', 'array'],
+            'form_pages.*.fields.*.slots.*.role' => ['required', Rule::in(Player::ROLES)],
+            'form_pages.*.fields.*.slots.*.label' => ['nullable', 'string', 'max:100'],
+            'form_pages.*.fields.*.slots.*.min' => ['required', 'integer', 'min:0'],
+            'form_pages.*.fields.*.slots.*.max' => ['nullable', 'integer', 'gte:form_pages.*.fields.*.slots.*.min'],
+            'form_pages.*.fields.*.member_fields' => ['nullable', 'array'],
+            'form_pages.*.fields.*.member_fields.*.key' => ['required', 'string', 'max:100', 'regex:/^[a-z0-9_]+$/'],
+            'form_pages.*.fields.*.member_fields.*.label' => ['required', 'string', 'max:255'],
+            'form_pages.*.fields.*.member_fields.*.type' => ['required', Rule::in(RegistrationCategory::ROSTER_MEMBER_FIELD_TYPES)],
+            'form_pages.*.fields.*.member_fields.*.required' => ['nullable', 'boolean'],
+            'form_pages.*.fields.*.member_fields.*.options' => ['nullable', 'array'],
+            'form_pages.*.fields.*.member_fields.*.options.*' => ['string', 'max:255'],
 
             'form_branding' => ['nullable', 'array'],
             'form_branding.primary_color' => ['nullable', 'string', 'max:20'],
@@ -294,11 +346,14 @@ class RegistrationCategoryController extends Controller
             'form_pages.*.fields.*.key.not_in' => '"name" is reserved for the built-in Name field — choose a different key, e.g. "participant_name".',
         ]);
 
-        $keys = collect($validated['form_pages'] ?? [])->flatMap(fn (array $page) => $page['fields'] ?? [])->pluck('key');
+        $fields = collect($validated['form_pages'] ?? [])->flatMap(fn (array $page) => $page['fields'] ?? []);
+        $keys = $fields->pluck('key');
 
         if ($keys->count() !== $keys->unique()->count()) {
             abort(422, 'Field keys must be unique within a form.');
         }
+
+        $this->validateRosterBlocks($fields, $validated['subject_type'], $event);
 
         return $validated;
     }

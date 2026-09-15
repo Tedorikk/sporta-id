@@ -83,6 +83,6 @@ class PlayerController extends Controller
             ...$this->roster->rules($request, $team, $player),
             // Only an organiser vouches for a medic's certificate.
             'is_certificate_validated' => ['nullable', 'boolean'],
-        ], $this->roster->messages(), $this->roster->attributes());
+        ], $this->roster->messages(), $this->roster->attributes($team->rosterMemberFields()));
     }
 }

@@ -144,6 +144,16 @@ class RegistrationCategory extends Model
      */
     public const DISPLAY_ONLY_TYPES = ['description'];
 
+    /**
+     * The roster block: collects a team's officials and players on the form
+     * itself. Its answers become Player rows rather than form_data, so it is
+     * neither a display block nor an ordinary input field.
+     */
+    public const ROSTER_TYPE = 'roster';
+
+    /** Answer types an organiser may ask per roster member, beyond the fixed identity fields. */
+    public const ROSTER_MEMBER_FIELD_TYPES = ['text', 'number', 'date', 'select', 'phone'];
+
     /** Flattens fields across every page, display-only blocks included — the form's layout order. */
     public function allFields(): array
     {
@@ -153,12 +163,31 @@ class RegistrationCategory extends Model
             ->all();
     }
 
-    /** Only the fields that carry an answer — used by validation, CSV export, and table columns. */
+    /** Only the fields that carry a form_data answer — used by validation, CSV export, and table columns. */
     public function inputFields(): array
     {
         return collect($this->allFields())
-            ->reject(fn (array $field) => in_array($field['type'] ?? null, self::DISPLAY_ONLY_TYPES, true))
+            ->reject(fn (array $field) => in_array($field['type'] ?? null, [...self::DISPLAY_ONLY_TYPES, self::ROSTER_TYPE], true))
             ->values()
             ->all();
+    }
+
+    /** The form's roster block, if the organiser placed one. */
+    public function rosterField(): ?array
+    {
+        return collect($this->allFields())
+            ->first(fn (array $field) => ($field['type'] ?? null) === self::ROSTER_TYPE);
+    }
+
+    /**
+     * The organiser-defined per-member questions from the roster block, or
+     * none when the form has no block — what the portal and admin forms show
+     * and validate as `extra`.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function rosterMemberFields(): array
+    {
+        return $this->rosterField()['member_fields'] ?? [];
     }
 }

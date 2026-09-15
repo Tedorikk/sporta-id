@@ -45,11 +45,11 @@ class BasketballEventCategory extends Model
 
     /**
      * The form a freshly minted basketball category sells through. Team name
-     * is the built-in field; what remains is the payment evidence organisers
-     * collect when the fee is paid by bank transfer rather than through
-     * Midtrans. Categories with a price still go through checkout; these
-     * fields simply ride along on the form either way and can be edited out
-     * in the builder.
+     * is the built-in field; the rest is what a tournament entry collects:
+     * where the team is from, its officials and players (the roster block —
+     * answers become the team sheet, not form_data), bank-transfer evidence
+     * for organisers who settle fees outside Midtrans, and the paperwork.
+     * Everything here is editable in the builder.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -57,7 +57,42 @@ class BasketballEventCategory extends Model
     {
         return [
             [
-                'key' => 'page-1',
+                'key' => 'data-tim',
+                'title' => 'Data Tim',
+                'fields' => [
+                    [
+                        'key' => 'asal_kabupaten_kota',
+                        'label' => 'Asal Kabupaten/Kota',
+                        'type' => 'text',
+                        'required' => true,
+                    ],
+                ],
+            ],
+            [
+                'key' => 'data-peserta',
+                'title' => 'Data Official & Peserta',
+                'fields' => [
+                    [
+                        'key' => 'roster',
+                        'label' => 'Official & Pemain',
+                        'type' => 'roster',
+                        'required' => true,
+                        'help_text' => 'Setiap anggota membutuhkan foto, kartu identitas, dan nomor WhatsApp.',
+                        'slots' => [
+                            ['role' => 'manager', 'label' => 'Manager', 'min' => 1, 'max' => 1],
+                            ['role' => 'coach', 'label' => 'Coach', 'min' => 1, 'max' => 1],
+                            ['role' => 'assistant_coach', 'label' => 'Ass. Coach', 'min' => 0, 'max' => 1],
+                            ['role' => 'player', 'label' => 'Pemain', 'min' => 7, 'max' => 12],
+                        ],
+                        'member_fields' => [
+                            ['key' => 'asal_sekolah', 'label' => 'Asal Sekolah', 'type' => 'text', 'required' => true],
+                            ['key' => 'kelas', 'label' => 'Kelas', 'type' => 'text', 'required' => true],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                'key' => 'pembayaran',
                 'title' => 'Pembayaran',
                 'fields' => [
                     [
@@ -72,6 +107,24 @@ class BasketballEventCategory extends Model
                         'label' => 'Nama Rekening yang Melakukan Pembayaran',
                         'type' => 'text',
                         'required' => true,
+                    ],
+                ],
+            ],
+            [
+                'key' => 'dokumen',
+                'title' => 'Dokumen',
+                'fields' => [
+                    [
+                        'key' => 'surat_pernyataan',
+                        'label' => 'Surat Pernyataan',
+                        'type' => 'document',
+                        'required' => true,
+                    ],
+                    [
+                        'key' => 'lisensi_tim_medis',
+                        'label' => 'Lisensi/Sertifikat Tim Medis',
+                        'type' => 'document',
+                        'required' => false,
                     ],
                 ],
             ],

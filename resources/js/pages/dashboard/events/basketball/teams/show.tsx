@@ -6,6 +6,7 @@ import {
     Check,
     Copy,
     Download,
+    IdCard,
     Mail,
     Pencil,
     Phone,
@@ -129,6 +130,34 @@ function PlayerRosterCard({
                                 <span className="italic">Missing</span>
                             )}
                         </span>
+                        {(player.birthplace || player.identity_card) && (
+                            <span className="flex items-center gap-1.5">
+                                <IdCard className="h-3 w-3 shrink-0" />
+                                {player.birthplace ?? '—'}
+                                {player.identity_card && (
+                                    <a
+                                        href={player.identity_card}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="underline underline-offset-2"
+                                    >
+                                        ID document
+                                    </a>
+                                )}
+                            </span>
+                        )}
+                        {/* The category's extra roster questions (school, class, …). */}
+                        {player.extra &&
+                            Object.entries(player.extra)
+                                .filter(([, v]) => v)
+                                .map(([k, v]) => (
+                                    <span key={k} className="truncate">
+                                        <span className="capitalize">
+                                            {k.replace(/_/g, ' ')}
+                                        </span>
+                                        : {v}
+                                    </span>
+                                ))}
                     </div>
                 </div>
 

@@ -57,14 +57,22 @@ class BasketballEventCategoryFactory extends Factory
 
             return [
                 'basketball_event_id' => $event->specific->id,
+                // A bare form: the full basketball default (roster block, payment
+                // proof, documents) is what the app mints, but a test that wants
+                // it should say so — see withDefaultForm().
                 'registration_category_id' => RegistrationCategory::factory()
                     ->team()
                     ->for($event)
-                    ->state([
-                        'name' => $attributes['name'],
-                        'form_pages' => BasketballEventCategory::defaultFormPages(),
-                    ]),
+                    ->state(['name' => $attributes['name']]),
             ];
+        });
+    }
+
+    /** The paired registration category sells through the app's full default basketball form. */
+    public function withDefaultForm(): static
+    {
+        return $this->afterCreating(function (BasketballEventCategory $category) {
+            $category->registrationCategory->update(['form_pages' => BasketballEventCategory::defaultFormPages()]);
         });
     }
 

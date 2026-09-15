@@ -32,7 +32,7 @@ function teamCategoryPayload(array $overrides = []): array
         'price' => null,
         'quota' => 16,
         'registration_open' => true,
-        'form_pages' => BasketballEventCategory::defaultFormPages(),
+        'form_pages' => [['key' => 'page-1', 'title' => 'Details', 'fields' => []]],
     ], $overrides);
 }
 
@@ -56,6 +56,24 @@ test('a team category with tournament settings creates the basketball category a
         ->and($tournament->min_team)->toBe(4)
         ->and($tournament->max_player_per_team)->toBe(12)
         ->and($tournament->roster_closes_at?->format('Y-m-d H:i'))->toBe('2026-12-01 18:00');
+});
+
+test('the default basketball form carries the roster block, payment evidence and paperwork', function () {
+    $event = Event::factory()->basketball()->create();
+    $this->actingAs(organizerOf($event));
+
+    $this->post(route('registration_categories.store', $event), teamCategoryPayload([
+        'tournament' => tournamentPayload(),
+        'form_pages' => BasketballEventCategory::defaultFormPages(),
+    ]))->assertRedirect()->assertSessionHasNoErrors();
+
+    $registrationCategory = RegistrationCategory::sole();
+
+    // The roster's members are kept out of form_data — they become the team sheet.
+    expect($registrationCategory->rosterField()['slots'])->toHaveCount(4)
+        ->and(collect($registrationCategory->rosterMemberFields())->pluck('key')->all())->toBe(['asal_sekolah', 'kelas'])
+        ->and(collect($registrationCategory->inputFields())->pluck('key')->all())
+        ->toBe(['asal_kabupaten_kota', 'bukti_pembayaran', 'nama_rekening_pembayaran', 'surat_pernyataan', 'lisensi_tim_medis']);
 });
 
 test('a team category without tournament settings is just a registration category', function () {

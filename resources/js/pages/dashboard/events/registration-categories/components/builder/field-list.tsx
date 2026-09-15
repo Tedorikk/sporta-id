@@ -37,6 +37,7 @@ import {
 } from '@/types/registration-category';
 import type { RegistrationField } from '@/types/registration-category';
 import { OptionEditor } from './option-editor';
+import { RosterBlockEditor } from './roster-block-editor';
 
 export interface DraftField extends RegistrationField {
     _uid: string;
@@ -130,7 +131,13 @@ function SortableFieldRow({
     const isReserved = RESERVED_FIELD_KEYS.includes(field.key);
     // A description block has no answer, so key / required / error message
     // are meaningless for it — the editor collapses to heading + body text.
-    const isDisplayOnly = !isInputField(field);
+    const isDisplayOnly = !isInputField(field) && field.type !== 'roster';
+    const isRoster = field.type === 'roster';
+    // A roster block can't be turned into a plain field (its slots would be
+    // lost) and a plain field can't become one — it is added from the palette.
+    const typeChoices = REGISTRATION_FIELD_TYPES.filter((t) =>
+        isRoster ? t.value === 'roster' : t.value !== 'roster',
+    );
     const typeLabel =
         REGISTRATION_FIELD_TYPES.find((t) => t.value === field.type)?.label ??
         field.type;
@@ -254,6 +261,7 @@ function SortableFieldRow({
                             <FieldLabel>Type</FieldLabel>
                             <Select
                                 value={field.type}
+                                disabled={isRoster}
                                 onValueChange={(value) => {
                                     const type = value as DraftField['type'];
 
@@ -268,7 +276,7 @@ function SortableFieldRow({
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {REGISTRATION_FIELD_TYPES.map((t) => (
+                                    {typeChoices.map((t) => (
                                         <SelectItem
                                             key={t.value}
                                             value={t.value}
@@ -303,6 +311,14 @@ function SortableFieldRow({
                         <OptionEditor
                             options={field.options ?? []}
                             onChange={(options) => onChange({ options })}
+                        />
+                    )}
+
+                    {isRoster && (
+                        <RosterBlockEditor
+                            slots={field.slots ?? []}
+                            memberFields={field.member_fields ?? []}
+                            onChange={(patch) => onChange(patch)}
                         />
                     )}
 

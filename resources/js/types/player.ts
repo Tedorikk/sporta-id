@@ -32,6 +32,8 @@ export interface Player {
     birthplace: string | null;
     /** URL of the uploaded identity document (KTP/KK/akta). */
     identity_card: string | null;
+    /** Answers to the category's per-member roster questions, keyed by field key. */
+    extra: Record<string, string> | null;
     qr_token: string;
     basketball_club_id: number;
     basketball_club: BasketballClub;
