@@ -35,10 +35,12 @@ class TeamRosterController extends Controller
             'registrationCategory' => $registration->registrationCategory->only('id', 'name'),
             'team' => $team->only('id', 'name', 'logo', 'status'),
             // Flagged per member so the page can point at who still owes
-            // a photo or document, rather than just counting them.
+            // a photo or document, rather than just counting them — with the
+            // link the manager can send them to fill it in themselves.
             'members' => $team->players->map(fn (Player $player) => [
                 ...$player->toArray(),
                 'is_complete' => $this->roster->isComplete($player, $memberFields),
+                'invite_url' => route('roster-member.show', $this->roster->inviteTokenFor($team, $player)),
             ]),
             // The organiser's extra per-member questions, so the dialog can ask them.
             'memberFields' => $memberFields,
@@ -46,7 +48,7 @@ class TeamRosterController extends Controller
                 ...$this->roster->summary($team),
                 'closes_at' => $registration->registrationCategory->rosterClosesAt(),
             ],
-            'lock' => $this->lockReason($registration, $team),
+            'lock' => $this->roster->lockReason($registration, $team),
         ]);
     }
 
@@ -96,6 +98,24 @@ class TeamRosterController extends Controller
         ]]);
     }
 
+    /**
+     * Issues the member a new self-fill link and voids the old one — for a
+     * link sent to the wrong group, or a player who has since left.
+     */
+    public function regenerateInvite(Registration $registration, Player $player)
+    {
+        $team = $this->tournamentTeam($registration);
+        $this->assertEditable($registration, $team);
+        $this->assertOnTeam($team, $player);
+
+        $this->roster->regenerateInviteToken($team, $player);
+
+        return back()->with(['toast' => [
+            'title' => __('New link ready'),
+            'description' => __('The previous link for :name no longer works.', ['name' => $player->name]),
+        ]]);
+    }
+
     public function destroy(Registration $registration, Player $player)
     {
         $team = $this->tournamentTeam($registration);
@@ -122,34 +142,9 @@ class TeamRosterController extends Controller
         return $team;
     }
 
-    /**
-     * Why the roster can't be edited right now, or null when it can. The page
-     * shows this instead of the form; writes refuse with it.
-     */
-    private function lockReason(Registration $registration, Team $team): ?string
-    {
-        if ($registration->status === Registration::STATUS_PENDING_PAYMENT) {
-            return 'payment_pending';
-        }
-
-        if ($registration->isWithdrawn()) {
-            return 'withdrawn';
-        }
-
-        if ($team->status === Team::STATUS_VERIFIED) {
-            return 'verified';
-        }
-
-        if (! ($team->basketballEventCategory?->rosterIsOpen() ?? true)) {
-            return 'closed';
-        }
-
-        return null;
-    }
-
     private function assertEditable(Registration $registration, Team $team): void
     {
-        abort_if($this->lockReason($registration, $team) !== null, 403, __('This roster can no longer be changed.'));
+        abort_if($this->roster->lockReason($registration, $team) !== null, 403, __('This roster can no longer be changed.'));
     }
 
     private function assertOnTeam(Team $team, Player $player): void

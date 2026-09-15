@@ -3,9 +3,12 @@
 namespace App\Services\Basketball;
 
 use App\Models\Player;
+use App\Models\Registration;
 use App\Models\Team;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -294,5 +297,80 @@ class RosterService
         $memberFields = $team->rosterMemberFields();
 
         return $team->players->reject(fn (Player $player) => $this->isComplete($player, $memberFields))->count();
+    }
+
+    /**
+     * Why the roster can't be edited right now, or null when it can. Shared
+     * by the manager's portal and a member's own self-fill page: the page
+     * shows this instead of the form, and writes refuse with it.
+     */
+    public function lockReason(Registration $registration, Team $team): ?string
+    {
+        if ($registration->status === Registration::STATUS_PENDING_PAYMENT) {
+            return 'payment_pending';
+        }
+
+        if ($registration->isWithdrawn()) {
+            return 'withdrawn';
+        }
+
+        if ($team->status === Team::STATUS_VERIFIED) {
+            return 'verified';
+        }
+
+        if (! ($team->basketballEventCategory?->rosterIsOpen() ?? true)) {
+            return 'closed';
+        }
+
+        return null;
+    }
+
+    /**
+     * The member's self-fill secret for this team, minted on first use. It
+     * lives on the pivot because a person can be on several teams and the
+     * link must open one sheet; and apart from players.qr_token, which is
+     * printed on ID cards and must never double as a write credential.
+     */
+    public function inviteTokenFor(Team $team, Player $player): string
+    {
+        $existing = DB::table('player_team')
+            ->where('team_id', $team->id)
+            ->where('player_id', $player->id)
+            ->value('invite_token');
+
+        return $existing ?? $this->regenerateInviteToken($team, $player);
+    }
+
+    /** A fresh secret — the old link stops working at once. */
+    public function regenerateInviteToken(Team $team, Player $player): string
+    {
+        $token = Str::random(48);
+
+        DB::table('player_team')
+            ->where('team_id', $team->id)
+            ->where('player_id', $player->id)
+            ->update(['invite_token' => $token, 'updated_at' => now()]);
+
+        return $token;
+    }
+
+    /**
+     * The team and member a self-fill link points at, or null for a token
+     * nobody holds (revoked, or never issued).
+     *
+     * @return array{team: Team, player: Player}|null
+     */
+    public function memberByInviteToken(string $token): ?array
+    {
+        $row = DB::table('player_team')->where('invite_token', $token)->first(['team_id', 'player_id']);
+
+        if ($row === null) {
+            return null;
+        }
+
+        $team = Team::find($row->team_id);
+        $player = Player::find($row->player_id);
+
+        return $team && $player ? ['team' => $team, 'player' => $player] : null;
     }
 }

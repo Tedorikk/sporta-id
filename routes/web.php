@@ -39,6 +39,7 @@ use App\Http\Controllers\RegistrationCategoryController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\RegistrationQrController;
 use App\Http\Controllers\RegistrationRefundController;
+use App\Http\Controllers\RosterMemberSelfController;
 use App\Http\Controllers\SpeakerController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamQrController;
@@ -98,6 +99,13 @@ Route::middleware('public.locale')->group(function () {
         ->middleware('throttle:20,1')->name('team-roster.update');
     Route::delete('registrations/{registration:qr_token}/roster/players/{player}', [TeamRosterController::class, 'destroy'])
         ->middleware('throttle:20,1')->name('team-roster.destroy');
+    Route::post('registrations/{registration:qr_token}/roster/players/{player}/invite', [TeamRosterController::class, 'regenerateInvite'])
+        ->middleware('throttle:20,1')->name('team-roster.invite');
+
+    // --- Member self-fill (a player completes their own details by invite link) --
+    Route::get('roster-members/{token}', [RosterMemberSelfController::class, 'show'])->name('roster-member.show');
+    Route::put('roster-members/{token}', [RosterMemberSelfController::class, 'update'])
+        ->middleware('throttle:20,1')->name('roster-member.update');
 
     // --- Public award voting (shareable, no auth required) --------------------
     // Identified voters arrive with ?token=<qr_token> from their own ID card.

@@ -1,17 +1,26 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
 import {
     Clock,
+    Copy,
     IdCard,
+    Link2,
     Loader2,
     Lock,
+    MessageCircle,
     Pencil,
     Plus,
+    RefreshCw,
     Trash2,
     UserRound,
 } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import {
+    MemberDetailsFields,
+    toMemberForm,
+} from '@/components/public/member-details-fields';
+import type { MemberForm } from '@/components/public/member-details-fields';
 import { PublicPageHeader } from '@/components/public/public-page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,8 +33,14 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
     Field,
-    FieldDescription,
     FieldError,
     FieldGroup,
     FieldLabel,
@@ -38,8 +53,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { UploadDocument } from '@/components/upload-document';
-import { UploadImage } from '@/components/upload-image';
+import { useClipboard } from '@/hooks/use-clipboard';
 import { useForceLightMode } from '@/hooks/use-force-light-mode';
 import { useT } from '@/hooks/use-t';
 import { accentColors } from '@/lib/color';
@@ -98,43 +112,6 @@ const LOCK_COPY: Record<LockReason, { title: string; description: string }> = {
     },
 };
 
-type MemberForm = {
-    name: string;
-    role: PlayerRole;
-    jersey_number: string;
-    position: string;
-    photo: string;
-    identity_card: string;
-    birthplace: string;
-    dob: string;
-    phone_number: string;
-    email: string;
-    certificate: string;
-    extra: Record<string, string>;
-};
-
-function toForm(
-    member: Player | undefined,
-    memberFields: RosterMemberField[],
-): MemberForm {
-    return {
-        name: member?.name ?? '',
-        role: member?.role ?? 'player',
-        jersey_number: member?.jersey_number ?? '',
-        position: member?.position ?? '',
-        photo: member?.photo ?? '',
-        identity_card: member?.identity_card ?? '',
-        birthplace: member?.birthplace ?? '',
-        dob: member?.dob?.slice(0, 10) ?? '',
-        phone_number: member?.phone_number ?? '',
-        email: member?.email ?? '',
-        certificate: member?.certificate ?? '',
-        extra: Object.fromEntries(
-            memberFields.map((f) => [f.key, member?.extra?.[f.key] ?? '']),
-        ),
-    };
-}
-
 /**
  * Add/edit form for one roster member. Validation lives on the server
  * (RosterService) so the same rules gate the organiser's form; this only
@@ -157,7 +134,9 @@ function MemberDialog({
     const isEditing = member !== null;
     // Mounted with a `key` per member (see TeamRoster), so the initial values
     // here are always the right member's; closing just rolls back to them.
-    const form = useForm<MemberForm>(toForm(member ?? undefined, memberFields));
+    const form = useForm<MemberForm>(
+        toMemberForm(member ?? undefined, memberFields),
+    );
     const { data, setData, errors, processing, reset, clearErrors } = form;
 
     function handleOpenChange(next: boolean) {
@@ -217,82 +196,58 @@ function MemberDialog({
                     </DialogHeader>
 
                     <FieldGroup className="py-4">
-                        <div className="grid grid-cols-[8rem_1fr] gap-4">
-                            <Field
-                                data-invalid={Boolean(errors.photo)}
-                                className="w-32"
-                            >
-                                <FieldLabel>{t('Photo')}</FieldLabel>
-                                <UploadImage
-                                    ratio={4 / 5}
-                                    value={data.photo}
-                                    uploadUrl="/public-upload/image"
-                                    deleteUrl="/public-upload/image"
-                                    onChange={(value) =>
-                                        setData('photo', value ?? '')
+                        <FieldGroup>
+                            <Field data-invalid={Boolean(errors.role)}>
+                                <FieldLabel htmlFor="member_role">
+                                    {t('Role')}
+                                </FieldLabel>
+                                <Select
+                                    value={data.role}
+                                    onValueChange={(value) =>
+                                        setData('role', value as PlayerRole)
                                     }
-                                    enableCrop
                                     disabled={processing}
-                                    className="rounded-xl border"
-                                />
-                                {errors.photo && (
-                                    <FieldError>{errors.photo}</FieldError>
+                                >
+                                    <SelectTrigger
+                                        id="member_role"
+                                        className="w-full"
+                                    >
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {PLAYER_ROLES.map((role) => (
+                                            <SelectItem
+                                                key={role.value}
+                                                value={role.value}
+                                            >
+                                                {t(role.label)}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {errors.role && (
+                                    <FieldError>{errors.role}</FieldError>
                                 )}
                             </Field>
 
-                            <FieldGroup>
-                                <Field data-invalid={Boolean(errors.role)}>
-                                    <FieldLabel htmlFor="member_role">
-                                        {t('Role')}
-                                    </FieldLabel>
-                                    <Select
-                                        value={data.role}
-                                        onValueChange={(value) =>
-                                            setData('role', value as PlayerRole)
-                                        }
-                                        disabled={processing}
-                                    >
-                                        <SelectTrigger
-                                            id="member_role"
-                                            className="w-full"
-                                        >
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {PLAYER_ROLES.map((role) => (
-                                                <SelectItem
-                                                    key={role.value}
-                                                    value={role.value}
-                                                >
-                                                    {t(role.label)}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    {errors.role && (
-                                        <FieldError>{errors.role}</FieldError>
-                                    )}
-                                </Field>
-
-                                <Field data-invalid={Boolean(errors.name)}>
-                                    <FieldLabel htmlFor="member_name">
-                                        {t('Full name')}
-                                    </FieldLabel>
-                                    <Input
-                                        id="member_name"
-                                        value={data.name}
-                                        onChange={(e) =>
-                                            setData('name', e.target.value)
-                                        }
-                                        autoComplete="name"
-                                        disabled={processing}
-                                    />
-                                    {errors.name && (
-                                        <FieldError>{errors.name}</FieldError>
-                                    )}
-                                </Field>
-                            </FieldGroup>
-                        </div>
+                            <Field data-invalid={Boolean(errors.name)}>
+                                <FieldLabel htmlFor="member_name">
+                                    {t('Full name')}
+                                </FieldLabel>
+                                <Input
+                                    id="member_name"
+                                    value={data.name}
+                                    onChange={(e) =>
+                                        setData('name', e.target.value)
+                                    }
+                                    autoComplete="name"
+                                    disabled={processing}
+                                />
+                                {errors.name && (
+                                    <FieldError>{errors.name}</FieldError>
+                                )}
+                            </Field>
+                        </FieldGroup>
 
                         {isPlayer && (
                             <div className="grid grid-cols-2 gap-3">
@@ -341,235 +296,13 @@ function MemberDialog({
                             </div>
                         )}
 
-                        <div className="grid grid-cols-2 gap-3">
-                            <Field data-invalid={Boolean(errors.birthplace)}>
-                                <FieldLabel htmlFor="member_birthplace">
-                                    {t('Place of birth')}
-                                </FieldLabel>
-                                <Input
-                                    id="member_birthplace"
-                                    value={data.birthplace}
-                                    onChange={(e) =>
-                                        setData('birthplace', e.target.value)
-                                    }
-                                    disabled={processing}
-                                />
-                                {errors.birthplace && (
-                                    <FieldError>{errors.birthplace}</FieldError>
-                                )}
-                            </Field>
-                            <Field data-invalid={Boolean(errors.dob)}>
-                                <FieldLabel htmlFor="member_dob">
-                                    {t('Date of birth')}
-                                </FieldLabel>
-                                <Input
-                                    id="member_dob"
-                                    type="date"
-                                    value={data.dob}
-                                    onChange={(e) =>
-                                        setData('dob', e.target.value)
-                                    }
-                                    disabled={processing}
-                                />
-                                {errors.dob && (
-                                    <FieldError>{errors.dob}</FieldError>
-                                )}
-                            </Field>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                            <Field data-invalid={Boolean(errors.phone_number)}>
-                                <FieldLabel htmlFor="member_phone">
-                                    {t('WhatsApp number')}
-                                </FieldLabel>
-                                <Input
-                                    id="member_phone"
-                                    type="tel"
-                                    placeholder="+628123456789"
-                                    value={data.phone_number}
-                                    onChange={(e) =>
-                                        setData('phone_number', e.target.value)
-                                    }
-                                    disabled={processing}
-                                />
-                                {errors.phone_number ? (
-                                    <FieldError>
-                                        {errors.phone_number}
-                                    </FieldError>
-                                ) : (
-                                    <FieldDescription>
-                                        {t(
-                                            'Include the country code, e.g. +62.',
-                                        )}
-                                    </FieldDescription>
-                                )}
-                            </Field>
-                            <Field data-invalid={Boolean(errors.email)}>
-                                <FieldLabel htmlFor="member_email">
-                                    {t('Email')}{' '}
-                                    <span className="font-normal text-muted-foreground">
-                                        {t('(Optional)')}
-                                    </span>
-                                </FieldLabel>
-                                <Input
-                                    id="member_email"
-                                    type="email"
-                                    value={data.email}
-                                    onChange={(e) =>
-                                        setData('email', e.target.value)
-                                    }
-                                    disabled={processing}
-                                />
-                                {errors.email && (
-                                    <FieldError>{errors.email}</FieldError>
-                                )}
-                            </Field>
-                        </div>
-
-                        {memberFields.length > 0 && (
-                            <div className="grid grid-cols-2 gap-3">
-                                {memberFields.map((mf) => {
-                                    const error = (
-                                        errors as Record<
-                                            string,
-                                            string | undefined
-                                        >
-                                    )[`extra.${mf.key}`];
-
-                                    return (
-                                        <Field
-                                            key={mf.key}
-                                            data-invalid={Boolean(error)}
-                                        >
-                                            <FieldLabel
-                                                htmlFor={`member_extra_${mf.key}`}
-                                            >
-                                                {mf.label}
-                                                {!mf.required && (
-                                                    <span className="font-normal text-muted-foreground">
-                                                        {' '}
-                                                        {t('(Optional)')}
-                                                    </span>
-                                                )}
-                                            </FieldLabel>
-                                            {mf.type === 'select' ? (
-                                                <Select
-                                                    value={
-                                                        data.extra[mf.key] ?? ''
-                                                    }
-                                                    onValueChange={(value) =>
-                                                        setData('extra', {
-                                                            ...data.extra,
-                                                            [mf.key]: value,
-                                                        })
-                                                    }
-                                                    disabled={processing}
-                                                >
-                                                    <SelectTrigger
-                                                        id={`member_extra_${mf.key}`}
-                                                        className="w-full"
-                                                    >
-                                                        <SelectValue
-                                                            placeholder={t(
-                                                                'Choose…',
-                                                            )}
-                                                        />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {(mf.options ?? []).map(
-                                                            (option) => (
-                                                                <SelectItem
-                                                                    key={option}
-                                                                    value={
-                                                                        option
-                                                                    }
-                                                                >
-                                                                    {option}
-                                                                </SelectItem>
-                                                            ),
-                                                        )}
-                                                    </SelectContent>
-                                                </Select>
-                                            ) : (
-                                                <Input
-                                                    id={`member_extra_${mf.key}`}
-                                                    type={
-                                                        mf.type === 'number'
-                                                            ? 'number'
-                                                            : mf.type === 'date'
-                                                              ? 'date'
-                                                              : mf.type ===
-                                                                  'phone'
-                                                                ? 'tel'
-                                                                : 'text'
-                                                    }
-                                                    value={
-                                                        data.extra[mf.key] ?? ''
-                                                    }
-                                                    onChange={(e) =>
-                                                        setData('extra', {
-                                                            ...data.extra,
-                                                            [mf.key]:
-                                                                e.target.value,
-                                                        })
-                                                    }
-                                                    disabled={processing}
-                                                />
-                                            )}
-                                            {error && (
-                                                <FieldError>{error}</FieldError>
-                                            )}
-                                        </Field>
-                                    );
-                                })}
-                            </div>
-                        )}
-
-                        <Field data-invalid={Boolean(errors.identity_card)}>
-                            <FieldLabel>{t('Identity document')}</FieldLabel>
-                            <FieldDescription>
-                                {t(
-                                    'A clear photo of the KTP, KK or birth certificate.',
-                                )}
-                            </FieldDescription>
-                            <UploadImage
-                                ratio={16 / 10}
-                                value={data.identity_card}
-                                uploadUrl="/public-upload/image"
-                                deleteUrl="/public-upload/image"
-                                onChange={(value) =>
-                                    setData('identity_card', value ?? '')
-                                }
-                                disabled={processing}
-                                className="rounded-xl border"
-                                placeholder={t('Upload identity document')}
-                            />
-                            {errors.identity_card && (
-                                <FieldError>{errors.identity_card}</FieldError>
-                            )}
-                        </Field>
-
-                        {isMedic && (
-                            <Field data-invalid={Boolean(errors.certificate)}>
-                                <FieldLabel>
-                                    {t('Medic certificate')}
-                                </FieldLabel>
-                                <UploadDocument
-                                    value={data.certificate}
-                                    uploadUrl="/public-upload/document"
-                                    deleteUrl="/public-upload/document"
-                                    onChange={(value) =>
-                                        setData('certificate', value ?? '')
-                                    }
-                                    disabled={processing}
-                                />
-                                {errors.certificate && (
-                                    <FieldError>
-                                        {errors.certificate}
-                                    </FieldError>
-                                )}
-                            </Field>
-                        )}
+                        <MemberDetailsFields
+                            data={data}
+                            setData={setData}
+                            errors={errors}
+                            processing={processing}
+                            memberFields={memberFields}
+                        />
                     </FieldGroup>
 
                     <DialogFooter>
@@ -594,18 +327,52 @@ function MemberDialog({
     );
 }
 
+/** The WhatsApp text a manager sends one member; the link goes on its own line. */
+function inviteMessage(
+    t: ReturnType<typeof useT>['t'],
+    member: Player,
+    team: string,
+    event: string,
+    closesAt: string | null,
+): string {
+    const ask = t(
+        'Hi :name, please complete your own details (photo, identity document, birth details) for :team at :event using this link',
+        { name: member.name, team, event },
+    );
+    const by = closesAt
+        ? t('before :deadline', { deadline: formatDateTime(closesAt) })
+        : '';
+
+    return `${ask}${by ? ` ${by}` : ''}:\n${member.invite_url ?? ''}`;
+}
+
+function whatsappHref(text: string): string {
+    return `https://wa.me/?text=${encodeURIComponent(text)}`;
+}
+
 function MemberRow({
     member,
     editable,
+    teamName,
+    eventName,
+    closesAt,
     onEdit,
     onRemove,
+    onNewLink,
 }: {
     member: Player;
     editable: boolean;
+    teamName: string;
+    eventName: string;
+    closesAt: string | null;
     onEdit: () => void;
     onRemove: () => void;
+    onNewLink: () => void;
 }) {
     const { t } = useT();
+    const [, copy] = useClipboard();
+    const canInvite =
+        editable && member.is_complete === false && Boolean(member.invite_url);
 
     return (
         <li className="flex items-center gap-3 px-4 py-3">
@@ -669,6 +436,64 @@ function MemberRow({
                             <IdCard className="h-4 w-4" />
                         </a>
                     </Button>
+                )}
+                {canInvite && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-[var(--accent)]"
+                                aria-label={t('Send :name their link', {
+                                    name: member.name,
+                                })}
+                            >
+                                <Link2 className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                                onSelect={() => {
+                                    void copy(member.invite_url ?? '').then(
+                                        (ok) =>
+                                            ok &&
+                                            toast(t('Link copied'), {
+                                                description: t(
+                                                    'Send it to :name — the link opens only their own entry.',
+                                                    { name: member.name },
+                                                ),
+                                            }),
+                                    );
+                                }}
+                            >
+                                <Copy className="mr-2 h-4 w-4" />
+                                {t('Copy their link')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <a
+                                    href={whatsappHref(
+                                        inviteMessage(
+                                            t,
+                                            member,
+                                            teamName,
+                                            eventName,
+                                            closesAt,
+                                        ),
+                                    )}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    <MessageCircle className="mr-2 h-4 w-4" />
+                                    {t('Send via WhatsApp')}
+                                </a>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onSelect={onNewLink}>
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                                {t('New link (old one stops working)')}
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 )}
                 {editable && (
                     <>
@@ -750,6 +575,42 @@ export default function TeamRoster({
         setEditingId(member.id);
         setDialogOpen(true);
     }
+
+    function newLink(member: Player) {
+        if (
+            !window.confirm(
+                t(
+                    'Issue :name a new link? The one you already sent will stop working.',
+                    { name: member.name },
+                ),
+            )
+        ) {
+            return;
+        }
+
+        removeForm.post(
+            `/registrations/${registration.qr_token}/roster/players/${member.id}/invite`,
+            { preserveScroll: true },
+        );
+    }
+
+    // One message for the team's WhatsApp group: every member still owing
+    // details, each with their own link.
+    const incompleteMembers = members.filter(
+        (m) => m.is_complete === false && m.invite_url,
+    );
+    const shareAllText = [
+        t(
+            'Please complete your own details for :team at :event — photo, identity document and birth details — using your personal link',
+            { team: team.name, event: event.name },
+        ) +
+            (limits.closes_at
+                ? ` ${t('before :deadline', { deadline: formatDateTime(limits.closes_at) })}`
+                : '') +
+            ':',
+        ...incompleteMembers.map((m) => `• ${m.name}: ${m.invite_url}`),
+    ].join('\n');
+    const [, copyAll] = useClipboard();
 
     function remove(member: Player) {
         if (
@@ -869,6 +730,59 @@ export default function TeamRoster({
                             )}
                         </div>
 
+                        {editable && incompleteMembers.length > 0 && (
+                            <div className="flex flex-col gap-2 rounded-xl border border-dashed border-neutral-300 p-4">
+                                <p className="text-sm font-semibold text-neutral-900">
+                                    {t('Let members fill in their own details')}
+                                </p>
+                                <p className="text-xs text-neutral-500">
+                                    {t(
+                                        'Each member has a personal link that opens only their entry. Paste one message into the team group, or send links one by one from the list below.',
+                                    )}
+                                </p>
+                                <div className="mt-1 flex flex-col gap-2 sm:flex-row">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="flex-1 cursor-pointer"
+                                        onClick={() =>
+                                            void copyAll(shareAllText).then(
+                                                (ok) =>
+                                                    ok &&
+                                                    toast(t('Message copied'), {
+                                                        description: t(
+                                                            ':count links, one per member still missing details.',
+                                                            {
+                                                                count: incompleteMembers.length,
+                                                            },
+                                                        ),
+                                                    }),
+                                            )
+                                        }
+                                    >
+                                        <Copy className="mr-1.5 h-3.5 w-3.5" />
+                                        {t('Copy message for the group')}
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="flex-1"
+                                        asChild
+                                    >
+                                        <a
+                                            href={whatsappHref(shareAllText)}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                        >
+                                            <MessageCircle className="mr-1.5 h-3.5 w-3.5" />
+                                            WhatsApp
+                                        </a>
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+
                         <section className="flex flex-col gap-2">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-sm font-bold tracking-wide text-neutral-900 uppercase">
@@ -899,8 +813,12 @@ export default function TeamRoster({
                                             key={member.id}
                                             member={member}
                                             editable={editable}
+                                            teamName={team.name}
+                                            eventName={event.name}
+                                            closesAt={limits.closes_at}
                                             onEdit={() => openEdit(member)}
                                             onRemove={() => remove(member)}
+                                            onNewLink={() => newLink(member)}
                                         />
                                     ))}
                                 </ul>
@@ -925,8 +843,12 @@ export default function TeamRoster({
                                             key={member.id}
                                             member={member}
                                             editable={editable}
+                                            teamName={team.name}
+                                            eventName={event.name}
+                                            closesAt={limits.closes_at}
                                             onEdit={() => openEdit(member)}
                                             onRemove={() => remove(member)}
+                                            onNewLink={() => newLink(member)}
                                         />
                                     ))}
                                 </ul>

@@ -46,7 +46,8 @@ class Team extends Model
     /** @return BelongsToMany<Player, $this> */
     public function players(): BelongsToMany
     {
-        return $this->belongsToMany(Player::class);
+        // invite_token: the per-membership self-fill secret (see RosterService::inviteTokenFor).
+        return $this->belongsToMany(Player::class)->withPivot('invite_token');
     }
 
     /** @return BelongsToMany<Pool, $this> */

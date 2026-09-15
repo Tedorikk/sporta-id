@@ -36,6 +36,8 @@ export interface Player {
     extra: Record<string, string> | null;
     /** Roster portal only: whether every detail a tournament entry needs is filled in. */
     is_complete?: boolean;
+    /** Roster portal only: the member's own self-fill page (per-membership invite token). */
+    invite_url?: string;
     qr_token: string;
     basketball_club_id: number;
     basketball_club: BasketballClub;
