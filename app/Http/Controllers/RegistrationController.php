@@ -57,7 +57,10 @@ class RegistrationController extends Controller
                 $team = Team::create([
                     'event_id' => $event->id,
                     'name' => $validated['name'],
-                    'status' => 'pending',
+                    'status' => Team::STATUS_PENDING,
+                    // Puts the team straight into its bracket's category so it
+                    // shows up for pooling and standings once verified.
+                    'basketball_event_category_id' => $category->basketballCategory?->id,
                 ]);
             }
 

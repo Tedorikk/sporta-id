@@ -13,6 +13,21 @@ class Team extends Model
 {
     use HasFactory;
 
+    /** Awaiting the organiser's roster review. */
+    public const STATUS_PENDING = 'pending';
+
+    /** Reviewed and cleared to play; the roster is frozen. */
+    public const STATUS_VERIFIED = 'verified';
+
+    /** Turned away, or its registration fell through (expired, cancelled, refunded). */
+    public const STATUS_REJECTED = 'rejected';
+
+    public const STATUSES = [
+        self::STATUS_PENDING,
+        self::STATUS_VERIFIED,
+        self::STATUS_REJECTED,
+    ];
+
     protected $fillable = [
         'event_id', 'name', 'logo', 'status', 'basketball_event_category_id',
     ];
@@ -64,7 +79,7 @@ class Team extends Model
      */
     public function rosterLocked(): bool
     {
-        if ($this->status === 'verified') {
+        if ($this->status === self::STATUS_VERIFIED) {
             return true;
         }
 
