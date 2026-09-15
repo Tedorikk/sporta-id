@@ -56,7 +56,11 @@ import type {
     RegistrationCategory,
     RegistrationField,
 } from '@/types/registration-category';
-import { isInputField, isRosterField } from '@/types/registration-category';
+import {
+    imageRatioOf,
+    isInputField,
+    isRosterField,
+} from '@/types/registration-category';
 
 interface Props {
     event: Event;
@@ -1052,7 +1056,9 @@ export default function RegisterDynamic({
                                                             value={
                                                                 field.value as string
                                                             }
-                                                            ratio={4 / 5}
+                                                            ratio={imageRatioOf(
+                                                                f,
+                                                            )}
                                                             uploadUrl="/public-upload/image"
                                                             deleteUrl="/public-upload/image"
                                                             onChange={(value) =>
@@ -1275,7 +1281,7 @@ export default function RegisterDynamic({
                                                     {f.help_text &&
                                                         f.type !==
                                                             'checkbox' && (
-                                                            <FieldDescription>
+                                                            <FieldDescription className="whitespace-pre-line">
                                                                 {f.help_text}
                                                             </FieldDescription>
                                                         )}

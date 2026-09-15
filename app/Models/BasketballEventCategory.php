@@ -66,6 +66,14 @@ class BasketballEventCategory extends Model
                         'type' => 'text',
                         'required' => true,
                     ],
+                    [
+                        'key' => 'team_logo',
+                        'label' => 'Logo Tim',
+                        'type' => 'file',
+                        'required' => true,
+                        'image_ratio' => 'square',
+                        'help_text' => "Gunakan gambar dengan latar belakang transparan.\nGambar tidak dapat diganti di kemudian hari.\nCrop gambar sesuai dengan grid.",
+                    ],
                 ],
             ],
             [

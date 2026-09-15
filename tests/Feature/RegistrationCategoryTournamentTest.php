@@ -73,7 +73,7 @@ test('the default basketball form carries the roster block, payment evidence and
     expect($registrationCategory->rosterField()['slots'])->toHaveCount(4)
         ->and(collect($registrationCategory->rosterMemberFields())->pluck('key')->all())->toBe(['asal_sekolah', 'kelas'])
         ->and(collect($registrationCategory->inputFields())->pluck('key')->all())
-        ->toBe(['asal_kabupaten_kota', 'bukti_pembayaran', 'nama_rekening_pembayaran', 'surat_pernyataan', 'lisensi_tim_medis']);
+        ->toBe(['asal_kabupaten_kota', 'team_logo', 'bukti_pembayaran', 'nama_rekening_pembayaran', 'surat_pernyataan', 'lisensi_tim_medis']);
 });
 
 test('a team category without tournament settings is just a registration category', function () {

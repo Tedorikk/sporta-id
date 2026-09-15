@@ -28,6 +28,34 @@ export interface RosterSlot {
     max: number | null;
 }
 
+/** Mirrors RegistrationCategory::IMAGE_RATIOS. */
+export type ImageRatio = 'portrait' | 'square' | 'landscape';
+
+export const IMAGE_RATIOS: {
+    value: ImageRatio;
+    label: string;
+    ratio: number;
+}[] = [
+    { value: 'portrait', label: 'Portrait (4:5)', ratio: 4 / 5 },
+    { value: 'square', label: 'Square (1:1)', ratio: 1 },
+    { value: 'landscape', label: 'Landscape (16:9)', ratio: 16 / 9 },
+];
+
+export function imageRatioOf(
+    field: Pick<RegistrationField, 'image_ratio'>,
+): number {
+    return (
+        IMAGE_RATIOS.find((r) => r.value === (field.image_ratio ?? 'portrait'))
+            ?.ratio ?? 4 / 5
+    );
+}
+
+/**
+ * A `file` field with this key on a team category is the team's logo — the
+ * server copies it onto the team. Mirrors RegistrationCategory::TEAM_LOGO_KEY.
+ */
+export const TEAM_LOGO_KEY = 'team_logo';
+
 /** Mirrors RegistrationCategory::ROSTER_MEMBER_FIELD_TYPES. */
 export type RosterMemberFieldType =
     'text' | 'number' | 'date' | 'select' | 'phone';
@@ -54,6 +82,8 @@ export interface RegistrationField {
     max?: number | null;
     /** rating type only — defaults to 5 when unset */
     max_rating?: number | null;
+    /** file type only — crop/aspect preset; defaults to portrait */
+    image_ratio?: ImageRatio | null;
     /** Overrides the generic "required" validation message for this field. */
     error_message?: string | null;
     /** roster type only: the roles a team enters and how many of each */

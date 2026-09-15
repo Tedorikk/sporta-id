@@ -18,7 +18,12 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import {
+    Field,
+    FieldDescription,
+    FieldGroup,
+    FieldLabel,
+} from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -30,12 +35,17 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import {
+    IMAGE_RATIOS,
     OPTION_FIELD_TYPES,
     REGISTRATION_FIELD_TYPES,
     RESERVED_FIELD_KEYS,
+    TEAM_LOGO_KEY,
     isInputField,
 } from '@/types/registration-category';
-import type { RegistrationField } from '@/types/registration-category';
+import type {
+    ImageRatio,
+    RegistrationField,
+} from '@/types/registration-category';
 import { OptionEditor } from './option-editor';
 import { RosterBlockEditor } from './roster-block-editor';
 
@@ -355,6 +365,39 @@ function SortableFieldRow({
                                 />
                             </Field>
                         </div>
+                    )}
+
+                    {field.type === 'file' && (
+                        <Field>
+                            <FieldLabel>Image shape</FieldLabel>
+                            <Select
+                                value={field.image_ratio ?? 'portrait'}
+                                onValueChange={(value) =>
+                                    onChange({
+                                        image_ratio: value as ImageRatio,
+                                    })
+                                }
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {IMAGE_RATIOS.map((r) => (
+                                        <SelectItem
+                                            key={r.value}
+                                            value={r.value}
+                                        >
+                                            {r.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <FieldDescription>
+                                The crop grid the participant sees.
+                                {field.key === TEAM_LOGO_KEY &&
+                                    ' With the key "team_logo" on a team category, this upload becomes the team\'s logo on ID cards and brackets.'}
+                            </FieldDescription>
+                        </Field>
                     )}
 
                     {field.type === 'rating' && (

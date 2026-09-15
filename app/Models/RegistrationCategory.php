@@ -170,6 +170,15 @@ class RegistrationCategory extends Model
     /** Answer types an organiser may ask per roster member, beyond the fixed identity fields. */
     public const ROSTER_MEMBER_FIELD_TYPES = ['text', 'number', 'date', 'select', 'phone'];
 
+    /**
+     * A `file` field with this key on a team category is the team's logo: its
+     * upload is copied onto teams.logo so ID cards and brackets show it.
+     */
+    public const TEAM_LOGO_KEY = 'team_logo';
+
+    /** Crop/aspect presets a `file` field can ask for; mirrors IMAGE_RATIOS in the TS types. */
+    public const IMAGE_RATIOS = ['portrait', 'square', 'landscape'];
+
     /** Flattens fields across every page, display-only blocks included — the form's layout order. */
     public function allFields(): array
     {

@@ -259,3 +259,22 @@ test('a registration category with no registrations can be deleted', function ()
 
     expect(RegistrationCategory::find($category->id))->toBeNull();
 });
+
+test('a file field can carry an image shape, but only a known one', function () {
+    $event = Event::factory()->create();
+    $this->actingAs(organizerOf($event));
+
+    $this->post(route('registration_categories.store', $event), categoryPayload(['form_pages' => [
+        ['key' => 'page-1', 'title' => 'Details', 'fields' => [
+            ['key' => 'logo', 'label' => 'Logo', 'type' => 'file', 'required' => true, 'image_ratio' => 'square'],
+        ]],
+    ]]))->assertRedirect()->assertSessionHasNoErrors();
+
+    expect(RegistrationCategory::sole()->allFields()[0]['image_ratio'])->toBe('square');
+
+    $this->post(route('registration_categories.store', $event), categoryPayload(['name' => 'Bad', 'form_pages' => [
+        ['key' => 'page-1', 'title' => 'Details', 'fields' => [
+            ['key' => 'logo', 'label' => 'Logo', 'type' => 'file', 'required' => true, 'image_ratio' => 'circle'],
+        ]],
+    ]]))->assertSessionHasErrors('form_pages.0.fields.0.image_ratio');
+});

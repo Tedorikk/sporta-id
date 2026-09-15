@@ -224,3 +224,33 @@ test('a team from another event cannot be updated or deleted through this event'
 
     expect($foreignTeam->fresh())->not->toBeNull();
 });
+
+// ─── Team logo ──────────────────────────────────────────────────────────────
+
+test('a team_logo upload on the form becomes the team logo', function () {
+    $tournament = tournamentCategory(['form_pages' => [
+        ['key' => 'tim', 'title' => 'Data Tim', 'fields' => [
+            ['key' => 'team_logo', 'label' => 'Logo Tim', 'type' => 'file', 'required' => true, 'image_ratio' => 'square'],
+        ]],
+    ]]);
+    $registrationCategory = $tournament->registrationCategory;
+
+    $this->post(route('registrations.store', [$registrationCategory->event, $registrationCategory]), registrationPayload([
+        'form_data' => ['team_logo' => 'https://example.com/warriors.png'],
+    ]))->assertOk();
+
+    expect(Registration::sole()->team->logo)->toBe('https://example.com/warriors.png');
+});
+
+test('the default basketball form asks for a square team logo with the handling notes', function () {
+    $field = collect(BasketballEventCategory::defaultFormPages())
+        ->flatMap(fn ($page) => $page['fields'])
+        ->firstWhere('key', 'team_logo');
+
+    expect($field['type'])->toBe('file')
+        ->and($field['required'])->toBeTrue()
+        ->and($field['image_ratio'])->toBe('square')
+        ->and($field['help_text'])->toContain('latar belakang transparan')
+        ->and($field['help_text'])->toContain('tidak dapat diganti')
+        ->and($field['help_text'])->toContain('sesuai dengan grid');
+});

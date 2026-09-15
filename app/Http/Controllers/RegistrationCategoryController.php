@@ -306,6 +306,7 @@ class RegistrationCategoryController extends Controller
             'form_pages.*.fields.*.max' => ['nullable', 'numeric'],
             'form_pages.*.fields.*.error_message' => ['nullable', 'string', 'max:255'],
             'form_pages.*.fields.*.max_rating' => ['nullable', 'integer', 'min:1', 'max:10'],
+            'form_pages.*.fields.*.image_ratio' => ['nullable', Rule::in(RegistrationCategory::IMAGE_RATIOS)],
 
             // Roster block: which roles, how many of each, and the extra
             // questions asked per member (their answers land in players.extra).
