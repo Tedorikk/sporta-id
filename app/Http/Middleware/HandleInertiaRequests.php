@@ -40,6 +40,10 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            // `id`/`en` on the public pages (see SetPublicLocale); the
+            // dashboard is not translated and always sees `en`. Lazy because
+            // route middleware — where the locale is set — runs after this.
+            'locale' => fn () => app()->getLocale(),
             'auth' => [
                 'user' => $user,
                 'organization' => fn () => $user?->resolveCurrentOrganization(),

@@ -1,51 +1,49 @@
 <x-mail::message>
-# You're registered
+# {{ __('You’re registered') }}
 
-Hi {{ $registration->name }}, your registration for **{{ $registration->event->name }}** is confirmed.
+{{ __('Hi :name, your registration for **:event** is confirmed.', ['name' => $registration->name, 'event' => $registration->event->name]) }}
 
-- Category: {{ $registration->registrationCategory->name }}
-- Participant: {{ $registration->name }}
-- Event dates: {{ $registration->event->start_date?->format('j M Y') }}@if ($registration->event->end_date && $registration->event->end_date->ne($registration->event->start_date)) – {{ $registration->event->end_date->format('j M Y') }}@endif
+- {{ __('Category') }}: {{ $registration->registrationCategory->name }}
+- {{ __('Participant') }}: {{ $registration->name }}
+- {{ __('Event dates') }}: {{ $registration->event->start_date?->translatedFormat('j M Y') }}@if ($registration->event->end_date && $registration->event->end_date->ne($registration->event->start_date)) – {{ $registration->event->end_date->translatedFormat('j M Y') }}@endif
 
 @if ($payment)
-## Payment receipt
+## {{ __('Payment receipt') }}
 
-- Order ID: {{ $payment->order_id }}
-- Amount paid: Rp {{ number_format((float) $payment->amount, 0, ',', '.') }}
-- Method: {{ $payment->payment_type ? str($payment->payment_type)->replace('_', ' ')->headline() : '—' }}
-- Paid at: {{ $payment->paid_at?->format('j M Y, H:i') }}
+- {{ __('Order ID') }}: {{ $payment->order_id }}
+- {{ __('Amount paid') }}: Rp {{ number_format((float) $payment->amount, 0, ',', '.') }}
+- {{ __('Method') }}: {{ $payment->payment_type ? str($payment->payment_type)->replace('_', ' ')->headline() : '—' }}
+- {{ __('Paid at') }}: {{ $payment->paid_at?->translatedFormat('j M Y, H:i') }}
 
-Payment was processed securely by Midtrans.
+{{ __('Payment was processed securely by Midtrans.') }}
 @endif
 
 @if ($registration->team?->basketball_event_category_id)
-## Team roster
+## {{ __('Team roster') }}
 
-Add your players and staff before the roster deadline. Each member gets their
-own ID card once added.
+{{ __('Add your players and staff before the roster deadline. Each member gets their own ID card once added.') }}
 
 <x-mail::button :url="route('team-roster.show', $registration)">
-Manage your roster
+{{ __('Manage your roster') }}
 </x-mail::button>
 @endif
 
 @if ($registration->team)
 <x-mail::button :url="route('teams.id-card', $registration->team)">
-Open your team ID card
+{{ __('Open your team ID card') }}
 </x-mail::button>
 @else
 <x-mail::button :url="route('registrations.id-card', $registration)">
-Open your ID card
+{{ __('Open your ID card') }}
 </x-mail::button>
 @endif
 
-Keep this link — the QR code on your ID card is what we scan at the event. You can
-also [check your registration status]({{ route('registrations.status', $registration) }}) at any time.
+{{ __('Keep this link — the QR code on your ID card is what we scan at the event. You can also [check your registration status](:url) at any time.', ['url' => route('registrations.status', $registration)]) }}
 
 @if ($registration->event->contact_person)
-Questions? Contact the organizer at {{ $registration->event->contact_person }}.
+{{ __('Questions? Contact the organizer at :contact.', ['contact' => $registration->event->contact_person]) }}
 @endif
 
-Thanks,<br>
+{{ __('Thanks,') }}<br>
 {{ config('app.name') }}
 </x-mail::message>

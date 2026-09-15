@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { PublicPageHeader } from '@/components/public/public-page-header';
 import { Button } from '@/components/ui/button';
 import { useForceLightMode } from '@/hooks/use-force-light-mode';
+import { useT } from '@/hooks/use-t';
 import { formatRupiah } from '@/lib/format-currency';
 import { loadSnapScript } from '@/lib/midtrans';
 import type { Event } from '@/types/event';
@@ -50,9 +51,11 @@ interface PayResponse {
 export default function RegistrationStatus({ registration }: Props) {
     useForceLightMode();
 
+    const { t } = useT();
     const [isPaying, setIsPaying] = useState(false);
 
     const copy = STATUS_COPY[registration.status] ?? STATUS_COPY.confirmed;
+    const statusLabel = t(copy.label);
     const hasRoster = Boolean(registration.team?.basketball_event_category_id);
     const Icon =
         registration.status === 'confirmed'
@@ -92,13 +95,16 @@ export default function RegistrationStatus({ registration }: Props) {
     return (
         <>
             <Head
-                title={`Registration ${copy.label} — ${registration.event.name}`}
+                title={t('Registration :status — :event', {
+                    status: statusLabel,
+                    event: registration.event.name,
+                })}
             />
 
             <div className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10">
                 <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
                     <PublicPageHeader
-                        eyebrow="Registration"
+                        eyebrow={t('Registration')}
                         title={registration.event.name}
                         subtitle={registration.registration_category.name}
                         logoUrl={registration.event.logo}
@@ -111,8 +117,10 @@ export default function RegistrationStatus({ registration }: Props) {
                         >
                             <Icon className="h-8 w-8" />
                         </div>
-                        <h2 className="text-xl font-bold">{copy.label}</h2>
-                        <p className="text-neutral-600">{copy.description}</p>
+                        <h2 className="text-xl font-bold">{statusLabel}</h2>
+                        <p className="text-neutral-600">
+                            {t(copy.description)}
+                        </p>
                         <p className="text-sm font-medium text-neutral-500">
                             {registration.name}
                         </p>
@@ -134,7 +142,9 @@ export default function RegistrationStatus({ registration }: Props) {
                                     {isPaying ? (
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     ) : null}
-                                    {isPaying ? 'Opening payment…' : 'Pay Now'}
+                                    {isPaying
+                                        ? t('Opening payment…')
+                                        : t('Pay Now')}
                                 </Button>
                             </>
                         )}
@@ -148,7 +158,7 @@ export default function RegistrationStatus({ registration }: Props) {
                                     href={`/registrations/${registration.qr_token}/roster`}
                                 >
                                     <Users className="mr-2 h-4 w-4" />
-                                    Manage roster
+                                    {t('Manage roster')}
                                 </a>
                             </Button>
                         )}

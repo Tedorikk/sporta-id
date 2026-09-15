@@ -47,82 +47,87 @@ use App\Http\Controllers\VerificationCodeController;
 use App\Http\Controllers\VoteController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [LandingController::class, 'index'])->name('home');
+// --- Public, registrant-facing pages -----------------------------------------
+// Everything here is localised (Indonesian by default, `?lang=en` to switch);
+// the dashboard below stays English.
+Route::middleware('public.locale')->group(function () {
+    Route::get('/', [LandingController::class, 'index'])->name('home');
 
-// --- Public marketing pages -------------------------------------------------
-Route::inertia('about', 'about')->name('about');
+    // --- Public marketing pages -------------------------------------------------
+    Route::inertia('about', 'about')->name('about');
 
-// --- Public legal pages (required for payment-gateway onboarding) ----------
-Route::inertia('terms', 'terms')->name('terms');
-Route::inertia('privacy', 'privacy')->name('privacy');
-Route::inertia('refund-policy', 'refund-policy')->name('refund-policy');
+    // --- Public legal pages (required for payment-gateway onboarding) ----------
+    Route::inertia('terms', 'terms')->name('terms');
+    Route::inertia('privacy', 'privacy')->name('privacy');
+    Route::inertia('refund-policy', 'refund-policy')->name('refund-policy');
 
-Route::get('events', [PublicEventController::class, 'index'])->name('events.public.index');
-Route::get('events/{event}', [PublicEventController::class, 'show'])->name('events.public.show');
+    Route::get('events', [PublicEventController::class, 'index'])->name('events.public.index');
+    Route::get('events/{event}', [PublicEventController::class, 'show'])->name('events.public.show');
 
-Route::get('contact', [ContactController::class, 'create'])->name('contact');
-Route::post('contact', [ContactController::class, 'store'])->name('contact.store');
+    Route::get('contact', [ContactController::class, 'create'])->name('contact');
+    Route::post('contact', [ContactController::class, 'store'])->name('contact.store');
 
-// --- Public Team ID Card (shareable, no auth required) --------------------
-Route::get('teams/{team}/id-card', [TeamQrController::class, 'idCard'])->name('teams.id-card');
+    // --- Public Team ID Card (shareable, no auth required) --------------------
+    Route::get('teams/{team}/id-card', [TeamQrController::class, 'idCard'])->name('teams.id-card');
 
-// --- Public Attendee ID Card (guest/tenant/photographer/..., shareable, no auth required) --
-Route::get('attendees/{attendee}/id-card', [AttendeeQrController::class, 'idCard'])->name('attendees.id-card');
+    // --- Public Attendee ID Card (guest/tenant/photographer/..., shareable, no auth required) --
+    Route::get('attendees/{attendee}/id-card', [AttendeeQrController::class, 'idCard'])->name('attendees.id-card');
 
-// --- Public Registration ID Card (individual registrants, shareable, no auth required) --
-Route::get('registrations/{registration:qr_token}/id-card', [RegistrationQrController::class, 'idCard'])->name('registrations.id-card');
+    // --- Public Registration ID Card (individual registrants, shareable, no auth required) --
+    Route::get('registrations/{registration:qr_token}/id-card', [RegistrationQrController::class, 'idCard'])->name('registrations.id-card');
 
-// --- Public Player Self-Registration & ID Card (shareable, no auth required) --
-// Kept for links already in circulation: sends visitors to wherever the event
-// takes registrations now.
-Route::get('events/{event}/register', [PublicEventController::class, 'register'])->name('events.public.register');
-Route::get('players/{player}/id-card', [PlayerQrController::class, 'idCard'])->name('players.id-card');
+    // --- Public Player Self-Registration & ID Card (shareable, no auth required) --
+    // Kept for links already in circulation: sends visitors to wherever the event
+    // takes registrations now.
+    Route::get('events/{event}/register', [PublicEventController::class, 'register'])->name('events.public.register');
+    Route::get('players/{player}/id-card', [PlayerQrController::class, 'idCard'])->name('players.id-card');
 
-// --- Public dynamic registration (team or individual, any event type) -----
-Route::get('events/{event}/registration-categories/{registrationCategory}/register', [RegistrationController::class, 'create'])->name('registrations.create');
-Route::post('events/{event}/registration-categories/{registrationCategory}/register', [RegistrationController::class, 'store'])
-    ->middleware('throttle:10,1')->name('registrations.store');
-Route::get('registrations/{registration:qr_token}/status', [RegistrationController::class, 'status'])->name('registrations.status');
-Route::post('registrations/{registration:qr_token}/pay', [RegistrationController::class, 'pay'])
-    ->middleware('throttle:20,1')->name('registrations.pay');
+    // --- Public dynamic registration (team or individual, any event type) -----
+    Route::get('events/{event}/registration-categories/{registrationCategory}/register', [RegistrationController::class, 'create'])->name('registrations.create');
+    Route::post('events/{event}/registration-categories/{registrationCategory}/register', [RegistrationController::class, 'store'])
+        ->middleware('throttle:10,1')->name('registrations.store');
+    Route::get('registrations/{registration:qr_token}/status', [RegistrationController::class, 'status'])->name('registrations.status');
+    Route::post('registrations/{registration:qr_token}/pay', [RegistrationController::class, 'pay'])
+        ->middleware('throttle:20,1')->name('registrations.pay');
 
-// --- Team roster portal (captains manage their own sheet by token) ---------
-Route::get('registrations/{registration:qr_token}/roster', [TeamRosterController::class, 'show'])->name('team-roster.show');
-Route::post('registrations/{registration:qr_token}/roster/players', [TeamRosterController::class, 'store'])
-    ->middleware('throttle:20,1')->name('team-roster.store');
-Route::put('registrations/{registration:qr_token}/roster/players/{player}', [TeamRosterController::class, 'update'])
-    ->middleware('throttle:20,1')->name('team-roster.update');
-Route::delete('registrations/{registration:qr_token}/roster/players/{player}', [TeamRosterController::class, 'destroy'])
-    ->middleware('throttle:20,1')->name('team-roster.destroy');
+    // --- Team roster portal (captains manage their own sheet by token) ---------
+    Route::get('registrations/{registration:qr_token}/roster', [TeamRosterController::class, 'show'])->name('team-roster.show');
+    Route::post('registrations/{registration:qr_token}/roster/players', [TeamRosterController::class, 'store'])
+        ->middleware('throttle:20,1')->name('team-roster.store');
+    Route::put('registrations/{registration:qr_token}/roster/players/{player}', [TeamRosterController::class, 'update'])
+        ->middleware('throttle:20,1')->name('team-roster.update');
+    Route::delete('registrations/{registration:qr_token}/roster/players/{player}', [TeamRosterController::class, 'destroy'])
+        ->middleware('throttle:20,1')->name('team-roster.destroy');
 
-// --- Public award voting (shareable, no auth required) --------------------
-// Identified voters arrive with ?token=<qr_token> from their own ID card.
-Route::get('events/{event}/awards/{award}/vote', [VoteController::class, 'create'])->name('votes.create');
-Route::post('events/{event}/awards/{award}/vote', [VoteController::class, 'store'])
-    ->middleware('throttle:10,1')->name('votes.store');
-Route::get('votes/{vote}/status', [VoteController::class, 'status'])->name('votes.status');
-Route::post('votes/{vote}/pay', [VoteController::class, 'pay'])
-    ->middleware('throttle:20,1')->name('votes.pay');
+    // --- Public award voting (shareable, no auth required) --------------------
+    // Identified voters arrive with ?token=<qr_token> from their own ID card.
+    Route::get('events/{event}/awards/{award}/vote', [VoteController::class, 'create'])->name('votes.create');
+    Route::post('events/{event}/awards/{award}/vote', [VoteController::class, 'store'])
+        ->middleware('throttle:10,1')->name('votes.store');
+    Route::get('votes/{vote}/status', [VoteController::class, 'status'])->name('votes.status');
+    Route::post('votes/{vote}/pay', [VoteController::class, 'pay'])
+        ->middleware('throttle:20,1')->name('votes.pay');
 
-// --- Midtrans payment notification webhook (server-to-server, no session) --
-Route::post('webhooks/midtrans', [PaymentNotificationController::class, 'handle'])->name('webhooks.midtrans');
+    // --- Midtrans payment notification webhook (server-to-server, no session) --
+    Route::post('webhooks/midtrans', [PaymentNotificationController::class, 'handle'])->name('webhooks.midtrans');
 
-// --- Public "Find My ID Card" lookup (no auth required) --------------------
-Route::get('find-id', [PlayerLookupController::class, 'index'])->name('players.lookup');
-Route::get('find-id/events/{event}/categories', [PlayerLookupController::class, 'categories'])->name('players.lookup.categories');
-Route::get('find-id/teams/{team}/players', [PlayerLookupController::class, 'players'])->name('players.lookup.players');
+    // --- Public "Find My ID Card" lookup (no auth required) --------------------
+    Route::get('find-id', [PlayerLookupController::class, 'index'])->name('players.lookup');
+    Route::get('find-id/events/{event}/categories', [PlayerLookupController::class, 'categories'])->name('players.lookup.categories');
+    Route::get('find-id/teams/{team}/players', [PlayerLookupController::class, 'players'])->name('players.lookup.players');
 
-// --- Public photo upload (rate-limited, used by self-registration) --------
-Route::post('public-upload/image', [ImageUploadController::class, 'store'])
-    ->middleware('throttle:20,1')->name('public-upload.image');
-Route::delete('public-upload/image', [ImageUploadController::class, 'destroy'])
-    ->middleware('throttle:20,1')->name('public-upload.image.destroy');
+    // --- Public photo upload (rate-limited, used by self-registration) --------
+    Route::post('public-upload/image', [ImageUploadController::class, 'store'])
+        ->middleware('throttle:20,1')->name('public-upload.image');
+    Route::delete('public-upload/image', [ImageUploadController::class, 'destroy'])
+        ->middleware('throttle:20,1')->name('public-upload.image.destroy');
 
-// --- Public document upload (rate-limited, used by self-registration) -----
-Route::post('public-upload/document', [DocumentUploadController::class, 'store'])
-    ->middleware('throttle:20,1')->name('public-upload.document');
-Route::delete('public-upload/document', [DocumentUploadController::class, 'destroy'])
-    ->middleware('throttle:20,1')->name('public-upload.document.destroy');
+    // --- Public document upload (rate-limited, used by self-registration) -----
+    Route::post('public-upload/document', [DocumentUploadController::class, 'store'])
+        ->middleware('throttle:20,1')->name('public-upload.document');
+    Route::delete('public-upload/document', [DocumentUploadController::class, 'destroy'])
+        ->middleware('throttle:20,1')->name('public-upload.document.destroy');
+});
 
 // --- Organization invitations (public: the invitee may have no account yet) --
 Route::get('invitations/{token}', [InvitationAcceptanceController::class, 'show'])->name('invitations.show');

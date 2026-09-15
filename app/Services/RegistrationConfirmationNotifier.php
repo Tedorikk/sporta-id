@@ -35,15 +35,21 @@ class RegistrationConfirmationNotifier
             return;
         }
 
-        $this->send($registration->email, new RegistrationConfirmed($registration));
+        // The registrant's own language, not the request's: the webhook that
+        // confirms a paid registration has no request at all.
+        $this->send(
+            $registration->email,
+            (new RegistrationConfirmed($registration))->locale($registration->locale ?? 'id'),
+        );
     }
 
     private function mailOrganizers(Registration $registration): void
     {
         $recipients = $registration->registrationCategory->form_settings['notify_emails'] ?? [];
 
+        // Organisers work in the English dashboard, whatever the registrant chose.
         foreach ($recipients as $recipient) {
-            $this->send($recipient, new RegistrationReceived($registration));
+            $this->send($recipient, (new RegistrationReceived($registration))->locale('en'));
         }
     }
 

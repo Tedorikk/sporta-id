@@ -1,6 +1,7 @@
 import { isValidHexColor, shadeColor } from '@/lib/color';
 import { formatImageUrl } from '@/lib/image-utils';
 import { SiteLogo } from '../landing/site-logo';
+import { LanguageToggle } from './language-toggle';
 
 interface PublicPageHeaderProps {
     eyebrow: string;
@@ -57,6 +58,8 @@ export function PublicPageHeader({
                     <rect width="100%" height="100%" fill="url(#ppgrid)" />
                 </svg>
             </div>
+
+            <LanguageToggle className="absolute top-3 right-3 z-20" />
 
             <div className="relative z-10 flex flex-col items-center gap-2">
                 <div className="flex items-center justify-center">

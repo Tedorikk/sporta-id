@@ -44,8 +44,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { UploadDocument } from '@/components/upload-document';
 import { UploadImage } from '@/components/upload-image';
 import { useForceLightMode } from '@/hooks/use-force-light-mode';
+import { useT } from '@/hooks/use-t';
 import { accentColors } from '@/lib/color';
 import { formatRupiah } from '@/lib/format-currency';
+import type { Translate } from '@/lib/i18n';
 import { loadSnapScript } from '@/lib/midtrans';
 import { cn } from '@/lib/utils';
 import type { CardTemplate } from '@/types/card-template';
@@ -90,6 +92,7 @@ function PaymentPendingView({
     midtransIsProduction: boolean;
     accentStyle: CSSProperties;
 }) {
+    const { t } = useT();
     const [isPaying, setIsPaying] = useState(false);
 
     const payNow = () => {
@@ -119,7 +122,9 @@ function PaymentPendingView({
 
     return (
         <>
-            <Head title={`Complete Payment — ${event.name}`} />
+            <Head
+                title={t('Complete Payment — :event', { event: event.name })}
+            />
 
             <div
                 className="relative flex min-h-screen flex-col items-center justify-center gap-6 bg-neutral-950 px-4 py-10"
@@ -128,13 +133,13 @@ function PaymentPendingView({
                 <div className="flex items-center gap-2 text-amber-400">
                     <Clock className="h-5 w-5" />
                     <span className="text-sm font-semibold tracking-wide uppercase">
-                        Awaiting payment
+                        {t('Awaiting payment')}
                     </span>
                 </div>
 
                 <div className="w-full max-w-sm overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
                     <PublicPageHeader
-                        eyebrow="Registration"
+                        eyebrow={t('Registration')}
                         title={event.name}
                         subtitle={registrationCategory.name}
                         logoUrl={event.logo}
@@ -149,8 +154,9 @@ function PaymentPendingView({
                             {formatRupiah(registrationCategory.price)}
                         </p>
                         <p className="text-sm text-neutral-600">
-                            Your slot is reserved — complete payment to confirm
-                            this registration and get your ID card.
+                            {t(
+                                'Your slot is reserved — complete payment to confirm this registration and get your ID card.',
+                            )}
                         </p>
 
                         {snapToken ? (
@@ -163,13 +169,15 @@ function PaymentPendingView({
                                 {isPaying ? (
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 ) : null}
-                                {isPaying ? 'Opening payment…' : 'Pay Now'}
+                                {isPaying
+                                    ? t('Opening payment…')
+                                    : t('Pay Now')}
                             </Button>
                         ) : (
                             <p className="text-sm text-amber-600">
-                                Couldn&apos;t start payment just now — use
-                                &quot;Check registration status&quot; below to
-                                try again.
+                                {t(
+                                    'Couldn’t start payment just now — use "Check registration status" below to try again.',
+                                )}
                             </p>
                         )}
                     </div>
@@ -179,7 +187,7 @@ function PaymentPendingView({
                     href={`/registrations/${registration.qr_token}/status`}
                     className="text-sm font-medium text-white/70 underline-offset-2 hover:text-white hover:underline"
                 >
-                    Check registration status
+                    {t('Check registration status')}
                 </a>
             </div>
         </>
@@ -201,6 +209,7 @@ function RegistrationSuccessView({
     accentStyle: CSSProperties;
     confirmationMessage?: string | null;
 }) {
+    const { t } = useT();
     const cardRef = useRef<HTMLDivElement>(null);
     const [qrDataUrl, setQrDataUrl] = useState('');
     const team = registration.team ?? null;
@@ -220,7 +229,7 @@ function RegistrationSuccessView({
 
     return (
         <>
-            <Head title={`Registered — ${event.name}`} />
+            <Head title={t('Registered — :event', { event: event.name })} />
 
             <div
                 className="relative flex min-h-screen flex-col items-center justify-center gap-6 bg-neutral-950 px-4 py-10"
@@ -229,7 +238,7 @@ function RegistrationSuccessView({
                 <div className="flex items-center gap-2 text-emerald-400">
                     <CheckCircle2 className="h-5 w-5" />
                     <span className="text-sm font-semibold tracking-wide uppercase">
-                        Registration confirmed
+                        {t('Registration confirmed')}
                     </span>
                 </div>
 
@@ -257,15 +266,19 @@ function RegistrationSuccessView({
                 <IdCardActions
                     targetRef={cardRef}
                     fileName={`${registration.name}-id-card`}
-                    shareTitle={`${registration.name} — ${registrationCategory.name} ID Card`}
+                    shareTitle={t(':name — :category ID Card', {
+                        name: registration.name,
+                        category: registrationCategory.name,
+                    })}
                     shareUrl={idCardUrl}
                 />
 
                 {team?.basketball_event_category_id && (
                     <div className="flex w-full max-w-sm flex-col items-center gap-2 rounded-2xl border border-white/15 bg-white/5 p-4 text-center">
                         <p className="text-sm text-white/80">
-                            Next, add your players and staff. Keep the link — it
-                            is how you get back to the roster.
+                            {t(
+                                'Next, add your players and staff. Keep the link — it is how you get back to the roster.',
+                            )}
                         </p>
                         <Button
                             asChild
@@ -275,7 +288,7 @@ function RegistrationSuccessView({
                                 href={`/registrations/${registration.qr_token}/roster`}
                             >
                                 <Users className="mr-2 h-4 w-4" />
-                                Add your roster
+                                {t('Add your roster')}
                             </a>
                         </Button>
                     </div>
@@ -285,7 +298,7 @@ function RegistrationSuccessView({
                     href={`/events/${event.id}/registration-categories/${registrationCategory.id}/register`}
                     className="text-sm font-medium text-white/70 underline-offset-2 hover:text-white hover:underline"
                 >
-                    Register another
+                    {t('Register another')}
                 </a>
             </div>
         </>
@@ -300,16 +313,21 @@ const RESERVED_KEYS = ['name', 'email', 'phone', 'photo'];
  * receipt or our confirmation without one, and the server enforces the same
  * rule — so the field has to exist even if the form builder omitted it.
  */
-const EMAIL_FIELD: RegistrationField = {
+const emailField = (t: Translate): RegistrationField => ({
     key: 'email',
-    label: 'Email Address',
+    label: t('Email Address'),
     type: 'email',
     required: true,
-    help_text:
+    help_text: t(
         'Your payment receipt and registration confirmation are sent here.',
-};
+    ),
+});
 
-function withRequiredEmail(pages: FormPage[], isPaid: boolean): FormPage[] {
+function withRequiredEmail(
+    pages: FormPage[],
+    isPaid: boolean,
+    t: Translate,
+): FormPage[] {
     if (
         !isPaid ||
         pages.some((page) =>
@@ -320,13 +338,15 @@ function withRequiredEmail(pages: FormPage[], isPaid: boolean): FormPage[] {
     }
 
     if (pages.length === 0) {
-        return [{ key: 'contact', title: 'Contact', fields: [EMAIL_FIELD] }];
+        return [
+            { key: 'contact', title: t('Contact'), fields: [emailField(t)] },
+        ];
     }
 
     const [first, ...rest] = pages;
 
     return [
-        { ...first, fields: [...(first.fields ?? []), EMAIL_FIELD] },
+        { ...first, fields: [...(first.fields ?? []), emailField(t)] },
         ...rest,
     ];
 }
@@ -344,10 +364,10 @@ function rosterFieldOf(pages: FormPage[]): RegistrationField | undefined {
     return pages.flatMap((page) => page.fields).find(isRosterField);
 }
 
-function buildSchema(pages: FormPage[]) {
+function buildSchema(pages: FormPage[], t: Translate) {
     const fields = inputFieldsOf(pages);
     const shape: Record<string, z.ZodTypeAny> = {
-        name: z.string().min(1, 'Input a name').max(255),
+        name: z.string().min(1, t('Input a name')).max(255),
     };
 
     fields.forEach((f) => {
@@ -361,7 +381,7 @@ function buildSchema(pages: FormPage[]) {
     const roster = rosterFieldOf(pages);
 
     if (roster) {
-        shape.roster = rosterSchema(roster);
+        shape.roster = rosterSchema(roster, t);
     }
 
     return z.object(shape).superRefine((data, ctx) => {
@@ -380,7 +400,9 @@ function buildSchema(pages: FormPage[]) {
                 ctx.addIssue({
                     code: 'custom',
                     path: [f.key],
-                    message: f.error_message || `${f.label} is required`,
+                    message:
+                        f.error_message ||
+                        t(':label is required', { label: f.label }),
                 });
 
                 return;
@@ -394,7 +416,7 @@ function buildSchema(pages: FormPage[]) {
                 ctx.addIssue({
                     code: 'custom',
                     path: [f.key],
-                    message: 'Must be a valid email',
+                    message: t('Must be a valid email'),
                 });
             }
 
@@ -402,7 +424,7 @@ function buildSchema(pages: FormPage[]) {
                 ctx.addIssue({
                     code: 'custom',
                     path: [f.key],
-                    message: 'Must be a valid phone number',
+                    message: t('Must be a valid phone number'),
                 });
             }
 
@@ -411,7 +433,7 @@ function buildSchema(pages: FormPage[]) {
                     ctx.addIssue({
                         code: 'custom',
                         path: [f.key],
-                        message: 'Must be a number',
+                        message: t('Must be a number'),
                     });
                 } else {
                     const numeric = Number(value);
@@ -420,7 +442,7 @@ function buildSchema(pages: FormPage[]) {
                         ctx.addIssue({
                             code: 'custom',
                             path: [f.key],
-                            message: `Must be at least ${f.min}`,
+                            message: t('Must be at least :min', { min: f.min }),
                         });
                     }
 
@@ -428,7 +450,7 @@ function buildSchema(pages: FormPage[]) {
                         ctx.addIssue({
                             code: 'custom',
                             path: [f.key],
-                            message: `Must be at most ${f.max}`,
+                            message: t('Must be at most :max', { max: f.max }),
                         });
                     }
                 }
@@ -635,6 +657,7 @@ function RatingInput({
     max?: number;
     disabled?: boolean;
 }) {
+    const { tc } = useT();
     const selected = Number(value) || 0;
 
     return (
@@ -645,7 +668,7 @@ function RatingInput({
                     type="button"
                     disabled={disabled}
                     onClick={() => onChange(String(n))}
-                    aria-label={`${n} star${n > 1 ? 's' : ''}`}
+                    aria-label={tc(':count star|:count stars', n)}
                     className="disabled:opacity-50"
                 >
                     <Star
@@ -673,6 +696,7 @@ export default function RegisterDynamic({
 }: Props) {
     useForceLightMode();
 
+    const { t, locale } = useT();
     const [isSaving, setIsSaving] = useState(false);
     const [pageIndex, setPageIndex] = useState(0);
     const [honeypot, setHoneypot] = useState('');
@@ -682,12 +706,13 @@ export default function RegisterDynamic({
                 registrationCategory.form_pages ?? [],
                 Boolean(registrationCategory.price) &&
                     Number(registrationCategory.price) > 0,
+                t,
             ),
-        [registrationCategory.form_pages, registrationCategory.price],
+        [registrationCategory.form_pages, registrationCategory.price, t],
     );
     const branding = registrationCategory.form_branding ?? {};
 
-    const schema = useMemo(() => buildSchema(pages), [pages]);
+    const schema = useMemo(() => buildSchema(pages, t), [pages, t]);
     type FormValues = z.infer<typeof schema>;
 
     const {
@@ -702,6 +727,17 @@ export default function RegisterDynamic({
         mode: 'onChange',
     });
     const rosterField = rosterFieldOf(pages);
+
+    // Errors already on screen were worded in the previous language; the new
+    // resolver only speaks up on the next change, so ask it now.
+    const hasErrors = Object.keys(errors).length > 0;
+    useEffect(() => {
+        if (hasErrors) {
+            void trigger();
+        }
+        // Only a language switch should re-run this, not every keystroke.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [locale]);
 
     const isTeam = registrationCategory.subject_type === 'team';
     const isFreeCategory =
@@ -836,7 +872,11 @@ export default function RegisterDynamic({
     if (registrationClosed) {
         return (
             <>
-                <Head title={`Registration Closed — ${event.name}`} />
+                <Head
+                    title={t('Registration Closed — :event', {
+                        event: event.name,
+                    })}
+                />
 
                 <div
                     className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10"
@@ -844,7 +884,7 @@ export default function RegisterDynamic({
                 >
                     <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
                         <PublicPageHeader
-                            eyebrow="Registration"
+                            eyebrow={t('Registration')}
                             title={event.name}
                             subtitle={registrationCategory.name}
                             logoUrl={event.logo}
@@ -856,13 +896,13 @@ export default function RegisterDynamic({
                                 <Lock className="h-8 w-8 text-red-600" />
                             </div>
                             <p className="text-neutral-600">
-                                Registration for this category is currently
-                                closed or full. Please contact the organizer for
-                                more information.
+                                {t(
+                                    'Registration for this category is currently closed or full. Please contact the organizer for more information.',
+                                )}
                             </p>
                             {event.contact_person && (
                                 <p className="text-sm font-medium text-neutral-500">
-                                    Contact: {event.contact_person}
+                                    {t('Contact')}: {event.contact_person}
                                 </p>
                             )}
                         </div>
@@ -875,7 +915,10 @@ export default function RegisterDynamic({
     return (
         <>
             <Head
-                title={`${registrationCategory.name} Registration — ${event.name}`}
+                title={t(':category Registration — :event', {
+                    category: registrationCategory.name,
+                    event: event.name,
+                })}
             />
 
             <div
@@ -887,7 +930,7 @@ export default function RegisterDynamic({
                     style={cardStyle}
                 >
                     <PublicPageHeader
-                        eyebrow="Registration"
+                        eyebrow={t('Registration')}
                         title={event.name}
                         subtitle={registrationCategory.name}
                         logoUrl={branding.logo_url || event.logo}
@@ -901,14 +944,14 @@ export default function RegisterDynamic({
                         <div className="flex items-start justify-between gap-4">
                             <div className="flex flex-col">
                                 <span className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">
-                                    You are registering for
+                                    {t('You are registering for')}
                                 </span>
                                 <span className="text-sm font-bold text-neutral-900">
                                     {registrationCategory.name}
                                 </span>
                                 <span className="text-xs text-neutral-500">
                                     {event.name} ·{' '}
-                                    {isTeam ? 'Per team' : 'Per person'}
+                                    {isTeam ? t('Per team') : t('Per person')}
                                 </span>
                             </div>
                             {/* A free category gets no price tag — a bare
@@ -921,11 +964,14 @@ export default function RegisterDynamic({
                         </div>
                         {!isFreeCategory && (
                             <p className="mt-2 text-xs text-neutral-500">
-                                After you submit this form your slot is reserved
-                                and you&apos;ll be taken to the Midtrans payment
-                                page to pay{' '}
-                                {formatRupiah(registrationCategory.price)}. The
-                                registration is confirmed once payment settles.
+                                {t(
+                                    'After you submit this form your slot is reserved and you’ll be taken to the Midtrans payment page to pay :price. The registration is confirmed once payment settles.',
+                                    {
+                                        price: formatRupiah(
+                                            registrationCategory.price,
+                                        ),
+                                    },
+                                )}
                             </p>
                         )}
                     </div>
@@ -934,7 +980,10 @@ export default function RegisterDynamic({
                         <div className="px-6 pt-4">
                             <div className="flex items-center justify-between text-xs font-medium text-neutral-500">
                                 <span>
-                                    Step {pageIndex + 1} of {pages.length}
+                                    {t('Step :current of :total', {
+                                        current: pageIndex + 1,
+                                        total: pages.length,
+                                    })}
                                 </span>
                                 <span>{currentPage?.title}</span>
                             </div>
@@ -976,16 +1025,18 @@ export default function RegisterDynamic({
                                         >
                                             <FieldLabel htmlFor="name">
                                                 {isTeam
-                                                    ? 'Team Name'
-                                                    : 'Full Name'}
+                                                    ? t('Team Name')
+                                                    : t('Full Name')}
                                             </FieldLabel>
                                             <Input
                                                 {...field}
                                                 id="name"
                                                 placeholder={
                                                     isTeam
-                                                        ? "Input your team's name"
-                                                        : 'Input your name'
+                                                        ? t(
+                                                              'Input your team’s name',
+                                                          )
+                                                        : t('Input your name')
                                                 }
                                                 aria-invalid={
                                                     fieldState.invalid
@@ -1046,7 +1097,9 @@ export default function RegisterDynamic({
                                                         {!f.required && (
                                                             <span className="font-normal text-muted-foreground">
                                                                 {' '}
-                                                                (Optional)
+                                                                {t(
+                                                                    '(Optional)',
+                                                                )}
                                                             </span>
                                                         )}
                                                     </FieldLabel>
@@ -1075,7 +1128,9 @@ export default function RegisterDynamic({
                                                                             typeof error ===
                                                                             'string'
                                                                                 ? error
-                                                                                : 'Upload failed',
+                                                                                : t(
+                                                                                      'Upload failed',
+                                                                                  ),
                                                                     },
                                                                 )
                                                             }
@@ -1104,7 +1159,9 @@ export default function RegisterDynamic({
                                                                             typeof error ===
                                                                             'string'
                                                                                 ? error
-                                                                                : 'Upload failed',
+                                                                                : t(
+                                                                                      'Upload failed',
+                                                                                  ),
                                                                     },
                                                                 )
                                                             }
@@ -1176,7 +1233,11 @@ export default function RegisterDynamic({
                                                                 }
                                                                 className="w-full cursor-pointer border-2 border-black font-semibold focus-visible:ring-[var(--accent)]"
                                                             >
-                                                                <SelectValue placeholder="Select an option" />
+                                                                <SelectValue
+                                                                    placeholder={t(
+                                                                        'Select an option',
+                                                                    )}
+                                                                />
                                                             </SelectTrigger>
                                                             <SelectContent>
                                                                 {(
@@ -1230,7 +1291,7 @@ export default function RegisterDynamic({
                                                             id={f.key}
                                                             label={
                                                                 f.help_text ??
-                                                                'Yes'
+                                                                t('Yes')
                                                             }
                                                             checked={
                                                                 field.value as boolean
@@ -1312,7 +1373,7 @@ export default function RegisterDynamic({
                                         disabled={isSaving}
                                         style={controlStyle}
                                     >
-                                        Back
+                                        {t('Back')}
                                     </Button>
                                 )}
 
@@ -1329,9 +1390,9 @@ export default function RegisterDynamic({
                                             <CheckCircle2 className="mr-2 h-4 w-4" />
                                         )}
                                         {isSaving
-                                            ? 'Registering...'
+                                            ? t('Registering…')
                                             : branding.button_label ||
-                                              'Register'}
+                                              t('Register')}
                                     </Button>
                                 ) : (
                                     <Button
@@ -1340,7 +1401,7 @@ export default function RegisterDynamic({
                                         onClick={goNext}
                                         style={controlStyle}
                                     >
-                                        Next
+                                        {t('Next')}
                                     </Button>
                                 )}
                             </div>

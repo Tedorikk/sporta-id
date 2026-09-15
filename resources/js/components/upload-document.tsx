@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { FileText, Upload, X } from 'lucide-react';
 import * as React from 'react';
+import { useT } from '@/hooks/use-t';
 import { cn } from '@/lib/utils';
 
 export interface UploadDocumentProps {
@@ -35,11 +36,13 @@ export function UploadDocument({
     maxSizeMB = 10,
     disabled = false,
     className,
-    placeholder = 'Drag & drop a file, or click to browse',
+    placeholder,
+
     onError,
     uploadUrl = '/upload/document',
     deleteUrl = '/upload/document',
 }: UploadDocumentProps) {
+    const { t } = useT();
     const inputRef = React.useRef<HTMLInputElement>(null);
     const [isDragging, setIsDragging] = React.useState(false);
     const [isUploading, setIsUploading] = React.useState(false);
@@ -77,7 +80,9 @@ export function UploadDocument({
             onChange?.(data.url);
         } catch (err) {
             onError?.(
-                `Upload failed. Please try again. ${err instanceof Error ? err.message : String(err)}`,
+                t('Upload failed. Please try again. :reason', {
+                    reason: err instanceof Error ? err.message : String(err),
+                }),
             );
         } finally {
             setIsUploading(false);
@@ -91,14 +96,16 @@ export function UploadDocument({
 
         if (!extension || !allowedExtensions.includes(extension)) {
             onError?.(
-                'Please upload a PDF or Word document (.pdf, .doc, .docx)',
+                t('Please upload a PDF or Word document (.pdf, .doc, .docx)'),
             );
 
             return false;
         }
 
         if (file.size > maxSizeMB * 1024 * 1024) {
-            onError?.(`File must be smaller than ${maxSizeMB}MB`);
+            onError?.(
+                t('File must be smaller than :size MB', { size: maxSizeMB }),
+            );
 
             return false;
         }
@@ -203,7 +210,7 @@ export function UploadDocument({
                         <button
                             type="button"
                             onClick={handleClear}
-                            aria-label="Remove document"
+                            aria-label={t('Remove document')}
                             className="shrink-0 rounded-full bg-muted p-1 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                         >
                             <X className="h-4 w-4" />
@@ -218,7 +225,10 @@ export function UploadDocument({
                         <FileText className="h-6 w-6" />
                     )}
                     <p className="text-sm">
-                        {isUploading ? 'Uploading…' : placeholder}
+                        {isUploading
+                            ? t('Uploading…')
+                            : (placeholder ??
+                              t('Drag & drop a file, or click to browse'))}
                     </p>
                 </div>
             )}
@@ -242,7 +252,7 @@ export function UploadDocument({
 
             {!isUploading && !displayName && (
                 <p className="text-xs text-muted-foreground">
-                    PDF, DOC or DOCX, up to {maxSizeMB}MB
+                    {t('PDF, DOC or DOCX, up to :size MB', { size: maxSizeMB })}
                 </p>
             )}
         </div>

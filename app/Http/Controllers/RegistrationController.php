@@ -50,8 +50,8 @@ class RegistrationController extends Controller
         $registration = DB::transaction(function () use ($validated, $roster, $event, $registrationCategory) {
             $category = RegistrationCategory::whereKey($registrationCategory->id)->lockForUpdate()->first();
 
-            abort_unless($category->isOpen(), 403, 'Registration is closed for this category.');
-            abort_unless($category->hasAvailableQuota(), 403, 'This category is full.');
+            abort_unless($category->isOpen(), 403, __('Registration is closed for this category.'));
+            abort_unless($category->hasAvailableQuota(), 403, __('This category is full.'));
 
             $team = null;
 
@@ -90,6 +90,9 @@ class RegistrationController extends Controller
                 // reserved immediately, same as a free registration.
                 'status' => $isFree ? Registration::STATUS_CONFIRMED : Registration::STATUS_PENDING_PAYMENT,
                 'expires_at' => $isFree ? null : now()->addDay(),
+                // Remembered so the confirmation the webhook sends later is
+                // in the language the registrant actually read the form in.
+                'locale' => app()->getLocale(),
             ]);
 
             $category->increment('registered_count');
@@ -142,7 +145,7 @@ class RegistrationController extends Controller
      */
     public function pay(Registration $registration)
     {
-        abort_unless($registration->status === Registration::STATUS_PENDING_PAYMENT, 403, 'This registration is not awaiting payment.');
+        abort_unless($registration->status === Registration::STATUS_PENDING_PAYMENT, 403, __('This registration is not awaiting payment.'));
 
         $payment = $this->createPayment($registration, $registration->registrationCategory);
 
@@ -213,6 +216,9 @@ class RegistrationController extends Controller
             'website' => ['prohibited'],
         ];
         $messages = [];
+        // Errors name the field the way the organiser labelled it on the form,
+        // not "form data.shirt size".
+        $attributes = ['name' => __('Full Name')];
 
         foreach ($registrationCategory->inputFields() as $field) {
             $key = $field['key'];
@@ -223,6 +229,7 @@ class RegistrationController extends Controller
 
             $attribute = in_array($key, self::RESERVED_KEYS, true) ? $key : "form_data.$key";
             $rules[$attribute] = $this->fieldRules($field);
+            $attributes[$attribute] = $field['label'] ?? $key;
 
             if (! empty($field['error_message'])) {
                 $messages["$attribute.required"] = $field['error_message'];
@@ -235,10 +242,11 @@ class RegistrationController extends Controller
         // also overrides an `email` field the organizer marked optional.
         if (! $registrationCategory->isFree()) {
             $rules['email'] = ['required', 'email', 'max:255'];
-            $messages['email.required'] = 'An email address is required so we can send your payment receipt and confirmation.';
+            $messages['email.required'] = __('An email address is required so we can send your payment receipt and confirmation.');
+            $attributes['email'] ??= __('Email Address');
         }
 
-        return $request->validate($rules, $messages);
+        return $request->validate($rules, $messages, $attributes);
     }
 
     private function fieldRules(array $field): array
@@ -284,6 +292,6 @@ class RegistrationController extends Controller
             ? $query->where($duplicateField, $validated[$duplicateField] ?? null)->exists()
             : $query->where("form_data->{$duplicateField}", data_get($validated, "form_data.{$duplicateField}"))->exists();
 
-        abort_if($exists, 422, "You've already registered for this category with that {$duplicateField}.");
+        abort_if($exists, 422, __('You’ve already registered for this category with that :field.', ['field' => $duplicateField]));
     }
 }

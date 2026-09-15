@@ -61,8 +61,8 @@ class TeamRosterController extends Controller
         $team->players()->create($validated);
 
         return back()->with(['toast' => [
-            'title' => 'Added',
-            'description' => "{$validated['name']} is on the roster.",
+            'title' => __('Added'),
+            'description' => __(':name is on the roster.', ['name' => $validated['name']]),
         ]]);
     }
 
@@ -86,8 +86,8 @@ class TeamRosterController extends Controller
         $player->update($validated);
 
         return back()->with(['toast' => [
-            'title' => 'Saved',
-            'description' => "{$player->name} updated.",
+            'title' => __('Saved'),
+            'description' => __(':name updated.', ['name' => $player->name]),
         ]]);
     }
 
@@ -102,8 +102,8 @@ class TeamRosterController extends Controller
         $team->players()->detach($player->id);
 
         return back()->with(['toast' => [
-            'title' => 'Removed',
-            'description' => "{$player->name} is off the roster.",
+            'title' => __('Removed'),
+            'description' => __(':name is off the roster.', ['name' => $player->name]),
         ]]);
     }
 
@@ -144,7 +144,7 @@ class TeamRosterController extends Controller
 
     private function assertEditable(Registration $registration, Team $team): void
     {
-        abort_if($this->lockReason($registration, $team) !== null, 403, 'This roster can no longer be changed.');
+        abort_if($this->lockReason($registration, $team) !== null, 403, __('This roster can no longer be changed.'));
     }
 
     private function assertOnTeam(Team $team, Player $player): void

@@ -21,6 +21,8 @@ import {
 } from '@/components/ui/select';
 import { UploadDocument } from '@/components/upload-document';
 import { UploadImage } from '@/components/upload-image';
+import { useT } from '@/hooks/use-t';
+import type { Translate } from '@/lib/i18n';
 import type { PlayerRole } from '@/types/player';
 import type {
     RegistrationField,
@@ -36,7 +38,7 @@ const LOOSE_PHONE = /^[0-9+\-\s()]{6,25}$/;
  * Client-side mirror of RosterService::submissionRules() + assertSubmissionFits():
  * what the server will reject, checked before the visitor leaves the page.
  */
-export function rosterSchema(field: RegistrationField) {
+export function rosterSchema(field: RegistrationField, t: Translate) {
     const slots = field.slots ?? [];
     const memberFields = field.member_fields ?? [];
 
@@ -62,27 +64,30 @@ export function rosterSchema(field: RegistrationField) {
                 }
             };
 
-            need('name', 'Name is required');
-            need('photo', 'Upload a photo for the ID card');
-            need('identity_card', 'Upload an identity document');
-            need('birthplace', 'Place of birth is required');
-            need('dob', 'Date of birth is required');
-            need('phone_number', 'WhatsApp number is required');
+            need('name', t('Name is required'));
+            need('photo', t('Upload a photo for the ID card'));
+            need('identity_card', t('Upload an identity document'));
+            need('birthplace', t('Place of birth is required'));
+            need('dob', t('Date of birth is required'));
+            need('phone_number', t('WhatsApp number is required'));
 
             if (m.phone_number.trim() !== '' && !E164.test(m.phone_number)) {
                 ctx.addIssue({
                     code: 'custom',
                     path: ['phone_number'],
-                    message: 'Use international format, e.g. +628123456789',
+                    message: t('Use international format, e.g. +628123456789'),
                 });
             }
 
             if (m.role === 'player') {
-                need('jersey_number', 'Every player needs a jersey number');
+                need('jersey_number', t('Every player needs a jersey number'));
             }
 
             if (m.role === 'medic') {
-                need('certificate', 'A medic needs a licence or certificate');
+                need(
+                    'certificate',
+                    t('A medic needs a licence or certificate'),
+                );
             }
 
             memberFields.forEach((mf) => {
@@ -92,7 +97,7 @@ export function rosterSchema(field: RegistrationField) {
                     ctx.addIssue({
                         code: 'custom',
                         path: ['extra', mf.key],
-                        message: `${mf.label} is required`,
+                        message: t(':label is required', { label: mf.label }),
                     });
                 } else if (
                     mf.type === 'phone' &&
@@ -102,7 +107,7 @@ export function rosterSchema(field: RegistrationField) {
                     ctx.addIssue({
                         code: 'custom',
                         path: ['extra', mf.key],
-                        message: 'Must be a valid phone number',
+                        message: t('Must be a valid phone number'),
                     });
                 }
             });
@@ -115,7 +120,10 @@ export function rosterSchema(field: RegistrationField) {
             if (count < slot.min) {
                 ctx.addIssue({
                     code: 'custom',
-                    message: `At least ${slot.min} ${slot.label} ${slot.min === 1 ? 'is' : 'are'} required`,
+                    message: t('At least :min :label required', {
+                        min: slot.min,
+                        label: slot.label,
+                    }),
                 });
             }
         });
@@ -133,7 +141,7 @@ export function rosterSchema(field: RegistrationField) {
                     ctx.addIssue({
                         code: 'custom',
                         path: [i, 'jersey_number'],
-                        message: 'Two players share this jersey number',
+                        message: t('Two players share this jersey number'),
                     }),
                 );
             } else {
@@ -172,6 +180,7 @@ export function RosterBlock({
     disabled,
     controlStyle,
 }: RosterBlockProps) {
+    const { t } = useT();
     const { fields, append, remove } = useFieldArray({
         control,
         name: 'roster',
@@ -199,17 +208,18 @@ export function RosterBlock({
                     .filter(({ m }) => m.role === slot.role);
                 const canAdd = slot.max === null || entries.length < slot.max;
                 const canRemove = entries.length > slot.min;
+                const sectionLabel = t(slot.label);
 
                 return (
                     <section key={slot.role} className="flex flex-col gap-3">
                         <div className="flex items-center justify-between">
                             <h3 className="text-sm font-bold tracking-wide uppercase">
-                                {slot.label}
+                                {sectionLabel}
                                 <span className="ml-2 font-normal text-muted-foreground normal-case">
                                     {slot.min === slot.max
                                         ? slot.min
                                         : slot.max === null
-                                          ? `min. ${slot.min}`
+                                          ? t('min. :min', { min: slot.min })
                                           : `${slot.min}–${slot.max}`}
                                 </span>
                             </h3>
@@ -230,15 +240,19 @@ export function RosterBlock({
                                     style={controlStyle}
                                 >
                                     <Plus className="mr-1.5 h-3.5 w-3.5" />
-                                    {slot.label}
+                                    {sectionLabel}
                                 </Button>
                             )}
                         </div>
 
                         {entries.length === 0 && (
                             <p className="rounded-xl border border-dashed px-4 py-4 text-center text-xs text-muted-foreground">
-                                Optional — add one if the team has a{' '}
-                                {slot.label.toLowerCase()}.
+                                {t(
+                                    'Optional — add one if the team has a :role.',
+                                    {
+                                        role: sectionLabel.toLowerCase(),
+                                    },
+                                )}
                             </p>
                         )}
 
@@ -248,8 +262,8 @@ export function RosterBlock({
                                 index={index}
                                 title={
                                     entries.length > 1 || slot.max !== 1
-                                        ? `${slot.label} ${position + 1}`
-                                        : slot.label
+                                        ? `${sectionLabel} ${position + 1}`
+                                        : sectionLabel
                                 }
                                 role={slot.role}
                                 memberFields={memberFields}
@@ -293,6 +307,7 @@ function MemberCard({
     controlStyle: CSSProperties;
     onRemove?: () => void;
 }) {
+    const { t } = useT();
     const base = `roster.${index}`;
     const isPlayer = role === 'player';
     const isMedic = role === 'medic';
@@ -300,7 +315,7 @@ function MemberCard({
     const uploadError = (name: string) => (error: unknown) =>
         setError(`${base}.${name}`, {
             type: 'manual',
-            message: typeof error === 'string' ? error : 'Upload failed',
+            message: typeof error === 'string' ? error : t('Upload failed'),
         });
 
     return (
@@ -315,7 +330,7 @@ function MemberCard({
                         className="h-8 w-8 text-destructive"
                         onClick={onRemove}
                         disabled={disabled}
-                        aria-label={`Remove ${title}`}
+                        aria-label={t('Remove :title', { title })}
                     >
                         <Trash2 className="h-4 w-4" />
                     </Button>
@@ -331,7 +346,7 @@ function MemberCard({
                             data-invalid={Boolean(errors?.photo)}
                             className="w-28"
                         >
-                            <FieldLabel>Photo</FieldLabel>
+                            <FieldLabel>{t('Photo')}</FieldLabel>
                             <UploadImage
                                 value={field.value as string}
                                 ratio={4 / 5}
@@ -359,7 +374,7 @@ function MemberCard({
                         render={({ field, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
                                 <FieldLabel htmlFor={`${base}.name`}>
-                                    Full name
+                                    {t('Full name')}
                                 </FieldLabel>
                                 <Input
                                     {...field}
@@ -385,7 +400,7 @@ function MemberCard({
                                         <FieldLabel
                                             htmlFor={`${base}.jersey_number`}
                                         >
-                                            Jersey no.
+                                            {t('Jersey no.')}
                                         </FieldLabel>
                                         <Input
                                             {...field}
@@ -411,9 +426,9 @@ function MemberCard({
                                         <FieldLabel
                                             htmlFor={`${base}.position`}
                                         >
-                                            Position{' '}
+                                            {t('Position')}{' '}
                                             <span className="font-normal text-muted-foreground">
-                                                (Optional)
+                                                {t('(Optional)')}
                                             </span>
                                         </FieldLabel>
                                         <Input
@@ -438,7 +453,7 @@ function MemberCard({
                     render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>
                             <FieldLabel htmlFor={`${base}.birthplace`}>
-                                Place of birth
+                                {t('Place of birth')}
                             </FieldLabel>
                             <Input
                                 {...field}
@@ -458,7 +473,7 @@ function MemberCard({
                     render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>
                             <FieldLabel htmlFor={`${base}.dob`}>
-                                Date of birth
+                                {t('Date of birth')}
                             </FieldLabel>
                             <Input
                                 {...field}
@@ -481,7 +496,7 @@ function MemberCard({
                 render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                         <FieldLabel htmlFor={`${base}.phone_number`}>
-                            WhatsApp number
+                            {t('WhatsApp number')}
                         </FieldLabel>
                         <Input
                             {...field}
@@ -516,7 +531,7 @@ function MemberCard({
                                         {!mf.required && (
                                             <span className="font-normal text-muted-foreground">
                                                 {' '}
-                                                (Optional)
+                                                {t('(Optional)')}
                                             </span>
                                         )}
                                     </FieldLabel>
@@ -531,7 +546,9 @@ function MemberCard({
                                                 className="w-full"
                                                 style={controlStyle}
                                             >
-                                                <SelectValue placeholder="Choose…" />
+                                                <SelectValue
+                                                    placeholder={t('Choose…')}
+                                                />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {(mf.options ?? []).map(
@@ -580,7 +597,7 @@ function MemberCard({
                 control={control}
                 render={({ field }) => (
                     <Field data-invalid={Boolean(errors?.identity_card)}>
-                        <FieldLabel>Identity document</FieldLabel>
+                        <FieldLabel>{t('Identity document')}</FieldLabel>
                         <FieldDescription>
                             A clear photo of the KTP, KK or birth certificate.
                         </FieldDescription>
@@ -593,7 +610,7 @@ function MemberCard({
                             onError={uploadError('identity_card')}
                             disabled={disabled}
                             className="rounded-2xl border-2 border-black"
-                            placeholder="Upload identity document"
+                            placeholder={t('Upload identity document')}
                         />
                         {errors?.identity_card?.message && (
                             <FieldError>
@@ -610,7 +627,9 @@ function MemberCard({
                     control={control}
                     render={({ field }) => (
                         <Field data-invalid={Boolean(errors?.certificate)}>
-                            <FieldLabel>Medic licence / certificate</FieldLabel>
+                            <FieldLabel>
+                                {t('Medic licence / certificate')}
+                            </FieldLabel>
                             <UploadDocument
                                 value={field.value as string}
                                 uploadUrl="/public-upload/document"

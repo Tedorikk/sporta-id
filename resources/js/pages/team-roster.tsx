@@ -41,6 +41,7 @@ import {
 import { UploadDocument } from '@/components/upload-document';
 import { UploadImage } from '@/components/upload-image';
 import { useForceLightMode } from '@/hooks/use-force-light-mode';
+import { useT } from '@/hooks/use-t';
 import { accentColors } from '@/lib/color';
 import { formatDateTime } from '@/lib/format-date';
 import type { Event } from '@/types/event';
@@ -150,6 +151,7 @@ function MemberDialog({
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }) {
+    const { t } = useT();
     const isEditing = member !== null;
     // Mounted with a `key` per member (see TeamRoster), so the initial values
     // here are always the right member's; closing just rolls back to them.
@@ -201,11 +203,14 @@ function MemberDialog({
                 <form onSubmit={submit}>
                     <DialogHeader>
                         <DialogTitle>
-                            {isEditing ? `Edit ${member.name}` : 'Add member'}
+                            {isEditing
+                                ? t('Edit :name', { name: member.name })
+                                : t('Add member')}
                         </DialogTitle>
                         <DialogDescription>
-                            Every member needs an identity document and a photo
-                            for their ID card.
+                            {t(
+                                'Every member needs an identity document and a photo for their ID card.',
+                            )}
                         </DialogDescription>
                     </DialogHeader>
 
@@ -215,7 +220,7 @@ function MemberDialog({
                                 data-invalid={Boolean(errors.photo)}
                                 className="w-32"
                             >
-                                <FieldLabel>Photo</FieldLabel>
+                                <FieldLabel>{t('Photo')}</FieldLabel>
                                 <UploadImage
                                     ratio={4 / 5}
                                     value={data.photo}
@@ -236,7 +241,7 @@ function MemberDialog({
                             <FieldGroup>
                                 <Field data-invalid={Boolean(errors.role)}>
                                     <FieldLabel htmlFor="member_role">
-                                        Role
+                                        {t('Role')}
                                     </FieldLabel>
                                     <Select
                                         value={data.role}
@@ -257,7 +262,7 @@ function MemberDialog({
                                                     key={role.value}
                                                     value={role.value}
                                                 >
-                                                    {role.label}
+                                                    {t(role.label)}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
@@ -269,7 +274,7 @@ function MemberDialog({
 
                                 <Field data-invalid={Boolean(errors.name)}>
                                     <FieldLabel htmlFor="member_name">
-                                        Full name
+                                        {t('Full name')}
                                     </FieldLabel>
                                     <Input
                                         id="member_name"
@@ -293,7 +298,7 @@ function MemberDialog({
                                     data-invalid={Boolean(errors.jersey_number)}
                                 >
                                     <FieldLabel htmlFor="member_jersey">
-                                        Jersey number
+                                        {t('Jersey number')}
                                     </FieldLabel>
                                     <Input
                                         id="member_jersey"
@@ -316,9 +321,9 @@ function MemberDialog({
                                 </Field>
                                 <Field data-invalid={Boolean(errors.position)}>
                                     <FieldLabel htmlFor="member_position">
-                                        Position{' '}
+                                        {t('Position')}{' '}
                                         <span className="font-normal text-muted-foreground">
-                                            (Optional)
+                                            {t('(Optional)')}
                                         </span>
                                     </FieldLabel>
                                     <Input
@@ -337,7 +342,7 @@ function MemberDialog({
                         <div className="grid grid-cols-2 gap-3">
                             <Field data-invalid={Boolean(errors.birthplace)}>
                                 <FieldLabel htmlFor="member_birthplace">
-                                    Place of birth
+                                    {t('Place of birth')}
                                 </FieldLabel>
                                 <Input
                                     id="member_birthplace"
@@ -353,7 +358,7 @@ function MemberDialog({
                             </Field>
                             <Field data-invalid={Boolean(errors.dob)}>
                                 <FieldLabel htmlFor="member_dob">
-                                    Date of birth
+                                    {t('Date of birth')}
                                 </FieldLabel>
                                 <Input
                                     id="member_dob"
@@ -373,7 +378,7 @@ function MemberDialog({
                         <div className="grid grid-cols-2 gap-3">
                             <Field data-invalid={Boolean(errors.phone_number)}>
                                 <FieldLabel htmlFor="member_phone">
-                                    WhatsApp number
+                                    {t('WhatsApp number')}
                                 </FieldLabel>
                                 <Input
                                     id="member_phone"
@@ -391,15 +396,17 @@ function MemberDialog({
                                     </FieldError>
                                 ) : (
                                     <FieldDescription>
-                                        Include the country code, e.g. +62.
+                                        {t(
+                                            'Include the country code, e.g. +62.',
+                                        )}
                                     </FieldDescription>
                                 )}
                             </Field>
                             <Field data-invalid={Boolean(errors.email)}>
                                 <FieldLabel htmlFor="member_email">
-                                    Email{' '}
+                                    {t('Email')}{' '}
                                     <span className="font-normal text-muted-foreground">
-                                        (Optional)
+                                        {t('(Optional)')}
                                     </span>
                                 </FieldLabel>
                                 <Input
@@ -439,7 +446,7 @@ function MemberDialog({
                                                 {!mf.required && (
                                                     <span className="font-normal text-muted-foreground">
                                                         {' '}
-                                                        (Optional)
+                                                        {t('(Optional)')}
                                                     </span>
                                                 )}
                                             </FieldLabel>
@@ -460,7 +467,11 @@ function MemberDialog({
                                                         id={`member_extra_${mf.key}`}
                                                         className="w-full"
                                                     >
-                                                        <SelectValue placeholder="Choose…" />
+                                                        <SelectValue
+                                                            placeholder={t(
+                                                                'Choose…',
+                                                            )}
+                                                        />
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {(mf.options ?? []).map(
@@ -513,10 +524,11 @@ function MemberDialog({
                         )}
 
                         <Field data-invalid={Boolean(errors.identity_card)}>
-                            <FieldLabel>Identity document</FieldLabel>
+                            <FieldLabel>{t('Identity document')}</FieldLabel>
                             <FieldDescription>
-                                A clear photo of the KTP, KK or birth
-                                certificate.
+                                {t(
+                                    'A clear photo of the KTP, KK or birth certificate.',
+                                )}
                             </FieldDescription>
                             <UploadImage
                                 ratio={16 / 10}
@@ -528,7 +540,7 @@ function MemberDialog({
                                 }
                                 disabled={processing}
                                 className="rounded-xl border"
-                                placeholder="Upload identity document"
+                                placeholder={t('Upload identity document')}
                             />
                             {errors.identity_card && (
                                 <FieldError>{errors.identity_card}</FieldError>
@@ -537,7 +549,9 @@ function MemberDialog({
 
                         {isMedic && (
                             <Field data-invalid={Boolean(errors.certificate)}>
-                                <FieldLabel>Medic certificate</FieldLabel>
+                                <FieldLabel>
+                                    {t('Medic certificate')}
+                                </FieldLabel>
                                 <UploadDocument
                                     value={data.certificate}
                                     uploadUrl="/public-upload/document"
@@ -563,13 +577,13 @@ function MemberDialog({
                             onClick={() => handleOpenChange(false)}
                             disabled={processing}
                         >
-                            Cancel
+                            {t('Cancel')}
                         </Button>
                         <Button type="submit" disabled={processing}>
                             {processing && (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             )}
-                            {isEditing ? 'Save changes' : 'Add to roster'}
+                            {isEditing ? t('Save changes') : t('Add to roster')}
                         </Button>
                     </DialogFooter>
                 </form>
@@ -589,6 +603,8 @@ function MemberRow({
     onEdit: () => void;
     onRemove: () => void;
 }) {
+    const { t } = useT();
+
     return (
         <li className="flex items-center gap-3 px-4 py-3">
             {member.photo ? (
@@ -612,7 +628,7 @@ function MemberRow({
                     {member.name}
                 </p>
                 <p className="truncate text-xs text-neutral-500">
-                    {playerRoleLabel(member.role)}
+                    {t(playerRoleLabel(member.role))}
                     {member.position ? ` · ${member.position}` : ''}
                     {member.phone_number ? ` · ${member.phone_number}` : ''}
                     {Object.values(member.extra ?? {})
@@ -627,7 +643,7 @@ function MemberRow({
                         href={`/players/${member.id}/id-card`}
                         target="_blank"
                         rel="noreferrer"
-                        aria-label={`${member.name}'s ID card`}
+                        aria-label={t(':name’s ID card', { name: member.name })}
                     >
                         <IdCard className="h-4 w-4" />
                     </a>
@@ -639,7 +655,7 @@ function MemberRow({
                             size="icon"
                             className="h-8 w-8"
                             onClick={onEdit}
-                            aria-label={`Edit ${member.name}`}
+                            aria-label={t('Edit :name', { name: member.name })}
                         >
                             <Pencil className="h-4 w-4" />
                         </Button>
@@ -648,7 +664,9 @@ function MemberRow({
                             size="icon"
                             className="h-8 w-8 text-destructive"
                             onClick={onRemove}
-                            aria-label={`Remove ${member.name}`}
+                            aria-label={t('Remove :name', {
+                                name: member.name,
+                            })}
                         >
                             <Trash2 className="h-4 w-4" />
                         </Button>
@@ -671,6 +689,7 @@ export default function TeamRoster({
 }: Props) {
     useForceLightMode();
 
+    const { t, tc } = useT();
     const { flash } = usePage<{
         flash: { toast: { title: string; description?: string } | null };
     }>().props;
@@ -711,7 +730,11 @@ export default function TeamRoster({
     }
 
     function remove(member: Player) {
-        if (!window.confirm(`Remove ${member.name} from the roster?`)) {
+        if (
+            !window.confirm(
+                t('Remove :name from the roster?', { name: member.name }),
+            )
+        ) {
             return;
         }
 
@@ -723,7 +746,12 @@ export default function TeamRoster({
 
     return (
         <>
-            <Head title={`Roster — ${team.name} · ${event.name}`} />
+            <Head
+                title={t('Roster — :team · :event', {
+                    team: team.name,
+                    event: event.name,
+                })}
+            />
 
             <div
                 className="relative flex min-h-screen items-start justify-center bg-neutral-950 px-4 py-10"
@@ -731,7 +759,7 @@ export default function TeamRoster({
             >
                 <div className="relative z-10 w-full max-w-2xl overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
                     <PublicPageHeader
-                        eyebrow="Team Roster"
+                        eyebrow={t('Team Roster')}
                         title={team.name}
                         subtitle={`${event.name} · ${registrationCategory.name}`}
                         logoUrl={team.logo ?? event.logo}
@@ -744,10 +772,10 @@ export default function TeamRoster({
                                 <Lock className="mt-0.5 h-5 w-5 shrink-0" />
                                 <div>
                                     <p className="font-semibold">
-                                        {LOCK_COPY[lock].title}
+                                        {t(LOCK_COPY[lock].title)}
                                     </p>
                                     <p className="text-sm">
-                                        {LOCK_COPY[lock].description}
+                                        {t(LOCK_COPY[lock].description)}
                                     </p>
                                 </div>
                             </div>
@@ -756,15 +784,23 @@ export default function TeamRoster({
                         <div className="flex flex-col gap-2 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <p className="text-sm font-semibold text-neutral-900">
-                                    {limits.players}
-                                    {limits.max_players !== null
-                                        ? ` / ${limits.max_players}`
-                                        : ''}{' '}
-                                    player{limits.players === 1 ? '' : 's'}
+                                    {tc(
+                                        ':count player|:count players',
+                                        limits.players,
+                                        {
+                                            count:
+                                                limits.max_players !== null
+                                                    ? `${limits.players} / ${limits.max_players}`
+                                                    : limits.players,
+                                        },
+                                    )}
                                     {limits.staff > 0 && (
                                         <span className="font-normal text-neutral-500">
                                             {' '}
-                                            · {limits.staff} staff
+                                            ·{' '}
+                                            {t(':count staff', {
+                                                count: limits.staff,
+                                            })}
                                         </span>
                                     )}
                                 </p>
@@ -774,18 +810,24 @@ export default function TeamRoster({
                                             variant="secondary"
                                             className="bg-emerald-100 text-emerald-800"
                                         >
-                                            Minimum reached
+                                            {t('Minimum reached')}
                                         </Badge>
                                     ) : limits.min_players !== null ? (
-                                        `At least ${limits.min_players} players needed to play`
+                                        t(
+                                            'At least :min players needed to play',
+                                            {
+                                                min: limits.min_players,
+                                            },
+                                        )
                                     ) : null}
                                 </p>
                             </div>
                             {editable && limits.closes_at && (
                                 <p className="flex items-center gap-1.5 text-xs text-neutral-500">
                                     <Clock className="h-3.5 w-3.5" />
-                                    Editable until{' '}
-                                    {formatDateTime(limits.closes_at)}
+                                    {t('Editable until :date', {
+                                        date: formatDateTime(limits.closes_at),
+                                    })}
                                 </p>
                             )}
                         </div>
@@ -793,7 +835,7 @@ export default function TeamRoster({
                         <section className="flex flex-col gap-2">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-sm font-bold tracking-wide text-neutral-900 uppercase">
-                                    Players
+                                    {t('Players')}
                                 </h2>
                                 {editable && (
                                     <Button
@@ -802,15 +844,15 @@ export default function TeamRoster({
                                         className="bg-[var(--accent)] text-white hover:bg-[var(--accent-dark)]"
                                     >
                                         <Plus className="mr-1.5 h-4 w-4" />
-                                        Add member
+                                        {t('Add member')}
                                     </Button>
                                 )}
                             </div>
                             {players.length === 0 ? (
                                 <p className="rounded-xl border border-dashed px-4 py-8 text-center text-sm text-neutral-500">
-                                    No players yet.
+                                    {t('No players yet.')}
                                     {editable
-                                        ? ' Add your first player to get started.'
+                                        ? ` ${t('Add your first player to get started.')}`
                                         : ''}
                                 </p>
                             ) : (
@@ -828,8 +870,9 @@ export default function TeamRoster({
                             )}
                             {editable && atCap && (
                                 <p className="text-xs text-neutral-500">
-                                    Player limit reached — staff can still be
-                                    added.
+                                    {t(
+                                        'Player limit reached — staff can still be added.',
+                                    )}
                                 </p>
                             )}
                         </section>
@@ -837,7 +880,7 @@ export default function TeamRoster({
                         {staff.length > 0 && (
                             <section className="flex flex-col gap-2">
                                 <h2 className="text-sm font-bold tracking-wide text-neutral-900 uppercase">
-                                    Coaches &amp; staff
+                                    {t('Coaches & staff')}
                                 </h2>
                                 <ul className="divide-y rounded-xl border">
                                     {staff.map((member) => (
@@ -854,20 +897,21 @@ export default function TeamRoster({
                         )}
 
                         <p className="text-center text-xs text-neutral-500">
-                            Keep this link private — anyone with it can edit the
-                            roster.{' '}
+                            {t(
+                                'Keep this link private — anyone with it can edit the roster.',
+                            )}{' '}
                             <a
                                 href={`/registrations/${registration.qr_token}/status`}
                                 className="underline underline-offset-2"
                             >
-                                Registration status
+                                {t('Registration status')}
                             </a>
                             {' · '}
                             <a
                                 href={`/teams/${team.id}/id-card`}
                                 className="underline underline-offset-2"
                             >
-                                Team ID card
+                                {t('Team ID card')}
                             </a>
                         </p>
                     </div>

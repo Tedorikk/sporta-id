@@ -45,7 +45,7 @@ class Registration extends Model implements Payable
     protected $fillable = [
         'registration_category_id', 'event_id', 'team_id', 'name', 'email',
         'phone', 'photo', 'qr_token', 'verification_code', 'form_data',
-        'status', 'expires_at',
+        'status', 'expires_at', 'locale',
     ];
 
     protected $casts = [

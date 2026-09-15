@@ -125,15 +125,15 @@ class RosterService
     public function messages(): array
     {
         return [
-            'phone_number.regex' => 'Use international format, e.g. +628123456789.',
-            'roster.*.phone_number.regex' => 'Use international format, e.g. +628123456789.',
-            'identity_card.required' => 'Upload an identity document (KTP, KK or akta).',
-            'roster.*.identity_card.required' => 'Upload an identity document (KTP, KK or akta).',
-            'photo.required' => 'Upload a photo for the ID card.',
-            'roster.*.photo.required' => 'Upload a photo for the ID card.',
-            'roster.*.jersey_number.required_if' => 'Every player needs a jersey number.',
-            'roster.*.certificate.required_if' => 'A medic needs a licence or certificate.',
-            'roster.*.jersey_number.distinct' => 'Two players share this jersey number.',
+            'phone_number.regex' => __('Use international format, e.g. +628123456789.'),
+            'roster.*.phone_number.regex' => __('Use international format, e.g. +628123456789.'),
+            'identity_card.required' => __('Upload an identity document (KTP, KK or akta).'),
+            'roster.*.identity_card.required' => __('Upload an identity document (KTP, KK or akta).'),
+            'photo.required' => __('Upload a photo for the ID card.'),
+            'roster.*.photo.required' => __('Upload a photo for the ID card.'),
+            'roster.*.jersey_number.required_if' => __('Every player needs a jersey number.'),
+            'roster.*.certificate.required_if' => __('A medic needs a licence or certificate.'),
+            'roster.*.jersey_number.distinct' => __('Two players share this jersey number.'),
         ];
     }
 
@@ -147,11 +147,11 @@ class RosterService
     public function attributes(array $memberFields = []): array
     {
         $attributes = [
-            'dob' => 'date of birth',
-            'birthplace' => 'place of birth',
-            'phone_number' => 'WhatsApp number',
-            'jersey_number' => 'jersey number',
-            'identity_card' => 'identity document',
+            'dob' => __('date of birth'),
+            'birthplace' => __('place of birth'),
+            'phone_number' => __('WhatsApp number'),
+            'jersey_number' => __('jersey number'),
+            'identity_card' => __('identity document'),
         ];
 
         foreach ($memberFields as $field) {
@@ -185,9 +185,9 @@ class RosterService
             $max = $slot['max'] ?? null;
 
             if ($count < $min) {
-                $errors['roster'][] = "At least {$min} {$label} ".($min === 1 ? 'is' : 'are').' required.';
+                $errors['roster'][] = __('At least :min :label required.', ['min' => $min, 'label' => $label]);
             } elseif ($max !== null && $count > (int) $max) {
-                $errors['roster'][] = "At most {$max} {$label} ".((int) $max === 1 ? 'is' : 'are').' allowed.';
+                $errors['roster'][] = __('At most :max :label allowed.', ['max' => (int) $max, 'label' => $label]);
             }
         }
 
@@ -212,7 +212,7 @@ class RosterService
 
         if ($current >= $max) {
             throw ValidationException::withMessages([
-                'role' => "This team already has the maximum of {$max} players.",
+                'role' => __('This team already has the maximum of :max players.', ['max' => $max]),
             ]);
         }
     }
