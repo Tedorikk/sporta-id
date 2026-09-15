@@ -17,6 +17,7 @@ import * as z from 'zod';
 import { RegistrationIdCardCard } from '@/components/id-card/registration-id-card-card';
 import { TeamIdCardCard } from '@/components/id-card/team-id-card-card';
 import { IdCardActions } from '@/components/id-card-actions';
+import { PayLinkShare } from '@/components/public/pay-link-share';
 import { PublicPageHeader } from '@/components/public/public-page-header';
 import {
     RosterBlock,
@@ -47,8 +48,16 @@ import { useForceLightMode } from '@/hooks/use-force-light-mode';
 import { useT } from '@/hooks/use-t';
 import { accentColors } from '@/lib/color';
 import { formatRupiah } from '@/lib/format-currency';
+import { formatDateTime } from '@/lib/format-date';
 import type { Translate } from '@/lib/i18n';
 import { loadSnapScript } from '@/lib/midtrans';
+import {
+    clearDraft,
+    draftKey,
+    readDraft,
+    sameAsDefaults,
+    writeDraft,
+} from '@/lib/registration-draft';
 import { cn } from '@/lib/utils';
 import type { CardTemplate } from '@/types/card-template';
 import type { Event } from '@/types/event';
@@ -180,6 +189,22 @@ function PaymentPendingView({
                                 )}
                             </p>
                         )}
+
+                        <PayLinkShare
+                            qrToken={registration.qr_token}
+                            expiresAt={registration.expires_at}
+                            message={t(
+                                'Please pay the registration fee of :price for :name (:category — :event) here:',
+                                {
+                                    price: formatRupiah(
+                                        registrationCategory.price,
+                                    ),
+                                    name: registration.name,
+                                    category: registrationCategory.name,
+                                    event: event.name,
+                                },
+                            )}
+                        />
                     </div>
                 </div>
 
@@ -720,6 +745,9 @@ export default function RegisterDynamic({
         handleSubmit,
         setError,
         trigger,
+        subscribe,
+        getValues,
+        reset,
         formState: { errors },
     } = useForm<FormValues>({
         resolver: zodResolver(schema),
@@ -727,6 +755,85 @@ export default function RegisterDynamic({
         mode: 'onChange',
     });
     const rosterField = rosterFieldOf(pages);
+
+    // --- Draft: what's typed so far lives in localStorage ------------------
+    // Restored silently on mount (one less tap on a phone); the banner says
+    // so and offers a clean start. Saving is off until the restore has run,
+    // so an empty first render can't overwrite the draft, and off for good
+    // once the registration went through.
+    const storageKey = draftKey(registrationCategory.id);
+    const [restoredAt, setRestoredAt] = useState<string | null>(null);
+    const draftEnabled = useRef(false);
+    const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+        if (confirmedRegistration) {
+            draftEnabled.current = false;
+            clearDraft(storageKey);
+
+            return;
+        }
+
+        const draft = readDraft<Record<string, unknown>>(storageKey);
+        const defaults = defaultValuesFor(pages);
+
+        if (draft && !sameAsDefaults(draft.values, defaults)) {
+            // Over the defaults, so a question the organiser added since
+            // still gets its empty value. A one-shot sync from storage on
+            // mount, not a render-time derivation — hence the setState here.
+            reset({ ...defaults, ...draft.values } as FormValues);
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setPageIndex(Math.min(draft.pageIndex, pages.length - 1));
+            setRestoredAt(draft.savedAt);
+        }
+
+        draftEnabled.current = true;
+        // The key only changes with the category, which means a new page.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [storageKey, Boolean(confirmedRegistration)]);
+
+    useEffect(() => {
+        const save = () => {
+            if (!draftEnabled.current) {
+                return;
+            }
+
+            writeDraft(storageKey, {
+                values: getValues(),
+                pageIndex,
+                savedAt: new Date().toISOString(),
+            });
+        };
+
+        // Moving between steps is worth remembering at once; typing is
+        // debounced so a phone isn't serialising the roster on every key.
+        save();
+        const unsubscribe = subscribe({
+            formState: { values: true },
+            callback: () => {
+                if (saveTimer.current) {
+                    clearTimeout(saveTimer.current);
+                }
+
+                saveTimer.current = setTimeout(save, 500);
+            },
+        });
+
+        return () => {
+            unsubscribe();
+
+            if (saveTimer.current) {
+                clearTimeout(saveTimer.current);
+            }
+        };
+    }, [subscribe, getValues, storageKey, pageIndex]);
+
+    function startOver() {
+        clearDraft(storageKey);
+        reset(defaultValuesFor(pages) as FormValues);
+        setPageIndex(0);
+        setRestoredAt(null);
+    }
 
     // Errors already on screen were worded in the previous language; the new
     // resolver only speaks up on the next change, so ask it now.
@@ -1013,6 +1120,27 @@ export default function RegisterDynamic({
                             className="absolute -left-[9999px] h-0 w-0 opacity-0"
                             aria-hidden="true"
                         />
+
+                        {restoredAt && (
+                            <div
+                                role="status"
+                                className="mb-5 flex flex-col gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between"
+                            >
+                                <span suppressHydrationWarning>
+                                    {t(
+                                        'Your unfinished registration from :time was restored.',
+                                        { time: formatDateTime(restoredAt) },
+                                    )}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={startOver}
+                                    className="shrink-0 cursor-pointer text-left font-semibold underline underline-offset-2 hover:text-amber-950"
+                                >
+                                    {t('Start over')}
+                                </button>
+                            </div>
+                        )}
 
                         <FieldGroup>
                             {isFirstPage && (

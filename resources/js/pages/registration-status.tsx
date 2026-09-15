@@ -2,6 +2,7 @@ import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import { CheckCircle2, Clock, Loader2, Users, XCircle } from 'lucide-react';
 import { useState } from 'react';
+import { PayLinkShare } from '@/components/public/pay-link-share';
 import { PublicPageHeader } from '@/components/public/public-page-header';
 import { Button } from '@/components/ui/button';
 import { useForceLightMode } from '@/hooks/use-force-light-mode';
@@ -146,6 +147,25 @@ export default function RegistrationStatus({ registration }: Props) {
                                         ? t('Opening payment…')
                                         : t('Pay Now')}
                                 </Button>
+                                <PayLinkShare
+                                    qrToken={registration.qr_token}
+                                    expiresAt={registration.expires_at}
+                                    message={t(
+                                        'Please pay the registration fee of :price for :name (:category — :event) here:',
+                                        {
+                                            price: formatRupiah(
+                                                registration
+                                                    .registration_category
+                                                    .price,
+                                            ),
+                                            name: registration.name,
+                                            category:
+                                                registration
+                                                    .registration_category.name,
+                                            event: registration.event.name,
+                                        },
+                                    )}
+                                />
                             </>
                         )}
 
