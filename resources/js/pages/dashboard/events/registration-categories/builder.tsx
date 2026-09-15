@@ -13,6 +13,7 @@ import type {
     RegistrationSubjectType,
 } from '@/types/registration-category';
 import {
+    DEFAULT_TOURNAMENT_SETTINGS,
     OPTION_FIELD_TYPES,
     REGISTRATION_FIELD_TYPES,
     isInputField,
@@ -28,10 +29,20 @@ import {
     SettingsPanel,
 } from './components/builder/settings-panel';
 import type { FormTemplate } from './components/builder/templates';
-import { FORM_TEMPLATES } from './components/builder/templates';
+import {
+    BASKETBALL_TEAM_TEMPLATE,
+    FORM_TEMPLATES,
+} from './components/builder/templates';
+import type { TournamentDraft } from './components/builder/tournament-settings';
+import {
+    fromTournamentDraft,
+    toTournamentDraft,
+} from './components/builder/tournament-settings';
 
 interface Props {
     event: Event;
+    /** Whether the event can run a basketball tournament (pools, brackets, standings). */
+    isBasketballEvent: boolean;
     registrationCategory: RegistrationCategory | null;
 }
 
@@ -81,9 +92,11 @@ function toDraftPages(category: RegistrationCategory | null): DraftPage[] {
 
 export default function RegistrationCategoryBuilder({
     event,
+    isBasketballEvent,
     registrationCategory,
 }: Props) {
     const isEditing = Boolean(registrationCategory);
+    const hasTournament = Boolean(registrationCategory?.basketball_category);
 
     const [pages, setPages] = useState<DraftPage[]>(() =>
         toDraftPages(registrationCategory),
@@ -106,6 +119,18 @@ export default function RegistrationCategoryBuilder({
                 : '',
         registration_open: registrationCategory?.registration_open ?? true,
     });
+    // A new team category on a basketball event runs a tournament unless the
+    // organiser opts out; an existing one keeps whatever it has (locked on
+    // once teams and pools hang off it).
+    const [tournamentEnabled, setTournamentEnabled] = useState(
+        isEditing ? hasTournament : isBasketballEvent,
+    );
+    const [tournament, setTournament] = useState<TournamentDraft>(() =>
+        toTournamentDraft(
+            registrationCategory?.basketball_category,
+            DEFAULT_TOURNAMENT_SETTINGS,
+        ),
+    );
     const [branding, setBranding] = useState<FormBranding>(
         registrationCategory?.form_branding ?? {},
     );
@@ -224,12 +249,20 @@ export default function RegistrationCategoryBuilder({
         // Cast: form_pages/form_branding/form_settings are plain JSON-serializable
         // objects, but their literal-union style types don't structurally satisfy
         // Inertia's FormDataConvertible index signature.
+        const sendsTournament =
+            isBasketballEvent &&
+            details.subject_type === 'team' &&
+            tournamentEnabled;
+
         const payload = {
             name: details.name,
             subject_type: details.subject_type,
             price: details.price || null,
             quota: details.quota || null,
             registration_open: details.registration_open,
+            tournament: sendsTournament
+                ? fromTournamentDraft(tournament)
+                : null,
             form_pages: pages.map((page) => ({
                 key: page.key,
                 title: page.title,
@@ -279,6 +312,11 @@ export default function RegistrationCategoryBuilder({
         ),
     ];
 
+    // Basketball events lead with the team-entry preset the tournament expects.
+    const templates = isBasketballEvent
+        ? [BASKETBALL_TEAM_TEMPLATE, ...FORM_TEMPLATES]
+        : FORM_TEMPLATES;
+
     if (showTemplates) {
         return (
             <div className="mx-auto flex h-full w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
@@ -310,7 +348,7 @@ export default function RegistrationCategoryBuilder({
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                    {FORM_TEMPLATES.map((template) => (
+                    {templates.map((template) => (
                         <button
                             key={template.key}
                             type="button"
@@ -436,6 +474,21 @@ export default function RegistrationCategoryBuilder({
                         details={details}
                         onDetailsChange={(patch) =>
                             setDetails((d) => ({ ...d, ...patch }))
+                        }
+                        tournament={
+                            isBasketballEvent
+                                ? {
+                                      enabled: tournamentEnabled,
+                                      lockedOn: hasTournament,
+                                      draft: tournament,
+                                      onEnabledChange: setTournamentEnabled,
+                                      onChange: (patch) =>
+                                          setTournament((t) => ({
+                                              ...t,
+                                              ...patch,
+                                          })),
+                                  }
+                                : null
                         }
                         branding={branding}
                         onBrandingChange={(patch) =>

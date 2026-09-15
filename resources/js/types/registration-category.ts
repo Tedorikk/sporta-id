@@ -57,6 +57,25 @@ export interface FormSettings {
     notify_emails?: string[];
 }
 
+export type TournamentFormat = 'round_robin' | 'pool_stage';
+
+/**
+ * The basketball side of a team category — what turns a list of registered
+ * teams into pools, a bracket and standings. Mirrors the writable columns of
+ * BasketballEventCategory; price/quota/open state stay on the category.
+ */
+export interface TournamentSettings {
+    format: TournamentFormat;
+    win_points: number;
+    loss_points: number;
+    min_team: number;
+    min_player_per_team: number;
+    max_player_per_team: number | null;
+    max_player_per_coach: number | null;
+    /** Roster edits close here; null means "when registration closes". */
+    roster_closes_at: string | null;
+}
+
 export interface RegistrationCategory {
     id: number;
     event_id: number;
@@ -74,7 +93,38 @@ export interface RegistrationCategory {
     form_settings: FormSettings | null;
     status: string;
     registrations_count?: number;
+    /** Present (when loaded) for team categories that run a basketball tournament. */
+    basketball_category?: (TournamentSettings & { id: number }) | null;
 }
+
+export const TOURNAMENT_FORMATS: {
+    value: TournamentFormat;
+    label: string;
+    description: string;
+}[] = [
+    {
+        value: 'pool_stage',
+        label: 'Pool Stage → Knockout',
+        description:
+            'Teams are divided into pools before entering an elimination bracket.',
+    },
+    {
+        value: 'round_robin',
+        label: 'Round Robin',
+        description: 'Every team plays every other team. No pools are created.',
+    },
+];
+
+export const DEFAULT_TOURNAMENT_SETTINGS: TournamentSettings = {
+    format: 'pool_stage',
+    win_points: 2,
+    loss_points: 1,
+    min_team: 2,
+    min_player_per_team: 5,
+    max_player_per_team: null,
+    max_player_per_coach: null,
+    roster_closes_at: null,
+};
 
 /**
  * A category as the public event page sees it — still listed (with its price)

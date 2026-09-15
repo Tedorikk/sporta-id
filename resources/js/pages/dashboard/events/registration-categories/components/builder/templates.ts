@@ -8,6 +8,38 @@ export interface FormTemplate {
 }
 
 /**
+ * What a basketball team entry collects on top of the built-in team name:
+ * bank-transfer evidence for organisers who settle fees outside Midtrans.
+ * Mirrors BasketballEventCategory::defaultFormPages().
+ */
+export const BASKETBALL_TEAM_TEMPLATE: FormTemplate = {
+    key: 'basketball_team',
+    name: 'Basketball team entry',
+    description:
+        'Payment proof and the paying account name; players are added to the roster after registering.',
+    pages: [
+        {
+            title: 'Pembayaran',
+            fields: [
+                {
+                    key: 'bukti_pembayaran',
+                    label: 'Bukti Pembayaran',
+                    type: 'document',
+                    required: true,
+                    help_text: 'Unggah bukti transfer biaya pendaftaran tim.',
+                },
+                {
+                    key: 'nama_rekening_pembayaran',
+                    label: 'Nama Rekening yang Melakukan Pembayaran',
+                    type: 'text',
+                    required: true,
+                },
+            ],
+        },
+    ],
+};
+
+/**
  * Static starter presets — picking one just seeds `form_pages` client-side,
  * there's nothing to persist server-side until the organizer saves.
  */

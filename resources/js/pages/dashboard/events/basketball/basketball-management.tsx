@@ -28,7 +28,6 @@ import type { BasketballEventCategory } from '@/types/basketball-event-category'
 import type { Event } from '@/types/event';
 import type { Pool } from '@/types/pool';
 import type { Team } from '@/types/team';
-import { BasketballCategoryFormDialog } from './components/basketball-category-form-dialog';
 import { PoolFormDialog } from './teams/components/pool-form-dialog';
 
 // NOTE: Pools are scoped per category (Pool.basketball_event_category_id),
@@ -344,13 +343,6 @@ export function BasketballManagement({
     pools?: Pool[];
     teams?: CategoryScopedTeam[];
 }) {
-    const handleDeleteCategory = (category: BasketballEventCategory) => {
-        router.delete(
-            `/dashboard/events/${event.id}/basketball-categories/${category.id}`,
-            { preserveScroll: true },
-        );
-    };
-
     const handleDeletePool = (pool: Pool) => {
         router.delete(
             `/dashboard/events/${event.id}/basketball-categories/${pool.basketball_event_category_id}/pools/${pool.id}`,
@@ -412,18 +404,18 @@ export function BasketballManagement({
                                     divisions
                                 </p>
                             </div>
-                            <BasketballCategoryFormDialog
-                                event={event}
-                                trigger={
-                                    <Button
-                                        size="sm"
-                                        className="w-full shrink-0 sm:w-auto"
-                                    >
-                                        <Plus className="mr-2 h-4 w-4" />
-                                        Add Category
-                                    </Button>
-                                }
-                            />
+                            <Button
+                                size="sm"
+                                className="w-full shrink-0 sm:w-auto"
+                                asChild
+                            >
+                                <Link
+                                    href={`/dashboard/events/${event.id}/registration-categories/builder`}
+                                >
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Add Category
+                                </Link>
+                            </Button>
                         </div>
 
                         {categories.length === 0 ? (
@@ -435,7 +427,7 @@ export function BasketballManagement({
                                     />
                                 }
                                 title="No categories yet"
-                                description="Add a category to set its format and limits — teams, pools, and matches all build on top of it."
+                                description="Add a team registration category with a tournament — teams, pools, and matches all build on top of it."
                             />
                         ) : (
                             <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -510,7 +502,7 @@ export function BasketballManagement({
                                                     )}{' '}
                                                     &middot;{' '}
                                                     <Link
-                                                        href={`/dashboard/events/${event.id}/registration-categories`}
+                                                        href={`/dashboard/events/${event.id}/registration-categories/builder?registration_category_id=${category.registration_category_id}`}
                                                         className="underline underline-offset-2 hover:text-foreground"
                                                     >
                                                         Pricing &amp; form
@@ -550,51 +542,19 @@ export function BasketballManagement({
                                                     )}
                                                 </div>
                                                 <div className="ml-auto flex items-center gap-1">
-                                                    <BasketballCategoryFormDialog
-                                                        event={event}
-                                                        category={category}
-                                                        trigger={
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="h-8 w-8"
-                                                            >
-                                                                <Pencil className="h-4 w-4" />
-                                                            </Button>
-                                                        }
-                                                    />
-                                                    <DeleteConfirmationDialog
-                                                        trigger={
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="h-8 w-8 text-destructive"
-                                                            >
-                                                                <Trash2 className="h-4 w-4" />
-                                                            </Button>
-                                                        }
-                                                        confirmationValue={
-                                                            category.name
-                                                        }
-                                                        description={
-                                                            <>
-                                                                This will
-                                                                permanently
-                                                                delete the{' '}
-                                                                <span className="font-semibold">
-                                                                    {
-                                                                        category.name
-                                                                    }
-                                                                </span>{' '}
-                                                                category.
-                                                            </>
-                                                        }
-                                                        onConfirm={() =>
-                                                            handleDeleteCategory(
-                                                                category,
-                                                            )
-                                                        }
-                                                    />
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8"
+                                                        asChild
+                                                    >
+                                                        <Link
+                                                            href={`/dashboard/events/${event.id}/registration-categories/builder?registration_category_id=${category.registration_category_id}`}
+                                                            aria-label={`Edit ${category.name}`}
+                                                        >
+                                                            <Pencil className="h-4 w-4" />
+                                                        </Link>
+                                                    </Button>
                                                 </div>
                                             </div>
 

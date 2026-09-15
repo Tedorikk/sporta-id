@@ -6,7 +6,6 @@ use App\Http\Controllers\AttendeeTypeController;
 use App\Http\Controllers\AwardController;
 use App\Http\Controllers\AwardNomineeController;
 use App\Http\Controllers\BasketballClubController;
-use App\Http\Controllers\BasketballEventCategoryController;
 use App\Http\Controllers\BasketballEventController;
 use App\Http\Controllers\BracketController;
 use App\Http\Controllers\CardTemplateController;
@@ -165,11 +164,6 @@ Route::middleware(['auth', 'verified', 'organization.current'])->group(function 
 
             Route::resource('teams.players', PlayerController::class)
                 ->names('players')
-                ->except(['index', 'create', 'edit', 'show']);
-
-            Route::resource('basketball-categories', BasketballEventCategoryController::class)
-                ->parameters(['basketball-categories' => 'category'])
-                ->names('basketball_categories')
                 ->except(['index', 'create', 'edit', 'show']);
 
             Route::resource('attendees', AttendeeController::class)
