@@ -26,20 +26,25 @@ class TeamRosterController extends Controller
             "case when role = 'player' then 0 else 1 end"
         )->orderBy('jersey_number')->orderBy('name')]);
 
-        $registration->loadMissing(['event', 'registrationCategory']);
-        $category = $team->basketballEventCategory;
+        $registration->loadMissing(['event', 'registrationCategory.basketballCategory']);
+        $memberFields = $team->rosterMemberFields();
 
         return Inertia::render('team-roster', [
             'registration' => $registration->only('qr_token', 'status', 'name'),
             'event' => $registration->event,
             'registrationCategory' => $registration->registrationCategory->only('id', 'name'),
             'team' => $team->only('id', 'name', 'logo', 'status'),
-            'members' => $team->players,
+            // Flagged per member so the page can point at who still owes
+            // a photo or document, rather than just counting them.
+            'members' => $team->players->map(fn (Player $player) => [
+                ...$player->toArray(),
+                'is_complete' => $this->roster->isComplete($player, $memberFields),
+            ]),
             // The organiser's extra per-member questions, so the dialog can ask them.
-            'memberFields' => $team->rosterMemberFields(),
+            'memberFields' => $memberFields,
             'limits' => [
                 ...$this->roster->summary($team),
-                'closes_at' => $category->roster_closes_at ?? $registration->registrationCategory->closes_at,
+                'closes_at' => $registration->registrationCategory->rosterClosesAt(),
             ],
             'lock' => $this->lockReason($registration, $team),
         ]);

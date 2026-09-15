@@ -310,6 +310,7 @@ class RegistrationCategoryController extends Controller
 
             // Roster block: which roles, how many of each, and the extra
             // questions asked per member (their answers land in players.extra).
+            'form_pages.*.fields.*.details_on_form' => ['nullable', 'boolean'],
             'form_pages.*.fields.*.slots' => ['nullable', 'array'],
             'form_pages.*.fields.*.slots.*.role' => ['required', Rule::in(Player::ROLES)],
             'form_pages.*.fields.*.slots.*.label' => ['nullable', 'string', 'max:100'],

@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\Payment;
 use App\Models\Registration;
+use App\Services\Basketball\RosterService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -41,11 +42,18 @@ class RegistrationConfirmed extends Mailable implements ShouldQueue
             ->latest('paid_at')
             ->first();
 
+        $team = $this->registration->team;
+        $tournamentTeam = $team?->basketballEventCategory !== null;
+
         return new Content(
             markdown: 'emails.registration-confirmed',
             with: [
                 'registration' => $this->registration,
                 'payment' => $payment,
+                // A team sheet that still needs work — members missing, or
+                // registered without their details — and by when.
+                'rosterIncomplete' => $tournamentTeam && ! app(RosterService::class)->summary($team)['complete'],
+                'rosterClosesAt' => $tournamentTeam ? $this->registration->registrationCategory->rosterClosesAt() : null,
             ],
         );
     }

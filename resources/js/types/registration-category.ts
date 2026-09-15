@@ -90,6 +90,19 @@ export interface RegistrationField {
     slots?: RosterSlot[];
     /** roster type only: extra questions per member */
     member_fields?: RosterMemberField[];
+    /**
+     * roster type only: ask for every member's photo, documents and birth
+     * details on the form (default true). When false the form takes only
+     * name, role and jersey; the rest is completed in the roster portal.
+     */
+    details_on_form?: boolean;
+}
+
+/** Mirrors RegistrationCategory::rosterDetailsOnForm(). */
+export function rosterDetailsOnForm(
+    field: Pick<RegistrationField, 'details_on_form'>,
+): boolean {
+    return field.details_on_form ?? true;
 }
 
 /** What the public form submits per roster member; mirrors RosterService::memberRules(). */

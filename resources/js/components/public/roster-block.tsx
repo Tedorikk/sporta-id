@@ -22,6 +22,7 @@ import {
 import { UploadDocument } from '@/components/upload-document';
 import { UploadImage } from '@/components/upload-image';
 import { useT } from '@/hooks/use-t';
+import { formatDateTime } from '@/lib/format-date';
 import type { Translate } from '@/lib/i18n';
 import type { PlayerRole } from '@/types/player';
 import type {
@@ -29,7 +30,10 @@ import type {
     RosterMemberField,
     RosterMemberInput,
 } from '@/types/registration-category';
-import { emptyRosterMember } from '@/types/registration-category';
+import {
+    emptyRosterMember,
+    rosterDetailsOnForm,
+} from '@/types/registration-category';
 
 const E164 = /^\+[1-9]\d{1,14}$/;
 const LOOSE_PHONE = /^[0-9+\-\s()]{6,25}$/;
@@ -41,6 +45,9 @@ const LOOSE_PHONE = /^[0-9+\-\s()]{6,25}$/;
 export function rosterSchema(field: RegistrationField, t: Translate) {
     const slots = field.slots ?? [];
     const memberFields = field.member_fields ?? [];
+    // Deferred details are completed in the portal, so only name, role and
+    // jersey are checked here — mirrors submissionRules()' lenient set.
+    const details = rosterDetailsOnForm(field);
 
     const member = z
         .object({
@@ -65,11 +72,14 @@ export function rosterSchema(field: RegistrationField, t: Translate) {
             };
 
             need('name', t('Name is required'));
-            need('photo', t('Upload a photo for the ID card'));
-            need('identity_card', t('Upload an identity document'));
-            need('birthplace', t('Place of birth is required'));
-            need('dob', t('Date of birth is required'));
-            need('phone_number', t('WhatsApp number is required'));
+
+            if (details) {
+                need('photo', t('Upload a photo for the ID card'));
+                need('identity_card', t('Upload an identity document'));
+                need('birthplace', t('Place of birth is required'));
+                need('dob', t('Date of birth is required'));
+                need('phone_number', t('WhatsApp number is required'));
+            }
 
             if (m.phone_number.trim() !== '' && !E164.test(m.phone_number)) {
                 ctx.addIssue({
@@ -83,7 +93,7 @@ export function rosterSchema(field: RegistrationField, t: Translate) {
                 need('jersey_number', t('Every player needs a jersey number'));
             }
 
-            if (m.role === 'medic') {
+            if (m.role === 'medic' && details) {
                 need(
                     'certificate',
                     t('A medic needs a licence or certificate'),
@@ -93,7 +103,7 @@ export function rosterSchema(field: RegistrationField, t: Translate) {
             memberFields.forEach((mf) => {
                 const value = m.extra[mf.key] ?? '';
 
-                if (mf.required && value.trim() === '') {
+                if (details && mf.required && value.trim() === '') {
                     ctx.addIssue({
                         code: 'custom',
                         path: ['extra', mf.key],
@@ -164,6 +174,8 @@ type RosterErrors = FieldErrors<{ roster: RosterMemberInput[] }>['roster'];
 
 interface RosterBlockProps {
     field: RegistrationField;
+    /** When roster edits close — quoted when details are deferred to the portal. */
+    rosterDeadline?: string | null;
     // The page's form has a dynamic shape; the block only ever touches `roster`.
     control: Control<any>;
     errors: RosterErrors;
@@ -174,6 +186,7 @@ interface RosterBlockProps {
 
 export function RosterBlock({
     field,
+    rosterDeadline = null,
     control,
     errors,
     setError,
@@ -190,12 +203,28 @@ export function RosterBlock({
     })[];
     const slots = field.slots ?? [];
     const memberFields = field.member_fields ?? [];
+    const detailsOnForm = rosterDetailsOnForm(field);
     const rootMessage = errors?.root?.message ?? errors?.message;
 
     return (
         <div className="flex flex-col gap-6">
             {field.help_text && (
                 <FieldDescription>{field.help_text}</FieldDescription>
+            )}
+
+            {!detailsOnForm && (
+                <p
+                    role="note"
+                    className="rounded-md border-l-4 border-[var(--accent)] bg-[var(--accent)]/5 px-4 py-3 text-sm text-neutral-700"
+                    suppressHydrationWarning
+                >
+                    {t(
+                        'Just names, roles and jersey numbers for now. Photos, identity documents and birth details are completed in the roster portal after you register',
+                    )}
+                    {rosterDeadline
+                        ? ` ${t('— before :deadline.', { deadline: formatDateTime(rosterDeadline) })}`
+                        : '.'}
+                </p>
             )}
 
             {typeof rootMessage === 'string' && (
@@ -267,6 +296,7 @@ export function RosterBlock({
                                 }
                                 role={slot.role}
                                 memberFields={memberFields}
+                                detailsOnForm={detailsOnForm}
                                 control={control}
                                 errors={errors?.[index]}
                                 setError={setError}
@@ -289,6 +319,7 @@ function MemberCard({
     title,
     role,
     memberFields,
+    detailsOnForm,
     control,
     errors,
     setError,
@@ -300,6 +331,7 @@ function MemberCard({
     title: string;
     role: PlayerRole;
     memberFields: RosterMemberField[];
+    detailsOnForm: boolean;
     control: Control<any>;
     errors: NonNullable<RosterErrors>[number] | undefined;
     setError: UseFormSetError<any>;
@@ -337,35 +369,45 @@ function MemberCard({
                 )}
             </div>
 
-            <div className="grid grid-cols-[7rem_1fr] gap-4">
-                <Controller
-                    name={`${base}.photo`}
-                    control={control}
-                    render={({ field }) => (
-                        <Field
-                            data-invalid={Boolean(errors?.photo)}
-                            className="w-28"
-                        >
-                            <FieldLabel>{t('Photo')}</FieldLabel>
-                            <UploadImage
-                                value={field.value as string}
-                                ratio={4 / 5}
-                                uploadUrl="/public-upload/image"
-                                deleteUrl="/public-upload/image"
-                                onChange={(value) =>
-                                    field.onChange(value ?? '')
-                                }
-                                onError={uploadError('photo')}
-                                enableCrop
-                                disabled={disabled}
-                                className="rounded-2xl border-2 border-black"
-                            />
-                            {errors?.photo?.message && (
-                                <FieldError>{errors.photo.message}</FieldError>
-                            )}
-                        </Field>
-                    )}
-                />
+            <div
+                className={
+                    detailsOnForm
+                        ? 'grid grid-cols-[7rem_1fr] gap-4'
+                        : 'grid gap-4'
+                }
+            >
+                {detailsOnForm && (
+                    <Controller
+                        name={`${base}.photo`}
+                        control={control}
+                        render={({ field }) => (
+                            <Field
+                                data-invalid={Boolean(errors?.photo)}
+                                className="w-28"
+                            >
+                                <FieldLabel>{t('Photo')}</FieldLabel>
+                                <UploadImage
+                                    value={field.value as string}
+                                    ratio={4 / 5}
+                                    uploadUrl="/public-upload/image"
+                                    deleteUrl="/public-upload/image"
+                                    onChange={(value) =>
+                                        field.onChange(value ?? '')
+                                    }
+                                    onError={uploadError('photo')}
+                                    enableCrop
+                                    disabled={disabled}
+                                    className="rounded-2xl border-2 border-black"
+                                />
+                                {errors?.photo?.message && (
+                                    <FieldError>
+                                        {errors.photo.message}
+                                    </FieldError>
+                                )}
+                            </Field>
+                        )}
+                    />
+                )}
 
                 <FieldGroup>
                     <Controller
@@ -446,140 +488,23 @@ function MemberCard({
                 </FieldGroup>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-                <Controller
-                    name={`${base}.birthplace`}
-                    control={control}
-                    render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                            <FieldLabel htmlFor={`${base}.birthplace`}>
-                                {t('Place of birth')}
-                            </FieldLabel>
-                            <Input
-                                {...field}
-                                id={`${base}.birthplace`}
-                                disabled={disabled}
-                                style={controlStyle}
-                            />
-                            {fieldState.invalid && (
-                                <FieldError errors={[fieldState.error]} />
-                            )}
-                        </Field>
-                    )}
-                />
-                <Controller
-                    name={`${base}.dob`}
-                    control={control}
-                    render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                            <FieldLabel htmlFor={`${base}.dob`}>
-                                {t('Date of birth')}
-                            </FieldLabel>
-                            <Input
-                                {...field}
-                                id={`${base}.dob`}
-                                type="date"
-                                disabled={disabled}
-                                style={controlStyle}
-                            />
-                            {fieldState.invalid && (
-                                <FieldError errors={[fieldState.error]} />
-                            )}
-                        </Field>
-                    )}
-                />
-            </div>
-
-            <Controller
-                name={`${base}.phone_number`}
-                control={control}
-                render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor={`${base}.phone_number`}>
-                            {t('WhatsApp number')}
-                        </FieldLabel>
-                        <Input
-                            {...field}
-                            id={`${base}.phone_number`}
-                            type="tel"
-                            placeholder="+628123456789"
-                            disabled={disabled}
-                            style={controlStyle}
-                        />
-                        {fieldState.invalid ? (
-                            <FieldError errors={[fieldState.error]} />
-                        ) : (
-                            <FieldDescription>
-                                Include the country code, e.g. +62.
-                            </FieldDescription>
-                        )}
-                    </Field>
-                )}
-            />
-
-            {memberFields.length > 0 && (
-                <div className="grid grid-cols-2 gap-3">
-                    {memberFields.map((mf) => (
+            {detailsOnForm && (
+                <>
+                    <div className="grid grid-cols-2 gap-3">
                         <Controller
-                            key={mf.key}
-                            name={`${base}.extra.${mf.key}`}
+                            name={`${base}.birthplace`}
                             control={control}
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel htmlFor={`${base}.${mf.key}`}>
-                                        {mf.label}
-                                        {!mf.required && (
-                                            <span className="font-normal text-muted-foreground">
-                                                {' '}
-                                                {t('(Optional)')}
-                                            </span>
-                                        )}
+                                    <FieldLabel htmlFor={`${base}.birthplace`}>
+                                        {t('Place of birth')}
                                     </FieldLabel>
-                                    {mf.type === 'select' ? (
-                                        <Select
-                                            value={field.value as string}
-                                            onValueChange={field.onChange}
-                                            disabled={disabled}
-                                        >
-                                            <SelectTrigger
-                                                id={`${base}.${mf.key}`}
-                                                className="w-full"
-                                                style={controlStyle}
-                                            >
-                                                <SelectValue
-                                                    placeholder={t('Choose…')}
-                                                />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {(mf.options ?? []).map(
-                                                    (option) => (
-                                                        <SelectItem
-                                                            key={option}
-                                                            value={option}
-                                                        >
-                                                            {option}
-                                                        </SelectItem>
-                                                    ),
-                                                )}
-                                            </SelectContent>
-                                        </Select>
-                                    ) : (
-                                        <Input
-                                            {...field}
-                                            id={`${base}.${mf.key}`}
-                                            type={
-                                                mf.type === 'number'
-                                                    ? 'number'
-                                                    : mf.type === 'date'
-                                                      ? 'date'
-                                                      : mf.type === 'phone'
-                                                        ? 'tel'
-                                                        : 'text'
-                                            }
-                                            disabled={disabled}
-                                            style={controlStyle}
-                                        />
-                                    )}
+                                    <Input
+                                        {...field}
+                                        id={`${base}.birthplace`}
+                                        disabled={disabled}
+                                        style={controlStyle}
+                                    />
                                     {fieldState.invalid && (
                                         <FieldError
                                             errors={[fieldState.error]}
@@ -588,66 +513,215 @@ function MemberCard({
                                 </Field>
                             )}
                         />
-                    ))}
-                </div>
-            )}
-
-            <Controller
-                name={`${base}.identity_card`}
-                control={control}
-                render={({ field }) => (
-                    <Field data-invalid={Boolean(errors?.identity_card)}>
-                        <FieldLabel>{t('Identity document')}</FieldLabel>
-                        <FieldDescription>
-                            A clear photo of the KTP, KK or birth certificate.
-                        </FieldDescription>
-                        <UploadImage
-                            value={field.value as string}
-                            ratio={16 / 10}
-                            uploadUrl="/public-upload/image"
-                            deleteUrl="/public-upload/image"
-                            onChange={(value) => field.onChange(value ?? '')}
-                            onError={uploadError('identity_card')}
-                            disabled={disabled}
-                            className="rounded-2xl border-2 border-black"
-                            placeholder={t('Upload identity document')}
-                        />
-                        {errors?.identity_card?.message && (
-                            <FieldError>
-                                {errors.identity_card.message}
-                            </FieldError>
-                        )}
-                    </Field>
-                )}
-            />
-
-            {isMedic && (
-                <Controller
-                    name={`${base}.certificate`}
-                    control={control}
-                    render={({ field }) => (
-                        <Field data-invalid={Boolean(errors?.certificate)}>
-                            <FieldLabel>
-                                {t('Medic licence / certificate')}
-                            </FieldLabel>
-                            <UploadDocument
-                                value={field.value as string}
-                                uploadUrl="/public-upload/document"
-                                deleteUrl="/public-upload/document"
-                                onChange={(value) =>
-                                    field.onChange(value ?? '')
-                                }
-                                onError={uploadError('certificate')}
-                                disabled={disabled}
-                            />
-                            {errors?.certificate?.message && (
-                                <FieldError>
-                                    {errors.certificate.message}
-                                </FieldError>
+                        <Controller
+                            name={`${base}.dob`}
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <Field data-invalid={fieldState.invalid}>
+                                    <FieldLabel htmlFor={`${base}.dob`}>
+                                        {t('Date of birth')}
+                                    </FieldLabel>
+                                    <Input
+                                        {...field}
+                                        id={`${base}.dob`}
+                                        type="date"
+                                        disabled={disabled}
+                                        style={controlStyle}
+                                    />
+                                    {fieldState.invalid && (
+                                        <FieldError
+                                            errors={[fieldState.error]}
+                                        />
+                                    )}
+                                </Field>
                             )}
-                        </Field>
+                        />
+                    </div>
+
+                    <Controller
+                        name={`${base}.phone_number`}
+                        control={control}
+                        render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                                <FieldLabel htmlFor={`${base}.phone_number`}>
+                                    {t('WhatsApp number')}
+                                </FieldLabel>
+                                <Input
+                                    {...field}
+                                    id={`${base}.phone_number`}
+                                    type="tel"
+                                    placeholder="+628123456789"
+                                    disabled={disabled}
+                                    style={controlStyle}
+                                />
+                                {fieldState.invalid ? (
+                                    <FieldError errors={[fieldState.error]} />
+                                ) : (
+                                    <FieldDescription>
+                                        {t(
+                                            'Include the country code, e.g. +62.',
+                                        )}
+                                    </FieldDescription>
+                                )}
+                            </Field>
+                        )}
+                    />
+
+                    {memberFields.length > 0 && (
+                        <div className="grid grid-cols-2 gap-3">
+                            {memberFields.map((mf) => (
+                                <Controller
+                                    key={mf.key}
+                                    name={`${base}.extra.${mf.key}`}
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <Field
+                                            data-invalid={fieldState.invalid}
+                                        >
+                                            <FieldLabel
+                                                htmlFor={`${base}.${mf.key}`}
+                                            >
+                                                {mf.label}
+                                                {!mf.required && (
+                                                    <span className="font-normal text-muted-foreground">
+                                                        {' '}
+                                                        {t('(Optional)')}
+                                                    </span>
+                                                )}
+                                            </FieldLabel>
+                                            {mf.type === 'select' ? (
+                                                <Select
+                                                    value={
+                                                        field.value as string
+                                                    }
+                                                    onValueChange={
+                                                        field.onChange
+                                                    }
+                                                    disabled={disabled}
+                                                >
+                                                    <SelectTrigger
+                                                        id={`${base}.${mf.key}`}
+                                                        className="w-full"
+                                                        style={controlStyle}
+                                                    >
+                                                        <SelectValue
+                                                            placeholder={t(
+                                                                'Choose…',
+                                                            )}
+                                                        />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {(mf.options ?? []).map(
+                                                            (option) => (
+                                                                <SelectItem
+                                                                    key={option}
+                                                                    value={
+                                                                        option
+                                                                    }
+                                                                >
+                                                                    {option}
+                                                                </SelectItem>
+                                                            ),
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                            ) : (
+                                                <Input
+                                                    {...field}
+                                                    id={`${base}.${mf.key}`}
+                                                    type={
+                                                        mf.type === 'number'
+                                                            ? 'number'
+                                                            : mf.type === 'date'
+                                                              ? 'date'
+                                                              : mf.type ===
+                                                                  'phone'
+                                                                ? 'tel'
+                                                                : 'text'
+                                                    }
+                                                    disabled={disabled}
+                                                    style={controlStyle}
+                                                />
+                                            )}
+                                            {fieldState.invalid && (
+                                                <FieldError
+                                                    errors={[fieldState.error]}
+                                                />
+                                            )}
+                                        </Field>
+                                    )}
+                                />
+                            ))}
+                        </div>
                     )}
-                />
+
+                    <Controller
+                        name={`${base}.identity_card`}
+                        control={control}
+                        render={({ field }) => (
+                            <Field
+                                data-invalid={Boolean(errors?.identity_card)}
+                            >
+                                <FieldLabel>
+                                    {t('Identity document')}
+                                </FieldLabel>
+                                <FieldDescription>
+                                    A clear photo of the KTP, KK or birth
+                                    certificate.
+                                </FieldDescription>
+                                <UploadImage
+                                    value={field.value as string}
+                                    ratio={16 / 10}
+                                    uploadUrl="/public-upload/image"
+                                    deleteUrl="/public-upload/image"
+                                    onChange={(value) =>
+                                        field.onChange(value ?? '')
+                                    }
+                                    onError={uploadError('identity_card')}
+                                    disabled={disabled}
+                                    className="rounded-2xl border-2 border-black"
+                                    placeholder={t('Upload identity document')}
+                                />
+                                {errors?.identity_card?.message && (
+                                    <FieldError>
+                                        {errors.identity_card.message}
+                                    </FieldError>
+                                )}
+                            </Field>
+                        )}
+                    />
+
+                    {isMedic && (
+                        <Controller
+                            name={`${base}.certificate`}
+                            control={control}
+                            render={({ field }) => (
+                                <Field
+                                    data-invalid={Boolean(errors?.certificate)}
+                                >
+                                    <FieldLabel>
+                                        {t('Medic licence / certificate')}
+                                    </FieldLabel>
+                                    <UploadDocument
+                                        value={field.value as string}
+                                        uploadUrl="/public-upload/document"
+                                        deleteUrl="/public-upload/document"
+                                        onChange={(value) =>
+                                            field.onChange(value ?? '')
+                                        }
+                                        onError={uploadError('certificate')}
+                                        disabled={disabled}
+                                    />
+                                    {errors?.certificate?.message && (
+                                        <FieldError>
+                                            {errors.certificate.message}
+                                        </FieldError>
+                                    )}
+                                </Field>
+                            )}
+                        />
+                    )}
+                </>
             )}
         </div>
     );

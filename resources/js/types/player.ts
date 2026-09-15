@@ -34,6 +34,8 @@ export interface Player {
     identity_card: string | null;
     /** Answers to the category's per-member roster questions, keyed by field key. */
     extra: Record<string, string> | null;
+    /** Roster portal only: whether every detail a tournament entry needs is filled in. */
+    is_complete?: boolean;
     qr_token: string;
     basketball_club_id: number;
     basketball_club: BasketballClub;

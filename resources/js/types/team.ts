@@ -45,6 +45,8 @@ export interface Team {
     basketball_event_category?: BasketballEventCategory;
     event?: Event;
     review_summary?: ReviewSummary;
+    /** Dashboard team pages: members still missing details (RosterService::isComplete). */
+    roster_incomplete?: number;
     next_match_today?: GameMatch | null;
 }
 

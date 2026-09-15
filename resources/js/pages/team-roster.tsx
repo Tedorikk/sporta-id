@@ -52,6 +52,8 @@ import type { RosterMemberField } from '@/types/registration-category';
 interface Limits {
     players: number;
     staff: number;
+    /** Members still missing a photo, document or birth detail. */
+    incomplete: number;
     min_players: number | null;
     max_players: number | null;
     complete: boolean;
@@ -627,27 +629,47 @@ function MemberRow({
                     )}
                     {member.name}
                 </p>
-                <p className="truncate text-xs text-neutral-500">
-                    {t(playerRoleLabel(member.role))}
-                    {member.position ? ` · ${member.position}` : ''}
-                    {member.phone_number ? ` · ${member.phone_number}` : ''}
-                    {Object.values(member.extra ?? {})
-                        .filter(Boolean)
-                        .map((v) => ` · ${v}`)
-                        .join('')}
+                <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-neutral-500">
+                    {member.is_complete === false && (
+                        <Badge
+                            variant="secondary"
+                            className="shrink-0 bg-amber-100 px-1.5 py-0 text-[10px] text-amber-800"
+                        >
+                            {t('Needs details')}
+                        </Badge>
+                    )}
+                    <span className="truncate">
+                        {t(playerRoleLabel(member.role))}
+                        {member.position ? ` · ${member.position}` : ''}
+                        {member.phone_number ? ` · ${member.phone_number}` : ''}
+                        {Object.values(member.extra ?? {})
+                            .filter(Boolean)
+                            .map((v) => ` · ${v}`)
+                            .join('')}
+                    </span>
                 </p>
             </div>
             <div className="flex shrink-0 items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                    <a
-                        href={`/players/${member.id}/id-card`}
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label={t(':name’s ID card', { name: member.name })}
+                {/* No card to show until the photo and details are in. */}
+                {member.is_complete !== false && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        asChild
                     >
-                        <IdCard className="h-4 w-4" />
-                    </a>
-                </Button>
+                        <a
+                            href={`/players/${member.id}/id-card`}
+                            target="_blank"
+                            rel="noreferrer"
+                            aria-label={t(':name’s ID card', {
+                                name: member.name,
+                            })}
+                        >
+                            <IdCard className="h-4 w-4" />
+                        </a>
+                    </Button>
+                )}
                 {editable && (
                     <>
                         <Button
@@ -810,7 +832,22 @@ export default function TeamRoster({
                                             variant="secondary"
                                             className="bg-emerald-100 text-emerald-800"
                                         >
-                                            {t('Minimum reached')}
+                                            {t('Roster complete')}
+                                        </Badge>
+                                    ) : limits.incomplete > 0 ? (
+                                        <Badge
+                                            variant="secondary"
+                                            className="bg-amber-100 text-amber-800"
+                                        >
+                                            {t(
+                                                ':count of :total members still need details',
+                                                {
+                                                    count: limits.incomplete,
+                                                    total:
+                                                        limits.players +
+                                                        limits.staff,
+                                                },
+                                            )}
                                         </Badge>
                                     ) : limits.min_players !== null ? (
                                         t(
@@ -823,7 +860,7 @@ export default function TeamRoster({
                                 </p>
                             </div>
                             {editable && limits.closes_at && (
-                                <p className="flex items-center gap-1.5 text-xs text-neutral-500">
+                                <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-neutral-500">
                                     <Clock className="h-3.5 w-3.5" />
                                     {t('Editable until :date', {
                                         date: formatDateTime(limits.closes_at),

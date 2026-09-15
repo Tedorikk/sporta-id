@@ -24,6 +24,7 @@ import {
     defaultRoster,
     rosterSchema,
 } from '@/components/public/roster-block';
+import { RosterRequirementsCard } from '@/components/public/roster-requirements-card';
 import { SignaturePad } from '@/components/signature-pad';
 import { Button } from '@/components/ui/button';
 import {
@@ -78,6 +79,8 @@ interface Props {
     registrationCategory: RegistrationCategory;
     registrationClosed: boolean;
     confirmedRegistration?: Registration | null;
+    /** When roster edits close, for team forms with a roster block. */
+    rosterDeadline?: string | null;
     cardTemplate?: CardTemplate | null;
     snapToken?: string | null;
     midtransClientKey?: string | null;
@@ -714,6 +717,7 @@ export default function RegisterDynamic({
     registrationCategory,
     registrationClosed,
     confirmedRegistration,
+    rosterDeadline = null,
     cardTemplate,
     snapToken,
     midtransClientKey,
@@ -1121,6 +1125,13 @@ export default function RegisterDynamic({
                             aria-hidden="true"
                         />
 
+                        {isFirstPage && rosterField && (
+                            <RosterRequirementsCard
+                                field={rosterField}
+                                rosterDeadline={rosterDeadline}
+                            />
+                        )}
+
                         {restoredAt && (
                             <div
                                 role="status"
@@ -1191,6 +1202,7 @@ export default function RegisterDynamic({
                                         <RosterBlock
                                             key={f.key}
                                             field={f}
+                                            rosterDeadline={rosterDeadline}
                                             control={control}
                                             errors={
                                                 (

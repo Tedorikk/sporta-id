@@ -322,6 +322,19 @@ export default function ShowTeam({
                             >
                                 {STATUS_BADGE[team.status].label}
                             </Badge>
+                            {(team.roster_incomplete ?? 0) > 0 && (
+                                <Badge
+                                    variant="secondary"
+                                    className="bg-amber-100 text-amber-800"
+                                    title="Members registered without a photo, document or birth details"
+                                >
+                                    {team.roster_incomplete} member
+                                    {team.roster_incomplete === 1
+                                        ? ''
+                                        : 's'}{' '}
+                                    incomplete
+                                </Badge>
+                            )}
                         </div>
                         <p className="text-sm text-muted-foreground">
                             {event.name} — {players.length} team member

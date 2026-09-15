@@ -64,21 +64,67 @@ class RosterService
      * `roster.*.<field>` — the block's slots decide which roles may appear
      * and its member_fields which extra answers each member carries.
      *
+     * With `details_on_form` off the form only takes name, role and jersey;
+     * photos, documents and birth details are completed in the portal, so
+     * they are optional here (see RegistrationCategory::rosterDetailsOnForm()).
+     *
      * @param  array<string, mixed>  $rosterField  The category's roster block definition.
      */
     public function submissionRules(array $rosterField): array
     {
         $roles = collect($rosterField['slots'] ?? [])->pluck('role')->unique()->values()->all();
         $prefix = fn (string $rule) => "roster.*.{$rule}";
+        $strict = (bool) ($rosterField['details_on_form'] ?? true);
 
         return [
             'roster' => ['required', 'array'],
-            ...$this->memberRules(true, $rosterField['member_fields'] ?? [], $prefix),
+            ...$this->memberRules($strict, $rosterField['member_fields'] ?? [], $prefix),
             'roster.*.role' => ['required', Rule::in($roles)],
             // `nullable` short-circuits for staff, so `distinct` only compares the players' numbers.
             'roster.*.jersey_number' => ['required_if:roster.*.role,'.Player::ROLE_PLAYER, 'nullable', 'string', 'max:3', 'distinct'],
-            'roster.*.certificate' => ['required_if:roster.*.role,'.Player::ROLE_MEDIC, 'nullable', 'url', 'max:255'],
+            'roster.*.certificate' => [
+                $strict ? 'required_if:roster.*.role,'.Player::ROLE_MEDIC : 'nullable',
+                'nullable',
+                'url',
+                'max:255',
+            ],
         ];
+    }
+
+    /**
+     * Whether a member carries everything a tournament entry needs — the
+     * same set the portal's strict rules demand: photo, identity document,
+     * birth details, a WhatsApp number, a jersey for players, a licence for
+     * medics, and an answer to every required extra question. A member added
+     * without details on the form stays incomplete until they are filled in.
+     *
+     * @param  array<int, array<string, mixed>>  $memberFields
+     */
+    public function isComplete(Player $player, array $memberFields = []): bool
+    {
+        $fixed = [$player->photo, $player->identity_card, $player->birthplace, $player->dob, $player->phone_number];
+
+        if ($player->role === Player::ROLE_PLAYER) {
+            $fixed[] = $player->jersey_number;
+        }
+
+        if ($player->role === Player::ROLE_MEDIC) {
+            $fixed[] = $player->certificate;
+        }
+
+        foreach ($fixed as $value) {
+            if (blank($value)) {
+                return false;
+            }
+        }
+
+        foreach ($memberFields as $field) {
+            if (($field['required'] ?? false) && blank(data_get($player->extra, $field['key']))) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -219,9 +265,10 @@ class RosterService
 
     /**
      * Where the roster stands against the category's limits — what the portal
-     * shows the captain and what verification checks.
+     * shows the captain and what verification checks. `complete` means enough
+     * players *and* nobody still missing their details.
      *
-     * @return array{players: int, staff: int, min_players: int|null, max_players: int|null, complete: bool}
+     * @return array{players: int, staff: int, incomplete: int, min_players: int|null, max_players: int|null, complete: bool}
      */
     public function summary(Team $team): array
     {
@@ -229,13 +276,23 @@ class RosterService
         $category = $team->basketballEventCategory;
         $players = $members->where('role', Player::ROLE_PLAYER)->count();
         $min = $category?->min_player_per_team;
+        $incomplete = $this->incompleteCount($team);
 
         return [
             'players' => $players,
             'staff' => $members->count() - $players,
+            'incomplete' => $incomplete,
             'min_players' => $min,
             'max_players' => $category?->max_player_per_team,
-            'complete' => $min === null || $players >= $min,
+            'complete' => ($min === null || $players >= $min) && $incomplete === 0,
         ];
+    }
+
+    /** How many of the team's members are still missing details (see isComplete()). */
+    public function incompleteCount(Team $team): int
+    {
+        $memberFields = $team->rosterMemberFields();
+
+        return $team->players->reject(fn (Player $player) => $this->isComplete($player, $memberFields))->count();
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -214,5 +215,25 @@ class RegistrationCategory extends Model
     public function rosterMemberFields(): array
     {
         return $this->rosterField()['member_fields'] ?? [];
+    }
+
+    /**
+     * Whether the roster block asks for every member's photo, documents and
+     * birth details on the form itself (the default), or only name, role and
+     * jersey — leaving the rest to the roster portal before the deadline, so
+     * a manager can register and pay before every parent has sent the akta.
+     */
+    public function rosterDetailsOnForm(): bool
+    {
+        return (bool) ($this->rosterField()['details_on_form'] ?? true);
+    }
+
+    /**
+     * When roster edits close: the tournament's own deadline, else the moment
+     * registration closes, else never. Mirrors BasketballEventCategory::rosterIsOpen().
+     */
+    public function rosterClosesAt(): ?CarbonInterface
+    {
+        return $this->basketballCategory?->roster_closes_at ?? $this->closes_at;
     }
 }

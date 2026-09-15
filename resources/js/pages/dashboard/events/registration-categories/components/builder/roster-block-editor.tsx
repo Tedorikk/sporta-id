@@ -36,15 +36,18 @@ function slugKey(label: string): string {
 interface RosterBlockEditorProps {
     slots: RosterSlot[];
     memberFields: RosterMemberField[];
+    detailsOnForm: boolean;
     onChange: (patch: {
         slots?: RosterSlot[];
         member_fields?: RosterMemberField[];
+        details_on_form?: boolean;
     }) => void;
 }
 
 export function RosterBlockEditor({
     slots,
     memberFields,
+    detailsOnForm,
     onChange,
 }: RosterBlockEditorProps) {
     function updateSlot(index: number, patch: Partial<RosterSlot>) {
@@ -104,6 +107,34 @@ export function RosterBlockEditor({
 
     return (
         <div className="flex flex-col gap-4">
+            <div className="flex items-start gap-2 rounded-md border bg-background p-3">
+                <Checkbox
+                    id="roster-details-on-form"
+                    checked={detailsOnForm}
+                    onCheckedChange={(checked) =>
+                        onChange({ details_on_form: Boolean(checked) })
+                    }
+                    className="mt-0.5"
+                />
+                <div className="flex flex-col gap-0.5">
+                    <label
+                        htmlFor="roster-details-on-form"
+                        className="text-sm font-medium"
+                    >
+                        Collect each member’s details on this form
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                        Photo, identity document, birth details and WhatsApp
+                        number for every member, before the team can submit.
+                        Unticked, the form only asks name, role and jersey
+                        number — the team completes the rest in the roster
+                        portal before the roster deadline, so a manager can
+                        register and pay before every parent has sent a
+                        document.
+                    </p>
+                </div>
+            </div>
+
             <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                     <div>

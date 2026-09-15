@@ -41,6 +41,7 @@ import {
     RESERVED_FIELD_KEYS,
     TEAM_LOGO_KEY,
     isInputField,
+    rosterDetailsOnForm,
 } from '@/types/registration-category';
 import type {
     ImageRatio,
@@ -328,6 +329,7 @@ function SortableFieldRow({
                         <RosterBlockEditor
                             slots={field.slots ?? []}
                             memberFields={field.member_fields ?? []}
+                            detailsOnForm={rosterDetailsOnForm(field)}
                             onChange={(patch) => onChange(patch)}
                         />
                     )}

@@ -35,6 +35,9 @@ class RegistrationController extends Controller
             'event' => $event,
             'registrationCategory' => $registrationCategory,
             'registrationClosed' => ! $registrationCategory->isOpen() || ! $registrationCategory->hasAvailableQuota(),
+            // For the "what you'll need" card: when a team must have its
+            // roster complete, if the form defers member details to the portal.
+            'rosterDeadline' => $registrationCategory->rosterField() ? $registrationCategory->rosterClosesAt() : null,
         ]);
     }
 

@@ -7,6 +7,7 @@ use App\Models\BasketballEvent;
 use App\Models\Event;
 use App\Models\Registration;
 use App\Models\Team;
+use App\Services\Basketball\RosterService;
 use App\Services\TeamReviewService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TeamController extends Controller
 {
-    public function __construct(private readonly TeamReviewService $teamReviewService) {}
+    public function __construct(
+        private readonly TeamReviewService $teamReviewService,
+        private readonly RosterService $rosterService,
+    ) {}
 
     public function index(Request $request, Event $event)
     {
@@ -34,6 +38,8 @@ class TeamController extends Controller
 
         $teams->getCollection()->transform(function (Team $team) {
             $team->setAttribute('review_summary', $this->teamReviewService->review($team)['summary']);
+            // Members registered without their details (see RosterService::isComplete).
+            $team->setAttribute('roster_incomplete', $this->rosterService->incompleteCount($team));
 
             return $team;
         });
@@ -170,6 +176,7 @@ class TeamController extends Controller
         abort_unless($team->event_id === $event->id, 404);
 
         $team->load('players', 'basketballEventCategory', 'registration');
+        $team->setAttribute('roster_incomplete', $this->rosterService->incompleteCount($team));
         $clubs = BasketballClub::with('player')->orderBy('name')->get();
 
         return Inertia::render('dashboard/events/basketball/teams/show', [

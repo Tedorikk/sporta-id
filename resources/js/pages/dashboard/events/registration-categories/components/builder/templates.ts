@@ -46,8 +46,7 @@ export const BASKETBALL_TEAM_TEMPLATE: FormTemplate = {
                     label: 'Official & Pemain',
                     type: 'roster',
                     required: true,
-                    help_text:
-                        'Setiap anggota membutuhkan foto, kartu identitas, dan nomor WhatsApp.',
+                    help_text: 'Daftarkan official dan pemain tim Anda.',
                     slots: [
                         { role: 'manager', label: 'Manager', min: 1, max: 1 },
                         { role: 'coach', label: 'Coach', min: 1, max: 1 },

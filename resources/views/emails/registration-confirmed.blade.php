@@ -22,6 +22,13 @@
 ## {{ __('Team roster') }}
 
 {{ __('Add your players and staff before the roster deadline. Each member gets their own ID card once added.') }}
+@if ($rosterIncomplete && $rosterClosesAt)
+
+**{{ __('Your roster is not complete yet — finish it before :deadline.', ['deadline' => $rosterClosesAt->translatedFormat('j M Y, H:i')]) }}**
+@elseif ($rosterIncomplete)
+
+**{{ __('Your roster is not complete yet.') }}**
+@endif
 
 <x-mail::button :url="route('team-roster.show', $registration)">
 {{ __('Manage your roster') }}
