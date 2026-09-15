@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Team extends Model
 {
@@ -43,6 +44,31 @@ class Team extends Model
     public function basketballEventCategory(): BelongsTo
     {
         return $this->belongsTo(BasketballEventCategory::class, 'basketball_event_category_id', 'id');
+    }
+
+    /**
+     * The registration that entered this team: payment state, form answers,
+     * and the captain's portal token.
+     *
+     * @return HasOne<Registration, $this>
+     */
+    public function registration(): HasOne
+    {
+        return $this->hasOne(Registration::class);
+    }
+
+    /**
+     * Roster edits stop once the organiser has verified the team (the sheet
+     * they reviewed must stay what they reviewed) or the category's roster
+     * window has closed.
+     */
+    public function rosterLocked(): bool
+    {
+        if ($this->status === 'verified') {
+            return true;
+        }
+
+        return ! ($this->basketballEventCategory?->rosterIsOpen() ?? true);
     }
 
     /** @return HasMany<GameMatch, $this> */

@@ -23,6 +23,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { formatRupiah } from '@/lib/format-currency';
 import type { BasketballEventCategory } from '@/types/basketball-event-category';
 import type { Event } from '@/types/event';
 import type { Pool } from '@/types/pool';
@@ -467,16 +468,31 @@ export function BasketballManagement({
                                                             : 'Pool Stage'}
                                                     </Badge>
 
-                                                    <Badge variant="secondary">
-                                                        {category.status}
-                                                    </Badge>
+                                                    {category.registration_category && (
+                                                        <Badge
+                                                            variant={
+                                                                category
+                                                                    .registration_category
+                                                                    .registration_open
+                                                                    ? 'secondary'
+                                                                    : 'outline'
+                                                            }
+                                                        >
+                                                            {category
+                                                                .registration_category
+                                                                .registration_open
+                                                                ? 'Open'
+                                                                : 'Closed'}
+                                                        </Badge>
+                                                    )}
                                                 </div>
                                             </div>
                                             <p className="text-sm text-muted-foreground">
                                                 {categoryTeamCount} of{' '}
                                                 {category.min_team}
-                                                {category.max_team
-                                                    ? `–${category.max_team}`
+                                                {category.registration_category
+                                                    ?.quota
+                                                    ? `–${category.registration_category.quota}`
                                                     : '+'}{' '}
                                                 teams &middot;{' '}
                                                 {category.min_player_per_team}
@@ -485,12 +501,20 @@ export function BasketballManagement({
                                                     : '+'}{' '}
                                                 players/team
                                             </p>
-                                            {category.price && (
+                                            {category.registration_category && (
                                                 <p className="text-sm text-muted-foreground">
-                                                    Rp
-                                                    {Number(
-                                                        category.price,
-                                                    ).toLocaleString('id-ID')}
+                                                    {formatRupiah(
+                                                        category
+                                                            .registration_category
+                                                            .price,
+                                                    )}{' '}
+                                                    &middot;{' '}
+                                                    <Link
+                                                        href={`/dashboard/events/${event.id}/registration-categories`}
+                                                        className="underline underline-offset-2 hover:text-foreground"
+                                                    >
+                                                        Pricing &amp; form
+                                                    </Link>
                                                 </p>
                                             )}
                                             <div className="mt-1 flex flex-wrap items-center justify-between gap-1">

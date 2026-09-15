@@ -29,6 +29,9 @@ export interface Player {
     phone_number: string | null;
     email: string | null;
     dob: string | null;
+    birthplace: string | null;
+    /** URL of the uploaded identity document (KTP/KK/akta). */
+    identity_card: string | null;
     qr_token: string;
     basketball_club_id: number;
     basketball_club: BasketballClub;

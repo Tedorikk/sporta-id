@@ -33,7 +33,8 @@ class Player extends Model
     protected $fillable = [
         // Removed 'team_id'
         'name', 'role', 'jersey_number', 'position',
-        'photo', 'certificate', 'is_certificate_validated', 'phone_number', 'email', 'dob', 'qr_token', 'basketball_club_id',
+        'photo', 'certificate', 'is_certificate_validated', 'phone_number', 'email', 'dob',
+        'birthplace', 'identity_card', 'qr_token', 'basketball_club_id',
     ];
 
     protected $casts = [

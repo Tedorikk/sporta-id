@@ -146,7 +146,7 @@ class EventController extends Controller
         $extra = [];
 
         if ($event->specific instanceof BasketballEvent) {
-            $event->specific->load('categories');
+            $event->specific->load('categories.registrationCategory');
 
             $extra = [
                 'teams_count' => $event->teams()->count(),

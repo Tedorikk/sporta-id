@@ -70,7 +70,7 @@ class PublicEventController extends Controller
                         ->orderBy('match_number')
                         ->orderBy('scheduled_at'),
                 ])
-                ->get(['id', 'basketball_event_id', 'name', 'format', 'price', 'quota'])
+                ->get(['id', 'basketball_event_id', 'registration_category_id', 'name', 'format'])
                 ->map(function (BasketballEventCategory $category) {
                     return [
                         ...$category->toArray(),

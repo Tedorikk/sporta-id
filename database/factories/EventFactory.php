@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\BasketballEvent;
 use App\Models\Event;
 use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -32,5 +33,15 @@ class EventFactory extends Factory
             'end_date' => $end->format('Y-m-d'),
             'banner' => null,
         ];
+    }
+
+    /** An event that runs a basketball tournament (teams, categories, pools, brackets). */
+    public function basketball(): static
+    {
+        return $this->state([
+            'category' => 'BASKETBALL',
+            'eventable_type' => BasketballEvent::class,
+            'eventable_id' => BasketballEvent::factory(),
+        ]);
     }
 }

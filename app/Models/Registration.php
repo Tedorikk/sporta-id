@@ -96,6 +96,11 @@ class Registration extends Model implements Payable
         return $this->belongsTo(Team::class);
     }
 
+    public function isTeamRegistration(): bool
+    {
+        return $this->team_id !== null;
+    }
+
     /** @return MorphMany<Payment, $this> */
     public function payments(): MorphMany
     {

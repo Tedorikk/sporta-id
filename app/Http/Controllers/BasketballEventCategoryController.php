@@ -5,9 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\BasketballEvent;
 use App\Models\BasketballEventCategory;
 use App\Models\Event;
+use App\Models\RegistrationCategory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
+/**
+ * Tournament configuration for a basketball category. Every category is the
+ * sport-specific half of a team registration category — the thing visitors
+ * actually buy, with its price, quota and open/close window — so creating one
+ * here mints that registration category too, and the pair share a name.
+ */
 class BasketballEventCategoryController extends Controller
 {
     public function store(Request $request, Event $event)
@@ -16,7 +24,18 @@ class BasketballEventCategoryController extends Controller
 
         $validated = $request->validate($this->rules());
 
-        $basketballEvent->categories()->create($validated);
+        DB::transaction(function () use ($event, $basketballEvent, $validated) {
+            $registrationCategory = $event->registrationCategories()->create([
+                'name' => $validated['name'],
+                'subject_type' => RegistrationCategory::SUBJECT_TEAM,
+                'form_pages' => BasketballEventCategory::defaultFormPages(),
+            ]);
+
+            $basketballEvent->categories()->create([
+                ...$validated,
+                'registration_category_id' => $registrationCategory->id,
+            ]);
+        });
 
         return redirect()->back()->with(['toast' => [
             'title' => 'Success',
@@ -30,7 +49,10 @@ class BasketballEventCategoryController extends Controller
 
         $validated = $request->validate($this->rules());
 
-        $category->update($validated);
+        DB::transaction(function () use ($category, $validated) {
+            $category->update($validated);
+            $category->registrationCategory()->update(['name' => $validated['name']]);
+        });
 
         return redirect()->back()->with(['toast' => [
             'title' => 'Success',
@@ -42,7 +64,18 @@ class BasketballEventCategoryController extends Controller
     {
         $this->authorizeCategory($event, $category);
 
-        $category->delete();
+        $registrationCategory = $category->registrationCategory;
+
+        if ($registrationCategory->registrations()->exists()) {
+            return redirect()->back()->with(['toast' => [
+                'title' => 'Error',
+                'description' => 'Kategori ini sudah punya pendaftar dan tidak bisa dihapus.',
+            ]]);
+        }
+
+        // Cascades to the basketball category, and from there to its teams,
+        // pools and matches.
+        $registrationCategory->delete();
 
         return redirect()->back()->with(['toast' => [
             'title' => 'Success',
@@ -58,13 +91,10 @@ class BasketballEventCategoryController extends Controller
             'format' => ['required', Rule::in(BasketballEventCategory::FORMATS)],
 
             'min_team' => ['required', 'integer', 'min:2'],
-            'max_team' => ['nullable', 'integer', 'gte:min_team'],
             'min_player_per_team' => ['required', 'integer', 'min:1'],
             'max_player_per_team' => ['nullable', 'integer', 'gte:min_player_per_team'],
             'max_player_per_coach' => ['nullable', 'integer', 'min:1'],
-            'price' => ['nullable', 'numeric', 'min:0'],
-            'quota' => ['nullable', 'integer', 'min:1'],
-            'status' => ['required', 'string', 'max:255'],
+            'roster_closes_at' => ['nullable', 'date'],
         ];
     }
 

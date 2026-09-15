@@ -77,6 +77,12 @@ class RegistrationCategory extends Model
         return $this->hasOne(BasketballEventCategory::class);
     }
 
+    /** A team category that also runs a basketball tournament (pools, brackets, standings). */
+    public function isTeamTournament(): bool
+    {
+        return $this->subject_type === self::SUBJECT_TEAM && $this->basketballCategory !== null;
+    }
+
     public function isFree(): bool
     {
         return $this->price === null || (float) $this->price === 0.0;

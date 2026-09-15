@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import {
     Field,
+    FieldDescription,
     FieldError,
     FieldGroup,
     FieldLabel,
@@ -31,12 +32,6 @@ import {
 } from '@/components/ui/select';
 import type { BasketballEventCategory } from '@/types/basketball-event-category';
 import type { Event } from '@/types/event';
-
-const CATEGORY_STATUSES = [
-    { value: 'PENDING', label: 'Pending' },
-    { value: 'OPEN', label: 'Open' },
-    { value: 'CLOSED', label: 'Closed' },
-];
 
 const digitsOnly = /^\d+$/;
 
@@ -65,15 +60,6 @@ function optionalIntField(min?: number) {
         );
 }
 
-// Optional decimal (for price): empty string -> null, otherwise a number.
-function optionalDecimalField() {
-    return z
-        .string()
-        .refine((v) => v === '' || !Number.isNaN(Number(v)), 'Must be a number')
-        .transform((v) => (v === '' ? null : Number(v)))
-        .refine((v) => v === null || v >= 0, 'Cannot be negative');
-}
-
 const CATEGORY_FORMATS = [
     {
         value: 'pool_stage',
@@ -92,22 +78,13 @@ const categorySchema = z
     .object({
         name: z.string().min(1, 'Category name is required').max(255),
         min_team: requiredIntField(2, 'Minimum 2 teams'),
-        max_team: optionalIntField(2),
         min_player_per_team: requiredIntField(1, 'Minimum 1 player'),
         max_player_per_team: optionalIntField(1),
         max_player_per_coach: optionalIntField(1),
-        price: optionalDecimalField(),
-        quota: optionalIntField(1),
-        status: z.string().min(1),
+        // datetime-local value; empty means "same as when registration closes".
+        roster_closes_at: z.string().transform((v) => (v === '' ? null : v)),
         format: z.enum(['pool_stage', 'round_robin']),
     })
-    .refine(
-        (data) => data.max_team === null || data.max_team >= data.min_team,
-        {
-            message: 'Max teams must be ≥ min teams',
-            path: ['max_team'],
-        },
-    )
     .refine(
         (data) =>
             data.max_player_per_team === null ||
@@ -130,7 +107,6 @@ function toDefaultValues(
     return {
         name: category?.name ?? '',
         min_team: String(category?.min_team ?? 2),
-        max_team: category?.max_team != null ? String(category.max_team) : '',
         min_player_per_team: String(category?.min_player_per_team ?? 5),
         max_player_per_team:
             category?.max_player_per_team != null
@@ -140,9 +116,7 @@ function toDefaultValues(
             category?.max_player_per_coach != null
                 ? String(category.max_player_per_coach)
                 : '',
-        price: category?.price != null ? String(category.price) : '',
-        quota: category?.quota != null ? String(category.quota) : '',
-        status: category?.status ?? 'PENDING',
+        roster_closes_at: category?.roster_closes_at?.slice(0, 16) ?? '',
         format: category?.format
             ? (category.format as 'pool_stage' | 'round_robin')
             : 'pool_stage',
@@ -296,7 +270,7 @@ export function BasketballCategoryFormDialog({
                             )}
                         />
 
-                        <FieldGroup className="grid grid-cols-2 gap-4">
+                        <FieldGroup>
                             <Controller
                                 name="min_team"
                                 control={control}
@@ -308,32 +282,6 @@ export function BasketballCategoryFormDialog({
                                         <Input
                                             {...field}
                                             id="min_team"
-                                            type="number"
-                                            aria-invalid={fieldState.invalid}
-                                            disabled={isSaving}
-                                        />
-                                        {fieldState.invalid && (
-                                            <FieldError
-                                                errors={[fieldState.error]}
-                                            />
-                                        )}
-                                    </Field>
-                                )}
-                            />
-                            <Controller
-                                name="max_team"
-                                control={control}
-                                render={({ field, fieldState }) => (
-                                    <Field data-invalid={fieldState.invalid}>
-                                        <FieldLabel htmlFor="max_team">
-                                            Max. Teams{' '}
-                                            <span className="font-normal text-muted-foreground">
-                                                (Optional)
-                                            </span>
-                                        </FieldLabel>
-                                        <Input
-                                            {...field}
-                                            id="max_team"
                                             type="number"
                                             aria-invalid={fieldState.invalid}
                                             disabled={isSaving}
@@ -431,98 +379,28 @@ export function BasketballCategoryFormDialog({
                                 )}
                             />
                             <Controller
-                                name="quota"
+                                name="roster_closes_at"
                                 control={control}
                                 render={({ field, fieldState }) => (
                                     <Field data-invalid={fieldState.invalid}>
-                                        <FieldLabel htmlFor="quota">
-                                            Quota{' '}
+                                        <FieldLabel htmlFor="roster_closes_at">
+                                            Roster Deadline{' '}
                                             <span className="font-normal text-muted-foreground">
                                                 (Optional)
                                             </span>
                                         </FieldLabel>
                                         <Input
                                             {...field}
-                                            id="quota"
-                                            type="number"
+                                            id="roster_closes_at"
+                                            type="datetime-local"
                                             aria-invalid={fieldState.invalid}
                                             disabled={isSaving}
                                         />
-                                        {fieldState.invalid && (
-                                            <FieldError
-                                                errors={[fieldState.error]}
-                                            />
-                                        )}
-                                    </Field>
-                                )}
-                            />
-                        </FieldGroup>
-
-                        <FieldGroup className="grid grid-cols-2 gap-4">
-                            <Controller
-                                name="price"
-                                control={control}
-                                render={({ field, fieldState }) => (
-                                    <Field data-invalid={fieldState.invalid}>
-                                        <FieldLabel htmlFor="price">
-                                            Price (Rp){' '}
-                                            <span className="font-normal text-muted-foreground">
-                                                (Optional)
-                                            </span>
-                                        </FieldLabel>
-                                        <Input
-                                            {...field}
-                                            id="price"
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0"
-                                            aria-invalid={fieldState.invalid}
-                                            disabled={isSaving}
-                                        />
-                                        {fieldState.invalid && (
-                                            <FieldError
-                                                errors={[fieldState.error]}
-                                            />
-                                        )}
-                                    </Field>
-                                )}
-                            />
-                            <Controller
-                                name="status"
-                                control={control}
-                                render={({ field, fieldState }) => (
-                                    <Field data-invalid={fieldState.invalid}>
-                                        <FieldLabel htmlFor="status">
-                                            Status
-                                        </FieldLabel>
-                                        <Select
-                                            value={field.value}
-                                            onValueChange={field.onChange}
-                                            disabled={isSaving}
-                                        >
-                                            <SelectTrigger
-                                                id="status"
-                                                aria-invalid={
-                                                    fieldState.invalid
-                                                }
-                                                className="cursor-pointer"
-                                            >
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {CATEGORY_STATUSES.map(
-                                                    (option) => (
-                                                        <SelectItem
-                                                            key={option.value}
-                                                            value={option.value}
-                                                            className="cursor-pointer"
-                                                        >
-                                                            {option.label}
-                                                        </SelectItem>
-                                                    ),
-                                                )}
-                                            </SelectContent>
-                                        </Select>
+                                        <FieldDescription>
+                                            Captains can edit their roster until
+                                            this time. Leave empty to close
+                                            together with registration.
+                                        </FieldDescription>
                                         {fieldState.invalid && (
                                             <FieldError
                                                 errors={[fieldState.error]}

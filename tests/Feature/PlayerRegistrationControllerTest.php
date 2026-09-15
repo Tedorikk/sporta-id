@@ -49,60 +49,31 @@ test('a new basketball event has registration open by default', function () {
 });
 
 // ─── Public form (create) ───────────────────────────────────────────────────────
+// Every basketball category now sells through a registration category, so the
+// legacy /register page is never the destination for an event with categories.
 
-test('the registration form loads with categories when registration is open', function () {
+test('a basketball event with one open category sends visitors straight to its registration form', function () {
     $event = makeBasketballEvent();
-    $category = BasketballEventCategory::create([
-        'basketball_event_id' => $event->specific->id,
-        'name' => 'Under 18',
-        'slug' => 'under-18',
-        'min_team' => 2,
-        'min_player_per_team' => 5,
-        'status' => 'PENDING',
-    ]);
+    $category = BasketballEventCategory::factory()->forEvent($event)->create(['name' => 'Under 18']);
 
     $this->get(route('players.register', $event))
-        ->assertOk()
-        ->assertInertia(fn ($page) => $page
-            ->component('register')
-            ->where('registrationClosed', false)
-            ->has('categories', 1)
-            ->where('categories.0.id', $category->id)
-        );
+        ->assertRedirect(route('registrations.create', [$event, $category->registrationCategory]));
 });
 
-test('the registration form reports closed with no categories when registration is closed', function () {
-    $event = makeBasketballEvent(['registration_open' => false]);
-    BasketballEventCategory::create([
-        'basketball_event_id' => $event->specific->id,
-        'name' => 'Under 18',
-        'slug' => 'under-18',
-        'min_team' => 2,
-        'min_player_per_team' => 5,
-        'status' => 'PENDING',
-    ]);
+test('a basketball event whose only category is closed sends visitors to the event page', function () {
+    $event = makeBasketballEvent();
+    $category = BasketballEventCategory::factory()->forEvent($event)->create(['name' => 'Under 18']);
+    $category->registrationCategory->update(['registration_open' => false]);
 
     $this->get(route('players.register', $event))
-        ->assertOk()
-        ->assertInertia(fn ($page) => $page
-            ->component('register')
-            ->where('registrationClosed', true)
-            ->has('categories', 0)
-        );
+        ->assertRedirect(route('events.public.show', $event));
 });
 
 // ─── Public form (store) ────────────────────────────────────────────────────────
 
 test('a player can register while registration is open', function () {
     $event = makeBasketballEvent();
-    $category = BasketballEventCategory::create([
-        'basketball_event_id' => $event->specific->id,
-        'name' => 'Under 18',
-        'slug' => 'under-18',
-        'min_team' => 2,
-        'min_player_per_team' => 5,
-        'status' => 'PENDING',
-    ]);
+    $category = BasketballEventCategory::factory()->forEvent($event)->create(['name' => 'Under 18']);
     $team = Team::create([
         'event_id' => $event->id,
         'basketball_event_category_id' => $category->id,
@@ -120,14 +91,7 @@ test('a player can register while registration is open', function () {
 
 test('registering is rejected once registration is closed', function () {
     $event = makeBasketballEvent(['registration_open' => false]);
-    $category = BasketballEventCategory::create([
-        'basketball_event_id' => $event->specific->id,
-        'name' => 'Under 18',
-        'slug' => 'under-18',
-        'min_team' => 2,
-        'min_player_per_team' => 5,
-        'status' => 'PENDING',
-    ]);
+    $category = BasketballEventCategory::factory()->forEvent($event)->create(['name' => 'Under 18']);
     $team = Team::create([
         'event_id' => $event->id,
         'basketball_event_category_id' => $category->id,
