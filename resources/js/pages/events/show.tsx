@@ -18,7 +18,7 @@ import { BasketballCategorySection } from '@/components/public/basketball-catego
 import { MatchesCalendar } from '@/components/public/matches-calendar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import PublicLayout from '@/layouts/public-layout';
-import { formatRupiah } from '@/lib/format-currency';
+import { formatPublicPrice } from '@/lib/format-currency';
 import { formatDate, formatDateTime } from '@/lib/format-date';
 import { formatImageUrl } from '@/lib/image-utils';
 import type { Event } from '@/types/event';
@@ -201,9 +201,15 @@ export default function EventShow({
                                             <span className="text-lg font-bold text-white">
                                                 {category.name}
                                             </span>
-                                            <span className="text-xl font-black text-white">
-                                                {formatRupiah(category.price)}
-                                            </span>
+                                            {formatPublicPrice(
+                                                category.price,
+                                            ) && (
+                                                <span className="text-xl font-black text-white">
+                                                    {formatPublicPrice(
+                                                        category.price,
+                                                    )}
+                                                </span>
+                                            )}
                                             <span className="text-xs text-white/50">
                                                 {category.subject_type ===
                                                 'team'

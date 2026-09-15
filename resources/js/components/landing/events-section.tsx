@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { ArrowRight, Calendar } from 'lucide-react';
-import { formatRupiah } from '@/lib/format-currency';
+import { formatPublicPrice } from '@/lib/format-currency';
 import { formatDate } from '@/lib/format-date';
 import { formatImageUrl } from '@/lib/image-utils';
 import type { Event } from '@/types/event';
@@ -106,7 +106,7 @@ export function EventsSection({ events }: EventsSectionProps) {
                                                             </span>
                                                         </span>
                                                         <span className="flex shrink-0 items-center gap-1.5 text-sm font-bold text-white">
-                                                            {formatRupiah(
+                                                            {formatPublicPrice(
                                                                 category.price,
                                                             )}
                                                             <ArrowRight className="h-3.5 w-3.5 text-white/40" />
@@ -135,7 +135,7 @@ export function EventsSection({ events }: EventsSectionProps) {
                                                                 </span>
                                                             </span>
                                                             <span className="shrink-0 text-sm font-bold text-white">
-                                                                {formatRupiah(
+                                                                {formatPublicPrice(
                                                                     category.price,
                                                                 )}
                                                             </span>
