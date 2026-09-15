@@ -17,6 +17,8 @@ export interface Event {
     contact_person: string;
     category: string | null;
     is_published: boolean;
+    /** Organiser override: keep taking registrations after the event's last day. */
+    registration_after_end: boolean;
     start_date: string;
     end_date: string;
     banner: string | null;

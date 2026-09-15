@@ -67,3 +67,50 @@ test('the public category payload does not carry the event along', function () {
 
     expect($category->toPublicArray())->not->toHaveKey('event');
 });
+
+// ─── Organiser override ─────────────────────────────────────────────────────
+
+test('the after-end override reopens registration on an ended event', function () {
+    $category = pastEventCategory();
+    $category->event->update(['registration_after_end' => true]);
+    $category->refresh();
+
+    expect($category->isOpen())->toBeTrue()
+        ->and($category->toPublicArray()['is_available'])->toBeTrue()
+        ->and($category->toPublicArray()['unavailable_reason'])->toBeNull();
+
+    $this->post(route('registrations.store', [$category->event, $category]), ['name' => 'Late Entry'])
+        ->assertOk();
+
+    expect(Registration::count())->toBe(1);
+});
+
+test('the override does not bypass the category\'s own switch', function () {
+    $category = pastEventCategory();
+    $category->event->update(['registration_after_end' => true]);
+    $category->update(['registration_open' => false]);
+
+    expect($category->fresh()->isOpen())->toBeFalse()
+        ->and($category->fresh()->toPublicArray()['unavailable_reason'])->toBe('closed');
+});
+
+test('an organiser can set the override from the event form', function () {
+    $category = pastEventCategory();
+    $event = $category->event;
+
+    $this->actingAs(organizerOf($event))
+        ->put(route('events.update', $event), [
+            'name' => $event->name,
+            'description' => $event->description,
+            'contact_person' => '+6281234567890',
+            'category' => 'BASKETBALL',
+            'is_published' => true,
+            'registration_after_end' => true,
+            'start_date' => $event->start_date->toDateString(),
+            'end_date' => $event->end_date->toDateString(),
+        ])
+        ->assertRedirect();
+
+    expect($event->fresh()->registration_after_end)->toBeTrue()
+        ->and($category->fresh()->isOpen())->toBeTrue();
+});

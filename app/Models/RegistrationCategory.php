@@ -90,7 +90,7 @@ class RegistrationCategory extends Model
 
     public function isOpen(): bool
     {
-        if (! $this->registration_open || $this->eventHasEnded()) {
+        if (! $this->registration_open || $this->eventBlocksRegistration()) {
             return false;
         }
 
@@ -109,16 +109,17 @@ class RegistrationCategory extends Model
 
     /**
      * Nobody registers for an event that is over, whatever the category's
-     * own switch says. Reads the end date without pulling the whole event
-     * onto this model, so public listings don't carry it into their JSON.
+     * own switch says — unless the organiser turned on the event's after-end
+     * override. Reads just the columns needed without pulling the whole
+     * event onto this model, so public listings don't carry it into their JSON.
      */
-    public function eventHasEnded(): bool
+    public function eventBlocksRegistration(): bool
     {
         $event = $this->relationLoaded('event')
             ? $this->event
-            : $this->event()->select(['id', 'end_date'])->first();
+            : $this->event()->select(['id', 'end_date', 'registration_after_end'])->first();
 
-        return $event?->hasEnded() ?? false;
+        return $event !== null && ! $event->acceptsRegistration();
     }
 
     public function hasAvailableQuota(): bool
@@ -142,7 +143,7 @@ class RegistrationCategory extends Model
             ...$this->toArray(),
             'is_available' => $isOpen && $hasQuota,
             'unavailable_reason' => match (true) {
-                $this->eventHasEnded() => 'ended',
+                $this->eventBlocksRegistration() => 'ended',
                 ! $hasQuota => 'full',
                 ! $isOpen => 'closed',
                 default => null,
