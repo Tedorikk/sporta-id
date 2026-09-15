@@ -36,6 +36,7 @@ interface Props {
 const UNAVAILABLE_LABEL: Record<string, string> = {
     closed: 'Registration closed',
     full: 'Sold out',
+    ended: 'Event has ended',
 };
 
 const STATUS_STYLE: Record<string, string> = {

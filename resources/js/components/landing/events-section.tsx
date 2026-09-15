@@ -18,6 +18,7 @@ const STATUS_STYLE: Record<string, string> = {
 const UNAVAILABLE_LABEL: Record<string, string> = {
     closed: 'Closed',
     full: 'Sold out',
+    ended: 'Event has ended',
 };
 
 export function EventsSection({ events }: EventsSectionProps) {

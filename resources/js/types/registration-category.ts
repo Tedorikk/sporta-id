@@ -209,7 +209,7 @@ export const DEFAULT_TOURNAMENT_SETTINGS: TournamentSettings = {
  */
 export interface PublicRegistrationCategory extends RegistrationCategory {
     is_available: boolean;
-    unavailable_reason: 'closed' | 'full' | null;
+    unavailable_reason: 'closed' | 'full' | 'ended' | null;
     slots_left: number | null;
 }
 

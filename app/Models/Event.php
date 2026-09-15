@@ -55,17 +55,17 @@ class Event extends Model
 
     public function getStatusAttribute(): string
     {
-        $today = now()->startOfDay();
-
-        if ($this->start_date->gt($today)) {
+        if ($this->start_date->gt(now()->startOfDay())) {
             return 'upcoming';
         }
 
-        if ($this->end_date->lt($today)) {
-            return 'past';
-        }
+        return $this->hasEnded() ? 'past' : 'ongoing';
+    }
 
-        return 'ongoing';
+    /** True from the day after the event's last day. */
+    public function hasEnded(): bool
+    {
+        return $this->end_date->lt(now()->startOfDay());
     }
 
     public function scopeForOrganization(Builder $query, Organization|int|null $organization): Builder
