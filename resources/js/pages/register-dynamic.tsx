@@ -1,6 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Head, router } from '@inertiajs/react';
-import { Check, CheckCircle2, Clock, Loader2, Lock, Star } from 'lucide-react';
+import {
+    Check,
+    CheckCircle2,
+    Clock,
+    Loader2,
+    Lock,
+    Star,
+    Users,
+} from 'lucide-react';
 import QRCode from 'qrcode';
 import type { CSSProperties } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -243,6 +251,26 @@ function RegistrationSuccessView({
                     shareTitle={`${registration.name} — ${registrationCategory.name} ID Card`}
                     shareUrl={idCardUrl}
                 />
+
+                {team?.basketball_event_category_id && (
+                    <div className="flex w-full max-w-sm flex-col items-center gap-2 rounded-2xl border border-white/15 bg-white/5 p-4 text-center">
+                        <p className="text-sm text-white/80">
+                            Next, add your players and staff. Keep the link — it
+                            is how you get back to the roster.
+                        </p>
+                        <Button
+                            asChild
+                            className="w-full bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
+                        >
+                            <a
+                                href={`/registrations/${registration.qr_token}/roster`}
+                            >
+                                <Users className="mr-2 h-4 w-4" />
+                                Add your roster
+                            </a>
+                        </Button>
+                    </div>
+                )}
 
                 <a
                     href={`/events/${event.id}/registration-categories/${registrationCategory.id}/register`}

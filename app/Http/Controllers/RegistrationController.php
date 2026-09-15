@@ -145,7 +145,7 @@ class RegistrationController extends Controller
 
     public function status(Registration $registration)
     {
-        $registration->loadMissing(['registrationCategory', 'event', 'team']);
+        $registration->loadMissing(['registrationCategory', 'event', 'team.basketballEventCategory']);
 
         return Inertia::render('registration-status', [
             'registration' => $registration,

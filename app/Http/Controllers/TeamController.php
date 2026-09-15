@@ -169,7 +169,7 @@ class TeamController extends Controller
     {
         abort_unless($team->event_id === $event->id, 404);
 
-        $team->load('players', 'basketballEventCategory');
+        $team->load('players', 'basketballEventCategory', 'registration');
         $clubs = BasketballClub::with('player')->orderBy('name')->get();
 
         return Inertia::render('dashboard/events/basketball/teams/show', [
@@ -177,6 +177,10 @@ class TeamController extends Controller
             'team' => $team,
             'clubs' => $clubs,
             'review' => $this->teamReviewService->review($team),
+            // The captain's self-service roster page, for organisers to pass on.
+            'rosterUrl' => $team->registration !== null && $team->basketballEventCategory !== null
+                ? route('team-roster.show', $team->registration)
+                : null,
         ]);
     }
 

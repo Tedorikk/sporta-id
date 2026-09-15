@@ -202,13 +202,17 @@ export default function ShowTeam({
     team,
     clubs,
     review,
+    rosterUrl = null,
 }: {
     event: Event;
     team: Team;
     clubs: BasketballClub[];
     review: TeamReview;
+    /** The captain's self-service roster page, when the team is in a tournament. */
+    rosterUrl?: string | null;
 }) {
     const [copied, setCopied] = useState(false);
+    const [rosterCopied, setRosterCopied] = useState(false);
     const [reviewMode, setReviewMode] = useState(false);
     const shareUrl = `${window.location.origin}/teams/${team.id}/id-card`;
 
@@ -216,6 +220,16 @@ export default function ShowTeam({
         navigator.clipboard.writeText(shareUrl);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleCopyRoster = () => {
+        if (!rosterUrl) {
+            return;
+        }
+
+        navigator.clipboard.writeText(rosterUrl);
+        setRosterCopied(true);
+        setTimeout(() => setRosterCopied(false), 2000);
     };
 
     const players = team.players ?? [];
@@ -383,6 +397,54 @@ export default function ShowTeam({
                     </div>
                 </div>
             </section>
+
+            {rosterUrl && (
+                <section className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                    <div className="min-w-0">
+                        <h3 className="text-sm font-semibold">
+                            Captain's roster link
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                            Lets the team add and edit their own members until
+                            you verify them or the roster deadline passes.
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={handleCopyRoster}
+                            className="flex-1 shrink-0 sm:flex-none"
+                        >
+                            {rosterCopied ? (
+                                <>
+                                    <Check className="mr-1.5 h-3.5 w-3.5 text-emerald-600" />
+                                    Copied!
+                                </>
+                            ) : (
+                                <>
+                                    <Copy className="mr-1.5 h-3.5 w-3.5" />
+                                    Copy Link
+                                </>
+                            )}
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                            className="flex-1 shrink-0 sm:flex-none"
+                        >
+                            <a
+                                href={rosterUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                Open
+                            </a>
+                        </Button>
+                    </div>
+                </section>
+            )}
 
             {/* Roster */}
             <section className="flex min-w-0 flex-col gap-4 rounded-xl border bg-card p-4 shadow-sm sm:p-6">

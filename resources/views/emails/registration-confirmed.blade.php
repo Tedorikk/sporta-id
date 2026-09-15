@@ -18,6 +18,17 @@ Hi {{ $registration->name }}, your registration for **{{ $registration->event->n
 Payment was processed securely by Midtrans.
 @endif
 
+@if ($registration->team?->basketball_event_category_id)
+## Team roster
+
+Add your players and staff before the roster deadline. Each member gets their
+own ID card once added.
+
+<x-mail::button :url="route('team-roster.show', $registration)">
+Manage your roster
+</x-mail::button>
+@endif
+
 @if ($registration->team)
 <x-mail::button :url="route('teams.id-card', $registration->team)">
 Open your team ID card

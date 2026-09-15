@@ -43,6 +43,7 @@ use App\Http\Controllers\RegistrationRefundController;
 use App\Http\Controllers\SpeakerController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamQrController;
+use App\Http\Controllers\TeamRosterController;
 use App\Http\Controllers\VerificationCodeController;
 use App\Http\Controllers\VoteController;
 use Illuminate\Support\Facades\Route;
@@ -84,6 +85,15 @@ Route::post('events/{event}/registration-categories/{registrationCategory}/regis
 Route::get('registrations/{registration:qr_token}/status', [RegistrationController::class, 'status'])->name('registrations.status');
 Route::post('registrations/{registration:qr_token}/pay', [RegistrationController::class, 'pay'])
     ->middleware('throttle:20,1')->name('registrations.pay');
+
+// --- Team roster portal (captains manage their own sheet by token) ---------
+Route::get('registrations/{registration:qr_token}/roster', [TeamRosterController::class, 'show'])->name('team-roster.show');
+Route::post('registrations/{registration:qr_token}/roster/players', [TeamRosterController::class, 'store'])
+    ->middleware('throttle:20,1')->name('team-roster.store');
+Route::put('registrations/{registration:qr_token}/roster/players/{player}', [TeamRosterController::class, 'update'])
+    ->middleware('throttle:20,1')->name('team-roster.update');
+Route::delete('registrations/{registration:qr_token}/roster/players/{player}', [TeamRosterController::class, 'destroy'])
+    ->middleware('throttle:20,1')->name('team-roster.destroy');
 
 // --- Public award voting (shareable, no auth required) --------------------
 // Identified voters arrive with ?token=<qr_token> from their own ID card.

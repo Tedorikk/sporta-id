@@ -1,6 +1,6 @@
 import { Head } from '@inertiajs/react';
 import axios from 'axios';
-import { CheckCircle2, Clock, Loader2, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock, Loader2, Users, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { PublicPageHeader } from '@/components/public/public-page-header';
 import { Button } from '@/components/ui/button';
@@ -53,6 +53,7 @@ export default function RegistrationStatus({ registration }: Props) {
     const [isPaying, setIsPaying] = useState(false);
 
     const copy = STATUS_COPY[registration.status] ?? STATUS_COPY.confirmed;
+    const hasRoster = Boolean(registration.team?.basketball_event_category_id);
     const Icon =
         registration.status === 'confirmed'
             ? CheckCircle2
@@ -136,6 +137,20 @@ export default function RegistrationStatus({ registration }: Props) {
                                     {isPaying ? 'Opening payment…' : 'Pay Now'}
                                 </Button>
                             </>
+                        )}
+
+                        {hasRoster && registration.status === 'confirmed' && (
+                            <Button
+                                asChild
+                                className="w-full font-bold tracking-wide uppercase"
+                            >
+                                <a
+                                    href={`/registrations/${registration.qr_token}/roster`}
+                                >
+                                    <Users className="mr-2 h-4 w-4" />
+                                    Manage roster
+                                </a>
+                            </Button>
                         )}
                     </div>
                 </div>
