@@ -33,7 +33,6 @@ use App\Http\Controllers\PaymentNotificationController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\PlayerLookupController;
 use App\Http\Controllers\PlayerQrController;
-use App\Http\Controllers\PlayerRegistrationController;
 use App\Http\Controllers\PoolController;
 use App\Http\Controllers\PublicEventController;
 use App\Http\Controllers\RegistrationCategoryController;
@@ -74,8 +73,9 @@ Route::get('attendees/{attendee}/id-card', [AttendeeQrController::class, 'idCard
 Route::get('registrations/{registration:qr_token}/id-card', [RegistrationQrController::class, 'idCard'])->name('registrations.id-card');
 
 // --- Public Player Self-Registration & ID Card (shareable, no auth required) --
-Route::get('events/{event}/register', [PlayerRegistrationController::class, 'create'])->name('players.register');
-Route::post('events/{event}/register', [PlayerRegistrationController::class, 'store'])->name('players.register.store');
+// Kept for links already in circulation: sends visitors to wherever the event
+// takes registrations now.
+Route::get('events/{event}/register', [PublicEventController::class, 'register'])->name('events.public.register');
 Route::get('players/{player}/id-card', [PlayerQrController::class, 'idCard'])->name('players.id-card');
 
 // --- Public dynamic registration (team or individual, any event type) -----
@@ -258,8 +258,6 @@ Route::middleware(['auth', 'verified', 'organization.current'])->group(function 
         ->middleware('event.org');
     Route::post('events/{event}/basketball', [BasketballEventController::class, 'store'])
         ->middleware('event.org')->name('events.basketball.store');
-    Route::put('events/{event}/basketball', [BasketballEventController::class, 'update'])
-        ->middleware('event.org')->name('events.basketball.update');
 
     // --- QR Scanner (admin only) ----------------------------------------
     Route::get('dashboard/qr-scanner', [TeamQrController::class, 'scan'])->name('qr-scanner');

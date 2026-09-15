@@ -8,7 +8,6 @@ export type EventStatus = 'upcoming' | 'ongoing' | 'past';
 export interface BasketballEventSpecific {
     id: number;
     pool_drawing_date: string | null;
-    registration_open: boolean;
 }
 
 export interface Event {

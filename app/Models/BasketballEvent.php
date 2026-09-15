@@ -13,19 +13,10 @@ class BasketballEvent extends Model
 
     protected $fillable = [
         'pool_drawing_date',
-        'registration_open',
     ];
 
     protected $casts = [
         'pool_drawing_date' => 'datetime',
-        'registration_open' => 'boolean',
-    ];
-
-    // Mirrors the DB column default, so a freshly `create()`d instance (e.g. in
-    // BasketballEventController::store) reflects the right value in-memory too,
-    // without needing a round trip back to the database.
-    protected $attributes = [
-        'registration_open' => true,
     ];
 
     /** @return HasMany<BasketballEventCategory, $this> */

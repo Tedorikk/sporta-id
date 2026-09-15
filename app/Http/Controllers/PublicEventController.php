@@ -51,6 +51,25 @@ class PublicEventController extends Controller
         ]);
     }
 
+    /**
+     * Where /events/{event}/register goes now that the basketball-only form
+     * behind it is gone: straight into the form when exactly one category is
+     * open, otherwise the event page, which lists them all with prices and
+     * availability.
+     */
+    public function register(Event $event)
+    {
+        $available = $event->registrationCategories()
+            ->get()
+            ->filter(fn (RegistrationCategory $category) => $category->isOpen() && $category->hasAvailableQuota());
+
+        if ($available->count() === 1) {
+            return redirect()->route('registrations.create', [$event, $available->first()]);
+        }
+
+        return redirect()->route('events.public.show', $event);
+    }
+
     public function show(Event $event)
     {
         abort_unless($event->is_published, 404);
