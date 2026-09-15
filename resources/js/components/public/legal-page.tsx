@@ -25,6 +25,7 @@ export function LegalPage({
 
             <PublicLayout>
                 <PublicPageHeader
+                    languageToggle={false}
                     eyebrow={eyebrow}
                     title={title}
                     subtitle={subtitle}

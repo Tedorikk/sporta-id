@@ -7,8 +7,6 @@ export interface PublicEventCategory {
     basketball_event_id: number;
     name: string;
     format: string;
-    price: string | null;
-    quota: number | null;
     pools: Pool[];
     teams: Team[];
     matches: GameMatch[];

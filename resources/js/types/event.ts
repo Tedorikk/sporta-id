@@ -90,3 +90,10 @@ export interface EventStats {
     ongoing: number;
     past: number;
 }
+
+/** Event status values are stored in English; these are the keys `t()` translates on public pages. */
+export const EVENT_STATUS_LABEL: Record<string, string> = {
+    upcoming: 'Upcoming',
+    ongoing: 'Ongoing',
+    past: 'Past',
+};

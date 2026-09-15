@@ -3,6 +3,7 @@ import { Download, Printer, Share2 } from 'lucide-react';
 import { useState } from 'react';
 import type { RefObject } from 'react';
 import { toast } from 'sonner';
+import { useT } from '@/hooks/use-t';
 
 interface IdCardActionsProps {
     targetRef: RefObject<HTMLElement | null>;
@@ -17,6 +18,7 @@ export function IdCardActions({
     shareTitle,
     shareUrl,
 }: IdCardActionsProps) {
+    const { t } = useT();
     const [isDownloading, setIsDownloading] = useState(false);
 
     const handleShare = async () => {
@@ -32,9 +34,9 @@ export function IdCardActions({
 
         try {
             await navigator.clipboard.writeText(shareUrl);
-            toast.success('Link copied to clipboard');
+            toast.success(t('Link copied to clipboard'));
         } catch {
-            toast.error('Could not copy the link');
+            toast.error(t('Could not copy the link'));
         }
     };
 
@@ -59,7 +61,7 @@ export function IdCardActions({
             link.href = dataUrl;
             link.click();
         } catch {
-            toast.error('Could not generate image. Try Print instead.');
+            toast.error(t('Could not generate image. Try Print instead.'));
         } finally {
             setIsDownloading(false);
         }
@@ -69,7 +71,7 @@ export function IdCardActions({
         <div className="fixed right-6 bottom-6 z-50 flex items-center gap-2 print:hidden">
             <button
                 onClick={handleShare}
-                aria-label="Share"
+                aria-label={t('Share')}
                 className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-black bg-white text-black shadow-lg transition hover:bg-neutral-100 active:scale-95"
             >
                 <Share2 className="h-4 w-4" />
@@ -77,18 +79,18 @@ export function IdCardActions({
             <button
                 onClick={handleDownload}
                 disabled={isDownloading}
-                aria-label="Download as image"
+                aria-label={t('Download as image')}
                 className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-black bg-white text-black shadow-lg transition hover:bg-neutral-100 active:scale-95 disabled:opacity-60"
             >
                 <Download className="h-4 w-4" />
             </button>
             <button
                 onClick={() => window.print()}
-                aria-label="Print"
+                aria-label={t('Print')}
                 className="flex items-center gap-2 rounded-full bg-red-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition hover:bg-red-700 active:scale-95"
             >
                 <Printer className="h-4 w-4" />
-                Print
+                {t('Print')}
             </button>
         </div>
     );

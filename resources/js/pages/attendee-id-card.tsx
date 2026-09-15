@@ -6,6 +6,7 @@ import { IdCardRenderer } from '@/components/id-card/id-card-renderer';
 import type { IdCardData } from '@/components/id-card/id-card-renderer';
 import { VerifiedBanner } from '@/components/id-card/verified-banner';
 import { IdCardActions } from '@/components/id-card-actions';
+import { useT } from '@/hooks/use-t';
 import { formatImageUrl } from '@/lib/image-utils';
 import type { Attendee } from '@/types/attendee';
 import type { CardTemplate } from '@/types/card-template';
@@ -30,6 +31,7 @@ export default function AttendeeIdCard({ attendee, template }: Props) {
         }).then(setQrDataUrl);
     }, [idCardUrl]);
 
+    const { t } = useT();
     const typeLabel = attendee.attendee_type?.label ?? '';
 
     const data: IdCardData = {
@@ -50,7 +52,12 @@ export default function AttendeeIdCard({ attendee, template }: Props) {
 
     return (
         <>
-            <Head title={`${attendee.name} — ${typeLabel} ID Card`} />
+            <Head
+                title={t(':name — :type ID Card', {
+                    name: attendee.name,
+                    type: typeLabel,
+                })}
+            />
 
             <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-neutral-950 px-4 py-10 print:bg-white print:p-0">
                 {/*

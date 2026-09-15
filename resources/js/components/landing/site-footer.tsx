@@ -13,6 +13,7 @@ import {
     CONTACT_PHONE,
     SOCIAL_LINKS,
 } from '@/data/contact-info';
+import { useT } from '@/hooks/use-t';
 import { SiteLogo } from './site-logo';
 
 const SOCIAL_ICONS: Record<string, typeof Instagram> = {
@@ -35,6 +36,8 @@ const LEGAL_LINKS = [
 ];
 
 export function SiteFooter() {
+    const { t } = useT();
+
     return (
         <footer className="border-t-2 border-white/10 bg-black/20">
             <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-6 py-14 sm:grid-cols-2 lg:grid-cols-4">
@@ -43,8 +46,9 @@ export function SiteFooter() {
                         <SiteLogo className="h-8 w-auto" />
                     </div>
                     <p className="text-sm text-white/60">
-                        Support Your Talent — organizing sports and arts events
-                        across Indonesia since 2011.
+                        {t(
+                            'Support Your Talent — organizing sports and arts events across Indonesia since 2011.',
+                        )}
                     </p>
                     <div className="flex gap-2">
                         {SOCIAL_LINKS.map((social) => {
@@ -68,7 +72,7 @@ export function SiteFooter() {
 
                 <div className="flex flex-col gap-3">
                     <h3 className="text-xs font-bold tracking-[0.2em] text-white/40 uppercase">
-                        Explore
+                        {t('Explore')}
                     </h3>
                     {EXPLORE_LINKS.map((link) => (
                         <Link
@@ -76,20 +80,20 @@ export function SiteFooter() {
                             href={link.href}
                             className="text-sm text-white/70 transition hover:text-white"
                         >
-                            {link.label}
+                            {t(link.label)}
                         </Link>
                     ))}
                 </div>
 
                 <div className="flex flex-col gap-3">
                     <h3 className="text-xs font-bold tracking-[0.2em] text-white/40 uppercase">
-                        Our Events
+                        {t('Our Events')}
                     </h3>
                     <Link
                         href="/events"
                         className="text-sm text-white/70 transition hover:text-white"
                     >
-                        All Events
+                        {t('All Events')}
                     </Link>
                     <a
                         href="https://pontianakcityrun.com"
@@ -103,7 +107,7 @@ export function SiteFooter() {
 
                 <div className="flex flex-col gap-3">
                     <h3 className="text-xs font-bold tracking-[0.2em] text-white/40 uppercase">
-                        Contact
+                        {t('Contact')}
                     </h3>
                     <div className="flex items-start gap-2 text-sm text-white/70">
                         <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-white/40" />
@@ -135,18 +139,19 @@ export function SiteFooter() {
                                 href={link.href}
                                 className="transition hover:text-white"
                             >
-                                {link.label}
+                                {t(link.label)}
                             </Link>
                         ))}
                     </div>
                     <p className="text-center">
-                        Online payments are processed securely by Midtrans —
-                        bank transfer &amp; virtual account, e-wallet, QRIS, and
-                        credit/debit card.
+                        {t(
+                            'Online payments are processed securely by Midtrans — bank transfer & virtual account, e-wallet, QRIS, and credit/debit card.',
+                        )}
                     </p>
                     <p>
-                        © {new Date().getFullYear()} Sporta Indonesia. All
-                        rights reserved.
+                        {t('© :year Sporta Indonesia. All rights reserved.', {
+                            year: new Date().getFullYear(),
+                        })}
                     </p>
                 </div>
             </div>

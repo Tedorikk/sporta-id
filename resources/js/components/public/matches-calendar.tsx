@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useT } from '@/hooks/use-t';
 import { APP_LOCALE } from '@/lib/format-date';
 import type { GameMatch } from '@/types/game-match';
 import { MatchRow } from './match-row';
@@ -24,6 +25,7 @@ function dateKey(date: Date) {
 }
 
 export function MatchesCalendar({ matches }: Props) {
+    const { t } = useT();
     const scheduledMatches = useMemo(
         () =>
             matches
@@ -124,7 +126,7 @@ export function MatchesCalendar({ matches }: Props) {
                                     setCursor(new Date(year, month - 1, 1))
                                 }
                                 className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white/15 text-white/70 transition hover:border-red-500 hover:text-white"
-                                aria-label="Previous month"
+                                aria-label={t('Previous month')}
                             >
                                 <ChevronLeft className="h-3.5 w-3.5" />
                             </button>
@@ -134,7 +136,7 @@ export function MatchesCalendar({ matches }: Props) {
                                     setCursor(new Date(year, month + 1, 1))
                                 }
                                 className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white/15 text-white/70 transition hover:border-red-500 hover:text-white"
-                                aria-label="Next month"
+                                aria-label={t('Next month')}
                             >
                                 <ChevronRight className="h-3.5 w-3.5" />
                             </button>
@@ -147,7 +149,7 @@ export function MatchesCalendar({ matches }: Props) {
                                 key={day}
                                 className="bg-black/40 py-1.5 text-center text-[10px] font-bold tracking-wide text-white/40 uppercase"
                             >
-                                {day}
+                                {t(day)}
                             </div>
                         ))}
 
@@ -214,7 +216,7 @@ export function MatchesCalendar({ matches }: Props) {
                 <div className="flex flex-col gap-2">
                     {scheduledMatches.length > 0 && (
                         <span className="text-xs font-semibold tracking-wide text-white/40 uppercase">
-                            Not yet scheduled
+                            {t('Not yet scheduled')}
                         </span>
                     )}
                     {unscheduledMatches.map((item) => (

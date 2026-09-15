@@ -1,8 +1,11 @@
 import { ArrowUpRight, Footprints } from 'lucide-react';
+import { useT } from '@/hooks/use-t';
 
 const DISTANCES = ['5K', '10K', 'Half Marathon', 'Full Marathon'];
 
 export function FlagshipEventSection() {
+    const { t } = useT();
+
     return (
         <section id="flagship-event" className="mx-auto max-w-6xl px-6 py-14">
             <div className="relative overflow-hidden rounded-3xl border-2 border-white/15 bg-gradient-to-br from-red-700 via-red-800 to-neutral-950 px-6 py-14 sm:px-12">
@@ -40,16 +43,16 @@ export function FlagshipEventSection() {
                     </div>
                     <div>
                         <span className="text-xs font-bold tracking-[0.3em] text-white/70 uppercase">
-                            Our Biggest Event
+                            {t('Our Biggest Event')}
                         </span>
                         <h2 className="mt-2 text-4xl font-black tracking-tight uppercase sm:text-5xl">
                             Pontianak City Run
                         </h2>
                     </div>
                     <p className="max-w-xl text-white/80">
-                        The biggest running event in Pontianak and West
-                        Kalimantan, bringing together thousands of runners every
-                        year across four distance categories.
+                        {t(
+                            'The biggest running event in Pontianak and West Kalimantan, bringing together thousands of runners every year across four distance categories.',
+                        )}
                     </p>
                     <div className="flex flex-wrap gap-3">
                         {DISTANCES.map((distance) => (
@@ -57,7 +60,7 @@ export function FlagshipEventSection() {
                                 key={distance}
                                 className="rounded-full border-2 border-white/30 bg-white/10 px-4 py-1.5 text-sm font-bold tracking-wide uppercase"
                             >
-                                {distance}
+                                {t(distance)}
                             </span>
                         ))}
                     </div>
@@ -67,7 +70,7 @@ export function FlagshipEventSection() {
                         rel="noopener noreferrer"
                         className="flex w-fit items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold tracking-wide text-red-700 uppercase shadow-lg transition hover:bg-neutral-100 active:scale-95"
                     >
-                        Visit pontianakcityrun.com
+                        {t('Visit pontianakcityrun.com')}
                         <ArrowUpRight className="h-4 w-4" />
                     </a>
                 </div>

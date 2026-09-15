@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { IdToolsSection } from '@/components/landing/id-tools-section';
 import { EventsCalendar } from '@/components/public/events-calendar';
 import { PublicPageHeader } from '@/components/public/public-page-header';
+import { useT } from '@/hooks/use-t';
 import PublicLayout from '@/layouts/public-layout';
 import { formatDate } from '@/lib/format-date';
 import { formatImageUrl } from '@/lib/image-utils';
 import type { EventFilters, PaginatedEvents } from '@/types/event';
+import { EVENT_STATUS_LABEL } from '@/types/event';
 
 interface CalendarEvent {
     id: number;
@@ -35,6 +37,7 @@ export default function EventsIndex({
     categories,
     calendarEvents,
 }: Props) {
+    const { t } = useT();
     const [search, setSearch] = useState(filters.search ?? '');
 
     useEffect(() => {
@@ -60,13 +63,16 @@ export default function EventsIndex({
 
     return (
         <>
-            <Head title="Events — Sporta Indonesia" />
+            <Head title={t('Events — Sporta Indonesia')} />
 
             <PublicLayout>
                 <PublicPageHeader
-                    eyebrow="Events"
-                    title="All Events"
-                    subtitle="Browse everything we've organized and register today."
+                    languageToggle={false}
+                    eyebrow={t('Events')}
+                    title={t('All Events')}
+                    subtitle={t(
+                        'Browse everything we’ve organized and register today.',
+                    )}
                 />
 
                 <section className="mx-auto max-w-6xl px-6 py-14">
@@ -80,7 +86,7 @@ export default function EventsIndex({
                             <input
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Search events..."
+                                placeholder={t('Search events…')}
                                 className="w-full rounded-full border-2 border-white/15 bg-white/5 py-2 pr-4 pl-9 text-sm text-white placeholder:text-white/40 focus:border-red-500 focus:outline-none"
                             />
                         </div>
@@ -95,7 +101,7 @@ export default function EventsIndex({
                             className="rounded-full border-2 border-white/15 bg-white/5 px-4 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
                         >
                             <option value="" className="bg-neutral-900">
-                                All categories
+                                {t('All categories')}
                             </option>
                             {categories.map((category) => (
                                 <option
@@ -111,7 +117,7 @@ export default function EventsIndex({
 
                     {events.data.length === 0 ? (
                         <div className="rounded-2xl border-2 border-dashed border-white/20 p-12 text-center text-white/50">
-                            No events match your search.
+                            {t('No events match your search.')}
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -135,7 +141,11 @@ export default function EventsIndex({
                                             <span
                                                 className={`absolute top-3 left-3 rounded-full px-3 py-0.5 text-[10px] font-bold tracking-wide uppercase ${STATUS_STYLE[event.status] ?? 'bg-white text-black'}`}
                                             >
-                                                {event.status}
+                                                {t(
+                                                    EVENT_STATUS_LABEL[
+                                                        event.status
+                                                    ] ?? event.status,
+                                                )}
                                             </span>
                                         </div>
                                         <div className="flex flex-1 flex-col gap-3 p-5">

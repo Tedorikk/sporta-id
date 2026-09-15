@@ -1,6 +1,9 @@
 import { STATS } from '@/data/landing-content';
+import { useT } from '@/hooks/use-t';
 
 export function StatsStrip() {
+    const { t } = useT();
+
     return (
         <section className="mx-auto grid max-w-6xl grid-cols-2 gap-4 px-6 py-14 lg:grid-cols-4">
             {STATS.map((stat) => (
@@ -12,11 +15,11 @@ export function StatsStrip() {
                         {stat.value}
                     </span>
                     <span className="text-xs font-bold tracking-wide text-white/70 uppercase">
-                        {stat.label}
+                        {t(stat.label)}
                     </span>
                     {stat.footnote && (
                         <span className="mt-1 text-[11px] text-white/40">
-                            {stat.footnote}
+                            {t(stat.footnote)}
                         </span>
                     )}
                 </div>

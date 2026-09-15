@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useT } from '@/hooks/use-t';
 import { APP_LOCALE } from '@/lib/format-date';
 
 interface CalendarEvent {
@@ -21,6 +22,7 @@ function stripTime(date: Date) {
 }
 
 export function EventsCalendar({ events }: Props) {
+    const { t } = useT();
     const [cursor, setCursor] = useState(() => {
         const now = new Date();
 
@@ -89,7 +91,7 @@ export function EventsCalendar({ events }: Props) {
                         }}
                         className="rounded-full border-2 border-white/15 px-3 py-1 text-xs font-bold tracking-wide text-white/70 uppercase transition hover:border-red-500 hover:text-white"
                     >
-                        Today
+                        {t('Today')}
                     </button>
                     <button
                         type="button"
@@ -107,7 +109,7 @@ export function EventsCalendar({ events }: Props) {
                         key={day}
                         className="bg-black/40 py-2 text-center text-[10px] font-bold tracking-wide text-white/40 uppercase"
                     >
-                        {day}
+                        {t(day)}
                     </div>
                 ))}
 

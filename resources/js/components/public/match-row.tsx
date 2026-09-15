@@ -1,5 +1,6 @@
 import { Calendar, Shield, Trophy } from 'lucide-react';
 import { LocalTime } from '@/components/local-time';
+import { useT } from '@/hooks/use-t';
 
 import { formatImageUrl } from '@/lib/image-utils';
 import type { GameMatch } from '@/types/game-match';
@@ -42,8 +43,9 @@ export function MatchRow({
     match: GameMatch;
     categoryLabel?: string;
 }) {
-    const homeName = match.home_team?.name ?? 'TBD';
-    const awayName = match.away_team?.name ?? 'TBD';
+    const { t } = useT();
+    const homeName = match.home_team?.name ?? t('TBD');
+    const awayName = match.away_team?.name ?? t('TBD');
     const isCompleted = match.status === 'finished';
     const homeWon =
         isCompleted && (match.home_score ?? 0) > (match.away_score ?? 0);
@@ -119,7 +121,7 @@ export function MatchRow({
                 <span
                     className={`rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase ${STATUS_STYLE[match.status]}`}
                 >
-                    {STATUS_LABEL[match.status]}
+                    {t(STATUS_LABEL[match.status])}
                 </span>
             </div>
         </div>

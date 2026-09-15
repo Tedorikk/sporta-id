@@ -1,9 +1,11 @@
 import { Link } from '@inertiajs/react';
 import { ArrowRight, Calendar } from 'lucide-react';
+import { useT } from '@/hooks/use-t';
 import { formatPublicPrice } from '@/lib/format-currency';
 import { formatDate } from '@/lib/format-date';
 import { formatImageUrl } from '@/lib/image-utils';
 import type { Event } from '@/types/event';
+import { EVENT_STATUS_LABEL } from '@/types/event';
 
 interface EventsSectionProps {
     events: Event[];
@@ -22,35 +24,36 @@ const UNAVAILABLE_LABEL: Record<string, string> = {
 };
 
 export function EventsSection({ events }: EventsSectionProps) {
+    const { t } = useT();
+
     return (
         <section id="events" className="mx-auto max-w-6xl px-6 py-14">
             <div className="mb-3 flex items-end justify-between">
                 <div>
                     <span className="text-xs font-bold tracking-[0.3em] text-red-500 uppercase">
-                        Live Now
+                        {t('Live Now')}
                     </span>
                     <h2 className="text-3xl font-black tracking-tight uppercase">
-                        Events &amp; Registration Fees
+                        {t('Events & Registration Fees')}
                     </h2>
                 </div>
                 <Link
                     href="/events"
                     className="text-xs font-semibold tracking-wide text-white/50 uppercase transition hover:text-white"
                 >
-                    View All Events
+                    {t('View All Events')}
                 </Link>
             </div>
 
             <p className="mb-8 max-w-2xl text-sm text-white/60">
-                Every registration category we currently sell, with its price in
-                Rupiah. Pick a category to open its registration form — paid
-                entries are settled online through Midtrans right after you
-                submit.
+                {t(
+                    'Every registration category we currently sell, with its price in Rupiah. Pick a category to open its registration form — paid entries are settled online through Midtrans right after you submit.',
+                )}
             </p>
 
             {events.length === 0 ? (
                 <div className="rounded-2xl border-2 border-dashed border-white/20 p-12 text-center text-white/50">
-                    No published events right now — check back soon.
+                    {t('No published events right now — check back soon.')}
                 </div>
             ) : (
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -73,7 +76,10 @@ export function EventsSection({ events }: EventsSectionProps) {
                                     <span
                                         className={`absolute top-3 left-3 rounded-full px-3 py-0.5 text-[10px] font-bold tracking-wide uppercase ${STATUS_STYLE[event.status] ?? 'bg-white text-black'}`}
                                     >
-                                        {event.status}
+                                        {t(
+                                            EVENT_STATUS_LABEL[event.status] ??
+                                                event.status,
+                                        )}
                                     </span>
                                 </div>
 
@@ -101,8 +107,12 @@ export function EventsSection({ events }: EventsSectionProps) {
                                                             <span className="text-[11px] text-white/45">
                                                                 {category.subject_type ===
                                                                 'team'
-                                                                    ? 'Per team'
-                                                                    : 'Per person'}
+                                                                    ? t(
+                                                                          'Per team',
+                                                                      )
+                                                                    : t(
+                                                                          'Per person',
+                                                                      )}
                                                             </span>
                                                         </span>
                                                         <span className="flex shrink-0 items-center gap-1.5 text-sm font-bold text-white">
@@ -127,11 +137,13 @@ export function EventsSection({ events }: EventsSectionProps) {
                                                                     }
                                                                 </span>
                                                                 <span className="text-[11px] text-white/45">
-                                                                    {UNAVAILABLE_LABEL[
-                                                                        category.unavailable_reason ??
-                                                                            ''
-                                                                    ] ??
-                                                                        'Unavailable'}
+                                                                    {t(
+                                                                        UNAVAILABLE_LABEL[
+                                                                            category.unavailable_reason ??
+                                                                                ''
+                                                                        ] ??
+                                                                            'Unavailable',
+                                                                    )}
                                                                 </span>
                                                             </span>
                                                             <span className="shrink-0 text-sm font-bold text-white">
@@ -157,8 +169,9 @@ export function EventsSection({ events }: EventsSectionProps) {
                                         </ul>
                                     ) : (
                                         <p className="border-y border-white/10 py-2.5 text-xs text-white/45">
-                                            Registration for this event is not
-                                            open yet.
+                                            {t(
+                                                'Registration for this event is not open yet.',
+                                            )}
                                         </p>
                                     )}
 
@@ -166,7 +179,7 @@ export function EventsSection({ events }: EventsSectionProps) {
                                         href={`/events/${event.id}`}
                                         className="mt-auto flex items-center justify-center gap-2 rounded-full bg-red-600 py-2.5 text-sm font-bold tracking-wide text-white uppercase transition hover:bg-red-700"
                                     >
-                                        View &amp; Register
+                                        {t('View & Register')}
                                         <ArrowRight className="h-4 w-4" />
                                     </Link>
                                 </div>
