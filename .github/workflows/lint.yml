@@ -26,6 +26,15 @@ jobs:
           composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
           npm install
 
+      # resources/js/routes and resources/js/actions are generated, and
+      # gitignored. Without them eslint's resolver cannot place an @/routes
+      # import, and import/order reports every one of them.
+      - name: Generate Wayfinder Routes
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          php artisan wayfinder:generate --with-form
+
       - name: Run Pint
         run: composer lint:check
 

@@ -10,6 +10,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
+/**
+ * @property-read BasketballEventCategory|null $basketballCategory
+ * @property-read RunningEventCategory|null $runningCategory
+ */
 class RegistrationCategory extends Model
 {
     use HasFactory;
@@ -307,6 +311,6 @@ class RegistrationCategory extends Model
      */
     public function rosterClosesAt(): ?CarbonInterface
     {
-        return $this->basketballCategory?->roster_closes_at ?? $this->closes_at;
+        return $this->basketballCategory->roster_closes_at ?? $this->closes_at;
     }
 }

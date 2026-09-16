@@ -47,7 +47,7 @@ class TeamReviewService
 
             if ($roster->isEmpty()) {
                 $issues[] = $this->issue('error', 'no_players', 'Team has no registered players (only staff).');
-            } elseif ($roster->count() < ($minRoster = $team->basketballEventCategory?->min_player_per_team ?? self::DEFAULT_MIN_ROSTER_SIZE)) {
+            } elseif ($roster->count() < ($minRoster = $team->basketballEventCategory->min_player_per_team ?? self::DEFAULT_MIN_ROSTER_SIZE)) {
                 $issues[] = $this->issue('warning', 'low_roster', "Only {$roster->count()} player(s) registered; this category needs at least {$minRoster}.");
             }
 

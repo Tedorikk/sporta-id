@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 /**
  * One candidate on an award's ballot, pointing at the player or team being
  * nominated.
+ *
+ * @property-read Player|Team|null $nominee
  */
 class AwardNominee extends Model
 {
@@ -50,7 +52,7 @@ class AwardNominee extends Model
      */
     public function getNameAttribute(): string
     {
-        return $this->display_name ?: (string) ($this->nominee?->name ?? 'Unknown nominee');
+        return $this->display_name ?: (string) ($this->nominee->name ?? 'Unknown nominee');
     }
 
     public function getPhotoUrlAttribute(): ?string

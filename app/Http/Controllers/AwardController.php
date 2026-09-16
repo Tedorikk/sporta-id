@@ -9,7 +9,6 @@ use App\Models\Player;
 use App\Models\Team;
 use App\Models\Vote;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
@@ -119,9 +118,9 @@ class AwardController extends Controller
     /**
      * Players or teams at this event that are not on the ballot yet.
      *
-     * @return Collection<int, array<string, mixed>>
+     * @return list<array{id: int, name: string, photo: string|null}>
      */
-    private function candidates(Event $event, Award $award): Collection
+    private function candidates(Event $event, Award $award): array
     {
         $taken = $award->nominees()
             ->where('nominee_type', $award->nomineeModelClass())
@@ -138,7 +137,8 @@ class AwardController extends Controller
                     'name' => $player->name,
                     'photo' => $player->photo,
                 ])
-                ->values();
+                ->values()
+                ->all();
         }
 
         return $event->teams()
@@ -150,7 +150,8 @@ class AwardController extends Controller
                 'name' => $team->name,
                 'photo' => $team->logo,
             ])
-            ->values();
+            ->values()
+            ->all();
     }
 
     /**

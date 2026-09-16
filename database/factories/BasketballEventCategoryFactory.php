@@ -49,14 +49,16 @@ class BasketballEventCategoryFactory extends Factory
     {
         return $this->state(function (array $attributes) use ($event) {
             $event->loadMissing('specific');
+            $basketballEvent = $event->specific;
 
-            if (! $event->specific instanceof BasketballEvent) {
-                $event->specific()->associate(BasketballEvent::factory()->create());
+            if (! $basketballEvent instanceof BasketballEvent) {
+                $basketballEvent = BasketballEvent::factory()->create();
+                $event->specific()->associate($basketballEvent);
                 $event->save();
             }
 
             return [
-                'basketball_event_id' => $event->specific->id,
+                'basketball_event_id' => $basketballEvent->id,
                 // A bare form: the full basketball default (roster block, payment
                 // proof, documents) is what the app mints, but a test that wants
                 // it should say so — see withDefaultForm().

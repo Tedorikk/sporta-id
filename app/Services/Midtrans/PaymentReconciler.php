@@ -59,7 +59,7 @@ class PaymentReconciler
 
         $class = Relation::getMorphedModel($payment->payable_type) ?? $payment->payable_type;
 
-        if (! is_string($class) || ! class_exists($class)) {
+        if (! class_exists($class)) {
             return null;
         }
 

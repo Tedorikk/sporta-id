@@ -152,7 +152,7 @@ class Vote extends Model implements Payable
                 50,
                 ''
             ),
-            'price' => (int) ($this->award?->price_per_vote ?? 0),
+            'price' => (int) ($this->award->price_per_vote ?? 0),
             'quantity' => $this->quantity,
         ]];
     }
