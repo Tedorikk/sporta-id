@@ -2,17 +2,18 @@
 
 namespace App\Services\Running;
 
+use App\Models\RaceParticipant;
 use App\Models\Registration;
 use App\Models\RunningEventCategory;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Turns confirmed registrations into a start list and hands every runner on
- * it a bib number.
+ * Hands runners on a distance's start list their bib numbers.
  *
- * Both halves are deliberately one action: organizers allocate bibs once, a
- * few days before the race, and expect late entries to be swept in at the
- * same time.
+ * A confirmed registration gets its bib the moment it lands on the start
+ * list (see {@see RaceEntryService}); the bulk pass here sweeps in anything
+ * that slipped past that — walk-ins staff added without a number, entries
+ * confirmed before bibs were switched on — and is safe to re-run.
  */
 class BibNumberAssigner
 {
@@ -30,73 +31,131 @@ class BibNumberAssigner
     }
 
     /**
-     * Every confirmed registration on the linked registration category that
-     * isn't on the start list yet joins it. Names and contact details are
-     * copied rather than joined, so a runner survives their registration
-     * being deleted.
+     * Every confirmed registration on any category selling this distance
+     * that isn't on the start list yet joins it.
      */
     private function addMissingRegistrants(RunningEventCategory $category): int
     {
-        if ($category->registration_category_id === null) {
-            return 0;
-        }
-
         $alreadyListed = $category->participants()
             ->whereNotNull('registration_id')
             ->pluck('registration_id');
 
         $newcomers = Registration::query()
-            ->where('registration_category_id', $category->registration_category_id)
+            ->whereIn('registration_category_id', $category->registrationCategories()->select('id'))
             ->where('status', Registration::STATUS_CONFIRMED)
             ->whereNotIn('id', $alreadyListed)
             ->orderBy('id')
             ->get();
 
+        $entries = app(RaceEntryService::class);
+
         foreach ($newcomers as $registration) {
-            $category->participants()->create([
-                'registration_id' => $registration->id,
-                'name' => $registration->name,
-                'email' => $registration->email,
-                'phone' => $registration->phone,
-            ]);
+            $entries->enter($registration, $category, assignBib: false);
         }
 
         return $newcomers->count();
     }
 
     /**
-     * Numbers run from the category's starting number upwards, skipping any
-     * bib already handed out — re-running the assignment never renumbers a
-     * runner who already has a bib printed on their race pack.
+     * Re-running the assignment never renumbers a runner who already has a
+     * bib printed on their race pack.
      */
     private function numberUnnumberedRunners(RunningEventCategory $category): int
     {
-        $taken = $this->takenBibs($category);
-
         $unnumbered = $category->participants()
             ->whereNull('bib_number')
             ->orderBy('id')
             ->get();
 
-        $next = max($category->bib_start_number, 1);
-
         foreach ($unnumbered as $participant) {
-            while (isset($taken[$this->format($category, $next)])) {
-                $next++;
-            }
-
-            $bib = $this->format($category, $next);
-            $participant->update(['bib_number' => $bib]);
-            $taken[$bib] = true;
-            $next++;
+            $this->assignTo($participant, $category);
         }
 
         return $unnumbered->count();
     }
 
+    /**
+     * Gives one runner the next free bib in their sequence. Men and women
+     * run independent sequences when the distance sets separate starts
+     * (PCR-style "1–2999 male, 3000+ female"); otherwise everyone shares
+     * the distance's single sequence. Callers hold the transaction.
+     */
+    public function assignTo(RaceParticipant $participant, ?RunningEventCategory $category = null): string
+    {
+        $category ??= $participant->category;
+
+        $bib = $this->nextAvailable($category, $participant->gender);
+        $participant->update(['bib_number' => $bib]);
+
+        return $bib;
+    }
+
+    /**
+     * The next free bib in a sequence: one past the highest number already
+     * handed to that sequence, never below its start, and skipping anything
+     * already taken on the distance (a sequence that overran into another's
+     * range, or a bib staff typed by hand).
+     */
+    public function nextAvailable(RunningEventCategory $category, ?string $gender = null): string
+    {
+        $taken = $this->takenBibs($category);
+        $start = $category->bibStartFor($gender);
+        $next = max($start, $this->highestNumberIn($category, $gender) + 1);
+
+        while (isset($taken[$this->format($category, $next)])) {
+            $next++;
+        }
+
+        return $this->format($category, $next);
+    }
+
     private function format(RunningEventCategory $category, int $number): string
     {
         return ($category->bib_prefix ?? '').$number;
+    }
+
+    /**
+     * The highest bib number handed out in a sequence so far. A sequence is
+     * everyone whose gender resolves to the same start number: with no
+     * gender-specific starts that is the whole distance; with "male from 1,
+     * female from 3000" it is that gender's runners (and, for the start the
+     * plain number shares, runners with no recorded gender).
+     */
+    private function highestNumberIn(RunningEventCategory $category, ?string $gender): int
+    {
+        $start = $category->bibStartFor($gender);
+        $sameSequence = collect([...RunningEventCategory::GENDERS, null])
+            ->filter(fn (?string $candidate) => $category->bibStartFor($candidate) === $start);
+
+        $bibs = $category->participants()
+            ->whereNotNull('bib_number')
+            ->where(function ($query) use ($sameSequence) {
+                $query->whereIn('gender', $sameSequence->filter()->values()->all());
+
+                if ($sameSequence->containsStrict(null)) {
+                    $query->orWhereNull('gender');
+                }
+            })
+            ->pluck('bib_number');
+
+        $prefix = $category->bib_prefix ?? '';
+        $highest = 0;
+
+        foreach ($bibs as $bib) {
+            $bib = (string) $bib;
+
+            if ($prefix !== '' && ! str_starts_with($bib, $prefix)) {
+                continue;
+            }
+
+            $number = substr($bib, strlen($prefix));
+
+            if (ctype_digit($number)) {
+                $highest = max($highest, (int) $number);
+            }
+        }
+
+        return $highest;
     }
 
     /**
@@ -113,21 +172,5 @@ class BibNumberAssigner
         }
 
         return $taken;
-    }
-
-    /**
-     * The next free bib in a category — what a walk-in gets when staff add
-     * them on race day without typing a number.
-     */
-    public function nextAvailable(RunningEventCategory $category): string
-    {
-        $taken = $this->takenBibs($category);
-        $next = max($category->bib_start_number, 1);
-
-        while (isset($taken[$this->format($category, $next)])) {
-            $next++;
-        }
-
-        return $this->format($category, $next);
     }
 }

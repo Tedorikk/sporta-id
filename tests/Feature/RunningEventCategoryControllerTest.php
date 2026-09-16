@@ -61,7 +61,8 @@ test('an organizer can create, update, and delete a distance', function () {
             'name' => 'Half Marathon',
             'distance_meters' => 21097,
             'bib_start_number' => 500,
-            'status' => 'active',
+            'bib_start_female' => 3000,
+            'minimum_age' => 17,
         ])
         ->assertRedirect();
 
@@ -70,6 +71,9 @@ test('an organizer can create, update, and delete a distance', function () {
     expect($category->name)->toBe('Half Marathon')
         ->and($category->distance_meters)->toBe(21097)
         ->and($category->bib_start_number)->toBe(500)
+        ->and($category->bib_start_male)->toBeNull()
+        ->and($category->bib_start_female)->toBe(3000)
+        ->and($category->minimum_age)->toBe(17)
         ->and($category->slug)->toStartWith('half-marathon-')
         ->and($category->running_event_id)->toBe($event->eventable_id);
 
@@ -79,7 +83,6 @@ test('an organizer can create, update, and delete a distance', function () {
             'distance_meters' => 21097,
             'bib_start_number' => 500,
             'cutoff_minutes' => 210,
-            'status' => 'active',
         ])
         ->assertRedirect();
 
@@ -93,27 +96,18 @@ test('an organizer can create, update, and delete a distance', function () {
     expect(RunningEventCategory::find($category->id))->toBeNull();
 });
 
-test('a distance can only be linked to a registration category of the same event', function () {
+test('a distance that registration categories still sell cannot be deleted', function () {
     $event = Event::factory()->running()->create();
-    $otherEvent = Event::factory()->create();
-    $foreignCategory = RegistrationCategory::create([
-        'event_id' => $otherEvent->id,
-        'name' => 'Someone else 10K',
-        'subject_type' => RegistrationCategory::SUBJECT_INDIVIDUAL,
-    ]);
+    $distance = RunningEventCategory::factory()->forEvent($event)->create();
+    RegistrationCategory::factory()->forDistance($distance)->create();
     $user = organizerOf($event);
 
     $this->actingAs($user)
-        ->post(route('running_categories.store', $event), [
-            'name' => '10K',
-            'distance_meters' => 10000,
-            'registration_category_id' => $foreignCategory->id,
-            'bib_start_number' => 1,
-            'status' => 'active',
-        ])
-        ->assertInvalid('registration_category_id');
+        ->delete(route('running_categories.destroy', [$event, $distance]))
+        ->assertRedirect()
+        ->assertSessionHas('toast.variant', 'destructive');
 
-    expect(RunningEventCategory::count())->toBe(0);
+    expect(RunningEventCategory::find($distance->id))->not->toBeNull();
 });
 
 test('distances cannot be managed on an event that is not a race', function () {
@@ -125,7 +119,6 @@ test('distances cannot be managed on an event that is not a race', function () {
             'name' => '10K',
             'distance_meters' => 10000,
             'bib_start_number' => 1,
-            'status' => 'active',
         ])
         ->assertNotFound();
 });

@@ -12,27 +12,24 @@ use Inertia\Testing\AssertableInertia;
  */
 function raceDistance(Event $event, array $attributes = []): RunningEventCategory
 {
-    $registrationCategory = RegistrationCategory::create([
-        'event_id' => $event->id,
-        'name' => '10K Entry',
-        'subject_type' => RegistrationCategory::SUBJECT_INDIVIDUAL,
-        'price' => 150000,
-    ]);
-
-    return RunningEventCategory::factory()->create([
-        'running_event_id' => $event->eventable_id,
-        'registration_category_id' => $registrationCategory->id,
+    $distance = RunningEventCategory::factory()->forEvent($event)->create([
         'name' => '10K',
         'distance_meters' => 10000,
         'bib_start_number' => 101,
         ...$attributes,
     ]);
+
+    RegistrationCategory::factory()->forDistance($distance)->paid()->create(['name' => '10K Entry']);
+
+    return $distance;
 }
 
 function registerRunner(RunningEventCategory $distance, string $name, string $status = 'confirmed'): void
 {
-    $distance->registrationCategory->registrations()->create([
-        'event_id' => $distance->registrationCategory->event_id,
+    $registrationCategory = $distance->registrationCategories()->firstOrFail();
+
+    $registrationCategory->registrations()->create([
+        'event_id' => $registrationCategory->event_id,
         'name' => $name,
         'email' => str($name)->slug().'@example.com',
         'phone' => '+6281234567890',
@@ -120,9 +117,7 @@ test('assignment skips bib numbers that are already taken', function () {
 
 test('a distance with no sign-up form still numbers its walk-ins', function () {
     $event = Event::factory()->running()->create();
-    $distance = RunningEventCategory::factory()->create([
-        'running_event_id' => $event->eventable_id,
-        'registration_category_id' => null,
+    $distance = RunningEventCategory::factory()->forEvent($event)->create([
         'bib_start_number' => 1,
     ]);
     RaceParticipant::factory()->create([

@@ -34,7 +34,7 @@ class RaceParticipantController extends Controller
 
         return Inertia::render('dashboard/events/running/participants/index', [
             'event' => $event->only(['id', 'name', 'category']),
-            'category' => $category->load('registrationCategory:id,name'),
+            'category' => $category->load('registrationCategories:id,running_event_category_id,name'),
             'participants' => $participants,
             'filters' => ['search' => $search],
             'summary' => [
@@ -95,6 +95,8 @@ class RaceParticipantController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:255'],
+            'gender' => ['nullable', Rule::in(RunningEventCategory::GENDERS)],
+            'dob' => ['nullable', 'date'],
             // A bib identifies a runner to the timing crew, so it has to be
             // unique within the distance it was handed out for.
             'bib_number' => [

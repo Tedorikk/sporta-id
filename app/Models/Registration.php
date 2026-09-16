@@ -5,10 +5,12 @@ namespace App\Models;
 use App\Concerns\HasVerificationCode;
 use App\Services\Midtrans\Payable;
 use App\Services\RegistrationConfirmationNotifier;
+use App\Services\Running\RaceEntryService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
@@ -69,14 +71,36 @@ class Registration extends Model implements Payable
             }
         });
 
-        // A team is only in the tournament for as long as its registration
-        // stands. Every way a registration falls through — payment expired or
-        // rejected, the safety-net expiry command, an organiser's refund —
-        // ends here, so the team drops out of pools, standings and lookups
-        // without each of those paths having to remember to do it.
+        // A free registration is confirmed from the start, so its start-list
+        // entry (if it is a race entry) is created right here.
+        static::created(function (self $registration) {
+            if ($registration->status === self::STATUS_CONFIRMED) {
+                app(RaceEntryService::class)->enter($registration);
+            }
+        });
+
+        // A team is only in the tournament, and a runner only on the start
+        // list, for as long as the registration stands. Every way a
+        // registration is confirmed (Midtrans settlement) or falls through —
+        // payment expired or rejected, the safety-net expiry command, an
+        // organiser's refund — ends here, so the team drops out of pools and
+        // the runner off the start list without each of those paths having
+        // to remember to do it.
         static::updated(function (self $registration) {
-            if ($registration->wasChanged('status') && $registration->isWithdrawn() && $registration->team_id !== null) {
-                $registration->team()->update(['status' => Team::STATUS_REJECTED]);
+            if (! $registration->wasChanged('status')) {
+                return;
+            }
+
+            if ($registration->status === self::STATUS_CONFIRMED) {
+                app(RaceEntryService::class)->enter($registration);
+            }
+
+            if ($registration->isWithdrawn()) {
+                app(RaceEntryService::class)->withdraw($registration);
+
+                if ($registration->team_id !== null) {
+                    $registration->team()->update(['status' => Team::STATUS_REJECTED]);
+                }
             }
         });
     }
@@ -112,6 +136,17 @@ class Registration extends Model implements Payable
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
+    }
+
+    /**
+     * The start-list entry a confirmed race registration became, carrying
+     * the bib number. Null for anything that isn't a race entry (yet).
+     *
+     * @return HasOne<RaceParticipant, $this>
+     */
+    public function raceParticipant(): HasOne
+    {
+        return $this->hasOne(RaceParticipant::class);
     }
 
     public function isTeamRegistration(): bool

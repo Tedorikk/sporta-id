@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Event;
 use App\Models\RegistrationCategory;
+use App\Models\RunningEventCategory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -49,5 +50,25 @@ class RegistrationCategoryFactory extends Factory
     public function closed(): static
     {
         return $this->state(['registration_open' => false]);
+    }
+
+    /**
+     * An individual category selling entries to the given distance, on the
+     * distance's own event. Uses a bare form; `->withRaceForm()` opts into
+     * the full default (which makes every test registration need a gender,
+     * a date of birth and two photos).
+     */
+    public function forDistance(RunningEventCategory $distance): static
+    {
+        return $this->state(fn () => [
+            'event_id' => $distance->runningEvent->event->id,
+            'running_event_category_id' => $distance->id,
+            'subject_type' => RegistrationCategory::SUBJECT_INDIVIDUAL,
+        ]);
+    }
+
+    public function withRaceForm(): static
+    {
+        return $this->state(['form_pages' => RunningEventCategory::defaultFormPages()]);
     }
 }

@@ -6,7 +6,6 @@ use App\Models\Event;
 use App\Models\RunningEvent;
 use App\Models\RunningEventCategory;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class RunningEventCategoryController extends Controller
 {
@@ -42,6 +41,16 @@ class RunningEventCategoryController extends Controller
     {
         $this->authorizeCategory($event, $category);
 
+        // The categories selling this distance would be left pointing at
+        // nothing, and their runners would have no start list to land on.
+        if ($category->registrationCategories()->exists()) {
+            return redirect()->back()->with(['toast' => [
+                'title' => 'Error',
+                'description' => 'Registration categories still sell this distance — move or delete them first.',
+                'variant' => 'destructive',
+            ]]);
+        }
+
         $category->delete();
 
         return redirect()->back()->with(['toast' => [
@@ -59,17 +68,15 @@ class RunningEventCategoryController extends Controller
             'name' => ['required', 'string', 'max:255'],
             // Stored in metres so a 21.097 km half marathon stays exact.
             'distance_meters' => ['required', 'integer', 'min:1'],
-            'registration_category_id' => [
-                'nullable',
-                Rule::exists('registration_categories', 'id')->where('event_id', $event->id),
-            ],
             'start_at' => ['nullable', 'date'],
             'cutoff_minutes' => ['nullable', 'integer', 'min:1'],
             'bib_prefix' => ['nullable', 'string', 'max:10'],
             'bib_start_number' => ['required', 'integer', 'min:1'],
-            'price' => ['nullable', 'numeric', 'min:0'],
-            'quota' => ['nullable', 'integer', 'min:1'],
-            'status' => ['required', 'string', 'max:255'],
+            // Separate men's and women's sequences are optional; either may
+            // be set on its own, the other falling back to bib_start_number.
+            'bib_start_male' => ['nullable', 'integer', 'min:1'],
+            'bib_start_female' => ['nullable', 'integer', 'min:1', 'different:bib_start_male'],
+            'minimum_age' => ['nullable', 'integer', 'min:1', 'max:120'],
         ];
     }
 

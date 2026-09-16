@@ -24,7 +24,7 @@ class RegistrationCategory extends Model
     ];
 
     protected $fillable = [
-        'event_id', 'name', 'slug', 'subject_type', 'price', 'quota',
+        'event_id', 'running_event_category_id', 'name', 'slug', 'subject_type', 'price', 'quota',
         'registered_count', 'registration_open', 'opens_at', 'closes_at',
         'form_pages', 'form_branding', 'form_settings', 'status',
     ];
@@ -78,16 +78,28 @@ class RegistrationCategory extends Model
         return $this->hasOne(BasketballEventCategory::class);
     }
 
-    /** @return HasOne<RunningEventCategory, $this> */
-    public function runningCategory(): HasOne
+    /**
+     * The distance this category sells entries to. Several categories may
+     * name the same distance (with/without jersey, early bird), so the
+     * link lives here rather than on the distance.
+     *
+     * @return BelongsTo<RunningEventCategory, $this>
+     */
+    public function runningCategory(): BelongsTo
     {
-        return $this->hasOne(RunningEventCategory::class);
+        return $this->belongsTo(RunningEventCategory::class, 'running_event_category_id');
     }
 
     /** A team category that also runs a basketball tournament (pools, brackets, standings). */
     public function isTeamTournament(): bool
     {
         return $this->subject_type === self::SUBJECT_TEAM && $this->basketballCategory !== null;
+    }
+
+    /** An individual category whose confirmed registrants go onto a distance's start list. */
+    public function isRaceEntry(): bool
+    {
+        return $this->subject_type === self::SUBJECT_INDIVIDUAL && $this->running_event_category_id !== null;
     }
 
     public function isFree(): bool
@@ -193,6 +205,23 @@ class RegistrationCategory extends Model
 
     /** Crop/aspect presets a `file` field can ask for; mirrors IMAGE_RATIOS in the TS types. */
     public const IMAGE_RATIOS = ['portrait', 'square', 'landscape'];
+
+    /**
+     * A field type whose answer is machine-readable (`male`/`female`) rather
+     * than whatever the organiser typed as options — what the bib sequence
+     * and age-group results key on. Rendered with translated labels.
+     */
+    public const GENDER_TYPE = 'gender';
+
+    /**
+     * Well-known keys a race entry reads out of form_data: the runner's
+     * gender (a `gender` field) and date of birth (a `date` field). The
+     * default race form uses them; an organiser building their own form
+     * keeps these keys for the start list to pick the answers up.
+     */
+    public const GENDER_KEY = 'gender';
+
+    public const DOB_KEY = 'dob';
 
     /** Flattens fields across every page, display-only blocks included — the form's layout order. */
     public function allFields(): array

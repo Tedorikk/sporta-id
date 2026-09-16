@@ -71,16 +71,8 @@ test('a basketball event carries no race results', function () {
 
 test('closing entries on a race closes every distance sign-up form', function () {
     $event = Event::factory()->running()->create(['is_published' => true]);
-    $registrationCategory = RegistrationCategory::create([
-        'event_id' => $event->id,
-        'name' => '10K Entry',
-        'subject_type' => RegistrationCategory::SUBJECT_INDIVIDUAL,
-        'price' => 150000,
-    ]);
-    RunningEventCategory::factory()->create([
-        'running_event_id' => $event->eventable_id,
-        'registration_category_id' => $registrationCategory->id,
-    ]);
+    $distance = RunningEventCategory::factory()->forEvent($event)->create();
+    $registrationCategory = RegistrationCategory::factory()->forDistance($distance)->paid()->create(['name' => '10K Entry']);
 
     expect($registrationCategory->fresh()->isOpen())->toBeTrue();
 
@@ -100,11 +92,12 @@ test('closing entries on a race closes every distance sign-up form', function ()
 
 test('the event page hands the dashboard its distances', function () {
     $event = Event::factory()->running()->create();
-    $distance = RunningEventCategory::factory()->create([
-        'running_event_id' => $event->eventable_id,
+    $distance = RunningEventCategory::factory()->forEvent($event)->create([
         'name' => '10K',
         'distance_meters' => 10000,
     ]);
+    RegistrationCategory::factory()->forDistance($distance)->create(['name' => '10K with jersey']);
+    RegistrationCategory::factory()->forDistance($distance)->create(['name' => '10K without jersey']);
     RaceParticipant::factory()->finished(2892)->create([
         'running_event_category_id' => $distance->id,
     ]);
@@ -122,6 +115,7 @@ test('the event page hands the dashboard its distances', function () {
             ->has('event.running_categories', 1)
             ->where('event.running_categories.0.participants_count', 2)
             ->where('event.running_categories.0.finishers_count', 1)
-            ->has('event.registration_category_options')
+            // Every category selling the distance, so the card can link to them.
+            ->has('event.running_categories.0.registration_categories', 2)
         );
 });

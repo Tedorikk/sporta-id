@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Event;
 use App\Models\RunningEvent;
 use App\Models\RunningEventCategory;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -20,7 +21,6 @@ class RunningEventCategoryFactory extends Factory
 
         return [
             'running_event_id' => RunningEvent::factory(),
-            'registration_category_id' => null,
             'name' => match ($distance) {
                 5000 => '5K',
                 10000 => '10K',
@@ -32,9 +32,15 @@ class RunningEventCategoryFactory extends Factory
             'cutoff_minutes' => 120,
             'bib_prefix' => null,
             'bib_start_number' => 1,
-            'price' => 150000,
-            'quota' => 100,
-            'status' => 'active',
+            'bib_start_male' => null,
+            'bib_start_female' => null,
+            'minimum_age' => null,
         ];
+    }
+
+    /** A distance on the given event's race (the event must already be a running event). */
+    public function forEvent(Event $event): static
+    {
+        return $this->state(fn () => ['running_event_id' => $event->specific->id]);
     }
 }

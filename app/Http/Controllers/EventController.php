@@ -149,13 +149,10 @@ class EventController extends Controller
 
         if ($event->specific instanceof RunningEvent) {
             $extra = [
-                // The sign-up forms a distance may be linked to, for the
-                // distance dialog's picker.
-                'registration_category_options' => $event->registrationCategories()
-                    ->orderBy('name')
-                    ->get(['id', 'name']),
                 'running_categories' => $event->specific->categories()
-                    ->with('registrationCategory:id,name')
+                    // The categories selling entries to each distance — the
+                    // organiser's way from a distance into its forms.
+                    ->with('registrationCategories:id,running_event_category_id,name,price,quota,registered_count,registration_open')
                     ->withCount([
                         'participants',
                         'participants as finishers_count' => fn ($query) => $query->finishers(),

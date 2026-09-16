@@ -27,6 +27,6 @@ class BasketballEvent extends Model
 
     public function event(): MorphOne
     {
-        return $this->morphOne(Event::class, 'specific');
+        return $this->morphOne(Event::class, 'specific', 'eventable_type', 'eventable_id');
     }
 }

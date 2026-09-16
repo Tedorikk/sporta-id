@@ -38,10 +38,12 @@ class RaceParticipant extends Model
 
     protected $fillable = [
         'running_event_category_id', 'registration_id', 'bib_number', 'name',
-        'email', 'phone', 'started_at', 'finished_at', 'duration_seconds', 'status',
+        'email', 'phone', 'gender', 'dob', 'started_at', 'finished_at',
+        'duration_seconds', 'status',
     ];
 
     protected $casts = [
+        'dob' => 'date:Y-m-d',
         'started_at' => 'datetime',
         'finished_at' => 'datetime',
         'duration_seconds' => 'integer',
