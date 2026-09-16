@@ -33,7 +33,7 @@ class RegistrationController extends Controller
 
         return Inertia::render('register-dynamic', [
             'event' => $event,
-            'registrationCategory' => $registrationCategory,
+            'registrationCategory' => $this->forRegistrant($registrationCategory),
             'registrationClosed' => ! $registrationCategory->isOpen() || ! $registrationCategory->hasAvailableQuota(),
             // For the "what you'll need" card: when a team must have its
             // roster complete, if the form defers member details to the portal.
@@ -128,7 +128,7 @@ class RegistrationController extends Controller
 
         return Inertia::render('register-dynamic', [
             'event' => $event,
-            'registrationCategory' => $registrationCategory->fresh(),
+            'registrationCategory' => $this->forRegistrant($registrationCategory->fresh()),
             'registrationClosed' => false,
             'confirmedRegistration' => $registration,
             'cardTemplate' => $registration->status === Registration::STATUS_CONFIRMED
@@ -166,6 +166,20 @@ class RegistrationController extends Controller
         return Inertia::render('registration-status', [
             'registration' => $registration,
         ]);
+    }
+
+    /**
+     * The category as the form renders it: form pages with the roster block's
+     * player slot resolved from the tournament (RegistrationCategory::formPagesForRegistrant).
+     *
+     * @return array<string, mixed>
+     */
+    private function forRegistrant(RegistrationCategory $registrationCategory): array
+    {
+        return [
+            ...$registrationCategory->toArray(),
+            'form_pages' => $registrationCategory->formPagesForRegistrant(),
+        ];
     }
 
     private function createPayment(Registration $registration, RegistrationCategory $registrationCategory): Payment

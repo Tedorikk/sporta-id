@@ -13,7 +13,9 @@ uses(RefreshDatabase::class);
 function rosterCategory(array $blockOverrides = []): RegistrationCategory
 {
     $event = Event::factory()->basketball()->create();
-    $tournament = BasketballEventCategory::factory()->forEvent($event)->create(['max_player_per_team' => 12]);
+    // The player slot below says 2–3; the tournament's own limits are what
+    // count (RegistrationCategory::syncPlayerSlot), so keep them in step here.
+    $tournament = BasketballEventCategory::factory()->forEvent($event)->create(['min_player_per_team' => 2, 'max_player_per_team' => 3]);
 
     $tournament->registrationCategory->update(['form_pages' => [
         ['key' => 'tim', 'title' => 'Data Tim', 'fields' => [
@@ -91,6 +93,44 @@ test('a registration with a roster block creates the team sheet in one go', func
         ->and($members->firstWhere('name', 'Player One')->extra)->toBe(['asal_sekolah' => 'SMP 1', 'kelas' => '8'])
         ->and($members->firstWhere('name', 'Manager M')->identity_card)->toContain('manager-m-ktp')
         ->and($members->every(fn (Player $p) => $p->qr_token !== null))->toBeTrue();
+});
+
+test('the player slot follows the tournament’s min/max players, not the block’s own numbers', function () {
+    $category = rosterCategory();
+    $category->basketballCategory->update(['min_player_per_team' => 3, 'max_player_per_team' => 3]);
+    $category = $category->fresh();
+
+    // The block still stores 2–3, but the form validates against 3–3…
+    submitRoster($category, fullRoster())->assertSessionHasErrors('roster');
+    submitRoster($category, [
+        ...fullRoster(),
+        member('player', 'Player Three', ['jersey_number' => '6']),
+    ])->assertOk();
+
+    // …and shows 3–3, both on the form and after the organiser saves the builder.
+    $slot = collect($category->rosterField()['slots'])->firstWhere('role', 'player');
+    expect($slot['min'])->toBe(3)->and($slot['max'])->toBe(3);
+
+    $this->get(route('registrations.create', [$category->event, $category]))
+        ->assertInertia(fn ($page) => $page
+            ->where('registrationCategory.form_pages.1.fields.0.slots.2.min', 3)
+            ->where('registrationCategory.form_pages.1.fields.0.slots.2.max', 3));
+
+    $this->actingAs(organizerOf($category->event))
+        ->put(route('registration_categories.update', [$category->event, $category]), [
+            'name' => $category->name,
+            'subject_type' => $category->subject_type,
+            'registration_open' => true,
+            'form_pages' => $category->form_pages,
+            'tournament' => [
+                ...$category->basketballCategory->only('format', 'win_points', 'loss_points', 'min_team', 'max_player_per_coach', 'roster_closes_at'),
+                'min_player_per_team' => 4,
+                'max_player_per_team' => 9,
+            ],
+        ])->assertSessionHasNoErrors();
+
+    $stored = collect($category->fresh()->form_pages[1]['fields'][0]['slots'])->firstWhere('role', 'player');
+    expect($stored['min'])->toBe(4)->and($stored['max'])->toBe(9);
 });
 
 test('the roster is required when the form has a block', function () {

@@ -54,12 +54,24 @@ export interface DraftField extends RegistrationField {
     _uid: string;
 }
 
+/** The tournament's player limits, which a roster block's player slot follows. */
+export interface PlayerLimits {
+    min: number;
+    max: number | null;
+}
+
 interface FieldListProps {
     fields: DraftField[];
     onChange: (fields: DraftField[]) => void;
+    /** Set when the category runs a tournament; the roster block's player slot is read-only then. */
+    playerLimits?: PlayerLimits | null;
 }
 
-export function FieldList({ fields, onChange }: FieldListProps) {
+export function FieldList({
+    fields,
+    onChange,
+    playerLimits = null,
+}: FieldListProps) {
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     );
@@ -109,6 +121,7 @@ export function FieldList({ fields, onChange }: FieldListProps) {
                         <SortableFieldRow
                             key={field._uid}
                             field={field}
+                            playerLimits={playerLimits}
                             onChange={(patch) => updateField(field._uid, patch)}
                             onRemove={() => removeField(field._uid)}
                         />
@@ -121,10 +134,12 @@ export function FieldList({ fields, onChange }: FieldListProps) {
 
 function SortableFieldRow({
     field,
+    playerLimits,
     onChange,
     onRemove,
 }: {
     field: DraftField;
+    playerLimits: PlayerLimits | null;
     onChange: (patch: Partial<DraftField>) => void;
     onRemove: () => void;
 }) {
@@ -330,6 +345,7 @@ function SortableFieldRow({
                             slots={field.slots ?? []}
                             memberFields={field.member_fields ?? []}
                             detailsOnForm={rosterDetailsOnForm(field)}
+                            playerLimits={playerLimits}
                             onChange={(patch) => onChange(patch)}
                         />
                     )}

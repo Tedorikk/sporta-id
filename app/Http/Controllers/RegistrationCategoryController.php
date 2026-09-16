@@ -198,6 +198,15 @@ class RegistrationCategoryController extends Controller
                 'name' => $registrationCategory->name,
             ],
         );
+
+        // The roster block's player slot is a copy of these limits; keep the
+        // stored form honest so the builder and any raw reader agree with
+        // what rosterField() resolves.
+        $registrationCategory->unsetRelation('basketballCategory');
+
+        if ($registrationCategory->rosterField() !== null) {
+            $registrationCategory->update(['form_pages' => $registrationCategory->formPagesForRegistrant()]);
+        }
     }
 
     private function isBasketballEvent(Event $event): bool

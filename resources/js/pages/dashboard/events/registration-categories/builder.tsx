@@ -494,6 +494,25 @@ export default function RegistrationCategoryBuilder({
                                 onChange={(fields) =>
                                     updatePageFields(activePage._uid, fields)
                                 }
+                                // The roster block's player slot follows the
+                                // tournament's limits (server: syncPlayerSlot).
+                                playerLimits={
+                                    isBasketballEvent && tournamentEnabled
+                                        ? {
+                                              min:
+                                                  Number(
+                                                      tournament.min_player_per_team,
+                                                  ) || 0,
+                                              max:
+                                                  tournament.max_player_per_team.trim() ===
+                                                  ''
+                                                      ? null
+                                                      : Number(
+                                                            tournament.max_player_per_team,
+                                                        ),
+                                          }
+                                        : null
+                                }
                             />
 
                             {showsAutoEmail && (

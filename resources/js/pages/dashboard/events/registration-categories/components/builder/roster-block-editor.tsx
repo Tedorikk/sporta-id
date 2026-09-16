@@ -18,6 +18,7 @@ import type {
     RosterSlot,
 } from '@/types/registration-category';
 import { ROSTER_MEMBER_FIELD_TYPES } from '@/types/registration-category';
+import type { PlayerLimits } from './field-list';
 import { OptionEditor } from './option-editor';
 
 /** The fixed questions every member answers — shown so organisers know what not to add again. */
@@ -37,6 +38,12 @@ interface RosterBlockEditorProps {
     slots: RosterSlot[];
     memberFields: RosterMemberField[];
     detailsOnForm: boolean;
+    /**
+     * When the category runs a tournament, the player slot's min/max are the
+     * tournament's own limits (the server resolves them the same way), so
+     * they are shown here but edited in Tournament settings.
+     */
+    playerLimits?: PlayerLimits | null;
     onChange: (patch: {
         slots?: RosterSlot[];
         member_fields?: RosterMemberField[];
@@ -48,6 +55,7 @@ export function RosterBlockEditor({
     slots,
     memberFields,
     detailsOnForm,
+    playerLimits = null,
     onChange,
 }: RosterBlockEditorProps) {
     function updateSlot(index: number, patch: Partial<RosterSlot>) {
@@ -160,101 +168,138 @@ export function RosterBlockEditor({
                     </p>
                 )}
 
-                {slots.map((slot, index) => (
-                    <div
-                        key={index}
-                        className="grid grid-cols-[1fr_1fr_4rem_4rem_auto] items-end gap-2 rounded-md border bg-background p-2"
-                    >
-                        <Field>
-                            <FieldLabel className="text-xs">Role</FieldLabel>
-                            <Select
-                                value={slot.role}
-                                onValueChange={(value) =>
-                                    updateSlot(index, {
-                                        role: value as PlayerRole,
-                                        label:
-                                            slot.label ||
-                                            playerRoleLabel(
-                                                value as PlayerRole,
-                                            ),
-                                    })
-                                }
-                            >
-                                <SelectTrigger className="h-8 w-full text-xs">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {PLAYER_ROLES.map((role) => (
-                                        <SelectItem
-                                            key={role.value}
-                                            value={role.value}
-                                        >
-                                            {role.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </Field>
-                        <Field>
-                            <FieldLabel className="text-xs">
-                                Shown as
-                            </FieldLabel>
-                            <Input
-                                className="h-8 text-xs"
-                                value={slot.label}
-                                onChange={(e) =>
-                                    updateSlot(index, { label: e.target.value })
-                                }
-                                placeholder={playerRoleLabel(slot.role)}
-                            />
-                        </Field>
-                        <Field>
-                            <FieldLabel className="text-xs">Min</FieldLabel>
-                            <Input
-                                className="h-8 text-xs"
-                                type="number"
-                                min={0}
-                                value={slot.min}
-                                onChange={(e) =>
-                                    updateSlot(index, {
-                                        min: Math.max(
-                                            0,
-                                            Number(e.target.value) || 0,
-                                        ),
-                                    })
-                                }
-                            />
-                        </Field>
-                        <Field>
-                            <FieldLabel className="text-xs">Max</FieldLabel>
-                            <Input
-                                className="h-8 text-xs"
-                                type="number"
-                                min={slot.min}
-                                value={slot.max ?? ''}
-                                placeholder="∞"
-                                onChange={(e) =>
-                                    updateSlot(index, {
-                                        max:
-                                            e.target.value === ''
-                                                ? null
-                                                : Number(e.target.value),
-                                    })
-                                }
-                            />
-                        </Field>
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                            onClick={() => removeSlot(index)}
-                            aria-label="Remove slot"
+                {slots.map((slot, index) => {
+                    const followsTournament =
+                        slot.role === 'player' && playerLimits !== null;
+                    const shownMin = followsTournament
+                        ? playerLimits.min
+                        : slot.min;
+                    const shownMax = followsTournament
+                        ? playerLimits.max
+                        : slot.max;
+
+                    return (
+                        <div
+                            key={index}
+                            className="grid grid-cols-[1fr_1fr_4rem_4rem_auto] items-end gap-2 rounded-md border bg-background p-2"
                         >
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                    </div>
-                ))}
+                            <Field>
+                                <FieldLabel className="text-xs">
+                                    Role
+                                </FieldLabel>
+                                <Select
+                                    value={slot.role}
+                                    onValueChange={(value) =>
+                                        updateSlot(index, {
+                                            role: value as PlayerRole,
+                                            label:
+                                                slot.label ||
+                                                playerRoleLabel(
+                                                    value as PlayerRole,
+                                                ),
+                                        })
+                                    }
+                                >
+                                    <SelectTrigger className="h-8 w-full text-xs">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {PLAYER_ROLES.map((role) => (
+                                            <SelectItem
+                                                key={role.value}
+                                                value={role.value}
+                                            >
+                                                {role.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </Field>
+                            <Field>
+                                <FieldLabel className="text-xs">
+                                    Shown as
+                                </FieldLabel>
+                                <Input
+                                    className="h-8 text-xs"
+                                    value={slot.label}
+                                    onChange={(e) =>
+                                        updateSlot(index, {
+                                            label: e.target.value,
+                                        })
+                                    }
+                                    placeholder={playerRoleLabel(slot.role)}
+                                />
+                            </Field>
+                            <Field>
+                                <FieldLabel className="text-xs">Min</FieldLabel>
+                                <Input
+                                    className="h-8 text-xs"
+                                    type="number"
+                                    min={0}
+                                    value={shownMin}
+                                    disabled={followsTournament}
+                                    title={
+                                        followsTournament
+                                            ? 'Follows Min players/team in Tournament settings'
+                                            : undefined
+                                    }
+                                    onChange={(e) =>
+                                        updateSlot(index, {
+                                            min: Math.max(
+                                                0,
+                                                Number(e.target.value) || 0,
+                                            ),
+                                        })
+                                    }
+                                />
+                            </Field>
+                            <Field>
+                                <FieldLabel className="text-xs">Max</FieldLabel>
+                                <Input
+                                    className="h-8 text-xs"
+                                    type="number"
+                                    min={slot.min}
+                                    value={shownMax ?? ''}
+                                    disabled={followsTournament}
+                                    title={
+                                        followsTournament
+                                            ? 'Follows Max players/team in Tournament settings'
+                                            : undefined
+                                    }
+                                    placeholder="∞"
+                                    onChange={(e) =>
+                                        updateSlot(index, {
+                                            max:
+                                                e.target.value === ''
+                                                    ? null
+                                                    : Number(e.target.value),
+                                        })
+                                    }
+                                />
+                            </Field>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                onClick={() => removeSlot(index)}
+                                aria-label="Remove slot"
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    );
+                })}
+
+                {playerLimits !== null && (
+                    <p className="text-xs text-muted-foreground">
+                        The player slot’s min/max follow{' '}
+                        <span className="font-medium">
+                            Min/Max players per team
+                        </span>{' '}
+                        in Tournament settings — change them there.
+                    </p>
+                )}
             </div>
 
             <div className="flex flex-col gap-2">

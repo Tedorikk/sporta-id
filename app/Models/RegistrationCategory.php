@@ -198,11 +198,68 @@ class RegistrationCategory extends Model
             ->all();
     }
 
-    /** The form's roster block, if the organiser placed one. */
+    /**
+     * The form's roster block, if the organiser placed one — with the player
+     * slot's min/max taken from the tournament settings (see syncPlayerSlot()),
+     * so the form validates and advertises the same limits the bracket enforces.
+     */
     public function rosterField(): ?array
     {
-        return collect($this->allFields())
+        $field = collect($this->allFields())
             ->first(fn (array $field) => ($field['type'] ?? null) === self::ROSTER_TYPE);
+
+        return $field === null ? null : $this->syncPlayerSlot($field);
+    }
+
+    /**
+     * The form pages a registrant sees: the stored pages with the roster
+     * block resolved through rosterField(), so the client never renders a
+     * player slot the server would validate differently.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function formPagesForRegistrant(): array
+    {
+        return collect($this->form_pages ?? [])->map(fn (array $page) => [
+            ...$page,
+            'fields' => collect($page['fields'] ?? [])
+                ->map(fn (array $field) => ($field['type'] ?? null) === self::ROSTER_TYPE ? $this->syncPlayerSlot($field) : $field)
+                ->values()
+                ->all(),
+        ])->all();
+    }
+
+    /**
+     * Min/Max players per team live on the tournament config — that is what
+     * the bracket and the portal's player cap enforce. The roster block's
+     * player slot is only a copy taken when the block was added, so it is
+     * overwritten from the tournament on every read (and written through on
+     * save by the builder). Without a tournament the slot stands on its own.
+     *
+     * @param  array<string, mixed>  $rosterField
+     * @return array<string, mixed>
+     */
+    public function syncPlayerSlot(array $rosterField): array
+    {
+        $tournament = $this->basketballCategory;
+
+        if ($tournament === null) {
+            return $rosterField;
+        }
+
+        $rosterField['slots'] = collect($rosterField['slots'] ?? [])->map(function (array $slot) use ($tournament) {
+            if (($slot['role'] ?? null) !== Player::ROLE_PLAYER) {
+                return $slot;
+            }
+
+            return [
+                ...$slot,
+                'min' => (int) $tournament->min_player_per_team,
+                'max' => $tournament->max_player_per_team === null ? null : (int) $tournament->max_player_per_team,
+            ];
+        })->values()->all();
+
+        return $rosterField;
     }
 
     /**
