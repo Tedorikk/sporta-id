@@ -45,7 +45,7 @@ class Registration extends Model implements Payable
     ];
 
     protected $fillable = [
-        'registration_category_id', 'event_id', 'team_id', 'name', 'email',
+        'registration_category_id', 'registration_order_id', 'event_id', 'team_id', 'name', 'email',
         'phone', 'photo', 'qr_token', 'verification_code', 'form_data',
         'status', 'expires_at', 'locale',
     ];
@@ -130,6 +130,12 @@ class Registration extends Model implements Payable
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
+    }
+
+    /** The group checkout this registration was bought through, if any. */
+    public function registrationOrder(): BelongsTo
+    {
+        return $this->belongsTo(RegistrationOrder::class);
     }
 
     /** @return BelongsTo<Team, $this> */

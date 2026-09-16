@@ -3,6 +3,7 @@
 use App\Models\Event;
 use App\Models\Registration;
 use App\Models\RegistrationCategory;
+use App\Models\RegistrationOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -62,4 +63,72 @@ test('a confirmed registration is left alone', function () {
     $this->artisan('registrations:expire-unpaid')->assertSuccessful();
 
     expect($registration->fresh()->status)->toBe(Registration::STATUS_CONFIRMED);
+});
+
+// ─── Group orders ────────────────────────────────────────────────────────────
+
+test('an overdue pending-payment order is expired and every participant loses their slot', function () {
+    $event = Event::factory()->create();
+
+    $category = RegistrationCategory::create([
+        'event_id' => $event->id,
+        'name' => 'Paid Category',
+        'subject_type' => RegistrationCategory::SUBJECT_INDIVIDUAL,
+        'price' => '50000',
+        'registration_open' => true,
+        'registered_count' => 2,
+        'form_pages' => [],
+    ]);
+
+    $order = RegistrationOrder::create([
+        'event_id' => $event->id,
+        'status' => RegistrationOrder::STATUS_PENDING_PAYMENT,
+        'expires_at' => now()->subHour(),
+    ]);
+
+    $participants = collect(['Alpha', 'Beta'])->map(fn (string $name) => Registration::create([
+        'registration_category_id' => $category->id,
+        'registration_order_id' => $order->id,
+        'event_id' => $event->id,
+        'name' => $name,
+        'status' => Registration::STATUS_PENDING_PAYMENT,
+    ]));
+
+    $order->payments()->create(['order_id' => 'ORD-TEST', 'amount' => 100000]);
+
+    $this->artisan('registrations:expire-unpaid')->assertSuccessful();
+
+    expect($order->fresh()->status)->toBe(RegistrationOrder::STATUS_EXPIRED)
+        ->and($participants->map->fresh()->pluck('status')->unique()->all())->toBe([Registration::STATUS_EXPIRED])
+        ->and($category->fresh()->registered_count)->toBe(0);
+});
+
+test('an order not yet past its expiry is left alone', function () {
+    $event = Event::factory()->create();
+    $category = RegistrationCategory::create([
+        'event_id' => $event->id,
+        'name' => 'Paid Category',
+        'subject_type' => RegistrationCategory::SUBJECT_INDIVIDUAL,
+        'price' => '50000',
+        'registration_open' => true,
+        'registered_count' => 1,
+        'form_pages' => [],
+    ]);
+    $order = RegistrationOrder::create([
+        'event_id' => $event->id,
+        'status' => RegistrationOrder::STATUS_PENDING_PAYMENT,
+        'expires_at' => now()->addHour(),
+    ]);
+    Registration::create([
+        'registration_category_id' => $category->id,
+        'registration_order_id' => $order->id,
+        'event_id' => $event->id,
+        'name' => 'Solo Runner',
+        'status' => Registration::STATUS_PENDING_PAYMENT,
+    ]);
+    $order->payments()->create(['order_id' => 'ORD-TEST-2', 'amount' => 50000]);
+
+    $this->artisan('registrations:expire-unpaid')->assertSuccessful();
+
+    expect($order->fresh()->status)->toBe(RegistrationOrder::STATUS_PENDING_PAYMENT);
 });

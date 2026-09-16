@@ -11,10 +11,11 @@ use App\Models\Team;
 use App\Services\Basketball\RosterService;
 use App\Services\Midtrans\MidtransClient;
 use App\Services\RegistrationConfirmationNotifier;
+use App\Services\RegistrationFieldRules;
+use App\Services\Running\RaceEntryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class RegistrationController extends Controller
@@ -25,6 +26,8 @@ class RegistrationController extends Controller
     public function __construct(
         private readonly MidtransClient $midtrans,
         private readonly RegistrationConfirmationNotifier $notifier,
+        private readonly RegistrationFieldRules $fieldRuleBuilder,
+        private readonly RaceEntryService $raceEntries,
     ) {}
 
     public function create(Event $event, RegistrationCategory $registrationCategory)
@@ -245,8 +248,18 @@ class RegistrationController extends Controller
             }
 
             $attribute = in_array($key, self::RESERVED_KEYS, true) ? $key : "form_data.$key";
-            $rules[$attribute] = $this->fieldRules($field);
+            $rules[$attribute] = $this->fieldRuleBuilder->forField($field);
             $attributes[$attribute] = $field['label'] ?? $key;
+
+            // A race entry's date-of-birth answer must also clear the
+            // distance's minimum age, on top of the field's own rules.
+            if ($key === RegistrationCategory::DOB_KEY) {
+                $ageRule = $this->raceEntries->minimumAgeRule($registrationCategory);
+
+                if ($ageRule !== null) {
+                    $rules[$attribute][] = $ageRule;
+                }
+            }
 
             if (! empty($field['error_message'])) {
                 $messages["$attribute.required"] = $field['error_message'];
@@ -264,30 +277,6 @@ class RegistrationController extends Controller
         }
 
         return $request->validate($rules, $messages, $attributes);
-    }
-
-    private function fieldRules(array $field): array
-    {
-        $rules = [($field['required'] ?? false) ? 'required' : 'nullable'];
-
-        return array_merge($rules, match ($field['type']) {
-            'number' => array_values(array_filter([
-                'numeric',
-                isset($field['min']) ? 'min:'.$field['min'] : null,
-                isset($field['max']) ? 'max:'.$field['max'] : null,
-            ])),
-            'email' => ['email', 'max:255'],
-            // Digits, spaces, and the common +/-/() separators — loose enough for
-            // international formats while still rejecting free-text garbage.
-            'phone' => ['string', 'max:50', 'regex:/^[0-9+\-\s()]{6,25}$/'],
-            'date' => ['date'],
-            'select', 'radio' => [Rule::in($field['options'] ?? [])],
-            'checkbox' => ['boolean'],
-            'rating' => ['integer', 'between:1,'.($field['max_rating'] ?? 5)],
-            'file', 'document', 'signature' => ['url', 'max:255'],
-            'textarea' => ['string', 'max:5000'],
-            default => ['string', 'max:255'],
-        });
     }
 
     /**

@@ -18,6 +18,7 @@ use App\Http\Controllers\EventBulkActionController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventMatchController;
 use App\Http\Controllers\GameMatchController;
+use App\Http\Controllers\GroupRegistrationController;
 use App\Http\Controllers\IdCardPrintController;
 use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\InvitationAcceptanceController;
@@ -95,6 +96,14 @@ Route::middleware('public.locale')->group(function () {
     Route::get('registrations/{registration:qr_token}/status', [RegistrationController::class, 'status'])->name('registrations.status');
     Route::post('registrations/{registration:qr_token}/pay', [RegistrationController::class, 'pay'])
         ->middleware('throttle:20,1')->name('registrations.pay');
+
+    // --- Public group registration (several individuals, one payment) ----------
+    Route::get('events/{event}/group-registration', [GroupRegistrationController::class, 'create'])->name('group_registration.create');
+    Route::post('events/{event}/group-registration', [GroupRegistrationController::class, 'store'])
+        ->middleware('throttle:15,1')->name('group_registration.store');
+    Route::get('registration-orders/{registrationOrder:qr_token}/status', [GroupRegistrationController::class, 'status'])->name('registration_orders.status');
+    Route::post('registration-orders/{registrationOrder:qr_token}/pay', [GroupRegistrationController::class, 'pay'])
+        ->middleware('throttle:20,1')->name('registration_orders.pay');
 
     // --- Team roster portal (captains manage their own sheet by token) ---------
     Route::get('registrations/{registration:qr_token}/roster', [TeamRosterController::class, 'show'])->name('team-roster.show');
