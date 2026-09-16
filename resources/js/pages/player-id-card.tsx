@@ -4,6 +4,7 @@ import QRCode from 'qrcode';
 import { useEffect, useRef, useState } from 'react';
 import { IdCardActions } from '@/components/id-card-actions';
 import { SiteLogo } from '@/components/landing/site-logo';
+import { useT } from '@/hooks/use-t';
 import { formatImageUrl } from '@/lib/image-utils';
 import { playerRoleLabel } from '@/types/player';
 import type { Player } from '@/types/player';
@@ -29,11 +30,12 @@ export default function PlayerIdCard({ player }: Props) {
         }).then(setQrDataUrl);
     }, [idCardUrl]);
 
+    const { t } = useT();
     const isPlayerRole = player.role === 'player';
 
     return (
         <>
-            <Head title={`${player.name} — Player ID Card`} />
+            <Head title={t(':name — Player ID Card', { name: player.name })} />
 
             <div className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10 print:bg-white print:p-0">
                 <div className="pointer-events-none absolute inset-0 overflow-hidden print:hidden">

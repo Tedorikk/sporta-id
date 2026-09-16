@@ -50,10 +50,8 @@ export function EventPeekPanel({
         : null;
 
     function copyRegistrationLink(id: number) {
-        navigator.clipboard.writeText(
-            `${window.location.origin}/events/${id}/register`,
-        );
-        toast.success('Registration link copied to clipboard');
+        navigator.clipboard.writeText(`${window.location.origin}/events/${id}`);
+        toast.success('Event link copied to clipboard');
     }
 
     return (

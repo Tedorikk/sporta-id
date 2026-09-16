@@ -31,6 +31,8 @@ import {
     RESERVED_FIELD_KEYS,
     THEME_PRESETS,
 } from '@/types/registration-category';
+import type { TournamentDraft } from './tournament-settings';
+import { TournamentSettingsFields } from './tournament-settings';
 
 interface DetailsValue {
     name: string;
@@ -40,12 +42,22 @@ interface DetailsValue {
     registration_open: boolean;
 }
 
+/** Only offered on basketball events, and only to team categories. */
+interface TournamentValue {
+    enabled: boolean;
+    lockedOn: boolean;
+    draft: TournamentDraft;
+    onEnabledChange: (enabled: boolean) => void;
+    onChange: (patch: Partial<TournamentDraft>) => void;
+}
+
 interface SettingsPanelProps {
     event: Event;
     registrationCategoryId: number | null;
     isEditingSubjectType: boolean;
     details: DetailsValue;
     onDetailsChange: (patch: Partial<DetailsValue>) => void;
+    tournament: TournamentValue | null;
     branding: FormBranding;
     onBrandingChange: (patch: Partial<FormBranding>) => void;
     settings: FormSettings;
@@ -391,6 +403,7 @@ export function SettingsPanel({
     isEditingSubjectType,
     details,
     onDetailsChange,
+    tournament,
     branding,
     onBrandingChange,
     settings,
@@ -490,6 +503,16 @@ export function SettingsPanel({
                             />
                         </Field>
                     </div>
+
+                    {tournament && details.subject_type === 'team' && (
+                        <TournamentSettingsFields
+                            enabled={tournament.enabled}
+                            lockedOn={tournament.lockedOn}
+                            onEnabledChange={tournament.onEnabledChange}
+                            draft={tournament.draft}
+                            onChange={tournament.onChange}
+                        />
+                    )}
                 </FieldGroup>
             </TabsContent>
 

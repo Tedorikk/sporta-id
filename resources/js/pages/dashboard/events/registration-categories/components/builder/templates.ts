@@ -8,6 +8,112 @@ export interface FormTemplate {
 }
 
 /**
+ * What a basketball team entry collects on top of the built-in team name:
+ * bank-transfer evidence for organisers who settle fees outside Midtrans.
+ * Mirrors BasketballEventCategory::defaultFormPages().
+ */
+export const BASKETBALL_TEAM_TEMPLATE: FormTemplate = {
+    key: 'basketball_team',
+    name: 'Basketball team entry',
+    description:
+        'Team origin, officials and players (the roster), payment proof, and the paperwork.',
+    pages: [
+        {
+            title: 'Data Tim',
+            fields: [
+                {
+                    key: 'asal_kabupaten_kota',
+                    label: 'Asal Kabupaten/Kota',
+                    type: 'text',
+                    required: true,
+                },
+                {
+                    key: 'team_logo',
+                    label: 'Logo Tim',
+                    type: 'file',
+                    required: true,
+                    image_ratio: 'square',
+                    help_text:
+                        'Gunakan gambar dengan latar belakang transparan.\nGambar tidak dapat diganti di kemudian hari.\nCrop gambar sesuai dengan grid.',
+                },
+            ],
+        },
+        {
+            title: 'Data Official & Peserta',
+            fields: [
+                {
+                    key: 'roster',
+                    label: 'Official & Pemain',
+                    type: 'roster',
+                    required: true,
+                    help_text: 'Daftarkan official dan pemain tim Anda.',
+                    slots: [
+                        { role: 'manager', label: 'Manager', min: 1, max: 1 },
+                        { role: 'coach', label: 'Coach', min: 1, max: 1 },
+                        {
+                            role: 'assistant_coach',
+                            label: 'Ass. Coach',
+                            min: 0,
+                            max: 1,
+                        },
+                        { role: 'player', label: 'Pemain', min: 7, max: 12 },
+                    ],
+                    member_fields: [
+                        {
+                            key: 'asal_sekolah',
+                            label: 'Asal Sekolah',
+                            type: 'text',
+                            required: true,
+                        },
+                        {
+                            key: 'kelas',
+                            label: 'Kelas',
+                            type: 'text',
+                            required: true,
+                        },
+                    ],
+                },
+            ],
+        },
+        {
+            title: 'Pembayaran',
+            fields: [
+                {
+                    key: 'bukti_pembayaran',
+                    label: 'Bukti Pembayaran',
+                    type: 'document',
+                    required: true,
+                    help_text: 'Unggah bukti transfer biaya pendaftaran tim.',
+                },
+                {
+                    key: 'nama_rekening_pembayaran',
+                    label: 'Nama Rekening yang Melakukan Pembayaran',
+                    type: 'text',
+                    required: true,
+                },
+            ],
+        },
+        {
+            title: 'Dokumen',
+            fields: [
+                {
+                    key: 'surat_pernyataan',
+                    label: 'Surat Pernyataan',
+                    type: 'document',
+                    required: true,
+                },
+                {
+                    key: 'lisensi_tim_medis',
+                    label: 'Lisensi/Sertifikat Tim Medis',
+                    type: 'document',
+                    required: false,
+                },
+            ],
+        },
+    ],
+};
+
+/**
  * Static starter presets — picking one just seeds `form_pages` client-side,
  * there's nothing to persist server-side until the organizer saves.
  */

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { RegistrationIdCardCard } from '@/components/id-card/registration-id-card-card';
 import { VerifiedBanner } from '@/components/id-card/verified-banner';
 import { IdCardActions } from '@/components/id-card-actions';
+import { useT } from '@/hooks/use-t';
 import type { CardTemplate } from '@/types/card-template';
 import type { Registration } from '@/types/registration';
 
@@ -17,6 +18,7 @@ export default function RegistrationIdCard({ registration, template }: Props) {
     const [qrDataUrl, setQrDataUrl] = useState<string>('');
 
     const idCardUrl = `${window.location.origin}/registrations/${registration.qr_token}/id-card`;
+    const { t } = useT();
     const typeLabel = registration.registration_category?.name ?? '';
 
     useEffect(() => {
@@ -30,7 +32,12 @@ export default function RegistrationIdCard({ registration, template }: Props) {
 
     return (
         <>
-            <Head title={`${registration.name} — ${typeLabel} ID Card`} />
+            <Head
+                title={t(':name — :type ID Card', {
+                    name: registration.name,
+                    type: typeLabel,
+                })}
+            />
 
             <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-neutral-950 px-4 py-10 print:bg-white print:p-0">
                 {/*

@@ -35,10 +35,17 @@ class Registration extends Model implements Payable
         self::STATUS_EXPIRED,
     ];
 
+    /** Terminal states in which the registrant no longer holds a place. */
+    public const WITHDRAWN_STATUSES = [
+        self::STATUS_REJECTED,
+        self::STATUS_CANCELLED,
+        self::STATUS_EXPIRED,
+    ];
+
     protected $fillable = [
         'registration_category_id', 'event_id', 'team_id', 'name', 'email',
         'phone', 'photo', 'qr_token', 'verification_code', 'form_data',
-        'status', 'expires_at',
+        'status', 'expires_at', 'locale',
     ];
 
     protected $casts = [
@@ -59,6 +66,17 @@ class Registration extends Model implements Payable
             }
             if (empty($registration->status)) {
                 $registration->status = self::STATUS_PENDING_PAYMENT;
+            }
+        });
+
+        // A team is only in the tournament for as long as its registration
+        // stands. Every way a registration falls through — payment expired or
+        // rejected, the safety-net expiry command, an organiser's refund —
+        // ends here, so the team drops out of pools, standings and lookups
+        // without each of those paths having to remember to do it.
+        static::updated(function (self $registration) {
+            if ($registration->wasChanged('status') && $registration->isWithdrawn() && $registration->team_id !== null) {
+                $registration->team()->update(['status' => Team::STATUS_REJECTED]);
             }
         });
     }
@@ -94,6 +112,16 @@ class Registration extends Model implements Payable
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
+    }
+
+    public function isTeamRegistration(): bool
+    {
+        return $this->team_id !== null;
+    }
+
+    public function isWithdrawn(): bool
+    {
+        return in_array($this->status, self::WITHDRAWN_STATUSES, true);
     }
 
     /** @return MorphMany<Payment, $this> */

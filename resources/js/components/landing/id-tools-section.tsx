@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { QrCode, ShieldCheck, Trophy } from 'lucide-react';
+import { useT } from '@/hooks/use-t';
 
 const FEATURES = [
     {
@@ -20,6 +21,8 @@ const FEATURES = [
 ];
 
 export function IdToolsSection() {
+    const { t } = useT();
+
     return (
         <section className="border-y-2 border-white/10 bg-white/5">
             <div className="mx-auto max-w-6xl px-6 py-14">
@@ -29,11 +32,12 @@ export function IdToolsSection() {
                             Sporta ID
                         </span>
                         <h2 className="text-3xl font-black tracking-tight uppercase">
-                            Already Registered?
+                            {t('Already Registered?')}
                         </h2>
                         <p className="mt-2 max-w-lg text-sm text-white/60">
-                            Manage your digital player ID card — find it again
-                            anytime, no app required.
+                            {t(
+                                'Manage your digital player ID card — find it again anytime, no app required.',
+                            )}
                         </p>
                     </div>
                     <Link
@@ -41,7 +45,7 @@ export function IdToolsSection() {
                         className="flex items-center gap-2 rounded-full border-2 border-blue-400 px-6 py-3 text-sm font-bold tracking-wide text-blue-200 uppercase transition hover:bg-blue-500/10 active:scale-95"
                     >
                         <QrCode className="h-4 w-4" />
-                        Find My ID Card
+                        {t('Find My ID Card')}
                     </Link>
                 </div>
 
@@ -55,9 +59,9 @@ export function IdToolsSection() {
                                 <Icon className="h-5 w-5 text-red-400" />
                             </div>
                             <h3 className="text-base font-bold tracking-tight uppercase">
-                                {title}
+                                {t(title)}
                             </h3>
-                            <p className="text-sm text-white/60">{desc}</p>
+                            <p className="text-sm text-white/60">{t(desc)}</p>
                         </div>
                     ))}
                 </div>

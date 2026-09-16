@@ -11,16 +11,21 @@ import {
     CONTACT_EMAIL,
     CONTACT_PHONE,
 } from '@/data/contact-info';
+import { useT } from '@/hooks/use-t';
 import PublicLayout from '@/layouts/public-layout';
+import type { Translate } from '@/lib/i18n';
 
-const contactSchema = z.object({
-    name: z.string().min(1, 'Please enter your name').max(255),
-    email: z.string().email('Please enter a valid email'),
-    phone: z.string().max(255).or(z.literal('')),
-    message: z.string().min(10, 'Message must be at least 10 characters'),
-});
+const contactSchema = (t: Translate) =>
+    z.object({
+        name: z.string().min(1, t('Please enter your name')).max(255),
+        email: z.string().email(t('Please enter a valid email')),
+        phone: z.string().max(255).or(z.literal('')),
+        message: z
+            .string()
+            .min(10, t('Message must be at least 10 characters')),
+    });
 
-type ContactFormValues = z.infer<typeof contactSchema>;
+type ContactFormValues = z.infer<ReturnType<typeof contactSchema>>;
 
 const CONTACT_INFO = [
     { icon: MapPin, label: CONTACT_ADDRESS },
@@ -29,6 +34,7 @@ const CONTACT_INFO = [
 ];
 
 export default function Contact() {
+    const { t } = useT();
     const [isSending, setIsSending] = useState(false);
 
     const {
@@ -38,7 +44,7 @@ export default function Contact() {
         setError,
         formState: { errors },
     } = useForm<ContactFormValues>({
-        resolver: zodResolver(contactSchema),
+        resolver: zodResolver(contactSchema(t)),
         defaultValues: { name: '', email: '', phone: '', message: '' },
     });
 
@@ -47,9 +53,10 @@ export default function Contact() {
 
         router.post('/contact', data, {
             onSuccess: () => {
-                toast.success('Message sent', {
-                    description:
-                        "Thanks for reaching out — we'll get back to you soon.",
+                toast.success(t('Message sent'), {
+                    description: t(
+                        'Thanks for reaching out — we’ll get back to you soon.',
+                    ),
                 });
                 reset();
             },
@@ -67,19 +74,22 @@ export default function Contact() {
 
     return (
         <>
-            <Head title="Contact Us — Sporta Indonesia" />
+            <Head title={t('Contact Us — Sporta Indonesia')} />
 
             <PublicLayout>
                 <PublicPageHeader
-                    eyebrow="Get In Touch"
-                    title="Contact Us"
-                    subtitle="Questions about an event or partnership? Send us a message."
+                    languageToggle={false}
+                    eyebrow={t('Get In Touch')}
+                    title={t('Contact Us')}
+                    subtitle={t(
+                        'Questions about an event or partnership? Send us a message.',
+                    )}
                 />
 
                 <section className="mx-auto grid max-w-5xl grid-cols-1 gap-10 px-6 py-14 lg:grid-cols-2">
                     <div className="flex flex-col gap-4">
                         <h2 className="text-xl font-black tracking-tight uppercase">
-                            Contact Info
+                            {t('Contact Info')}
                         </h2>
                         {CONTACT_INFO.map(({ icon: Icon, label }) => (
                             <div
@@ -103,13 +113,13 @@ export default function Contact() {
                                 htmlFor="name"
                                 className="text-xs font-bold tracking-wide text-white/70 uppercase"
                             >
-                                Name
+                                {t('Name')}
                             </label>
                             <input
                                 id="name"
                                 {...register('name')}
                                 disabled={isSending}
-                                placeholder="Your name"
+                                placeholder={t('Your name')}
                                 className="rounded-xl border-2 border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:border-red-500 focus:outline-none"
                             />
                             {errors.name && (
@@ -124,7 +134,7 @@ export default function Contact() {
                                 htmlFor="email"
                                 className="text-xs font-bold tracking-wide text-white/70 uppercase"
                             >
-                                Email
+                                {t('Email')}
                             </label>
                             <input
                                 id="email"
@@ -146,9 +156,9 @@ export default function Contact() {
                                 htmlFor="phone"
                                 className="text-xs font-bold tracking-wide text-white/70 uppercase"
                             >
-                                Phone{' '}
+                                {t('Phone')}{' '}
                                 <span className="font-normal text-white/40 normal-case">
-                                    (Optional)
+                                    {t('(Optional)')}
                                 </span>
                             </label>
                             <input
@@ -165,14 +175,14 @@ export default function Contact() {
                                 htmlFor="message"
                                 className="text-xs font-bold tracking-wide text-white/70 uppercase"
                             >
-                                Message
+                                {t('Message')}
                             </label>
                             <textarea
                                 id="message"
                                 {...register('message')}
                                 disabled={isSending}
                                 rows={5}
-                                placeholder="How can we help?"
+                                placeholder={t('How can we help?')}
                                 className="rounded-xl border-2 border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:border-red-500 focus:outline-none"
                             />
                             {errors.message && (
@@ -192,7 +202,7 @@ export default function Contact() {
                             ) : (
                                 <Send className="h-4 w-4" />
                             )}
-                            {isSending ? 'Sending...' : 'Send Message'}
+                            {isSending ? t('Sending…') : t('Send Message')}
                         </button>
                     </form>
                 </section>

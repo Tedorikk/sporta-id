@@ -1,4 +1,5 @@
 import { Trophy } from 'lucide-react';
+import { useT } from '@/hooks/use-t';
 import type { StandingRow } from '@/types/game-match';
 import type { Team } from '@/types/team';
 
@@ -8,11 +9,14 @@ interface Props {
 }
 
 export function StandingsTable({ standings, teams }: Props) {
+    const { t } = useT();
     const teamMap = Object.fromEntries(teams.map((t) => [t.id, t]));
 
     if (standings.length === 0) {
         return (
-            <p className="text-sm text-white/40">No completed matches yet.</p>
+            <p className="text-sm text-white/40">
+                {t('No completed matches yet.')}
+            </p>
         );
     }
 
@@ -22,25 +26,25 @@ export function StandingsTable({ standings, teams }: Props) {
                 <thead>
                     <tr className="border-b border-white/15 text-white/50">
                         <th className="py-2 pr-3 text-left font-semibold tracking-wide uppercase">
-                            Team
+                            {t('Team')}
                         </th>
                         <th className="px-2 py-2 text-center font-semibold tracking-wide uppercase">
-                            P
+                            {t('P')}
                         </th>
                         <th className="px-2 py-2 text-center font-semibold tracking-wide uppercase">
-                            W
+                            {t('W')}
                         </th>
                         <th className="px-2 py-2 text-center font-semibold tracking-wide uppercase">
-                            L
+                            {t('L')}
                         </th>
                         <th className="px-2 py-2 text-center font-semibold tracking-wide uppercase">
-                            PF
+                            {t('PF')}
                         </th>
                         <th className="px-2 py-2 text-center font-semibold tracking-wide uppercase">
-                            PA
+                            {t('PA')}
                         </th>
                         <th className="py-2 pl-2 text-center font-semibold tracking-wide uppercase">
-                            Pts
+                            {t('Pts')}
                         </th>
                     </tr>
                 </thead>

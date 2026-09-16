@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { PublicPageHeader } from '@/components/public/public-page-header';
 import { Button } from '@/components/ui/button';
+import { useT } from '@/hooks/use-t';
 import { formatRupiah } from '@/lib/format-currency';
 import { loadSnapScript } from '@/lib/midtrans';
 import type { VoteReceipt } from '@/types/award';
@@ -43,6 +44,7 @@ const STATE = {
 export default function VoteStatus({ vote, award, event }: Props) {
     const [isPaying, setIsPaying] = useState(false);
 
+    const { t } = useT();
     const state = STATE[vote.status];
     const Icon = state.icon;
 
@@ -87,7 +89,9 @@ export default function VoteStatus({ vote, award, event }: Props) {
 
     return (
         <>
-            <Head title={`${state.heading} — ${award?.title ?? 'Vote'}`} />
+            <Head
+                title={`${t(state.heading)} — ${award?.title ?? t('Vote')}`}
+            />
 
             <div
                 className="flex min-h-screen flex-col items-center justify-center bg-neutral-950 px-4 py-10"
@@ -95,8 +99,8 @@ export default function VoteStatus({ vote, award, event }: Props) {
             >
                 <div className="w-full max-w-sm overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
                     <PublicPageHeader
-                        eyebrow="Vote"
-                        title={award?.title ?? 'Your vote'}
+                        eyebrow={t('Vote')}
+                        title={award?.title ?? t('Your vote')}
                         subtitle={event?.name}
                         accentColor={event?.accent_color}
                     />
@@ -106,29 +110,33 @@ export default function VoteStatus({ vote, award, event }: Props) {
 
                         <div>
                             <p className="text-lg font-bold text-neutral-900">
-                                {state.heading}
+                                {t(state.heading)}
                             </p>
                             <p className="mt-1 text-sm text-neutral-600">
-                                {state.body}
+                                {t(state.body)}
                             </p>
                         </div>
 
                         <dl className="w-full space-y-1 rounded-lg bg-neutral-50 px-4 py-3 text-left text-sm">
                             <div className="flex justify-between">
-                                <dt className="text-neutral-500">For</dt>
+                                <dt className="text-neutral-500">{t('For')}</dt>
                                 <dd className="font-medium text-neutral-900">
                                     {vote.nominee_name}
                                 </dd>
                             </div>
                             <div className="flex justify-between">
-                                <dt className="text-neutral-500">Votes</dt>
+                                <dt className="text-neutral-500">
+                                    {t('Votes')}
+                                </dt>
                                 <dd className="font-medium text-neutral-900 tabular-nums">
                                     {vote.quantity}
                                 </dd>
                             </div>
                             {vote.amount !== null && (
                                 <div className="flex justify-between">
-                                    <dt className="text-neutral-500">Total</dt>
+                                    <dt className="text-neutral-500">
+                                        {t('Total')}
+                                    </dt>
                                     <dd className="font-medium text-neutral-900">
                                         {formatRupiah(vote.amount)}
                                     </dd>
@@ -143,7 +151,9 @@ export default function VoteStatus({ vote, award, event }: Props) {
                                 disabled={isPaying}
                                 className="w-full"
                             >
-                                {isPaying ? 'Opening payment...' : 'Pay now'}
+                                {isPaying
+                                    ? t('Opening payment…')
+                                    : t('Pay Now')}
                             </Button>
                         )}
 
@@ -157,7 +167,7 @@ export default function VoteStatus({ vote, award, event }: Props) {
                                 }
                                 className="text-xs font-medium text-neutral-500 underline"
                             >
-                                Back to the ballot
+                                {t('Back to the ballot')}
                             </button>
                         )}
                     </div>

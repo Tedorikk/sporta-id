@@ -24,15 +24,20 @@ import { formatDate } from '@/lib/format-date';
 import { formatImageUrl } from '@/lib/image-utils';
 import { cn } from '@/lib/utils';
 import events from '@/routes/events';
-import type { Event } from '@/types/event';
+import type { Event, RunningEventSpecific } from '@/types/event';
 import { BasketballManagement } from './basketball/basketball-management';
 import { RunningManagement } from './running/running-management';
 
 export default function ShowEvent({ event }: { event: Event }) {
     const [isDeleting, setIsDeleting] = useState(false);
     const [isTogglingRegistration, setIsTogglingRegistration] = useState(false);
-    const registrationOpen = event.specific?.registration_open ?? true;
     const isRace = event.category === 'RUNNING';
+    // Only a race carries an event-level entries switch; basketball's moved
+    // to the registration category, so its module cannot answer for one.
+    const raceModule = isRace
+        ? (event.specific as RunningEventSpecific | null | undefined)
+        : null;
+    const registrationOpen = raceModule?.registration_open ?? true;
 
     const handleDelete = () => {
         setIsDeleting(true);
@@ -42,16 +47,18 @@ export default function ShowEvent({ event }: { event: Event }) {
         });
     };
 
+    // The public event page lists every registration category with its
+    // price and availability — that's the link to hand out.
     const handleCopyRegistrationLink = () => {
-        const url = `${window.location.origin}/events/${event.id}/register`;
+        const url = `${window.location.origin}/events/${event.id}`;
         navigator.clipboard.writeText(url);
-        toast.success('Registration link copied to clipboard');
+        toast.success('Event link copied to clipboard');
     };
 
     const handleToggleRegistration = (checked: boolean) => {
         setIsTogglingRegistration(true);
         router.put(
-            `/events/${event.id}/${isRace ? 'running' : 'basketball'}`,
+            `/events/${event.id}/running`,
             { registration_open: checked },
             {
                 preserveScroll: true,
@@ -154,13 +161,14 @@ export default function ShowEvent({ event }: { event: Event }) {
                                 onClick={handleCopyRegistrationLink}
                             >
                                 <Link2 className="mr-2 h-4 w-4" />
-                                Copy Registration Link
+                                Copy Event Link
                             </Button>
                         </>
                     )}
-                    {/* Both modules carry a master switch for entries; only a
-                        module that has actually been set up can answer for it. */}
-                    {event.specific && (
+                    {/* A race carries a master switch for entries, closing
+                        every distance's sign-up form at once. Only a race that
+                        has actually been set up can answer for it. */}
+                    {isRace && raceModule && (
                         <div className="flex items-center gap-2 rounded-md border px-3 py-2">
                             <Switch
                                 id="registration-toggle"

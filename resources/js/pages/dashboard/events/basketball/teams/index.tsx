@@ -336,13 +336,28 @@ export default function TeamsIndex({
                                             )}
                                         </td>
                                         <td className="px-4 py-3">
-                                            <Badge
-                                                variant={
-                                                    STATUS_VARIANT[team.status]
-                                                }
-                                            >
-                                                {team.status}
-                                            </Badge>
+                                            <div className="flex flex-wrap items-center gap-1.5">
+                                                <Badge
+                                                    variant={
+                                                        STATUS_VARIANT[
+                                                            team.status
+                                                        ]
+                                                    }
+                                                >
+                                                    {team.status}
+                                                </Badge>
+                                                {(team.roster_incomplete ?? 0) >
+                                                    0 && (
+                                                    <Badge
+                                                        variant="secondary"
+                                                        className="bg-amber-100 text-amber-800"
+                                                        title="Members registered without a photo, document or birth details"
+                                                    >
+                                                        {team.roster_incomplete}{' '}
+                                                        incomplete
+                                                    </Badge>
+                                                )}
+                                            </div>
                                         </td>
                                         {reviewMode && (
                                             <td className="px-4 py-3">

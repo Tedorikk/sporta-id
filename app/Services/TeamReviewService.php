@@ -8,7 +8,8 @@ use Illuminate\Support\Collection;
 
 class TeamReviewService
 {
-    private const MIN_ROSTER_SIZE = 5;
+    /** Fallback when a team has no category to take the minimum from. */
+    private const DEFAULT_MIN_ROSTER_SIZE = 5;
 
     private const PHONE_PATTERN = '/^\+?[0-9\s-]{8,15}$/';
 
@@ -46,8 +47,8 @@ class TeamReviewService
 
             if ($roster->isEmpty()) {
                 $issues[] = $this->issue('error', 'no_players', 'Team has no registered players (only staff).');
-            } elseif ($roster->count() < self::MIN_ROSTER_SIZE) {
-                $issues[] = $this->issue('warning', 'low_roster', "Only {$roster->count()} player(s) registered; basketball teams typically need at least ".self::MIN_ROSTER_SIZE.'.');
+            } elseif ($roster->count() < ($minRoster = $team->basketballEventCategory?->min_player_per_team ?? self::DEFAULT_MIN_ROSTER_SIZE)) {
+                $issues[] = $this->issue('warning', 'low_roster', "Only {$roster->count()} player(s) registered; this category needs at least {$minRoster}.");
             }
 
             if (! $players->contains(fn ($p) => in_array($p->role, [Player::ROLE_COACH, Player::ROLE_ASSISTANT_COACH], true))) {

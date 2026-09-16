@@ -1,4 +1,5 @@
 import { CheckCircle2, Circle, Play, Trophy } from 'lucide-react';
+import { useT } from '@/hooks/use-t';
 import type { GameMatch } from '@/types/game-match';
 
 interface Props {
@@ -15,8 +16,9 @@ const ROUND_LABELS: Record<string, string> = {
 };
 
 function BracketSlot({ match }: { match: GameMatch }) {
-    const homeName = match.home_team?.name ?? 'TBD';
-    const awayName = match.away_team?.name ?? 'TBD';
+    const { t } = useT();
+    const homeName = match.home_team?.name ?? t('TBD');
+    const awayName = match.away_team?.name ?? t('TBD');
     const isCompleted = match.status === 'finished';
 
     const homeWon =
@@ -83,6 +85,7 @@ function BracketSlot({ match }: { match: GameMatch }) {
 }
 
 export function BracketTree({ matches }: Props) {
+    const { t } = useT();
     const knockoutMatches = matches.filter(
         (match) => match.round && match.round !== 'group',
     );
@@ -114,7 +117,7 @@ export function BracketTree({ matches }: Props) {
     return (
         <div className="flex flex-col gap-3">
             <h4 className="text-sm font-bold tracking-wide text-white/70 uppercase">
-                Bracket
+                {t('Bracket')}
             </h4>
             <div className="overflow-x-auto rounded-xl border-2 border-white/10 bg-black/20 p-4">
                 <div className="flex min-w-max items-start gap-6">
@@ -133,7 +136,7 @@ export function BracketTree({ matches }: Props) {
                                 {round === 'final' && (
                                     <Trophy className="mr-1 inline h-3 w-3" />
                                 )}
-                                {ROUND_LABELS[round] ?? round}
+                                {t(ROUND_LABELS[round] ?? round)}
                             </div>
                             <div className="flex h-full flex-col justify-around gap-4">
                                 {roundMatches.map((match) => (

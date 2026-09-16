@@ -12,6 +12,7 @@ import {
     DialogFooter,
 } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
+import { useT } from '@/hooks/use-t';
 import { getCroppedImageFile } from '@/lib/crop-image';
 import { cn } from '@/lib/utils';
 
@@ -55,12 +56,14 @@ export function UploadImage({
     maxSizeMB = 5,
     disabled = false,
     className,
-    placeholder = 'Drag & drop an image, or click to browse',
+    placeholder,
+
     onError,
     uploadUrl = '/upload/image',
     deleteUrl = '/upload/image',
     enableCrop = false, // NEW
 }: UploadImageProps) {
+    const { t } = useT();
     const inputRef = React.useRef<HTMLInputElement>(null);
     const [isDragging, setIsDragging] = React.useState(false);
     const [isUploading, setIsUploading] = React.useState(false);
@@ -127,7 +130,9 @@ export function UploadImage({
             setLocalPreview(null);
         } catch (err) {
             onError?.(
-                `Upload failed. Please try again. ${err instanceof Error ? err.message : String(err)}`,
+                t('Upload failed. Please try again. :reason', {
+                    reason: err instanceof Error ? err.message : String(err),
+                }),
             );
             setLocalPreview(null);
         } finally {
@@ -138,13 +143,15 @@ export function UploadImage({
 
     const validateFile = (file: File): boolean => {
         if (!file.type.startsWith('image/')) {
-            onError?.('Please upload an image file');
+            onError?.(t('Please upload an image file'));
 
             return false;
         }
 
         if (file.size > maxSizeMB * 1024 * 1024) {
-            onError?.(`Image must be smaller than ${maxSizeMB}MB`);
+            onError?.(
+                t('Image must be smaller than :size MB', { size: maxSizeMB }),
+            );
 
             return false;
         }
@@ -192,7 +199,7 @@ export function UploadImage({
             );
             await uploadFile(croppedFile);
         } catch {
-            onError?.('Could not crop image. Please try again.');
+            onError?.(t('Could not crop image. Please try again.'));
         } finally {
             setIsCropProcessing(false);
             setCropperOpen(false);
@@ -312,13 +319,13 @@ export function UploadImage({
                     <>
                         <img
                             src={previewUrl}
-                            alt="Preview"
+                            alt={t('Preview')}
                             className="h-full w-full object-cover"
                         />
                         {isUploading && (
                             <div className="absolute inset-x-0 bottom-0 bg-black/70 px-3 py-2 backdrop-blur-sm">
                                 <div className="mb-1 flex items-center justify-between text-xs font-medium text-white">
-                                    <span>Uploading…</span>
+                                    <span>{t('Uploading…')}</span>
                                     <span>{uploadProgress}%</span>
                                 </div>
                                 <div
@@ -339,7 +346,7 @@ export function UploadImage({
                             <button
                                 type="button"
                                 onClick={handleClear}
-                                aria-label="Remove image"
+                                aria-label={t('Remove image')}
                                 className="absolute top-2 right-2 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                             >
                                 <X className="h-4 w-4" />
@@ -354,7 +361,12 @@ export function UploadImage({
                             <ImageIcon className="h-6 w-6" />
                         )}
                         <p className="text-sm">
-                            {isUploading ? 'Uploading…' : placeholder}
+                            {isUploading
+                                ? t('Uploading…')
+                                : (placeholder ??
+                                  t(
+                                      'Drag & drop an image, or click to browse',
+                                  ))}
                         </p>
                         {isUploading ? (
                             <div
@@ -371,7 +383,9 @@ export function UploadImage({
                             </div>
                         ) : (
                             <p className="text-xs">
-                                PNG, JPG or WEBP, up to {maxSizeMB}MB
+                                {t('PNG, JPG or WEBP, up to :size MB', {
+                                    size: maxSizeMB,
+                                })}
                             </p>
                         )}
                     </div>
@@ -386,7 +400,7 @@ export function UploadImage({
                 >
                     <DialogContent className="sm:max-w-lg">
                         <DialogHeader>
-                            <DialogTitle>Crop image</DialogTitle>
+                            <DialogTitle>{t('Crop image')}</DialogTitle>
                         </DialogHeader>
 
                         <div
@@ -429,15 +443,15 @@ export function UploadImage({
                                 variant="outline"
                                 onClick={handleCropCancel}
                             >
-                                Cancel
+                                {t('Cancel')}
                             </Button>
                             <Button
                                 onClick={handleCropConfirm}
                                 disabled={isCropProcessing}
                             >
                                 {isCropProcessing
-                                    ? 'Cropping…'
-                                    : 'Apply crop & upload'}
+                                    ? t('Cropping…')
+                                    : t('Apply crop & upload')}
                             </Button>
                         </DialogFooter>
                     </DialogContent>

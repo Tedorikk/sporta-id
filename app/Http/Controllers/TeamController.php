@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\BasketballClub;
 use App\Models\BasketballEvent;
 use App\Models\Event;
+use App\Models\Registration;
 use App\Models\Team;
+use App\Services\Basketball\RosterService;
 use App\Services\TeamReviewService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -15,7 +18,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TeamController extends Controller
 {
-    public function __construct(private readonly TeamReviewService $teamReviewService) {}
+    public function __construct(
+        private readonly TeamReviewService $teamReviewService,
+        private readonly RosterService $rosterService,
+    ) {}
 
     public function index(Request $request, Event $event)
     {
@@ -32,6 +38,8 @@ class TeamController extends Controller
 
         $teams->getCollection()->transform(function (Team $team) {
             $team->setAttribute('review_summary', $this->teamReviewService->review($team)['summary']);
+            // Members registered without their details (see RosterService::isComplete).
+            $team->setAttribute('roster_incomplete', $this->rosterService->incompleteCount($team));
 
             return $team;
         });
@@ -74,12 +82,41 @@ class TeamController extends Controller
 
         $validated = $this->validated($request, $event);
 
-        $event->teams()->create($validated);
+        DB::transaction(function () use ($event, $validated) {
+            $team = $event->teams()->create($validated);
+
+            $this->registerTeam($team);
+        });
 
         return redirect()->route('teams.index', $event)->with(['toast' => [
             'title' => 'Success',
             'description' => 'Team added successfully.',
         ]]);
+    }
+
+    /**
+     * An organiser adding a team by hand is entering it the same way a captain
+     * would through the public form, so it gets the same registration record:
+     * confirmed, holding a quota slot, with a portal token for its roster.
+     */
+    private function registerTeam(Team $team): void
+    {
+        $registrationCategory = $team->basketballEventCategory?->registrationCategory;
+
+        if ($registrationCategory === null) {
+            return;
+        }
+
+        Registration::create([
+            'registration_category_id' => $registrationCategory->id,
+            'event_id' => $team->event_id,
+            'team_id' => $team->id,
+            'name' => $team->name,
+            'form_data' => [],
+            'status' => Registration::STATUS_CONFIRMED,
+        ]);
+
+        $registrationCategory->increment('registered_count');
     }
 
     public function edit(Event $event, Team $team)
@@ -93,9 +130,17 @@ class TeamController extends Controller
 
     public function update(Request $request, Event $event, Team $team)
     {
+        abort_unless($team->event_id === $event->id, 404);
+
         $validated = $this->validated($request, $event, $team);
 
-        $team->update($validated);
+        DB::transaction(function () use ($team, $validated) {
+            $team->update($validated);
+
+            // The registration is the team's entry ticket; keep the name it
+            // shows on lists and ID cards in step with the team.
+            $team->registration()->update(['name' => $team->name]);
+        });
 
         return redirect()->route('teams.index', $event)->with(['toast' => [
             'title' => 'Success',
@@ -105,7 +150,20 @@ class TeamController extends Controller
 
     public function destroy(Event $event, Team $team)
     {
-        $team->delete();
+        abort_unless($team->event_id === $event->id, 404);
+
+        DB::transaction(function () use ($team) {
+            $registration = $team->registration;
+
+            // Keep the registration (and any payment on it) as a record, but
+            // release the slot it was holding.
+            if ($registration !== null && ! $registration->isWithdrawn()) {
+                $registration->update(['status' => Registration::STATUS_CANCELLED]);
+                $registration->registrationCategory()->decrement('registered_count');
+            }
+
+            $team->delete();
+        });
 
         return redirect()->route('teams.index', $event)->with(['toast' => [
             'title' => 'Success',
@@ -117,7 +175,8 @@ class TeamController extends Controller
     {
         abort_unless($team->event_id === $event->id, 404);
 
-        $team->load('players', 'basketballEventCategory');
+        $team->load('players', 'basketballEventCategory', 'registration');
+        $team->setAttribute('roster_incomplete', $this->rosterService->incompleteCount($team));
         $clubs = BasketballClub::with('player')->orderBy('name')->get();
 
         return Inertia::render('dashboard/events/basketball/teams/show', [
@@ -125,6 +184,10 @@ class TeamController extends Controller
             'team' => $team,
             'clubs' => $clubs,
             'review' => $this->teamReviewService->review($team),
+            // The captain's self-service roster page, for organisers to pass on.
+            'rosterUrl' => $team->registration !== null && $team->basketballEventCategory !== null
+                ? route('team-roster.show', $team->registration)
+                : null,
         ]);
     }
 
@@ -181,7 +244,7 @@ class TeamController extends Controller
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'logo' => ['nullable', 'url', 'max:255'],
-            'status' => ['required', 'in:pending,verified,rejected'],
+            'status' => ['required', Rule::in(Team::STATUSES)],
             'basketball_event_category_id' => [
                 'nullable',
                 Rule::exists('basketball_event_categories', 'id')

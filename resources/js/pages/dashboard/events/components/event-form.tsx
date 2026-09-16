@@ -50,6 +50,7 @@ const eventSchema = z
             .regex(/^\+[1-9]\d{1,14}$/, 'Invalid E.164 format'),
         category: z.string().min(1, 'Please select a category'),
         is_published: z.boolean(),
+        registration_after_end: z.boolean(),
         start_date: z.string().min(1, 'Start date is required'),
         end_date: z.string().min(1, 'End date is required'),
         banner: z.string().url('Must be a valid URL').or(z.literal('')),
@@ -87,6 +88,7 @@ function toDefaultValues(event?: Event): EventFormValues {
         contact_person: event?.contact_person ?? '',
         category: event?.category ?? '',
         is_published: Boolean(event?.is_published ?? false),
+        registration_after_end: Boolean(event?.registration_after_end ?? false),
         start_date: event?.start_date ?? '',
         end_date: event?.end_date ?? '',
         banner: event?.banner ?? '',
@@ -655,6 +657,48 @@ function FormContent({ event }: EventFormProps) {
                                         >
                                             Publish this event immediately
                                         </FieldLabel>
+                                        {fieldState.invalid && (
+                                            <FieldError
+                                                errors={[fieldState.error]}
+                                            />
+                                        )}
+                                    </Field>
+                                )}
+                            />
+                            <Controller
+                                name="registration_after_end"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <Field
+                                        data-invalid={fieldState.invalid}
+                                        orientation="horizontal"
+                                        className="items-start"
+                                    >
+                                        <Checkbox
+                                            id="registration_after_end"
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                            aria-label="Keep registration open after the event ends"
+                                            disabled={isSaving}
+                                            className="mt-0.5 cursor-pointer"
+                                        />
+                                        <div className="flex flex-col gap-1">
+                                            <FieldLabel
+                                                htmlFor="registration_after_end"
+                                                className="cursor-pointer font-normal"
+                                            >
+                                                Keep registration open after the
+                                                event ends
+                                            </FieldLabel>
+                                            <FieldDescription>
+                                                Registration closes by itself
+                                                the day after the end date. Turn
+                                                this on for late or post-event
+                                                entries; each category&apos;s
+                                                own open switch and dates still
+                                                apply.
+                                            </FieldDescription>
+                                        </div>
                                         {fieldState.invalid && (
                                             <FieldError
                                                 errors={[fieldState.error]}

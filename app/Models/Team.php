@@ -7,10 +7,26 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Team extends Model
 {
     use HasFactory;
+
+    /** Awaiting the organiser's roster review. */
+    public const STATUS_PENDING = 'pending';
+
+    /** Reviewed and cleared to play; the roster is frozen. */
+    public const STATUS_VERIFIED = 'verified';
+
+    /** Turned away, or its registration fell through (expired, cancelled, refunded). */
+    public const STATUS_REJECTED = 'rejected';
+
+    public const STATUSES = [
+        self::STATUS_PENDING,
+        self::STATUS_VERIFIED,
+        self::STATUS_REJECTED,
+    ];
 
     protected $fillable = [
         'event_id', 'name', 'logo', 'status', 'basketball_event_category_id',
@@ -30,7 +46,8 @@ class Team extends Model
     /** @return BelongsToMany<Player, $this> */
     public function players(): BelongsToMany
     {
-        return $this->belongsToMany(Player::class);
+        // invite_token: the per-membership self-fill secret (see RosterService::inviteTokenFor).
+        return $this->belongsToMany(Player::class)->withPivot('invite_token');
     }
 
     /** @return BelongsToMany<Pool, $this> */
@@ -43,6 +60,41 @@ class Team extends Model
     public function basketballEventCategory(): BelongsTo
     {
         return $this->belongsTo(BasketballEventCategory::class, 'basketball_event_category_id', 'id');
+    }
+
+    /**
+     * The registration that entered this team: payment state, form answers,
+     * and the captain's portal token.
+     *
+     * @return HasOne<Registration, $this>
+     */
+    public function registration(): HasOne
+    {
+        return $this->hasOne(Registration::class);
+    }
+
+    /**
+     * The per-member questions this team's category asks on its roster block.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function rosterMemberFields(): array
+    {
+        return $this->basketballEventCategory?->registrationCategory?->rosterMemberFields() ?? [];
+    }
+
+    /**
+     * Roster edits stop once the organiser has verified the team (the sheet
+     * they reviewed must stay what they reviewed) or the category's roster
+     * window has closed.
+     */
+    public function rosterLocked(): bool
+    {
+        if ($this->status === self::STATUS_VERIFIED) {
+            return true;
+        }
+
+        return ! ($this->basketballEventCategory?->rosterIsOpen() ?? true);
     }
 
     /** @return HasMany<GameMatch, $this> */

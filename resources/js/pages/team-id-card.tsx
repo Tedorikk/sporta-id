@@ -3,6 +3,7 @@ import QRCode from 'qrcode';
 import { useEffect, useRef, useState } from 'react';
 import { TeamIdCardCard } from '@/components/id-card/team-id-card-card';
 import { IdCardActions } from '@/components/id-card-actions';
+import { useT } from '@/hooks/use-t';
 import type { Team } from '@/types/team';
 
 interface Props {
@@ -26,9 +27,11 @@ export default function TeamIdCard({ team }: Props) {
         }).then(setQrDataUrl);
     }, [idCardUrl]);
 
+    const { t } = useT();
+
     return (
         <>
-            <Head title={`${team.name} — ID Card`} />
+            <Head title={t(':name — ID Card', { name: team.name })} />
 
             {/* Full-page background */}
             <div className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10 print:bg-white print:p-0">

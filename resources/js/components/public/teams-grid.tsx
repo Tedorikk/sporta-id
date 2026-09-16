@@ -1,4 +1,5 @@
 import { Shield } from 'lucide-react';
+import { useT } from '@/hooks/use-t';
 import { formatImageUrl } from '@/lib/image-utils';
 import type { Team } from '@/types/team';
 
@@ -7,6 +8,8 @@ interface Props {
 }
 
 export function TeamsGrid({ teams }: Props) {
+    const { t } = useT();
+
     if (teams.length === 0) {
         return null;
     }
@@ -14,7 +17,7 @@ export function TeamsGrid({ teams }: Props) {
     return (
         <div className="flex flex-col gap-3">
             <h4 className="text-sm font-bold tracking-wide text-white/70 uppercase">
-                Teams ({teams.length})
+                {t('Teams (:count)', { count: teams.length })}
             </h4>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
                 {teams.map((team) => (

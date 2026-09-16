@@ -166,7 +166,7 @@ class EventController extends Controller
         }
 
         if ($event->specific instanceof BasketballEvent) {
-            $event->specific->load('categories');
+            $event->specific->load('categories.registrationCategory');
 
             $extra = [
                 'teams_count' => $event->teams()->count(),
@@ -253,6 +253,7 @@ class EventController extends Controller
             'contact_person' => ['required', 'string', 'regex:/^\+[1-9]\d{1,14}$/'],
             'category' => ['required', Rule::in(Event::CATEGORIES)],
             'is_published' => ['required', 'boolean'],
+            'registration_after_end' => ['nullable', 'boolean'],
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'banner' => ['nullable', 'url'],

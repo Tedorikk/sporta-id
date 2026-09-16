@@ -19,11 +19,13 @@ import { MatchesCalendar } from '@/components/public/matches-calendar';
 import { RaceResultsSection } from '@/components/public/race-results-section';
 import type { PublicRaceResult } from '@/components/public/race-results-section';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useT } from '@/hooks/use-t';
 import PublicLayout from '@/layouts/public-layout';
-import { formatRupiah } from '@/lib/format-currency';
+import { formatPublicPrice } from '@/lib/format-currency';
 import { formatDate, formatDateTime } from '@/lib/format-date';
 import { formatImageUrl } from '@/lib/image-utils';
 import type { Event } from '@/types/event';
+import { EVENT_STATUS_LABEL } from '@/types/event';
 import type { Meeting } from '@/types/meeting';
 import type { PublicEventCategory } from '@/types/public-event-category';
 import type { PublicRegistrationCategory } from '@/types/registration-category';
@@ -40,6 +42,7 @@ interface Props {
 const UNAVAILABLE_LABEL: Record<string, string> = {
     closed: 'Registration closed',
     full: 'Sold out',
+    ended: 'Event has ended',
 };
 
 const STATUS_STYLE: Record<string, string> = {
@@ -66,6 +69,7 @@ export default function EventShow({
     meetings,
     registrationCategories,
 }: Props) {
+    const { t, tc } = useT();
     const hasCategories = Boolean(categories && categories.length > 0);
     const hasRaceResults = Boolean(raceResults && raceResults.length > 0);
     const hasMeetings = meetings.length > 0;
@@ -82,10 +86,14 @@ export default function EventShow({
         ) ?? [];
 
     const stats = [
-        { label: 'Categories', value: categories?.length ?? 0, icon: Trophy },
-        { label: 'Teams', value: totalTeams, icon: Users },
-        { label: 'Pools', value: totalPools, icon: LayoutGrid },
-        { label: 'Matches', value: totalMatches, icon: Swords },
+        {
+            label: t('Categories'),
+            value: categories?.length ?? 0,
+            icon: Trophy,
+        },
+        { label: t('Teams'), value: totalTeams, icon: Users },
+        { label: t('Pools'), value: totalPools, icon: LayoutGrid },
+        { label: t('Matches'), value: totalMatches, icon: Swords },
     ].filter((stat) => stat.value > 0);
 
     const activeSocialLinks = SOCIAL_LINKS.filter((social) =>
@@ -110,7 +118,10 @@ export default function EventShow({
                             <span
                                 className={`w-fit rounded-full px-3 py-1 text-xs font-bold tracking-wide uppercase ${STATUS_STYLE[event.status] ?? 'bg-white text-black'}`}
                             >
-                                {event.status}
+                                {t(
+                                    EVENT_STATUS_LABEL[event.status] ??
+                                        event.status,
+                                )}
                             </span>
                             {event.category && (
                                 <span className="w-fit rounded-full border-2 border-white/25 px-3 py-1 text-xs font-bold tracking-wide text-white/80 uppercase">
@@ -197,7 +208,7 @@ export default function EventShow({
                         <div className="flex flex-col gap-6">
                             <h2 className="flex items-center gap-2 text-2xl font-black tracking-tight uppercase">
                                 <Ticket className="h-5 w-5 text-white/50" />
-                                Register
+                                {t('Register')}
                             </h2>
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 {registrationCategories.map((category) => {
@@ -206,17 +217,23 @@ export default function EventShow({
                                             <span className="text-lg font-bold text-white">
                                                 {category.name}
                                             </span>
-                                            <span className="text-xl font-black text-white">
-                                                {formatRupiah(category.price)}
-                                            </span>
+                                            {formatPublicPrice(
+                                                category.price,
+                                            ) && (
+                                                <span className="text-xl font-black text-white">
+                                                    {formatPublicPrice(
+                                                        category.price,
+                                                    )}
+                                                </span>
+                                            )}
                                             <span className="text-xs text-white/50">
                                                 {category.subject_type ===
                                                 'team'
-                                                    ? 'Per team'
-                                                    : 'Per person'}
+                                                    ? t('Per team')
+                                                    : t('Per person')}
                                                 {category.slots_left !== null &&
                                                 category.is_available
-                                                    ? ` · ${category.slots_left} slot${category.slots_left === 1 ? '' : 's'} left`
+                                                    ? ` · ${tc(':count slot left|:count slots left', category.slots_left)}`
                                                     : ''}
                                             </span>
                                         </div>
@@ -230,10 +247,12 @@ export default function EventShow({
                                             >
                                                 {details}
                                                 <span className="rounded-full border-2 border-white/20 px-4 py-2 text-xs font-bold tracking-wide text-white/60 uppercase">
-                                                    {UNAVAILABLE_LABEL[
-                                                        category.unavailable_reason ??
-                                                            ''
-                                                    ] ?? 'Unavailable'}
+                                                    {t(
+                                                        UNAVAILABLE_LABEL[
+                                                            category.unavailable_reason ??
+                                                                ''
+                                                        ] ?? 'Unavailable',
+                                                    )}
                                                 </span>
                                             </div>
                                         );
@@ -247,7 +266,7 @@ export default function EventShow({
                                         >
                                             {details}
                                             <span className="flex items-center gap-1.5 rounded-full bg-red-600 px-4 py-2 text-xs font-bold tracking-wide text-white uppercase transition group-hover:bg-red-700">
-                                                Register
+                                                {t('Register')}
                                                 <ArrowRight className="h-3.5 w-3.5" />
                                             </span>
                                         </Link>
@@ -256,23 +275,21 @@ export default function EventShow({
                             </div>
 
                             <p className="text-xs text-white/50">
-                                Prices are per registration and include the
-                                event entry described above. Paid registrations
-                                are settled online through Midtrans (bank
-                                transfer / virtual account, e-wallet, QRIS, or
-                                card) right after you submit the form. See our{' '}
+                                {t(
+                                    'Prices are per registration and include the event entry described above. Paid registrations are settled online through Midtrans (bank transfer / virtual account, e-wallet, QRIS, or card) right after you submit the form. See our',
+                                )}{' '}
                                 <Link
                                     href="/terms"
                                     className="text-red-400 underline-offset-2 hover:underline"
                                 >
-                                    Terms &amp; Conditions
+                                    {t('Terms & Conditions')}
                                 </Link>{' '}
-                                and{' '}
+                                {t('and')}{' '}
                                 <Link
                                     href="/refund-policy"
                                     className="text-red-400 underline-offset-2 hover:underline"
                                 >
-                                    Refund Policy
+                                    {t('Refund Policy')}
                                 </Link>
                                 .
                             </p>
@@ -282,7 +299,7 @@ export default function EventShow({
                     {calendarMatches.length > 0 && (
                         <div className="flex flex-col gap-6">
                             <h2 className="text-2xl font-black tracking-tight uppercase">
-                                Match Schedule
+                                {t('Match Schedule')}
                             </h2>
                             <MatchesCalendar matches={calendarMatches} />
                         </div>
@@ -292,7 +309,7 @@ export default function EventShow({
                         <div className="flex flex-col gap-6">
                             <h2 className="flex items-center gap-2 text-2xl font-black tracking-tight uppercase">
                                 <Mic className="h-5 w-5 text-white/50" />
-                                Schedule
+                                {t('Schedule')}
                             </h2>
                             <div className="flex flex-col gap-3">
                                 {meetings.map((meeting) => (
@@ -384,7 +401,7 @@ export default function EventShow({
                         <div className="flex flex-col gap-6">
                             <div className="flex flex-wrap items-center justify-between gap-3">
                                 <h2 className="text-2xl font-black tracking-tight uppercase">
-                                    Categories &amp; Matches
+                                    {t('Categories & Matches')}
                                 </h2>
                                 {categories && categories.length > 1 && (
                                     <div className="flex flex-wrap gap-2">
@@ -417,12 +434,14 @@ export default function EventShow({
                         !hasRegistration &&
                         !hasRaceResults && (
                             <p className="text-center text-sm text-white/40">
-                                Details for this event will be posted soon.{' '}
+                                {t(
+                                    'Details for this event will be posted soon.',
+                                )}{' '}
                                 <Link
                                     href="/events"
                                     className="text-red-400 hover:underline"
                                 >
-                                    Browse other events
+                                    {t('Browse other events')}
                                 </Link>
                                 .
                             </p>

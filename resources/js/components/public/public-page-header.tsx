@@ -1,6 +1,7 @@
 import { isValidHexColor, shadeColor } from '@/lib/color';
 import { formatImageUrl } from '@/lib/image-utils';
 import { SiteLogo } from '../landing/site-logo';
+import { LanguageToggle } from './language-toggle';
 
 interface PublicPageHeaderProps {
     eyebrow: string;
@@ -9,6 +10,8 @@ interface PublicPageHeaderProps {
     /** Event-specific branding — falls back to the default Sporta Indonesia logo/red when absent. */
     logoUrl?: string | null;
     accentColor?: string | null;
+    /** Off for pages inside PublicLayout, whose nav already carries the switch. */
+    languageToggle?: boolean;
 }
 
 export function PublicPageHeader({
@@ -17,6 +20,7 @@ export function PublicPageHeader({
     subtitle,
     logoUrl,
     accentColor,
+    languageToggle = true,
 }: PublicPageHeaderProps) {
     const accent = isValidHexColor(accentColor) ? accentColor : null;
 
@@ -57,6 +61,10 @@ export function PublicPageHeader({
                     <rect width="100%" height="100%" fill="url(#ppgrid)" />
                 </svg>
             </div>
+
+            {languageToggle && (
+                <LanguageToggle className="absolute top-3 right-3 z-20" />
+            )}
 
             <div className="relative z-10 flex flex-col items-center gap-2">
                 <div className="flex items-center justify-center">

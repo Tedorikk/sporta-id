@@ -1,6 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Head, router } from '@inertiajs/react';
-import { Check, CheckCircle2, Clock, Loader2, Lock, Star } from 'lucide-react';
+import {
+    Check,
+    CheckCircle2,
+    Clock,
+    Loader2,
+    Lock,
+    Star,
+    Users,
+} from 'lucide-react';
 import QRCode from 'qrcode';
 import type { CSSProperties } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -9,7 +17,14 @@ import * as z from 'zod';
 import { RegistrationIdCardCard } from '@/components/id-card/registration-id-card-card';
 import { TeamIdCardCard } from '@/components/id-card/team-id-card-card';
 import { IdCardActions } from '@/components/id-card-actions';
+import { PayLinkShare } from '@/components/public/pay-link-share';
 import { PublicPageHeader } from '@/components/public/public-page-header';
+import {
+    RosterBlock,
+    defaultRoster,
+    rosterSchema,
+} from '@/components/public/roster-block';
+import { RosterRequirementsCard } from '@/components/public/roster-requirements-card';
 import { SignaturePad } from '@/components/signature-pad';
 import { Button } from '@/components/ui/button';
 import {
@@ -31,9 +46,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { UploadDocument } from '@/components/upload-document';
 import { UploadImage } from '@/components/upload-image';
 import { useForceLightMode } from '@/hooks/use-force-light-mode';
+import { useT } from '@/hooks/use-t';
 import { accentColors } from '@/lib/color';
 import { formatRupiah } from '@/lib/format-currency';
+import { formatDateTime } from '@/lib/format-date';
+import type { Translate } from '@/lib/i18n';
 import { loadSnapScript } from '@/lib/midtrans';
+import {
+    clearDraft,
+    draftKey,
+    readDraft,
+    sameAsDefaults,
+    writeDraft,
+} from '@/lib/registration-draft';
 import { cn } from '@/lib/utils';
 import type { CardTemplate } from '@/types/card-template';
 import type { Event } from '@/types/event';
@@ -43,13 +68,19 @@ import type {
     RegistrationCategory,
     RegistrationField,
 } from '@/types/registration-category';
-import { isInputField } from '@/types/registration-category';
+import {
+    imageRatioOf,
+    isInputField,
+    isRosterField,
+} from '@/types/registration-category';
 
 interface Props {
     event: Event;
     registrationCategory: RegistrationCategory;
     registrationClosed: boolean;
     confirmedRegistration?: Registration | null;
+    /** When roster edits close, for team forms with a roster block. */
+    rosterDeadline?: string | null;
     cardTemplate?: CardTemplate | null;
     snapToken?: string | null;
     midtransClientKey?: string | null;
@@ -73,6 +104,7 @@ function PaymentPendingView({
     midtransIsProduction: boolean;
     accentStyle: CSSProperties;
 }) {
+    const { t } = useT();
     const [isPaying, setIsPaying] = useState(false);
 
     const payNow = () => {
@@ -102,7 +134,9 @@ function PaymentPendingView({
 
     return (
         <>
-            <Head title={`Complete Payment — ${event.name}`} />
+            <Head
+                title={t('Complete Payment — :event', { event: event.name })}
+            />
 
             <div
                 className="relative flex min-h-screen flex-col items-center justify-center gap-6 bg-neutral-950 px-4 py-10"
@@ -111,13 +145,13 @@ function PaymentPendingView({
                 <div className="flex items-center gap-2 text-amber-400">
                     <Clock className="h-5 w-5" />
                     <span className="text-sm font-semibold tracking-wide uppercase">
-                        Awaiting payment
+                        {t('Awaiting payment')}
                     </span>
                 </div>
 
                 <div className="w-full max-w-sm overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
                     <PublicPageHeader
-                        eyebrow="Registration"
+                        eyebrow={t('Registration')}
                         title={event.name}
                         subtitle={registrationCategory.name}
                         logoUrl={event.logo}
@@ -132,8 +166,9 @@ function PaymentPendingView({
                             {formatRupiah(registrationCategory.price)}
                         </p>
                         <p className="text-sm text-neutral-600">
-                            Your slot is reserved — complete payment to confirm
-                            this registration and get your ID card.
+                            {t(
+                                'Your slot is reserved — complete payment to confirm this registration and get your ID card.',
+                            )}
                         </p>
 
                         {snapToken ? (
@@ -146,15 +181,33 @@ function PaymentPendingView({
                                 {isPaying ? (
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 ) : null}
-                                {isPaying ? 'Opening payment…' : 'Pay Now'}
+                                {isPaying
+                                    ? t('Opening payment…')
+                                    : t('Pay Now')}
                             </Button>
                         ) : (
                             <p className="text-sm text-amber-600">
-                                Couldn&apos;t start payment just now — use
-                                &quot;Check registration status&quot; below to
-                                try again.
+                                {t(
+                                    'Couldn’t start payment just now — use "Check registration status" below to try again.',
+                                )}
                             </p>
                         )}
+
+                        <PayLinkShare
+                            qrToken={registration.qr_token}
+                            expiresAt={registration.expires_at}
+                            message={t(
+                                'Please pay the registration fee of :price for :name (:category — :event) here:',
+                                {
+                                    price: formatRupiah(
+                                        registrationCategory.price,
+                                    ),
+                                    name: registration.name,
+                                    category: registrationCategory.name,
+                                    event: event.name,
+                                },
+                            )}
+                        />
                     </div>
                 </div>
 
@@ -162,7 +215,7 @@ function PaymentPendingView({
                     href={`/registrations/${registration.qr_token}/status`}
                     className="text-sm font-medium text-white/70 underline-offset-2 hover:text-white hover:underline"
                 >
-                    Check registration status
+                    {t('Check registration status')}
                 </a>
             </div>
         </>
@@ -184,6 +237,7 @@ function RegistrationSuccessView({
     accentStyle: CSSProperties;
     confirmationMessage?: string | null;
 }) {
+    const { t } = useT();
     const cardRef = useRef<HTMLDivElement>(null);
     const [qrDataUrl, setQrDataUrl] = useState('');
     const team = registration.team ?? null;
@@ -203,7 +257,7 @@ function RegistrationSuccessView({
 
     return (
         <>
-            <Head title={`Registered — ${event.name}`} />
+            <Head title={t('Registered — :event', { event: event.name })} />
 
             <div
                 className="relative flex min-h-screen flex-col items-center justify-center gap-6 bg-neutral-950 px-4 py-10"
@@ -212,7 +266,7 @@ function RegistrationSuccessView({
                 <div className="flex items-center gap-2 text-emerald-400">
                     <CheckCircle2 className="h-5 w-5" />
                     <span className="text-sm font-semibold tracking-wide uppercase">
-                        Registration confirmed
+                        {t('Registration confirmed')}
                     </span>
                 </div>
 
@@ -240,15 +294,39 @@ function RegistrationSuccessView({
                 <IdCardActions
                     targetRef={cardRef}
                     fileName={`${registration.name}-id-card`}
-                    shareTitle={`${registration.name} — ${registrationCategory.name} ID Card`}
+                    shareTitle={t(':name — :category ID Card', {
+                        name: registration.name,
+                        category: registrationCategory.name,
+                    })}
                     shareUrl={idCardUrl}
                 />
+
+                {team?.basketball_event_category_id && (
+                    <div className="flex w-full max-w-sm flex-col items-center gap-2 rounded-2xl border border-white/15 bg-white/5 p-4 text-center">
+                        <p className="text-sm text-white/80">
+                            {t(
+                                'Next, add your players and staff. Keep the link — it is how you get back to the roster.',
+                            )}
+                        </p>
+                        <Button
+                            asChild
+                            className="w-full bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
+                        >
+                            <a
+                                href={`/registrations/${registration.qr_token}/roster`}
+                            >
+                                <Users className="mr-2 h-4 w-4" />
+                                {t('Add your roster')}
+                            </a>
+                        </Button>
+                    </div>
+                )}
 
                 <a
                     href={`/events/${event.id}/registration-categories/${registrationCategory.id}/register`}
                     className="text-sm font-medium text-white/70 underline-offset-2 hover:text-white hover:underline"
                 >
-                    Register another
+                    {t('Register another')}
                 </a>
             </div>
         </>
@@ -263,16 +341,21 @@ const RESERVED_KEYS = ['name', 'email', 'phone', 'photo'];
  * receipt or our confirmation without one, and the server enforces the same
  * rule — so the field has to exist even if the form builder omitted it.
  */
-const EMAIL_FIELD: RegistrationField = {
+const emailField = (t: Translate): RegistrationField => ({
     key: 'email',
-    label: 'Email Address',
+    label: t('Email Address'),
     type: 'email',
     required: true,
-    help_text:
+    help_text: t(
         'Your payment receipt and registration confirmation are sent here.',
-};
+    ),
+});
 
-function withRequiredEmail(pages: FormPage[], isPaid: boolean): FormPage[] {
+function withRequiredEmail(
+    pages: FormPage[],
+    isPaid: boolean,
+    t: Translate,
+): FormPage[] {
     if (
         !isPaid ||
         pages.some((page) =>
@@ -283,13 +366,15 @@ function withRequiredEmail(pages: FormPage[], isPaid: boolean): FormPage[] {
     }
 
     if (pages.length === 0) {
-        return [{ key: 'contact', title: 'Contact', fields: [EMAIL_FIELD] }];
+        return [
+            { key: 'contact', title: t('Contact'), fields: [emailField(t)] },
+        ];
     }
 
     const [first, ...rest] = pages;
 
     return [
-        { ...first, fields: [...(first.fields ?? []), EMAIL_FIELD] },
+        { ...first, fields: [...(first.fields ?? []), emailField(t)] },
         ...rest,
     ];
 }
@@ -303,10 +388,14 @@ function inputFieldsOf(pages: FormPage[]): RegistrationField[] {
     return pages.flatMap((page) => page.fields.filter(isInputField));
 }
 
-function buildSchema(pages: FormPage[]) {
+function rosterFieldOf(pages: FormPage[]): RegistrationField | undefined {
+    return pages.flatMap((page) => page.fields).find(isRosterField);
+}
+
+function buildSchema(pages: FormPage[], t: Translate) {
     const fields = inputFieldsOf(pages);
     const shape: Record<string, z.ZodTypeAny> = {
-        name: z.string().min(1, 'Input a name').max(255),
+        name: z.string().min(1, t('Input a name')).max(255),
     };
 
     fields.forEach((f) => {
@@ -316,6 +405,12 @@ function buildSchema(pages: FormPage[]) {
 
         shape[f.key] = f.type === 'checkbox' ? z.boolean() : z.string();
     });
+
+    const roster = rosterFieldOf(pages);
+
+    if (roster) {
+        shape.roster = rosterSchema(roster, t);
+    }
 
     return z.object(shape).superRefine((data, ctx) => {
         fields.forEach((f) => {
@@ -333,7 +428,9 @@ function buildSchema(pages: FormPage[]) {
                 ctx.addIssue({
                     code: 'custom',
                     path: [f.key],
-                    message: f.error_message || `${f.label} is required`,
+                    message:
+                        f.error_message ||
+                        t(':label is required', { label: f.label }),
                 });
 
                 return;
@@ -347,7 +444,7 @@ function buildSchema(pages: FormPage[]) {
                 ctx.addIssue({
                     code: 'custom',
                     path: [f.key],
-                    message: 'Must be a valid email',
+                    message: t('Must be a valid email'),
                 });
             }
 
@@ -355,7 +452,7 @@ function buildSchema(pages: FormPage[]) {
                 ctx.addIssue({
                     code: 'custom',
                     path: [f.key],
-                    message: 'Must be a valid phone number',
+                    message: t('Must be a valid phone number'),
                 });
             }
 
@@ -364,7 +461,7 @@ function buildSchema(pages: FormPage[]) {
                     ctx.addIssue({
                         code: 'custom',
                         path: [f.key],
-                        message: 'Must be a number',
+                        message: t('Must be a number'),
                     });
                 } else {
                     const numeric = Number(value);
@@ -373,7 +470,7 @@ function buildSchema(pages: FormPage[]) {
                         ctx.addIssue({
                             code: 'custom',
                             path: [f.key],
-                            message: `Must be at least ${f.min}`,
+                            message: t('Must be at least :min', { min: f.min }),
                         });
                     }
 
@@ -381,7 +478,7 @@ function buildSchema(pages: FormPage[]) {
                         ctx.addIssue({
                             code: 'custom',
                             path: [f.key],
-                            message: `Must be at most ${f.max}`,
+                            message: t('Must be at most :max', { max: f.max }),
                         });
                     }
                 }
@@ -391,7 +488,7 @@ function buildSchema(pages: FormPage[]) {
 }
 
 function defaultValuesFor(pages: FormPage[]) {
-    const defaults: Record<string, string | boolean> = { name: '' };
+    const defaults: Record<string, unknown> = { name: '' };
 
     inputFieldsOf(pages).forEach((f) => {
         if (f.key === 'name') {
@@ -400,6 +497,12 @@ function defaultValuesFor(pages: FormPage[]) {
 
         defaults[f.key] = f.type === 'checkbox' ? false : '';
     });
+
+    const roster = rosterFieldOf(pages);
+
+    if (roster) {
+        defaults.roster = defaultRoster(roster);
+    }
 
     return defaults;
 }
@@ -582,6 +685,7 @@ function RatingInput({
     max?: number;
     disabled?: boolean;
 }) {
+    const { tc } = useT();
     const selected = Number(value) || 0;
 
     return (
@@ -592,7 +696,7 @@ function RatingInput({
                     type="button"
                     disabled={disabled}
                     onClick={() => onChange(String(n))}
-                    aria-label={`${n} star${n > 1 ? 's' : ''}`}
+                    aria-label={tc(':count star|:count stars', n)}
                     className="disabled:opacity-50"
                 >
                     <Star
@@ -613,6 +717,7 @@ export default function RegisterDynamic({
     registrationCategory,
     registrationClosed,
     confirmedRegistration,
+    rosterDeadline = null,
     cardTemplate,
     snapToken,
     midtransClientKey,
@@ -620,6 +725,7 @@ export default function RegisterDynamic({
 }: Props) {
     useForceLightMode();
 
+    const { t, locale } = useT();
     const [isSaving, setIsSaving] = useState(false);
     const [pageIndex, setPageIndex] = useState(0);
     const [honeypot, setHoneypot] = useState('');
@@ -629,19 +735,120 @@ export default function RegisterDynamic({
                 registrationCategory.form_pages ?? [],
                 Boolean(registrationCategory.price) &&
                     Number(registrationCategory.price) > 0,
+                t,
             ),
-        [registrationCategory.form_pages, registrationCategory.price],
+        [registrationCategory.form_pages, registrationCategory.price, t],
     );
     const branding = registrationCategory.form_branding ?? {};
 
-    const schema = useMemo(() => buildSchema(pages), [pages]);
+    const schema = useMemo(() => buildSchema(pages, t), [pages, t]);
     type FormValues = z.infer<typeof schema>;
 
-    const { control, handleSubmit, setError, trigger } = useForm<FormValues>({
+    const {
+        control,
+        handleSubmit,
+        setError,
+        trigger,
+        subscribe,
+        getValues,
+        reset,
+        formState: { errors },
+    } = useForm<FormValues>({
         resolver: zodResolver(schema),
         defaultValues: defaultValuesFor(pages) as FormValues,
         mode: 'onChange',
     });
+    const rosterField = rosterFieldOf(pages);
+
+    // --- Draft: what's typed so far lives in localStorage ------------------
+    // Restored silently on mount (one less tap on a phone); the banner says
+    // so and offers a clean start. Saving is off until the restore has run,
+    // so an empty first render can't overwrite the draft, and off for good
+    // once the registration went through.
+    const storageKey = draftKey(registrationCategory.id);
+    const [restoredAt, setRestoredAt] = useState<string | null>(null);
+    const draftEnabled = useRef(false);
+    const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+        if (confirmedRegistration) {
+            draftEnabled.current = false;
+            clearDraft(storageKey);
+
+            return;
+        }
+
+        const draft = readDraft<Record<string, unknown>>(storageKey);
+        const defaults = defaultValuesFor(pages);
+
+        if (draft && !sameAsDefaults(draft.values, defaults)) {
+            // Over the defaults, so a question the organiser added since
+            // still gets its empty value. A one-shot sync from storage on
+            // mount, not a render-time derivation — hence the setState here.
+            reset({ ...defaults, ...draft.values } as FormValues);
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setPageIndex(Math.min(draft.pageIndex, pages.length - 1));
+            setRestoredAt(draft.savedAt);
+        }
+
+        draftEnabled.current = true;
+        // The key only changes with the category, which means a new page.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [storageKey, Boolean(confirmedRegistration)]);
+
+    useEffect(() => {
+        const save = () => {
+            if (!draftEnabled.current) {
+                return;
+            }
+
+            writeDraft(storageKey, {
+                values: getValues(),
+                pageIndex,
+                savedAt: new Date().toISOString(),
+            });
+        };
+
+        // Moving between steps is worth remembering at once; typing is
+        // debounced so a phone isn't serialising the roster on every key.
+        save();
+        const unsubscribe = subscribe({
+            formState: { values: true },
+            callback: () => {
+                if (saveTimer.current) {
+                    clearTimeout(saveTimer.current);
+                }
+
+                saveTimer.current = setTimeout(save, 500);
+            },
+        });
+
+        return () => {
+            unsubscribe();
+
+            if (saveTimer.current) {
+                clearTimeout(saveTimer.current);
+            }
+        };
+    }, [subscribe, getValues, storageKey, pageIndex]);
+
+    function startOver() {
+        clearDraft(storageKey);
+        reset(defaultValuesFor(pages) as FormValues);
+        setPageIndex(0);
+        setRestoredAt(null);
+    }
+
+    // Errors already on screen were worded in the previous language; the new
+    // resolver only speaks up on the next change, so ask it now.
+    const hasErrors = Object.keys(errors).length > 0;
+    useEffect(() => {
+        if (hasErrors) {
+            void trigger();
+        }
+        // Only a language switch should re-run this, not every keystroke.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [locale]);
 
     const isTeam = registrationCategory.subject_type === 'team';
     const isFreeCategory =
@@ -677,16 +884,13 @@ export default function RegisterDynamic({
     const onSubmit = (data: FormValues) => {
         setIsSaving(true);
 
-        const raw = data as Record<string, string | boolean>;
-        const payload: Record<
-            string,
-            string | boolean | Record<string, string | boolean>
-        > = {
+        const raw = data as Record<string, unknown>;
+        const payload: Record<string, unknown> = {
             name: raw.name,
             form_data: {},
             website: honeypot,
         };
-        const formData = payload.form_data as Record<string, string | boolean>;
+        const formData = payload.form_data as Record<string, unknown>;
 
         inputFieldsOf(pages).forEach((f) => {
             if (f.key === 'name') {
@@ -700,9 +904,15 @@ export default function RegisterDynamic({
             }
         });
 
+        // The roster block's members go up as their own array: the server
+        // turns them into the team sheet rather than storing them as answers.
+        if (rosterField) {
+            payload.roster = raw.roster;
+        }
+
         router.post(
             `/events/${event.id}/registration-categories/${registrationCategory.id}/register`,
-            payload,
+            payload as never,
             {
                 onFinish: () => setIsSaving(false),
                 onError: (errors) => {
@@ -725,9 +935,15 @@ export default function RegisterDynamic({
 
         const keys = currentPage.fields
             .filter((f) => isInputField(f) && f.key !== 'name')
-            .map((f) => f.key) as never[];
-        const namesToCheck =
-            pageIndex === 0 ? (['name', ...keys] as never[]) : keys;
+            .map((f) => f.key);
+
+        if (currentPage.fields.some(isRosterField)) {
+            keys.push('roster');
+        }
+
+        const namesToCheck = (
+            pageIndex === 0 ? ['name', ...keys] : keys
+        ) as never[];
         const valid = await trigger(namesToCheck);
 
         if (valid) {
@@ -767,7 +983,11 @@ export default function RegisterDynamic({
     if (registrationClosed) {
         return (
             <>
-                <Head title={`Registration Closed — ${event.name}`} />
+                <Head
+                    title={t('Registration Closed — :event', {
+                        event: event.name,
+                    })}
+                />
 
                 <div
                     className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10"
@@ -775,7 +995,7 @@ export default function RegisterDynamic({
                 >
                     <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
                         <PublicPageHeader
-                            eyebrow="Registration"
+                            eyebrow={t('Registration')}
                             title={event.name}
                             subtitle={registrationCategory.name}
                             logoUrl={event.logo}
@@ -787,13 +1007,13 @@ export default function RegisterDynamic({
                                 <Lock className="h-8 w-8 text-red-600" />
                             </div>
                             <p className="text-neutral-600">
-                                Registration for this category is currently
-                                closed or full. Please contact the organizer for
-                                more information.
+                                {t(
+                                    'Registration for this category is currently closed or full. Please contact the organizer for more information.',
+                                )}
                             </p>
                             {event.contact_person && (
                                 <p className="text-sm font-medium text-neutral-500">
-                                    Contact: {event.contact_person}
+                                    {t('Contact')}: {event.contact_person}
                                 </p>
                             )}
                         </div>
@@ -806,7 +1026,10 @@ export default function RegisterDynamic({
     return (
         <>
             <Head
-                title={`${registrationCategory.name} Registration — ${event.name}`}
+                title={t(':category Registration — :event', {
+                    category: registrationCategory.name,
+                    event: event.name,
+                })}
             />
 
             <div
@@ -818,7 +1041,7 @@ export default function RegisterDynamic({
                     style={cardStyle}
                 >
                     <PublicPageHeader
-                        eyebrow="Registration"
+                        eyebrow={t('Registration')}
                         title={event.name}
                         subtitle={registrationCategory.name}
                         logoUrl={branding.logo_url || event.logo}
@@ -832,14 +1055,14 @@ export default function RegisterDynamic({
                         <div className="flex items-start justify-between gap-4">
                             <div className="flex flex-col">
                                 <span className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">
-                                    You are registering for
+                                    {t('You are registering for')}
                                 </span>
                                 <span className="text-sm font-bold text-neutral-900">
                                     {registrationCategory.name}
                                 </span>
                                 <span className="text-xs text-neutral-500">
                                     {event.name} ·{' '}
-                                    {isTeam ? 'Per team' : 'Per person'}
+                                    {isTeam ? t('Per team') : t('Per person')}
                                 </span>
                             </div>
                             {/* A free category gets no price tag — a bare
@@ -852,11 +1075,14 @@ export default function RegisterDynamic({
                         </div>
                         {!isFreeCategory && (
                             <p className="mt-2 text-xs text-neutral-500">
-                                After you submit this form your slot is reserved
-                                and you&apos;ll be taken to the Midtrans payment
-                                page to pay{' '}
-                                {formatRupiah(registrationCategory.price)}. The
-                                registration is confirmed once payment settles.
+                                {t(
+                                    'After you submit this form your slot is reserved and you’ll be taken to the Midtrans payment page to pay :price. The registration is confirmed once payment settles.',
+                                    {
+                                        price: formatRupiah(
+                                            registrationCategory.price,
+                                        ),
+                                    },
+                                )}
                             </p>
                         )}
                     </div>
@@ -865,7 +1091,10 @@ export default function RegisterDynamic({
                         <div className="px-6 pt-4">
                             <div className="flex items-center justify-between text-xs font-medium text-neutral-500">
                                 <span>
-                                    Step {pageIndex + 1} of {pages.length}
+                                    {t('Step :current of :total', {
+                                        current: pageIndex + 1,
+                                        total: pages.length,
+                                    })}
                                 </span>
                                 <span>{currentPage?.title}</span>
                             </div>
@@ -896,6 +1125,34 @@ export default function RegisterDynamic({
                             aria-hidden="true"
                         />
 
+                        {isFirstPage && rosterField && (
+                            <RosterRequirementsCard
+                                field={rosterField}
+                                rosterDeadline={rosterDeadline}
+                            />
+                        )}
+
+                        {restoredAt && (
+                            <div
+                                role="status"
+                                className="mb-5 flex flex-col gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between"
+                            >
+                                <span suppressHydrationWarning>
+                                    {t(
+                                        'Your unfinished registration from :time was restored.',
+                                        { time: formatDateTime(restoredAt) },
+                                    )}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={startOver}
+                                    className="shrink-0 cursor-pointer text-left font-semibold underline underline-offset-2 hover:text-amber-950"
+                                >
+                                    {t('Start over')}
+                                </button>
+                            </div>
+                        )}
+
                         <FieldGroup>
                             {isFirstPage && (
                                 <Controller
@@ -907,16 +1164,18 @@ export default function RegisterDynamic({
                                         >
                                             <FieldLabel htmlFor="name">
                                                 {isTeam
-                                                    ? 'Team Name'
-                                                    : 'Full Name'}
+                                                    ? t('Team Name')
+                                                    : t('Full Name')}
                                             </FieldLabel>
                                             <Input
                                                 {...field}
                                                 id="name"
                                                 placeholder={
                                                     isTeam
-                                                        ? "Input your team's name"
-                                                        : 'Input your name'
+                                                        ? t(
+                                                              'Input your team’s name',
+                                                          )
+                                                        : t('Input your name')
                                                 }
                                                 aria-invalid={
                                                     fieldState.invalid
@@ -939,7 +1198,25 @@ export default function RegisterDynamic({
                             {(currentPage?.fields ?? [])
                                 .filter((f) => f.key !== 'name')
                                 .map((f) =>
-                                    !isInputField(f) ? (
+                                    isRosterField(f) ? (
+                                        <RosterBlock
+                                            key={f.key}
+                                            field={f}
+                                            rosterDeadline={rosterDeadline}
+                                            control={control}
+                                            errors={
+                                                (
+                                                    errors as Record<
+                                                        string,
+                                                        unknown
+                                                    >
+                                                ).roster as never
+                                            }
+                                            setError={setError}
+                                            disabled={isSaving}
+                                            controlStyle={controlStyle}
+                                        />
+                                    ) : !isInputField(f) ? (
                                         <DescriptionBlock
                                             key={f.key}
                                             field={f}
@@ -960,7 +1237,9 @@ export default function RegisterDynamic({
                                                         {!f.required && (
                                                             <span className="font-normal text-muted-foreground">
                                                                 {' '}
-                                                                (Optional)
+                                                                {t(
+                                                                    '(Optional)',
+                                                                )}
                                                             </span>
                                                         )}
                                                     </FieldLabel>
@@ -970,7 +1249,9 @@ export default function RegisterDynamic({
                                                             value={
                                                                 field.value as string
                                                             }
-                                                            ratio={4 / 5}
+                                                            ratio={imageRatioOf(
+                                                                f,
+                                                            )}
                                                             uploadUrl="/public-upload/image"
                                                             deleteUrl="/public-upload/image"
                                                             onChange={(value) =>
@@ -987,7 +1268,9 @@ export default function RegisterDynamic({
                                                                             typeof error ===
                                                                             'string'
                                                                                 ? error
-                                                                                : 'Upload failed',
+                                                                                : t(
+                                                                                      'Upload failed',
+                                                                                  ),
                                                                     },
                                                                 )
                                                             }
@@ -1016,7 +1299,9 @@ export default function RegisterDynamic({
                                                                             typeof error ===
                                                                             'string'
                                                                                 ? error
-                                                                                : 'Upload failed',
+                                                                                : t(
+                                                                                      'Upload failed',
+                                                                                  ),
                                                                     },
                                                                 )
                                                             }
@@ -1088,7 +1373,11 @@ export default function RegisterDynamic({
                                                                 }
                                                                 className="w-full cursor-pointer border-2 border-black font-semibold focus-visible:ring-[var(--accent)]"
                                                             >
-                                                                <SelectValue placeholder="Select an option" />
+                                                                <SelectValue
+                                                                    placeholder={t(
+                                                                        'Select an option',
+                                                                    )}
+                                                                />
                                                             </SelectTrigger>
                                                             <SelectContent>
                                                                 {(
@@ -1142,7 +1431,7 @@ export default function RegisterDynamic({
                                                             id={f.key}
                                                             label={
                                                                 f.help_text ??
-                                                                'Yes'
+                                                                t('Yes')
                                                             }
                                                             checked={
                                                                 field.value as boolean
@@ -1193,7 +1482,7 @@ export default function RegisterDynamic({
                                                     {f.help_text &&
                                                         f.type !==
                                                             'checkbox' && (
-                                                            <FieldDescription>
+                                                            <FieldDescription className="whitespace-pre-line">
                                                                 {f.help_text}
                                                             </FieldDescription>
                                                         )}
@@ -1224,7 +1513,7 @@ export default function RegisterDynamic({
                                         disabled={isSaving}
                                         style={controlStyle}
                                     >
-                                        Back
+                                        {t('Back')}
                                     </Button>
                                 )}
 
@@ -1241,9 +1530,9 @@ export default function RegisterDynamic({
                                             <CheckCircle2 className="mr-2 h-4 w-4" />
                                         )}
                                         {isSaving
-                                            ? 'Registering...'
+                                            ? t('Registering…')
                                             : branding.button_label ||
-                                              'Register'}
+                                              t('Register')}
                                     </Button>
                                 ) : (
                                     <Button
@@ -1252,7 +1541,7 @@ export default function RegisterDynamic({
                                         onClick={goNext}
                                         style={controlStyle}
                                     >
-                                        Next
+                                        {t('Next')}
                                     </Button>
                                 )}
                             </div>

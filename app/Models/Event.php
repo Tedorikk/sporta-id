@@ -42,6 +42,7 @@ class Event extends Model
         'contact_person',
         'category',
         'is_published',
+        'registration_after_end',
         'start_date',
         'end_date',
         'banner',
@@ -55,6 +56,7 @@ class Event extends Model
 
     protected $casts = [
         'is_published' => 'boolean',
+        'registration_after_end' => 'boolean',
         'start_date' => 'date:Y-m-d',
         'end_date' => 'date:Y-m-d',
     ];
@@ -72,17 +74,27 @@ class Event extends Model
 
     public function getStatusAttribute(): string
     {
-        $today = now()->startOfDay();
-
-        if ($this->start_date->gt($today)) {
+        if ($this->start_date->gt(now()->startOfDay())) {
             return 'upcoming';
         }
 
-        if ($this->end_date->lt($today)) {
-            return 'past';
-        }
+        return $this->hasEnded() ? 'past' : 'ongoing';
+    }
 
-        return 'ongoing';
+    /** True from the day after the event's last day. */
+    public function hasEnded(): bool
+    {
+        return $this->end_date->lt(now()->startOfDay());
+    }
+
+    /**
+     * Whether categories on this event may still take registrations as far
+     * as the calendar is concerned: an event that is over stops, unless the
+     * organiser has switched on the after-end override.
+     */
+    public function acceptsRegistration(): bool
+    {
+        return ! $this->hasEnded() || $this->registration_after_end;
     }
 
     public function scopeForOrganization(Builder $query, Organization|int|null $organization): Builder

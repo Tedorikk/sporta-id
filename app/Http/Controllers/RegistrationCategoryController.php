@@ -2,12 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BasketballEvent;
+use App\Models\BasketballEventCategory;
 use App\Models\Event;
 use App\Models\Payment;
+use App\Models\Player;
 use App\Models\RegistrationCategory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class RegistrationCategoryController extends Controller
@@ -16,7 +22,9 @@ class RegistrationCategoryController extends Controller
     {
         return Inertia::render('dashboard/events/registration-categories/index', [
             'event' => $event,
+            'isBasketballEvent' => $this->isBasketballEvent($event),
             'registrationCategories' => $event->registrationCategories()
+                ->with('basketballCategory')
                 ->withCount('registrations')
                 ->latest()
                 ->get(),
@@ -33,11 +41,12 @@ class RegistrationCategoryController extends Controller
         $registrationCategoryId = $request->integer('registration_category_id') ?: null;
 
         $registrationCategory = $registrationCategoryId
-            ? $event->registrationCategories()->findOrFail($registrationCategoryId)
+            ? $event->registrationCategories()->with('basketballCategory')->findOrFail($registrationCategoryId)
             : null;
 
         return Inertia::render('dashboard/events/registration-categories/builder', [
             'event' => $event,
+            'isBasketballEvent' => $this->isBasketballEvent($event),
             'registrationCategory' => $registrationCategory,
         ]);
     }
@@ -120,9 +129,17 @@ class RegistrationCategoryController extends Controller
 
     public function store(Request $request, Event $event)
     {
-        $validated = $this->validated($request);
+        $validated = $this->validated($request, $event);
+        $tournament = $validated['tournament'] ?? null;
+        unset($validated['tournament']);
 
-        $event->registrationCategories()->create($validated);
+        DB::transaction(function () use ($event, $validated, $tournament) {
+            $registrationCategory = $event->registrationCategories()->create($validated);
+
+            if ($tournament !== null) {
+                $this->saveTournament($event, $registrationCategory, $tournament);
+            }
+        });
 
         return redirect()->route('registration_categories.index', $event)->with(['toast' => [
             'title' => 'Success',
@@ -134,14 +151,69 @@ class RegistrationCategoryController extends Controller
     {
         abort_unless($registrationCategory->event_id === $event->id, 404);
 
-        $validated = $this->validated($request);
+        $validated = $this->validated($request, $event);
+        $tournament = $validated['tournament'] ?? null;
+        unset($validated['tournament']);
 
-        $registrationCategory->update($validated);
+        DB::transaction(function () use ($event, $registrationCategory, $validated, $tournament) {
+            $registrationCategory->update($validated);
+
+            if ($tournament !== null) {
+                $this->saveTournament($event, $registrationCategory, $tournament);
+            } elseif ($registrationCategory->basketballCategory) {
+                // Tournament config can't be switched off from the form — its
+                // teams, pools and matches hang off it — but the shared name
+                // must still follow the category.
+                $registrationCategory->basketballCategory->update(['name' => $registrationCategory->name]);
+            }
+        });
 
         return redirect()->route('registration_categories.index', $event)->with(['toast' => [
             'title' => 'Success',
             'description' => 'Registration category updated successfully.',
         ]]);
+    }
+
+    /**
+     * Creates or updates the tournament config that turns a team category
+     * into a basketball bracket: format, points, and roster limits.
+     */
+    private function saveTournament(Event $event, RegistrationCategory $registrationCategory, array $tournament): void
+    {
+        $basketballEvent = $event->specific;
+
+        if (! $basketballEvent instanceof BasketballEvent) {
+            throw ValidationException::withMessages(['tournament' => 'This event does not run a basketball tournament.']);
+        }
+
+        if ($registrationCategory->subject_type !== RegistrationCategory::SUBJECT_TEAM) {
+            throw ValidationException::withMessages(['tournament' => 'Only team categories can run a tournament.']);
+        }
+
+        BasketballEventCategory::updateOrCreate(
+            ['registration_category_id' => $registrationCategory->id],
+            [
+                ...$tournament,
+                'basketball_event_id' => $basketballEvent->id,
+                'name' => $registrationCategory->name,
+            ],
+        );
+
+        // The roster block's player slot is a copy of these limits; keep the
+        // stored form honest so the builder and any raw reader agree with
+        // what rosterField() resolves.
+        $registrationCategory->unsetRelation('basketballCategory');
+
+        if ($registrationCategory->rosterField() !== null) {
+            $registrationCategory->update(['form_pages' => $registrationCategory->formPagesForRegistrant()]);
+        }
+    }
+
+    private function isBasketballEvent(Event $event): bool
+    {
+        $event->loadMissing('specific');
+
+        return $event->specific instanceof BasketballEvent;
     }
 
     public function destroy(Event $event, RegistrationCategory $registrationCategory)
@@ -163,7 +235,41 @@ class RegistrationCategoryController extends Controller
         ]]);
     }
 
-    private function validated(Request $request): array
+    /**
+     * A roster block writes Player rows on a basketball team, so only a team
+     * category on a basketball event may carry one — and only one, since
+     * the members all land on the same team sheet.
+     */
+    private function validateRosterBlocks(Collection $fields, string $subjectType, Event $event): void
+    {
+        $rosterBlocks = $fields->where('type', RegistrationCategory::ROSTER_TYPE);
+
+        if ($rosterBlocks->isEmpty()) {
+            return;
+        }
+
+        if ($rosterBlocks->count() > 1) {
+            throw ValidationException::withMessages(['form_pages' => 'A form can only have one roster block.']);
+        }
+
+        if ($subjectType !== RegistrationCategory::SUBJECT_TEAM || ! $this->isBasketballEvent($event)) {
+            throw ValidationException::withMessages(['form_pages' => 'A roster block needs a team category on a basketball event.']);
+        }
+
+        $block = $rosterBlocks->first();
+
+        if (empty($block['slots'])) {
+            throw ValidationException::withMessages(['form_pages' => 'The roster block needs at least one slot (e.g. 5–12 players).']);
+        }
+
+        $memberKeys = collect($block['member_fields'] ?? [])->pluck('key');
+
+        if ($memberKeys->count() !== $memberKeys->unique()->count()) {
+            throw ValidationException::withMessages(['form_pages' => 'Roster member field keys must be unique.']);
+        }
+    }
+
+    private function validated(Request $request, Event $event): array
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -173,6 +279,18 @@ class RegistrationCategoryController extends Controller
             'registration_open' => ['nullable', 'boolean'],
             'opens_at' => ['nullable', 'date'],
             'closes_at' => ['nullable', 'date', 'after_or_equal:opens_at'],
+
+            // Present only when a team category also runs a basketball
+            // tournament; saveTournament() checks the event supports one.
+            'tournament' => ['nullable', 'array', Rule::prohibitedIf(fn () => ! $this->isBasketballEvent($event))],
+            'tournament.format' => ['required_with:tournament', Rule::in(BasketballEventCategory::FORMATS)],
+            'tournament.win_points' => ['nullable', 'integer', 'min:0', 'max:10'],
+            'tournament.loss_points' => ['nullable', 'integer', 'min:0', 'max:10'],
+            'tournament.min_team' => ['required_with:tournament', 'integer', 'min:2'],
+            'tournament.min_player_per_team' => ['required_with:tournament', 'integer', 'min:1'],
+            'tournament.max_player_per_team' => ['nullable', 'integer', 'gte:tournament.min_player_per_team'],
+            'tournament.max_player_per_coach' => ['nullable', 'integer', 'min:1'],
+            'tournament.roster_closes_at' => ['nullable', 'date'],
 
             'form_pages' => ['nullable', 'array'],
             'form_pages.*.key' => ['required', 'string', 'max:100'],
@@ -187,6 +305,7 @@ class RegistrationCategoryController extends Controller
             'form_pages.*.fields.*.type' => ['required', Rule::in([
                 'text', 'number', 'email', 'phone', 'date', 'select', 'radio', 'checkbox',
                 'textarea', 'rating', 'signature', 'file', 'document', 'description',
+                RegistrationCategory::ROSTER_TYPE,
             ])],
             'form_pages.*.fields.*.required' => ['nullable', 'boolean'],
             'form_pages.*.fields.*.options' => ['nullable', 'array'],
@@ -196,6 +315,23 @@ class RegistrationCategoryController extends Controller
             'form_pages.*.fields.*.max' => ['nullable', 'numeric'],
             'form_pages.*.fields.*.error_message' => ['nullable', 'string', 'max:255'],
             'form_pages.*.fields.*.max_rating' => ['nullable', 'integer', 'min:1', 'max:10'],
+            'form_pages.*.fields.*.image_ratio' => ['nullable', Rule::in(RegistrationCategory::IMAGE_RATIOS)],
+
+            // Roster block: which roles, how many of each, and the extra
+            // questions asked per member (their answers land in players.extra).
+            'form_pages.*.fields.*.details_on_form' => ['nullable', 'boolean'],
+            'form_pages.*.fields.*.slots' => ['nullable', 'array'],
+            'form_pages.*.fields.*.slots.*.role' => ['required', Rule::in(Player::ROLES)],
+            'form_pages.*.fields.*.slots.*.label' => ['nullable', 'string', 'max:100'],
+            'form_pages.*.fields.*.slots.*.min' => ['required', 'integer', 'min:0'],
+            'form_pages.*.fields.*.slots.*.max' => ['nullable', 'integer', 'gte:form_pages.*.fields.*.slots.*.min'],
+            'form_pages.*.fields.*.member_fields' => ['nullable', 'array'],
+            'form_pages.*.fields.*.member_fields.*.key' => ['required', 'string', 'max:100', 'regex:/^[a-z0-9_]+$/'],
+            'form_pages.*.fields.*.member_fields.*.label' => ['required', 'string', 'max:255'],
+            'form_pages.*.fields.*.member_fields.*.type' => ['required', Rule::in(RegistrationCategory::ROSTER_MEMBER_FIELD_TYPES)],
+            'form_pages.*.fields.*.member_fields.*.required' => ['nullable', 'boolean'],
+            'form_pages.*.fields.*.member_fields.*.options' => ['nullable', 'array'],
+            'form_pages.*.fields.*.member_fields.*.options.*' => ['string', 'max:255'],
 
             'form_branding' => ['nullable', 'array'],
             'form_branding.primary_color' => ['nullable', 'string', 'max:20'],
@@ -213,6 +349,7 @@ class RegistrationCategoryController extends Controller
             'form_settings.notify_emails' => ['nullable', 'array'],
             'form_settings.notify_emails.*' => ['email', 'max:255'],
         ], [
+            'tournament.prohibited' => 'This event does not run a basketball tournament.',
             'form_pages.*.fields.*.key.regex' => 'Field key may only contain lowercase letters, numbers and underscores.',
             // "name" is always collected by the built-in Team/Full Name field and rendered
             // outside the dynamic field list — a custom field reusing that key would silently
@@ -220,11 +357,14 @@ class RegistrationCategoryController extends Controller
             'form_pages.*.fields.*.key.not_in' => '"name" is reserved for the built-in Name field — choose a different key, e.g. "participant_name".',
         ]);
 
-        $keys = collect($validated['form_pages'] ?? [])->flatMap(fn (array $page) => $page['fields'] ?? [])->pluck('key');
+        $fields = collect($validated['form_pages'] ?? [])->flatMap(fn (array $page) => $page['fields'] ?? []);
+        $keys = $fields->pluck('key');
 
         if ($keys->count() !== $keys->unique()->count()) {
             abort(422, 'Field keys must be unique within a form.');
         }
+
+        $this->validateRosterBlocks($fields, $validated['subject_type'], $event);
 
         return $validated;
     }

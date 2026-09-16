@@ -24,6 +24,18 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configureTranslations();
+    }
+
+    /**
+     * The app's own public-page strings live in lang/app/{locale}.json, apart
+     * from the framework strings laravel-lang manages in lang/{locale}.json,
+     * so `lang:update` can never overwrite ours. The same files are imported
+     * by the client through the `@lang` Vite alias — one source of truth.
+     */
+    protected function configureTranslations(): void
+    {
+        $this->app['translator']->addJsonPath(lang_path('app'));
     }
 
     /**

@@ -13,6 +13,7 @@ import {
     PenLine,
     Star,
     Type,
+    Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { RegistrationFieldType } from '@/types/registration-category';
@@ -41,16 +42,29 @@ const PALETTE: {
 interface FieldPaletteProps {
     onAdd: (type: RegistrationFieldType) => void;
     disabled?: boolean;
+    /** Offer the roster block — a team category on a basketball event that doesn't have one yet. */
+    allowRoster?: boolean;
 }
 
-export function FieldPalette({ onAdd, disabled }: FieldPaletteProps) {
+export function FieldPalette({
+    onAdd,
+    disabled,
+    allowRoster = false,
+}: FieldPaletteProps) {
+    const palette = allowRoster
+        ? [
+              ...PALETTE,
+              { type: 'roster' as const, label: 'Team roster', icon: Users },
+          ]
+        : PALETTE;
+
     return (
         <div className="space-y-1">
             <p className="px-1 text-xs font-medium text-muted-foreground uppercase">
                 Add a field
             </p>
             <div className="grid grid-cols-2 gap-1.5">
-                {PALETTE.map(({ type, label, icon: Icon }) => (
+                {palette.map(({ type, label, icon: Icon }) => (
                     <Button
                         key={type}
                         type="button"

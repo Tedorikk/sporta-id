@@ -12,7 +12,6 @@ export type EventStatus = 'upcoming' | 'ongoing' | 'past';
 export interface BasketballEventSpecific {
     id: number;
     pool_drawing_date: string | null;
-    registration_open: boolean;
 }
 
 export interface RunningEventSpecific {
@@ -28,6 +27,8 @@ export interface Event {
     contact_person: string;
     category: string | null;
     is_published: boolean;
+    /** Organiser override: keep taking registrations after the event's last day. */
+    registration_after_end: boolean;
     start_date: string;
     end_date: string;
     banner: string | null;
@@ -103,3 +104,10 @@ export interface EventStats {
     ongoing: number;
     past: number;
 }
+
+/** Event status values are stored in English; these are the keys `t()` translates on public pages. */
+export const EVENT_STATUS_LABEL: Record<string, string> = {
+    upcoming: 'Upcoming',
+    ongoing: 'Ongoing',
+    past: 'Past',
+};

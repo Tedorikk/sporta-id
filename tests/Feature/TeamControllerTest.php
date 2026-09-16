@@ -86,14 +86,7 @@ test('can access team create page and store team if categories exist', function 
 
     $this->actingAs(organizerOf($event));
 
-    $category = BasketballEventCategory::create([
-        'basketball_event_id' => $basketballEvent->id,
-        'name' => 'Under 18',
-        'slug' => 'under-18',
-        'min_team' => 2,
-        'min_player_per_team' => 5,
-        'status' => 'PENDING',
-    ]);
+    $category = BasketballEventCategory::factory()->forEvent($event)->create(['name' => 'Under 18']);
 
     $response = $this->get(route('teams.create', $event));
     $response->assertOk();

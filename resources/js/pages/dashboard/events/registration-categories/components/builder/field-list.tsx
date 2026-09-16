@@ -18,7 +18,12 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import {
+    Field,
+    FieldDescription,
+    FieldGroup,
+    FieldLabel,
+} from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -30,24 +35,43 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import {
+    IMAGE_RATIOS,
     OPTION_FIELD_TYPES,
     REGISTRATION_FIELD_TYPES,
     RESERVED_FIELD_KEYS,
+    TEAM_LOGO_KEY,
     isInputField,
+    rosterDetailsOnForm,
 } from '@/types/registration-category';
-import type { RegistrationField } from '@/types/registration-category';
+import type {
+    ImageRatio,
+    RegistrationField,
+} from '@/types/registration-category';
 import { OptionEditor } from './option-editor';
+import { RosterBlockEditor } from './roster-block-editor';
 
 export interface DraftField extends RegistrationField {
     _uid: string;
 }
 
+/** The tournament's player limits, which a roster block's player slot follows. */
+export interface PlayerLimits {
+    min: number;
+    max: number | null;
+}
+
 interface FieldListProps {
     fields: DraftField[];
     onChange: (fields: DraftField[]) => void;
+    /** Set when the category runs a tournament; the roster block's player slot is read-only then. */
+    playerLimits?: PlayerLimits | null;
 }
 
-export function FieldList({ fields, onChange }: FieldListProps) {
+export function FieldList({
+    fields,
+    onChange,
+    playerLimits = null,
+}: FieldListProps) {
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     );
@@ -97,6 +121,7 @@ export function FieldList({ fields, onChange }: FieldListProps) {
                         <SortableFieldRow
                             key={field._uid}
                             field={field}
+                            playerLimits={playerLimits}
                             onChange={(patch) => updateField(field._uid, patch)}
                             onRemove={() => removeField(field._uid)}
                         />
@@ -109,10 +134,12 @@ export function FieldList({ fields, onChange }: FieldListProps) {
 
 function SortableFieldRow({
     field,
+    playerLimits,
     onChange,
     onRemove,
 }: {
     field: DraftField;
+    playerLimits: PlayerLimits | null;
     onChange: (patch: Partial<DraftField>) => void;
     onRemove: () => void;
 }) {
@@ -130,7 +157,13 @@ function SortableFieldRow({
     const isReserved = RESERVED_FIELD_KEYS.includes(field.key);
     // A description block has no answer, so key / required / error message
     // are meaningless for it — the editor collapses to heading + body text.
-    const isDisplayOnly = !isInputField(field);
+    const isDisplayOnly = !isInputField(field) && field.type !== 'roster';
+    const isRoster = field.type === 'roster';
+    // A roster block can't be turned into a plain field (its slots would be
+    // lost) and a plain field can't become one — it is added from the palette.
+    const typeChoices = REGISTRATION_FIELD_TYPES.filter((t) =>
+        isRoster ? t.value === 'roster' : t.value !== 'roster',
+    );
     const typeLabel =
         REGISTRATION_FIELD_TYPES.find((t) => t.value === field.type)?.label ??
         field.type;
@@ -254,6 +287,7 @@ function SortableFieldRow({
                             <FieldLabel>Type</FieldLabel>
                             <Select
                                 value={field.type}
+                                disabled={isRoster}
                                 onValueChange={(value) => {
                                     const type = value as DraftField['type'];
 
@@ -268,7 +302,7 @@ function SortableFieldRow({
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {REGISTRATION_FIELD_TYPES.map((t) => (
+                                    {typeChoices.map((t) => (
                                         <SelectItem
                                             key={t.value}
                                             value={t.value}
@@ -306,6 +340,16 @@ function SortableFieldRow({
                         />
                     )}
 
+                    {isRoster && (
+                        <RosterBlockEditor
+                            slots={field.slots ?? []}
+                            memberFields={field.member_fields ?? []}
+                            detailsOnForm={rosterDetailsOnForm(field)}
+                            playerLimits={playerLimits}
+                            onChange={(patch) => onChange(patch)}
+                        />
+                    )}
+
                     {field.type === 'number' && (
                         <div className="grid grid-cols-2 gap-2">
                             <Field>
@@ -339,6 +383,39 @@ function SortableFieldRow({
                                 />
                             </Field>
                         </div>
+                    )}
+
+                    {field.type === 'file' && (
+                        <Field>
+                            <FieldLabel>Image shape</FieldLabel>
+                            <Select
+                                value={field.image_ratio ?? 'portrait'}
+                                onValueChange={(value) =>
+                                    onChange({
+                                        image_ratio: value as ImageRatio,
+                                    })
+                                }
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {IMAGE_RATIOS.map((r) => (
+                                        <SelectItem
+                                            key={r.value}
+                                            value={r.value}
+                                        >
+                                            {r.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <FieldDescription>
+                                The crop grid the participant sees.
+                                {field.key === TEAM_LOGO_KEY &&
+                                    ' With the key "team_logo" on a team category, this upload becomes the team\'s logo on ID cards and brackets.'}
+                            </FieldDescription>
+                        </Field>
                     )}
 
                     {field.type === 'rating' && (

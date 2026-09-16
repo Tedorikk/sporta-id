@@ -4,6 +4,7 @@ import { FlagshipEventSection } from '@/components/landing/flagship-event-sectio
 import { HeroSection } from '@/components/landing/hero-section';
 import { ReachSection } from '@/components/landing/reach-section';
 import { StatsStrip } from '@/components/landing/stats-strip';
+import { useT } from '@/hooks/use-t';
 import PublicLayout from '@/layouts/public-layout';
 import type { Event } from '@/types/event';
 
@@ -12,9 +13,11 @@ interface Props {
 }
 
 export default function Landing({ events }: Props) {
+    const { t } = useT();
+
     return (
         <>
-            <Head title="Sporta Indonesia — Support Your Talent" />
+            <Head title={t('Sporta Indonesia — Support Your Talent')} />
 
             <PublicLayout>
                 <HeroSection />

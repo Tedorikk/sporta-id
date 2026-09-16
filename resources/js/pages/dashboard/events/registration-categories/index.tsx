@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ChevronLeft, Link2, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ChevronLeft, Link2, Pencil, Plus, Trash2, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { Badge } from '@/components/ui/badge';
@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/button';
 import { formatRupiah } from '@/lib/format-currency';
 import type { Event } from '@/types/event';
 import type { RegistrationCategory } from '@/types/registration-category';
+import { TOURNAMENT_FORMATS } from '@/types/registration-category';
 
 interface Props {
     event: Event;
+    isBasketballEvent: boolean;
     registrationCategories: RegistrationCategory[];
 }
 
@@ -93,6 +95,17 @@ export default function RegistrationCategoriesIndex({
                                 </Badge>
                                 {!category.registration_open && (
                                     <Badge variant="outline">Closed</Badge>
+                                )}
+                                {category.basketball_category && (
+                                    <Badge variant="secondary">
+                                        <Trophy className="mr-1 h-3 w-3" />
+                                        {TOURNAMENT_FORMATS.find(
+                                            (f) =>
+                                                f.value ===
+                                                category.basketball_category
+                                                    ?.format,
+                                        )?.label ?? 'Tournament'}
+                                    </Badge>
                                 )}
                             </div>
                             <p className="text-xs text-muted-foreground">

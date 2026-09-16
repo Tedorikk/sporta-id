@@ -5,6 +5,7 @@ import type { CSSProperties } from 'react';
 import { PublicPageHeader } from '@/components/public/public-page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useT } from '@/hooks/use-t';
 import { formatRupiah } from '@/lib/format-currency';
 import { formatImageUrl } from '@/lib/image-utils';
 import type {
@@ -41,6 +42,7 @@ export default function Vote({ event, award, nominees, voter }: Props) {
         website: '',
     });
 
+    const { t, tc } = useT();
     const accentStyle = {
         '--accent-color': event.accent_color ?? '#dc2626',
     } as CSSProperties;
@@ -89,7 +91,7 @@ export default function Vote({ event, award, nominees, voter }: Props) {
             >
                 <div className="w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
                     <PublicPageHeader
-                        eyebrow="Vote"
+                        eyebrow={t('Vote')}
                         title={award.title}
                         subtitle={event.name}
                         logoUrl={event.logo}
@@ -105,15 +107,20 @@ export default function Vote({ event, award, nominees, voter }: Props) {
 
                         {voter && (
                             <p className="rounded-md bg-emerald-50 px-3 py-2 text-center text-xs font-medium text-emerald-800">
-                                Voting as {voter.name}
+                                {t('Voting as :name', { name: voter.name })}
                             </p>
                         )}
 
                         {award.is_paid && (
                             <p className="rounded-md bg-amber-50 px-3 py-2 text-center text-xs font-medium text-amber-900">
-                                Each vote costs{' '}
-                                {formatRupiah(award.price_per_vote)}. Your votes
-                                are counted once your payment completes.
+                                {t(
+                                    'Each vote costs :price. Your votes are counted once your payment completes.',
+                                    {
+                                        price: formatRupiah(
+                                            award.price_per_vote,
+                                        ),
+                                    },
+                                )}
                             </p>
                         )}
 
@@ -122,8 +129,8 @@ export default function Vote({ event, award, nominees, voter }: Props) {
                                 <Lock className="h-5 w-5 text-neutral-500" />
                                 <p className="text-sm font-semibold text-neutral-700">
                                     {award.has_closed
-                                        ? 'Voting has closed'
-                                        : 'Voting is not open yet'}
+                                        ? t('Voting has closed')
+                                        : t('Voting is not open yet')}
                                 </p>
                             </div>
                         )}
@@ -142,7 +149,7 @@ export default function Vote({ event, award, nominees, voter }: Props) {
                         <div className="flex flex-col gap-2">
                             {nominees.length === 0 && (
                                 <p className="py-6 text-center text-sm text-neutral-500">
-                                    Nobody is on this ballot yet.
+                                    {t('Nobody is on this ballot yet.')}
                                 </p>
                             )}
 
@@ -197,8 +204,11 @@ export default function Vote({ event, award, nominees, voter }: Props) {
                                                         />
                                                     </span>
                                                     <span className="mt-1 block text-xs text-neutral-500">
-                                                        {nominee.votes_total}{' '}
-                                                        votes
+                                                        {tc(
+                                                            ':count vote|:count votes',
+                                                            nominee.votes_total ??
+                                                                0,
+                                                        )}
                                                     </span>
                                                 </>
                                             )}
@@ -214,7 +224,7 @@ export default function Vote({ event, award, nominees, voter }: Props) {
 
                         {!award.results_are_public && award.is_open && (
                             <p className="text-center text-xs text-neutral-500">
-                                Results are revealed when voting closes.
+                                {t('Results are revealed when voting closes.')}
                             </p>
                         )}
 
@@ -224,7 +234,7 @@ export default function Vote({ event, award, nominees, voter }: Props) {
                                     <>
                                         <div className="flex items-center justify-between">
                                             <span className="text-sm font-medium text-neutral-700">
-                                                Votes
+                                                {t('Votes')}
                                             </span>
                                             <div className="flex items-center gap-2">
                                                 <Button
@@ -232,7 +242,9 @@ export default function Vote({ event, award, nominees, voter }: Props) {
                                                     variant="outline"
                                                     size="icon"
                                                     className="h-8 w-8"
-                                                    aria-label="One fewer vote"
+                                                    aria-label={t(
+                                                        'One fewer vote',
+                                                    )}
                                                     onClick={() =>
                                                         adjustQuantity(-1)
                                                     }
@@ -247,7 +259,9 @@ export default function Vote({ event, award, nominees, voter }: Props) {
                                                     variant="outline"
                                                     size="icon"
                                                     className="h-8 w-8"
-                                                    aria-label="One more vote"
+                                                    aria-label={t(
+                                                        'One more vote',
+                                                    )}
                                                     onClick={() =>
                                                         adjustQuantity(1)
                                                     }
@@ -258,7 +272,7 @@ export default function Vote({ event, award, nominees, voter }: Props) {
                                         </div>
 
                                         <Input
-                                            placeholder="Your name"
+                                            placeholder={t('Your name')}
                                             value={data.voter_name}
                                             onChange={(event_) =>
                                                 setData(
@@ -275,7 +289,9 @@ export default function Vote({ event, award, nominees, voter }: Props) {
 
                                         <Input
                                             type="email"
-                                            placeholder="Email for the receipt"
+                                            placeholder={t(
+                                                'Email for the receipt',
+                                            )}
                                             value={data.voter_email}
                                             onChange={(event_) =>
                                                 setData(
@@ -312,17 +328,21 @@ export default function Vote({ event, award, nominees, voter }: Props) {
                                     className="w-full"
                                 >
                                     {processing
-                                        ? 'Submitting...'
+                                        ? t('Submitting…')
                                         : award.is_paid
-                                          ? `Pay ${formatRupiah(cost)}`
-                                          : 'Cast my vote'}
+                                          ? t('Pay :amount', {
+                                                amount: formatRupiah(cost),
+                                            })
+                                          : t('Cast my vote')}
                                 </Button>
                             </div>
                         )}
 
                         {!award.allows_anonymous && !voter && (
                             <p className="text-center text-xs text-neutral-500">
-                                Open this page from your own ID card to vote.
+                                {t(
+                                    'Open this page from your own ID card to vote.',
+                                )}
                             </p>
                         )}
 
@@ -331,7 +351,7 @@ export default function Vote({ event, award, nominees, voter }: Props) {
                             onClick={() => router.visit(`/events/${event.id}`)}
                             className="text-center text-xs font-medium text-neutral-500 underline"
                         >
-                            Back to {event.name}
+                            {t('Back to :event', { event: event.name })}
                         </button>
                     </div>
                 </div>

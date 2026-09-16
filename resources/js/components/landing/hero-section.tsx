@@ -1,6 +1,9 @@
 import { ArrowRight, Compass } from 'lucide-react';
+import { useT } from '@/hooks/use-t';
 
 export function HeroSection() {
+    const { t } = useT();
+
     return (
         <section
             className="relative overflow-hidden bg-gradient-to-br from-red-700 via-red-800 to-neutral-950"
@@ -42,16 +45,16 @@ export function HeroSection() {
                     Support Your <span className="text-red-300">Talent</span>.
                 </h1>
                 <p className="max-w-lg text-lg text-white/80">
-                    Based in Pontianak, West Kalimantan, we design and organize
-                    sports and arts events across Indonesia and beyond — helping
-                    athletes and communities grow, one event at a time.
+                    {t(
+                        'Based in Pontianak, West Kalimantan, we design and organize sports and arts events across Indonesia and beyond — helping athletes and communities grow, one event at a time.',
+                    )}
                 </p>
                 <div className="flex flex-wrap gap-4 pt-2">
                     <a
                         href="#events"
                         className="flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold tracking-wide text-red-700 uppercase shadow-lg transition hover:bg-neutral-100 active:scale-95"
                     >
-                        See Upcoming Events
+                        {t('See Upcoming Events')}
                         <ArrowRight className="h-4 w-4" />
                     </a>
                     <a
@@ -59,7 +62,7 @@ export function HeroSection() {
                         className="flex items-center gap-2 rounded-full border-2 border-blue-400 px-6 py-3 text-sm font-bold tracking-wide text-blue-200 uppercase transition hover:bg-blue-500/10 active:scale-95"
                     >
                         <Compass className="h-4 w-4" />
-                        Our Biggest Event
+                        {t('Our Biggest Event')}
                     </a>
                 </div>
             </div>

@@ -8,6 +8,7 @@ use App\Models\Payment;
 use App\Models\Registration;
 use App\Models\RegistrationCategory;
 use App\Models\Team;
+use App\Services\Basketball\RosterService;
 use App\Services\Midtrans\MidtransClient;
 use App\Services\RegistrationConfirmationNotifier;
 use Illuminate\Http\Request;
@@ -32,8 +33,11 @@ class RegistrationController extends Controller
 
         return Inertia::render('register-dynamic', [
             'event' => $event,
-            'registrationCategory' => $registrationCategory,
+            'registrationCategory' => $this->forRegistrant($registrationCategory),
             'registrationClosed' => ! $registrationCategory->isOpen() || ! $registrationCategory->hasAvailableQuota(),
+            // For the "what you'll need" card: when a team must have its
+            // roster complete, if the form defers member details to the portal.
+            'rosterDeadline' => $registrationCategory->rosterField() ? $registrationCategory->rosterClosesAt() : null,
         ]);
     }
 
@@ -42,14 +46,15 @@ class RegistrationController extends Controller
         abort_unless($registrationCategory->event_id === $event->id, 404);
 
         $validated = $this->validated($request, $registrationCategory);
+        $roster = $this->validatedRoster($request, $registrationCategory);
 
         $this->guardAgainstDuplicate($validated, $registrationCategory);
 
-        $registration = DB::transaction(function () use ($validated, $event, $registrationCategory) {
+        $registration = DB::transaction(function () use ($validated, $roster, $event, $registrationCategory) {
             $category = RegistrationCategory::whereKey($registrationCategory->id)->lockForUpdate()->first();
 
-            abort_unless($category->isOpen(), 403, 'Registration is closed for this category.');
-            abort_unless($category->hasAvailableQuota(), 403, 'This category is full.');
+            abort_unless($category->isOpen(), 403, __('Registration is closed for this category.'));
+            abort_unless($category->hasAvailableQuota(), 403, __('This category is full.'));
 
             $team = null;
 
@@ -57,8 +62,19 @@ class RegistrationController extends Controller
                 $team = Team::create([
                     'event_id' => $event->id,
                     'name' => $validated['name'],
-                    'status' => 'pending',
+                    'logo' => $validated['form_data'][RegistrationCategory::TEAM_LOGO_KEY] ?? null,
+                    'status' => Team::STATUS_PENDING,
+                    // Puts the team straight into its bracket's category so it
+                    // shows up for pooling and standings once verified.
+                    'basketball_event_category_id' => $category->basketballCategory?->id,
                 ]);
+
+                // The roster block's officials and players go straight onto
+                // the team sheet, so the entry is complete at registration;
+                // the captain's portal takes over for edits after this.
+                foreach ($roster as $member) {
+                    $team->players()->create($member);
+                }
             }
 
             $isFree = $category->isFree();
@@ -77,6 +93,9 @@ class RegistrationController extends Controller
                 // reserved immediately, same as a free registration.
                 'status' => $isFree ? Registration::STATUS_CONFIRMED : Registration::STATUS_PENDING_PAYMENT,
                 'expires_at' => $isFree ? null : now()->addDay(),
+                // Remembered so the confirmation the webhook sends later is
+                // in the language the registrant actually read the form in.
+                'locale' => app()->getLocale(),
             ]);
 
             $category->increment('registered_count');
@@ -109,7 +128,7 @@ class RegistrationController extends Controller
 
         return Inertia::render('register-dynamic', [
             'event' => $event,
-            'registrationCategory' => $registrationCategory->fresh(),
+            'registrationCategory' => $this->forRegistrant($registrationCategory->fresh()),
             'registrationClosed' => false,
             'confirmedRegistration' => $registration,
             'cardTemplate' => $registration->status === Registration::STATUS_CONFIRMED
@@ -129,7 +148,7 @@ class RegistrationController extends Controller
      */
     public function pay(Registration $registration)
     {
-        abort_unless($registration->status === Registration::STATUS_PENDING_PAYMENT, 403, 'This registration is not awaiting payment.');
+        abort_unless($registration->status === Registration::STATUS_PENDING_PAYMENT, 403, __('This registration is not awaiting payment.'));
 
         $payment = $this->createPayment($registration, $registration->registrationCategory);
 
@@ -142,11 +161,25 @@ class RegistrationController extends Controller
 
     public function status(Registration $registration)
     {
-        $registration->loadMissing(['registrationCategory', 'event', 'team']);
+        $registration->loadMissing(['registrationCategory', 'event', 'team.basketballEventCategory']);
 
         return Inertia::render('registration-status', [
             'registration' => $registration,
         ]);
+    }
+
+    /**
+     * The category as the form renders it: form pages with the roster block's
+     * player slot resolved from the tournament (RegistrationCategory::formPagesForRegistrant).
+     *
+     * @return array<string, mixed>
+     */
+    private function forRegistrant(RegistrationCategory $registrationCategory): array
+    {
+        return [
+            ...$registrationCategory->toArray(),
+            'form_pages' => $registrationCategory->formPagesForRegistrant(),
+        ];
     }
 
     private function createPayment(Registration $registration, RegistrationCategory $registrationCategory): Payment
@@ -164,6 +197,33 @@ class RegistrationController extends Controller
         return $payment;
     }
 
+    /**
+     * The roster block's members, validated against the block's slots and
+     * per-member questions; an empty array when the form has no block.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function validatedRoster(Request $request, RegistrationCategory $registrationCategory): array
+    {
+        $rosterField = $registrationCategory->rosterField();
+
+        if ($rosterField === null) {
+            return [];
+        }
+
+        $roster = app(RosterService::class);
+
+        $validated = $request->validate(
+            $roster->submissionRules($rosterField),
+            $roster->messages(),
+            $roster->attributes($rosterField['member_fields'] ?? []),
+        );
+
+        $roster->assertSubmissionFits($validated['roster'], $rosterField);
+
+        return $validated['roster'];
+    }
+
     private function validated(Request $request, RegistrationCategory $registrationCategory): array
     {
         $rules = [
@@ -173,6 +233,9 @@ class RegistrationController extends Controller
             'website' => ['prohibited'],
         ];
         $messages = [];
+        // Errors name the field the way the organiser labelled it on the form,
+        // not "form data.shirt size".
+        $attributes = ['name' => __('Full Name')];
 
         foreach ($registrationCategory->inputFields() as $field) {
             $key = $field['key'];
@@ -183,6 +246,7 @@ class RegistrationController extends Controller
 
             $attribute = in_array($key, self::RESERVED_KEYS, true) ? $key : "form_data.$key";
             $rules[$attribute] = $this->fieldRules($field);
+            $attributes[$attribute] = $field['label'] ?? $key;
 
             if (! empty($field['error_message'])) {
                 $messages["$attribute.required"] = $field['error_message'];
@@ -195,10 +259,11 @@ class RegistrationController extends Controller
         // also overrides an `email` field the organizer marked optional.
         if (! $registrationCategory->isFree()) {
             $rules['email'] = ['required', 'email', 'max:255'];
-            $messages['email.required'] = 'An email address is required so we can send your payment receipt and confirmation.';
+            $messages['email.required'] = __('An email address is required so we can send your payment receipt and confirmation.');
+            $attributes['email'] ??= __('Email Address');
         }
 
-        return $request->validate($rules, $messages);
+        return $request->validate($rules, $messages, $attributes);
     }
 
     private function fieldRules(array $field): array
@@ -244,6 +309,6 @@ class RegistrationController extends Controller
             ? $query->where($duplicateField, $validated[$duplicateField] ?? null)->exists()
             : $query->where("form_data->{$duplicateField}", data_get($validated, "form_data.{$duplicateField}"))->exists();
 
-        abort_if($exists, 422, "You've already registered for this category with that {$duplicateField}.");
+        abort_if($exists, 422, __('You’ve already registered for this category with that :field.', ['field' => $duplicateField]));
     }
 }

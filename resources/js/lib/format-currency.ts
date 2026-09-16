@@ -1,5 +1,22 @@
+export function isFreePrice(
+    price: string | number | null | undefined,
+): boolean {
+    return !price || Number(price) === 0;
+}
+
+/**
+ * The price tag public pages print beside a category: the amount when there
+ * is one, nothing when it's free — a bare "Free" label is clutter next to
+ * every free entry. The pay step still uses formatRupiah() for the amount.
+ */
+export function formatPublicPrice(
+    price: string | number | null | undefined,
+): string | null {
+    return isFreePrice(price) ? null : formatRupiah(price ?? null);
+}
+
 export function formatRupiah(price: string | number | null): string {
-    if (!price || Number(price) === 0) {
+    if (isFreePrice(price)) {
         return 'Free';
     }
 

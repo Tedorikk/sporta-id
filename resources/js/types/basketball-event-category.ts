@@ -1,19 +1,16 @@
-export interface BasketballEventCategory {
+import type {
+    RegistrationCategory,
+    TournamentSettings,
+} from '@/types/registration-category';
+
+export interface BasketballEventCategory extends TournamentSettings {
     id: number;
     basketball_event_id: number;
     name: string;
     slug: string;
-    format: 'round_robin' | 'pool_stage' | string;
-    win_points: number;
-    loss_points: number;
-    min_team: number;
-    max_team: number | null;
-    min_player_per_team: number;
-    max_player_per_team: number | null;
-    max_player_per_coach: number | null;
-    price: string | null;
-    quota: number | null;
-    status: string;
+    registration_category_id: number;
+    /** Price, quota and the open/close window live here — present when the page loads it. */
+    registration_category?: RegistrationCategory;
     created_at: string;
     updated_at: string;
 }

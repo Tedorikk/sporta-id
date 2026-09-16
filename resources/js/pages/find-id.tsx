@@ -12,6 +12,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { useForceLightMode } from '@/hooks/use-force-light-mode';
+import { useT } from '@/hooks/use-t';
 import { playerRoleLabel } from '@/types/player';
 import type { PlayerRole } from '@/types/player';
 
@@ -44,6 +45,8 @@ interface Props {
 
 export default function FindId({ events }: Props) {
     useForceLightMode();
+
+    const { t } = useT();
 
     const [eventId, setEventId] = useState('');
     const [categoryId, setCategoryId] = useState('');
@@ -134,7 +137,7 @@ export default function FindId({ events }: Props) {
 
     return (
         <>
-            <Head title="Find My ID Card" />
+            <Head title={t('Find My ID Card')} />
 
             <div className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10">
                 <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -144,19 +147,23 @@ export default function FindId({ events }: Props) {
 
                 <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
                     <PublicPageHeader
-                        eyebrow="Player Lookup"
-                        title="Find My ID Card"
-                        subtitle="Select your event, category, team, and name to view your card"
+                        eyebrow={t('Player Lookup')}
+                        title={t('Find My ID Card')}
+                        subtitle={t(
+                            'Select your event, category, team, and name to view your card',
+                        )}
                     />
 
                     <div className="flex flex-col gap-4 px-6 py-6">
                         <div className="flex flex-col gap-1.5">
                             <span className="text-xs font-bold tracking-wide text-neutral-500 uppercase">
-                                Event
+                                {t('Event')}
                             </span>
                             <Select value={eventId} onValueChange={chooseEvent}>
                                 <SelectTrigger className="w-full cursor-pointer border-2 border-black font-semibold focus-visible:ring-red-600">
-                                    <SelectValue placeholder="Select an event" />
+                                    <SelectValue
+                                        placeholder={t('Select an event')}
+                                    />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {events.map((event) => (
@@ -174,7 +181,7 @@ export default function FindId({ events }: Props) {
 
                         <div className="flex flex-col gap-1.5">
                             <span className="text-xs font-bold tracking-wide text-neutral-500 uppercase">
-                                Category
+                                {t('Category')}
                             </span>
                             <Select
                                 value={categoryId}
@@ -185,10 +192,10 @@ export default function FindId({ events }: Props) {
                                     <SelectValue
                                         placeholder={
                                             !eventId
-                                                ? 'Select an event first'
+                                                ? t('Select an event first')
                                                 : loadingCategories
-                                                  ? 'Loading...'
-                                                  : 'Select your category'
+                                                  ? t('Loading…')
+                                                  : t('Select your category')
                                         }
                                     />
                                 </SelectTrigger>
@@ -208,7 +215,7 @@ export default function FindId({ events }: Props) {
 
                         <div className="flex flex-col gap-1.5">
                             <span className="text-xs font-bold tracking-wide text-neutral-500 uppercase">
-                                Team
+                                {t('Team')}
                             </span>
                             <Select
                                 value={teamId}
@@ -219,8 +226,8 @@ export default function FindId({ events }: Props) {
                                     <SelectValue
                                         placeholder={
                                             !categoryId
-                                                ? 'Select a category first'
-                                                : 'Select your team'
+                                                ? t('Select a category first')
+                                                : t('Select your team')
                                         }
                                     />
                                 </SelectTrigger>
@@ -240,7 +247,7 @@ export default function FindId({ events }: Props) {
 
                         <div className="flex flex-col gap-1.5">
                             <span className="text-xs font-bold tracking-wide text-neutral-500 uppercase">
-                                Your Name
+                                {t('Your Name')}
                             </span>
                             <Select
                                 value={playerId}
@@ -251,10 +258,10 @@ export default function FindId({ events }: Props) {
                                     <SelectValue
                                         placeholder={
                                             !teamId
-                                                ? 'Select a team first'
+                                                ? t('Select a team first')
                                                 : loadingPlayers
-                                                  ? 'Loading...'
-                                                  : 'Select your name'
+                                                  ? t('Loading…')
+                                                  : t('Select your name')
                                         }
                                     />
                                 </SelectTrigger>
@@ -267,7 +274,7 @@ export default function FindId({ events }: Props) {
                                         >
                                             {player.role === 'player'
                                                 ? `#${player.jersey_number} — ${player.name}`
-                                                : `${playerRoleLabel(player.role)} — ${player.name}`}
+                                                : `${t(playerRoleLabel(player.role))} — ${player.name}`}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -280,7 +287,7 @@ export default function FindId({ events }: Props) {
                             className="mt-2 w-full cursor-pointer bg-red-600 font-bold tracking-wide text-white uppercase hover:bg-red-700"
                         >
                             <Search className="mr-2 h-4 w-4" />
-                            View My ID Card
+                            {t('View My ID Card')}
                         </Button>
                     </div>
                 </div>

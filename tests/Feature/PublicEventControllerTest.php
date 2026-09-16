@@ -94,7 +94,7 @@ test('an open category reports how many slots are left', function () {
         ->assertInertia(fn ($page) => $page->where('registrationCategories.0.slots_left', 42));
 });
 
-test('the public events index exposes a price range for each event', function () {
+test('the public events index lists events without a price range; prices live on the event page', function () {
     $event = Event::factory()->create(['is_published' => true]);
 
     foreach ([100000, 250000] as $price) {
@@ -111,9 +111,14 @@ test('the public events index exposes a price range for each event', function ()
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('events/index')
-            ->where('events.data.0.price_from', fn ($value) => (float) $value === 100000.0)
-            ->where('events.data.0.price_to', fn ($value) => (float) $value === 250000.0)
+            ->where('events.data.0.id', $event->id)
+            ->missing('events.data.0.price_from')
         );
+
+    // Each purchasable category still states its own price where it is bought.
+    $this->get(route('events.public.show', $event))
+        ->assertInertia(fn ($page) => $page
+            ->where('registrationCategories.0.price', fn ($value) => (float) $value === 100000.0));
 });
 
 test('the landing page exposes a price range for each published event', function () {

@@ -29,10 +29,6 @@ class PublicEventController extends Controller
             ->lifecycle('published')
             ->search($filters['search'] ?? null)
             ->category($filters['category'] ?? null)
-            // Same price range as the landing page — the catalogue has to state
-            // a price for every listed event, not just the detail page.
-            ->withMin('registrationCategories as price_from', 'price')
-            ->withMax('registrationCategories as price_to', 'price')
             ->orderBy('start_date')
             ->paginate(9)
             ->withQueryString();
@@ -57,6 +53,25 @@ class PublicEventController extends Controller
         ]);
     }
 
+    /**
+     * Where /events/{event}/register goes now that the basketball-only form
+     * behind it is gone: straight into the form when exactly one category is
+     * open, otherwise the event page, which lists them all with prices and
+     * availability.
+     */
+    public function register(Event $event)
+    {
+        $available = $event->registrationCategories()
+            ->get()
+            ->filter(fn (RegistrationCategory $category) => $category->isOpen() && $category->hasAvailableQuota());
+
+        if ($available->count() === 1) {
+            return redirect()->route('registrations.create', [$event, $available->first()]);
+        }
+
+        return redirect()->route('events.public.show', $event);
+    }
+
     public function show(Event $event)
     {
         abort_unless($event->is_published, 404);
@@ -76,7 +91,7 @@ class PublicEventController extends Controller
                         ->orderBy('match_number')
                         ->orderBy('scheduled_at'),
                 ])
-                ->get(['id', 'basketball_event_id', 'name', 'format', 'price', 'quota'])
+                ->get(['id', 'basketball_event_id', 'registration_category_id', 'name', 'format'])
                 ->map(function (BasketballEventCategory $category) {
                     return [
                         ...$category->toArray(),
