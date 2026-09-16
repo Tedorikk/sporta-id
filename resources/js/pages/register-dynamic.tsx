@@ -519,6 +519,7 @@ function ChoiceGroup({
     name,
     label,
     options,
+    labels,
     value,
     onChange,
     disabled,
@@ -528,6 +529,8 @@ function ChoiceGroup({
     name: string;
     label: string;
     options: string[];
+    /** Display text per option value, for a fixed-value/translated-label choice like gender. Falls back to the value itself. */
+    labels?: Record<string, string>;
     value: string;
     onChange: (value: string) => void;
     disabled?: boolean;
@@ -589,7 +592,9 @@ function ChoiceGroup({
                                 <span className="h-1.5 w-1.5 rounded-full bg-white" />
                             )}
                         </span>
-                        <span className="min-w-0 break-words">{option}</span>
+                        <span className="min-w-0 break-words">
+                            {labels?.[option] ?? option}
+                        </span>
                     </label>
                 );
             })}
@@ -1441,6 +1446,36 @@ export default function RegisterDynamic({
                                                             options={
                                                                 f.options ?? []
                                                             }
+                                                            value={
+                                                                field.value as string
+                                                            }
+                                                            onChange={
+                                                                field.onChange
+                                                            }
+                                                            disabled={isSaving}
+                                                            controlStyle={
+                                                                controlStyle
+                                                            }
+                                                            invalid={
+                                                                fieldState.invalid
+                                                            }
+                                                        />
+                                                    ) : f.type === 'gender' ? (
+                                                        <ChoiceGroup
+                                                            name={f.key}
+                                                            label={f.label}
+                                                            options={[
+                                                                'male',
+                                                                'female',
+                                                            ]}
+                                                            labels={{
+                                                                male: t(
+                                                                    'Male',
+                                                                ),
+                                                                female: t(
+                                                                    'Female',
+                                                                ),
+                                                            }}
                                                             value={
                                                                 field.value as string
                                                             }

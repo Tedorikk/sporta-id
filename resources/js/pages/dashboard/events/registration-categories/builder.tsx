@@ -18,6 +18,7 @@ import {
     REGISTRATION_FIELD_TYPES,
     isInputField,
 } from '@/types/registration-category';
+import type { RunningEventCategory } from '@/types/running-event-category';
 import { BuiltInFieldRow } from './components/builder/built-in-field-row';
 import type { DraftField } from './components/builder/field-list';
 import { FieldList } from './components/builder/field-list';
@@ -43,6 +44,10 @@ interface Props {
     event: Event;
     /** Whether the event can run a basketball tournament (pools, brackets, standings). */
     isBasketballEvent: boolean;
+    /** Whether an individual category on this event may sell entries to a distance. */
+    isRunningEvent: boolean;
+    /** Every distance on this event, for the "sells entries to" picker. */
+    runningCategories: Pick<RunningEventCategory, 'id' | 'name' | 'distance_meters'>[];
     registrationCategory: RegistrationCategory | null;
 }
 
@@ -93,6 +98,8 @@ function toDraftPages(category: RegistrationCategory | null): DraftPage[] {
 export default function RegistrationCategoryBuilder({
     event,
     isBasketballEvent,
+    isRunningEvent,
+    runningCategories,
     registrationCategory,
 }: Props) {
     const isEditing = Boolean(registrationCategory);
@@ -118,6 +125,9 @@ export default function RegistrationCategoryBuilder({
                 ? String(registrationCategory.quota)
                 : '',
         registration_open: registrationCategory?.registration_open ?? true,
+        running_event_category_id: registrationCategory?.running_event_category_id
+            ? String(registrationCategory.running_event_category_id)
+            : '',
     });
     // A new team category on a basketball event runs a tournament unless the
     // organiser opts out; an existing one keeps whatever it has (locked on
@@ -297,6 +307,12 @@ export default function RegistrationCategoryBuilder({
             price: details.price || null,
             quota: details.quota || null,
             registration_open: details.registration_open,
+            running_event_category_id:
+                isRunningEvent &&
+                details.subject_type === 'individual' &&
+                details.running_event_category_id
+                    ? Number(details.running_event_category_id)
+                    : null,
             tournament: sendsTournament
                 ? fromTournamentDraft(tournament)
                 : null,
@@ -541,6 +557,9 @@ export default function RegistrationCategoryBuilder({
                         details={details}
                         onDetailsChange={(patch) =>
                             setDetails((d) => ({ ...d, ...patch }))
+                        }
+                        runningCategories={
+                            isRunningEvent ? runningCategories : null
                         }
                         tournament={
                             isBasketballEvent

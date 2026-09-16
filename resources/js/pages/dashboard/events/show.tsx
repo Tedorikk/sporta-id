@@ -196,9 +196,6 @@ export default function ShowEvent({ event }: { event: Event }) {
                         key={event.id}
                         event={event}
                         categories={event.running_categories ?? []}
-                        registrationCategories={
-                            event.registration_category_options ?? []
-                        }
                     />
                 </div>
             )}

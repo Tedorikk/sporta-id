@@ -16,24 +16,14 @@ import {
 } from '@/components/ui/dialog';
 import {
     Field,
+    FieldDescription,
     FieldError,
     FieldGroup,
     FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import type { Event } from '@/types/event';
-import type { RegistrationCategory } from '@/types/registration-category';
 import type { RunningEventCategory } from '@/types/running-event-category';
-
-/** The sentinel the Select uses for "no sign-up form" — Radix forbids "". */
-const NO_REGISTRATION_CATEGORY = 'none';
 
 /**
  * Every field is held as a string — what an <input> actually gives back — and
@@ -47,7 +37,6 @@ const distanceSchema = z.object({
             (value) => Number.isInteger(Number(value)) && Number(value) >= 1,
             'Input a distance in whole metres',
         ),
-    registration_category_id: z.string(),
     start_at: z.string(),
     cutoff_minutes: z.string(),
     bib_prefix: z.string().max(10),
@@ -57,8 +46,9 @@ const distanceSchema = z.object({
             (value) => Number.isInteger(Number(value)) && Number(value) >= 1,
             'Start from 1 or higher',
         ),
-    quota: z.string(),
-    price: z.string(),
+    bib_start_male: z.string(),
+    bib_start_female: z.string(),
+    minimum_age: z.string(),
 });
 
 type DistanceFormValues = z.infer<typeof distanceSchema>;
@@ -67,9 +57,6 @@ function toDefaultValues(category?: RunningEventCategory): DistanceFormValues {
     return {
         name: category?.name ?? '',
         distance_meters: String(category?.distance_meters ?? 5000),
-        registration_category_id: category?.registration_category_id
-            ? String(category.registration_category_id)
-            : NO_REGISTRATION_CATEGORY,
         // datetime-local wants "YYYY-MM-DDTHH:mm"; the API sends ISO.
         start_at: category?.start_at ? category.start_at.slice(0, 16) : '',
         cutoff_minutes: category?.cutoff_minutes
@@ -77,22 +64,27 @@ function toDefaultValues(category?: RunningEventCategory): DistanceFormValues {
             : '',
         bib_prefix: category?.bib_prefix ?? '',
         bib_start_number: String(category?.bib_start_number ?? 1),
-        quota: category?.quota ? String(category.quota) : '',
-        price: category?.price ? String(category.price) : '',
+        bib_start_male: category?.bib_start_male
+            ? String(category.bib_start_male)
+            : '',
+        bib_start_female: category?.bib_start_female
+            ? String(category.bib_start_female)
+            : '',
+        minimum_age: category?.minimum_age
+            ? String(category.minimum_age)
+            : '',
     };
 }
 
 interface RunningCategoryFormDialogProps {
     event: Event;
     category?: RunningEventCategory;
-    registrationCategories: Pick<RegistrationCategory, 'id' | 'name'>[];
     trigger: ReactNode;
 }
 
 export function RunningCategoryFormDialog({
     event,
     category,
-    registrationCategories,
     trigger,
 }: RunningCategoryFormDialogProps) {
     const isEditing = Boolean(category);
@@ -109,19 +101,19 @@ export function RunningCategoryFormDialog({
         const payload = {
             name: data.name,
             distance_meters: Number(data.distance_meters),
-            registration_category_id:
-                data.registration_category_id === NO_REGISTRATION_CATEGORY
-                    ? null
-                    : Number(data.registration_category_id),
             start_at: data.start_at || null,
             cutoff_minutes: data.cutoff_minutes
                 ? Number(data.cutoff_minutes)
                 : null,
             bib_prefix: data.bib_prefix || null,
             bib_start_number: Number(data.bib_start_number),
-            quota: data.quota ? Number(data.quota) : null,
-            price: data.price ? Number(data.price) : null,
-            status: category?.status ?? 'active',
+            bib_start_male: data.bib_start_male
+                ? Number(data.bib_start_male)
+                : null,
+            bib_start_female: data.bib_start_female
+                ? Number(data.bib_start_female)
+                : null,
+            minimum_age: data.minimum_age ? Number(data.minimum_age) : null,
         };
 
         const options = {
@@ -164,7 +156,9 @@ export function RunningCategoryFormDialog({
                         <DialogDescription>
                             A distance is one race within the event — a 5K, a
                             10K, a half marathon — with its own start time, bib
-                            range and results.
+                            range and results. Its sign-up forms (price,
+                            quota, with/without jersey) live under
+                            Registration Categories.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -211,54 +205,6 @@ export function RunningCategoryFormDialog({
                                             errors={[fieldState.error]}
                                         />
                                     )}
-                                </Field>
-                            )}
-                        />
-
-                        <Controller
-                            name="registration_category_id"
-                            control={control}
-                            render={({ field }) => (
-                                <Field>
-                                    <FieldLabel htmlFor="registration_category_id">
-                                        Sign-up form
-                                    </FieldLabel>
-                                    <Select
-                                        value={field.value}
-                                        onValueChange={field.onChange}
-                                    >
-                                        <SelectTrigger
-                                            id="registration_category_id"
-                                            className="w-full cursor-pointer"
-                                        >
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem
-                                                value={NO_REGISTRATION_CATEGORY}
-                                                className="cursor-pointer"
-                                            >
-                                                None — walk-ins only
-                                            </SelectItem>
-                                            {registrationCategories.map(
-                                                (registrationCategory) => (
-                                                    <SelectItem
-                                                        key={
-                                                            registrationCategory.id
-                                                        }
-                                                        value={String(
-                                                            registrationCategory.id,
-                                                        )}
-                                                        className="cursor-pointer"
-                                                    >
-                                                        {
-                                                            registrationCategory.name
-                                                        }
-                                                    </SelectItem>
-                                                ),
-                                            )}
-                                        </SelectContent>
-                                    </Select>
                                 </Field>
                             )}
                         />
@@ -344,43 +290,84 @@ export function RunningCategoryFormDialog({
 
                         <div className="grid grid-cols-2 gap-4">
                             <Controller
-                                name="price"
+                                name="bib_start_male"
                                 control={control}
                                 render={({ field }) => (
                                     <Field>
-                                        <FieldLabel htmlFor="price">
-                                            Price (Rp)
+                                        <FieldLabel htmlFor="bib_start_male">
+                                            First bib — men
+                                            <span className="font-normal text-muted-foreground">
+                                                {' '}
+                                                (Optional)
+                                            </span>
                                         </FieldLabel>
                                         <Input
                                             {...field}
-                                            id="price"
+                                            id="bib_start_male"
                                             type="number"
-                                            min={0}
-                                            placeholder="150000"
+                                            min={1}
+                                            placeholder="Same as first bib"
                                         />
                                     </Field>
                                 )}
                             />
 
                             <Controller
-                                name="quota"
+                                name="bib_start_female"
                                 control={control}
                                 render={({ field }) => (
                                     <Field>
-                                        <FieldLabel htmlFor="quota">
-                                            Quota
+                                        <FieldLabel htmlFor="bib_start_female">
+                                            First bib — women
+                                            <span className="font-normal text-muted-foreground">
+                                                {' '}
+                                                (Optional)
+                                            </span>
                                         </FieldLabel>
                                         <Input
                                             {...field}
-                                            id="quota"
+                                            id="bib_start_female"
                                             type="number"
                                             min={1}
-                                            placeholder="500"
+                                            placeholder="e.g. 3000"
                                         />
                                     </Field>
                                 )}
                             />
                         </div>
+                        <FieldDescription className="-mt-2">
+                            Leave both blank to number every runner in one
+                            sequence from the first bib above. Set either to
+                            give men and women independent ranges.
+                        </FieldDescription>
+
+                        <Controller
+                            name="minimum_age"
+                            control={control}
+                            render={({ field }) => (
+                                <Field>
+                                    <FieldLabel htmlFor="minimum_age">
+                                        Minimum age
+                                        <span className="font-normal text-muted-foreground">
+                                            {' '}
+                                            (Optional)
+                                        </span>
+                                    </FieldLabel>
+                                    <Input
+                                        {...field}
+                                        id="minimum_age"
+                                        type="number"
+                                        min={1}
+                                        max={120}
+                                        placeholder="No minimum"
+                                    />
+                                    <FieldDescription>
+                                        Checked against the runner's date of
+                                        birth on race day, at sign-up.
+                                    </FieldDescription>
+                                </Field>
+                            )}
+                        />
                     </FieldGroup>
 
                     <DialogFooter>

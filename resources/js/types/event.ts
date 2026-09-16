@@ -1,9 +1,6 @@
 import type { BasketballEventCategory } from './basketball-event-category';
 import type { Pool } from './pool';
-import type {
-    PublicRegistrationCategory,
-    RegistrationCategory,
-} from './registration-category';
+import type { PublicRegistrationCategory } from './registration-category';
 import type { RunningEventCategory } from './running-event-category';
 import type { Team } from './team';
 
@@ -53,8 +50,6 @@ export interface Event {
     matches_count?: number;
     basketball_categories?: BasketballEventCategory[];
     running_categories?: RunningEventCategory[];
-    /** Sign-up forms of this event, for pickers that link one to a distance. */
-    registration_category_options?: Pick<RegistrationCategory, 'id' | 'name'>[];
     pools?: Pool[];
     teams?: Team[];
 }

@@ -14,6 +14,7 @@ import {
     Star,
     Type,
     Users,
+    VenusAndMars,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { RegistrationFieldType } from '@/types/registration-category';
@@ -29,6 +30,7 @@ const PALETTE: {
     { type: 'email', label: 'Email', icon: Mail },
     { type: 'phone', label: 'Phone', icon: Phone },
     { type: 'date', label: 'Date', icon: Calendar },
+    { type: 'gender', label: 'Gender', icon: VenusAndMars },
     { type: 'select', label: 'Dropdown', icon: ChevronDownSquare },
     { type: 'radio', label: 'Multiple choice', icon: CircleDot },
     { type: 'checkbox', label: 'Checkbox', icon: CheckSquare },

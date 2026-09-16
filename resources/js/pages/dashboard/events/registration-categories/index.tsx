@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ChevronLeft, Link2, Pencil, Plus, Trash2, Trophy } from 'lucide-react';
+import { ChevronLeft, Flag, Link2, Pencil, Plus, Trash2, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +12,10 @@ import { TOURNAMENT_FORMATS } from '@/types/registration-category';
 interface Props {
     event: Event;
     isBasketballEvent: boolean;
-    registrationCategories: RegistrationCategory[];
+    isRunningEvent: boolean;
+    registrationCategories: (RegistrationCategory & {
+        running_category?: { id: number; name: string } | null;
+    })[];
 }
 
 export default function RegistrationCategoriesIndex({
@@ -105,6 +108,12 @@ export default function RegistrationCategoriesIndex({
                                                 category.basketball_category
                                                     ?.format,
                                         )?.label ?? 'Tournament'}
+                                    </Badge>
+                                )}
+                                {category.running_category && (
+                                    <Badge variant="secondary">
+                                        <Flag className="mr-1 h-3 w-3" />
+                                        {category.running_category.name}
                                     </Badge>
                                 )}
                             </div>

@@ -8,6 +8,7 @@ use App\Models\Event;
 use App\Models\Payment;
 use App\Models\Player;
 use App\Models\RegistrationCategory;
+use App\Models\RunningEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -23,8 +24,9 @@ class RegistrationCategoryController extends Controller
         return Inertia::render('dashboard/events/registration-categories/index', [
             'event' => $event,
             'isBasketballEvent' => $this->isBasketballEvent($event),
+            'isRunningEvent' => $this->isRunningEvent($event),
             'registrationCategories' => $event->registrationCategories()
-                ->with('basketballCategory')
+                ->with(['basketballCategory', 'runningCategory'])
                 ->withCount('registrations')
                 ->latest()
                 ->get(),
@@ -44,10 +46,23 @@ class RegistrationCategoryController extends Controller
             ? $event->registrationCategories()->with('basketballCategory')->findOrFail($registrationCategoryId)
             : null;
 
+        // The distance picker on an individual category, for a running
+        // event: several categories (with/without jersey, early bird) can
+        // name the same distance.
+        $runningCategories = [];
+
+        if ($event->specific instanceof RunningEvent) {
+            $runningCategories = $event->specific->categories()
+                ->orderBy('distance_meters')
+                ->get(['id', 'name', 'distance_meters']);
+        }
+
         return Inertia::render('dashboard/events/registration-categories/builder', [
             'event' => $event,
             'isBasketballEvent' => $this->isBasketballEvent($event),
-            'registrationCategory' => $registrationCategory,
+            'isRunningEvent' => $this->isRunningEvent($event),
+            'runningCategories' => $runningCategories,
+            'registrationCategory' => $registrationCategory?->loadMissing('runningCategory'),
         ]);
     }
 
@@ -216,6 +231,13 @@ class RegistrationCategoryController extends Controller
         return $event->specific instanceof BasketballEvent;
     }
 
+    private function isRunningEvent(Event $event): bool
+    {
+        $event->loadMissing('specific');
+
+        return $event->specific instanceof RunningEvent;
+    }
+
     public function destroy(Event $event, RegistrationCategory $registrationCategory)
     {
         abort_unless($registrationCategory->event_id === $event->id, 404);
@@ -271,6 +293,8 @@ class RegistrationCategoryController extends Controller
 
     private function validated(Request $request, Event $event): array
     {
+        $runningEventId = $event->specific instanceof RunningEvent ? $event->specific->id : null;
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'subject_type' => ['required', Rule::in(RegistrationCategory::SUBJECT_TYPES)],
@@ -279,6 +303,17 @@ class RegistrationCategoryController extends Controller
             'registration_open' => ['nullable', 'boolean'],
             'opens_at' => ['nullable', 'date'],
             'closes_at' => ['nullable', 'date', 'after_or_equal:opens_at'],
+
+            // Which distance this individual category sells entries to, on
+            // a running event — several categories may name the same one.
+            // Team categories are basketball's, and never sell a distance.
+            'running_event_category_id' => [
+                'nullable',
+                Rule::prohibitedIf(fn () => ! $this->isRunningEvent($event) || $request->input('subject_type') === RegistrationCategory::SUBJECT_TEAM),
+                Rule::exists('running_event_categories', 'id')->where(function ($query) use ($runningEventId) {
+                    $query->where('running_event_id', $runningEventId);
+                }),
+            ],
 
             // Present only when a team category also runs a basketball
             // tournament; saveTournament() checks the event supports one.

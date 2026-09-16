@@ -3,6 +3,7 @@
 use App\Models\Event;
 use App\Models\Registration;
 use App\Models\RegistrationCategory;
+use App\Models\RunningEventCategory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -298,4 +299,69 @@ test('a file field can carry an image shape, but only a known one', function () 
             ['key' => 'logo', 'label' => 'Logo', 'type' => 'file', 'required' => true, 'image_ratio' => 'circle'],
         ]],
     ]]))->assertSessionHasErrors('form_pages.0.fields.0.image_ratio');
+});
+
+// ─── Distance linking (running events) ──────────────────────────────────────
+
+test('an individual category on a running event can name a distance', function () {
+    $event = Event::factory()->running()->create();
+    $distance = RunningEventCategory::factory()->forEvent($event)->create();
+    $user = organizerOf($event);
+
+    $this->actingAs($user)
+        ->post(route('registration_categories.store', $event), categoryPayload([
+            'name' => '5K with jersey',
+            'subject_type' => 'individual',
+            'price' => '150000',
+            'quota' => null,
+            'running_event_category_id' => $distance->id,
+            'form_pages' => [],
+        ]))
+        ->assertRedirect(route('registration_categories.index', $event));
+
+    expect(RegistrationCategory::sole()->running_event_category_id)->toBe($distance->id);
+});
+
+test('a distance from another event cannot be linked', function () {
+    $event = Event::factory()->running()->create();
+    $otherEvent = Event::factory()->running()->create();
+    $foreignDistance = RunningEventCategory::factory()->forEvent($otherEvent)->create();
+    $user = organizerOf($event);
+
+    $this->actingAs($user)
+        ->post(route('registration_categories.store', $event), categoryPayload([
+            'subject_type' => 'individual',
+            'running_event_category_id' => $foreignDistance->id,
+            'form_pages' => [],
+        ]))
+        ->assertInvalid('running_event_category_id');
+
+    expect(RegistrationCategory::count())->toBe(0);
+});
+
+test('a team category cannot be linked to a distance', function () {
+    $event = Event::factory()->running()->create();
+    $distance = RunningEventCategory::factory()->forEvent($event)->create();
+    $user = organizerOf($event);
+
+    $this->actingAs($user)
+        ->post(route('registration_categories.store', $event), categoryPayload([
+            'subject_type' => 'team',
+            'running_event_category_id' => $distance->id,
+            'form_pages' => [],
+        ]))
+        ->assertInvalid('running_event_category_id');
+});
+
+test('a distance link is rejected on a non-running event', function () {
+    $event = Event::factory()->create();
+    $user = organizerOf($event);
+
+    $this->actingAs($user)
+        ->post(route('registration_categories.store', $event), categoryPayload([
+            'subject_type' => 'individual',
+            'running_event_category_id' => 1,
+            'form_pages' => [],
+        ]))
+        ->assertInvalid('running_event_category_id');
 });

@@ -17,7 +17,12 @@ export type RegistrationFieldType =
     | 'file'
     | 'document'
     | 'description'
-    | 'roster';
+    | 'roster'
+    | 'gender';
+
+/** Mirrors RegistrationCategory::GENDER_KEY/DOB_KEY — the keys a race entry's start-list wiring reads out of form_data. */
+export const RACE_GENDER_KEY = 'gender';
+export const RACE_DOB_KEY = 'dob';
 
 /** One role on a roster block and how many of it a team must/may enter. */
 export interface RosterSlot {
@@ -225,6 +230,8 @@ export interface RegistrationCategory {
     form_settings: FormSettings | null;
     status: string;
     registrations_count?: number;
+    /** The distance (running event) this individual category sells entries to, if any. */
+    running_event_category_id?: number | null;
     /** Present (when loaded) for team categories that run a basketball tournament. */
     basketball_category?: (TournamentSettings & { id: number }) | null;
 }
@@ -288,6 +295,7 @@ export const REGISTRATION_FIELD_TYPES: {
     { value: 'document', label: 'Document upload (PDF, Word)' },
     { value: 'description', label: 'Description' },
     { value: 'roster', label: 'Team roster' },
+    { value: 'gender', label: 'Gender' },
 ];
 
 /** Field types where `options` (comma-separated choices) apply. */

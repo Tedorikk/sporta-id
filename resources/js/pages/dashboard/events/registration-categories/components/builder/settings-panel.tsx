@@ -31,6 +31,7 @@ import {
     RESERVED_FIELD_KEYS,
     THEME_PRESETS,
 } from '@/types/registration-category';
+import type { RunningEventCategory } from '@/types/running-event-category';
 import type { TournamentDraft } from './tournament-settings';
 import { TournamentSettingsFields } from './tournament-settings';
 
@@ -40,6 +41,7 @@ interface DetailsValue {
     price: string;
     quota: string;
     registration_open: boolean;
+    running_event_category_id: string;
 }
 
 /** Only offered on basketball events, and only to team categories. */
@@ -57,6 +59,10 @@ interface SettingsPanelProps {
     isEditingSubjectType: boolean;
     details: DetailsValue;
     onDetailsChange: (patch: Partial<DetailsValue>) => void;
+    /** Every distance on this event, when it's a running event — for the "sells entries to" picker. */
+    runningCategories:
+        | Pick<RunningEventCategory, 'id' | 'name' | 'distance_meters'>[]
+        | null;
     tournament: TournamentValue | null;
     branding: FormBranding;
     onBrandingChange: (patch: Partial<FormBranding>) => void;
@@ -403,6 +409,7 @@ export function SettingsPanel({
     isEditingSubjectType,
     details,
     onDetailsChange,
+    runningCategories,
     tournament,
     branding,
     onBrandingChange,
@@ -503,6 +510,61 @@ export function SettingsPanel({
                             />
                         </Field>
                     </div>
+
+                    {runningCategories && details.subject_type === 'individual' && (
+                        <Field>
+                            <FieldLabel htmlFor="running_event_category_id">
+                                Sells entries to
+                            </FieldLabel>
+                            <Select
+                                value={
+                                    details.running_event_category_id || 'none'
+                                }
+                                onValueChange={(value) =>
+                                    onDetailsChange({
+                                        running_event_category_id:
+                                            value === 'none' ? '' : value,
+                                    })
+                                }
+                            >
+                                <SelectTrigger
+                                    id="running_event_category_id"
+                                    className="w-full"
+                                >
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">
+                                        No distance — a plain sign-up
+                                    </SelectItem>
+                                    {runningCategories.map((category) => (
+                                        <SelectItem
+                                            key={category.id}
+                                            value={String(category.id)}
+                                        >
+                                            {category.name} (
+                                            {(
+                                                category.distance_meters / 1000
+                                            ).toFixed(
+                                                category.distance_meters %
+                                                    1000 ===
+                                                    0
+                                                    ? 0
+                                                    : 1,
+                                            )}
+                                            km)
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <FieldDescription>
+                                Several categories (with/without jersey,
+                                early bird) can sell the same distance —
+                                confirmed entrants all land on its one start
+                                list.
+                            </FieldDescription>
+                        </Field>
+                    )}
 
                     {tournament && details.subject_type === 'team' && (
                         <TournamentSettingsFields

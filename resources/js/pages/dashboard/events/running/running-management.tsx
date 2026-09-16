@@ -16,14 +16,12 @@ import { formatRupiah } from '@/lib/format-currency';
 import { formatDateTime } from '@/lib/format-date';
 import { formatDistance } from '@/lib/format-race';
 import type { Event } from '@/types/event';
-import type { RegistrationCategory } from '@/types/registration-category';
 import type { RunningEventCategory } from '@/types/running-event-category';
 import { RunningCategoryFormDialog } from './components/running-category-form-dialog';
 
 interface RunningManagementProps {
     event: Event;
     categories?: RunningEventCategory[];
-    registrationCategories?: Pick<RegistrationCategory, 'id' | 'name'>[];
 }
 
 /**
@@ -34,7 +32,6 @@ interface RunningManagementProps {
 export function RunningManagement({
     event,
     categories = [],
-    registrationCategories = [],
 }: RunningManagementProps) {
     const handleDeleteCategory = (category: RunningEventCategory) => {
         router.delete(
@@ -62,7 +59,6 @@ export function RunningManagement({
                             </div>
                             <RunningCategoryFormDialog
                                 event={event}
-                                registrationCategories={registrationCategories}
                                 trigger={
                                     <Button
                                         size="sm"
@@ -115,9 +111,6 @@ export function RunningManagement({
                                             runner(s) ·{' '}
                                             {category.finishers_count ?? 0}{' '}
                                             finisher(s)
-                                            {category.quota
-                                                ? ` · quota ${category.quota}`
-                                                : ''}
                                         </p>
 
                                         {category.start_at && (
@@ -132,11 +125,45 @@ export function RunningManagement({
                                             </p>
                                         )}
 
-                                        {category.price !== null && (
-                                            <p className="text-sm text-muted-foreground">
-                                                {formatRupiah(category.price)}
-                                            </p>
-                                        )}
+                                        {/* Every sign-up form currently selling this
+                                            distance — price/quota/open state live there,
+                                            not on the distance itself. */}
+                                        <div className="flex flex-col gap-1">
+                                            {(category.registration_categories ?? []).length === 0 ? (
+                                                <p className="text-xs text-muted-foreground italic">
+                                                    No sign-up form yet
+                                                </p>
+                                            ) : (
+                                                category.registration_categories!.map(
+                                                    (rc) => (
+                                                        <Link
+                                                            key={rc.id}
+                                                            href={`/dashboard/events/${event.id}/registration-categories/builder?registration_category_id=${rc.id}`}
+                                                            className="flex items-center justify-between gap-2 rounded-md border px-2 py-1 text-xs hover:bg-muted"
+                                                        >
+                                                            <span className="min-w-0 truncate">
+                                                                {rc.name}
+                                                            </span>
+                                                            <span className="shrink-0 text-muted-foreground">
+                                                                {rc.price !== null
+                                                                    ? formatRupiah(rc.price)
+                                                                    : 'Free'}
+                                                                {rc.quota
+                                                                    ? ` · ${rc.registered_count}/${rc.quota}`
+                                                                    : ''}
+                                                                {!rc.registration_open && ' · Closed'}
+                                                            </span>
+                                                        </Link>
+                                                    ),
+                                                )
+                                            )}
+                                            <Link
+                                                href={`/dashboard/events/${event.id}/registration-categories/builder`}
+                                                className="text-xs font-medium text-primary hover:underline"
+                                            >
+                                                + Add sign-up form
+                                            </Link>
+                                        </div>
 
                                         <div className="mt-1 flex flex-wrap items-center justify-between gap-1">
                                             <div className="flex items-center gap-1">
@@ -171,9 +198,6 @@ export function RunningManagement({
                                                 <RunningCategoryFormDialog
                                                     event={event}
                                                     category={category}
-                                                    registrationCategories={
-                                                        registrationCategories
-                                                    }
                                                     trigger={
                                                         <Button
                                                             variant="ghost"
