@@ -150,7 +150,9 @@ class PublicEventController extends Controller
     /**
      * A single page listing every registration category an event sells,
      * with nothing else on it — for sharing a direct "how do I sign up"
-     * link instead of the full event page.
+     * link instead of the full event page. Oldest-first: the admin list
+     * (RegistrationCategoryController::index) shows newest-first, and the
+     * organiser expects this page to read as its mirror image.
      */
     public function registrationCategoriesPage(Event $event)
     {
@@ -158,7 +160,7 @@ class PublicEventController extends Controller
 
         $registrationCategories = $event->registrationCategories()
             ->with('runningCategory.runningEvent')
-            ->orderBy('name')
+            ->oldest()
             ->get()
             ->map(fn (RegistrationCategory $category) => $category->toPublicArray())
             ->values();
