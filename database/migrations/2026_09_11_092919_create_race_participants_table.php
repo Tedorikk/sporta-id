@@ -29,8 +29,10 @@ return new class extends Migration
             $table->string('status')->default('registered');
             $table->timestamps();
 
-            $table->unique(['running_event_category_id', 'bib_number']);
-            $table->unique(['running_event_category_id', 'registration_id']);
+            // Named explicitly: the generated names run to 61 and 66
+            // characters, and MySQL rejects an identifier over 64.
+            $table->unique(['running_event_category_id', 'bib_number'], 'race_participants_category_bib_unique');
+            $table->unique(['running_event_category_id', 'registration_id'], 'race_participants_category_registration_unique');
         });
     }
 
