@@ -86,7 +86,7 @@ Route::middleware('public.locale')->group(function () {
     // --- Public dynamic registration (team or individual, any event type) -----
     Route::get('events/{event}/registration-categories/{registrationCategory}/register', [RegistrationController::class, 'create'])->name('registrations.create');
     Route::post('events/{event}/registration-categories/{registrationCategory}/register', [RegistrationController::class, 'store'])
-        ->middleware('throttle:10,1')->name('registrations.store');
+        ->middleware('throttle:30,1')->name('registrations.store');
     Route::get('registrations/{registration:qr_token}/status', [RegistrationController::class, 'status'])->name('registrations.status');
     Route::post('registrations/{registration:qr_token}/pay', [RegistrationController::class, 'pay'])
         ->middleware('throttle:20,1')->name('registrations.pay');
@@ -94,18 +94,18 @@ Route::middleware('public.locale')->group(function () {
     // --- Team roster portal (captains manage their own sheet by token) ---------
     Route::get('registrations/{registration:qr_token}/roster', [TeamRosterController::class, 'show'])->name('team-roster.show');
     Route::post('registrations/{registration:qr_token}/roster/players', [TeamRosterController::class, 'store'])
-        ->middleware('throttle:20,1')->name('team-roster.store');
+        ->middleware('throttle:60,1')->name('team-roster.store');
     Route::put('registrations/{registration:qr_token}/roster/players/{player}', [TeamRosterController::class, 'update'])
-        ->middleware('throttle:20,1')->name('team-roster.update');
+        ->middleware('throttle:60,1')->name('team-roster.update');
     Route::delete('registrations/{registration:qr_token}/roster/players/{player}', [TeamRosterController::class, 'destroy'])
-        ->middleware('throttle:20,1')->name('team-roster.destroy');
+        ->middleware('throttle:60,1')->name('team-roster.destroy');
     Route::post('registrations/{registration:qr_token}/roster/players/{player}/invite', [TeamRosterController::class, 'regenerateInvite'])
-        ->middleware('throttle:20,1')->name('team-roster.invite');
+        ->middleware('throttle:60,1')->name('team-roster.invite');
 
     // --- Member self-fill (a player completes their own details by invite link) --
     Route::get('roster-members/{token}', [RosterMemberSelfController::class, 'show'])->name('roster-member.show');
     Route::put('roster-members/{token}', [RosterMemberSelfController::class, 'update'])
-        ->middleware('throttle:20,1')->name('roster-member.update');
+        ->middleware('throttle:30,1')->name('roster-member.update');
 
     // --- Public award voting (shareable, no auth required) --------------------
     // Identified voters arrive with ?token=<qr_token> from their own ID card.
@@ -125,16 +125,20 @@ Route::middleware('public.locale')->group(function () {
     Route::get('find-id/teams/{team}/players', [PlayerLookupController::class, 'players'])->name('players.lookup.players');
 
     // --- Public photo upload (rate-limited, used by self-registration) --------
+    // A full roster is 12 players × (photo + identity document) plus a team
+    // logo, from one phone within a couple of minutes — and a club's WiFi
+    // shares one IP — so these limits are per-IP burst protection, not a
+    // per-form budget.
     Route::post('public-upload/image', [ImageUploadController::class, 'store'])
-        ->middleware('throttle:20,1')->name('public-upload.image');
+        ->middleware('throttle:120,1')->name('public-upload.image');
     Route::delete('public-upload/image', [ImageUploadController::class, 'destroy'])
-        ->middleware('throttle:20,1')->name('public-upload.image.destroy');
+        ->middleware('throttle:120,1')->name('public-upload.image.destroy');
 
     // --- Public document upload (rate-limited, used by self-registration) -----
     Route::post('public-upload/document', [DocumentUploadController::class, 'store'])
-        ->middleware('throttle:20,1')->name('public-upload.document');
+        ->middleware('throttle:120,1')->name('public-upload.document');
     Route::delete('public-upload/document', [DocumentUploadController::class, 'destroy'])
-        ->middleware('throttle:20,1')->name('public-upload.document.destroy');
+        ->middleware('throttle:120,1')->name('public-upload.document.destroy');
 });
 
 // --- Organization invitations (public: the invitee may have no account yet) --

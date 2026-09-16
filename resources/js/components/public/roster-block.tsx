@@ -94,13 +94,6 @@ export function rosterSchema(field: RegistrationField, t: Translate) {
                 need('jersey_number', t('Every player needs a jersey number'));
             }
 
-            if (m.role === 'medic' && details) {
-                need(
-                    'certificate',
-                    t('A medic needs a licence or certificate'),
-                );
-            }
-
             memberFields.forEach((mf) => {
                 const value = m.extra[mf.key] ?? '';
 
@@ -713,8 +706,10 @@ function MemberCard({
                                     data-invalid={Boolean(errors?.certificate)}
                                 >
                                     <FieldLabel>
-                                        {t('Medic licence / certificate')}
-                                        <RequiredMark />
+                                        {t('Medic licence / certificate')}{' '}
+                                        <span className="font-normal text-muted-foreground">
+                                            {t('(Optional)')}
+                                        </span>
                                     </FieldLabel>
                                     <UploadDocument
                                         value={field.value as string}

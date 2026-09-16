@@ -142,7 +142,7 @@ test('jersey numbers must be unique within the team', function () {
         ->assertSessionHasErrors('jersey_number');
 });
 
-test('staff need no jersey number but a medic needs a certificate', function () {
+test('staff need no jersey number, and a medic’s certificate is optional', function () {
     $registration = enteredTeam();
 
     $this->post(route('team-roster.store', $registration), memberPayload([
@@ -151,6 +151,11 @@ test('staff need no jersey number but a medic needs a certificate', function () 
 
     $this->post(route('team-roster.store', $registration), memberPayload([
         'name' => 'Dr. Sari', 'role' => Player::ROLE_MEDIC, 'jersey_number' => null,
+    ]))->assertSessionHasNoErrors();
+
+    // …but when given it has to be a link to the uploaded file.
+    $this->post(route('team-roster.store', $registration), memberPayload([
+        'name' => 'Dr. Budi', 'role' => Player::ROLE_MEDIC, 'jersey_number' => null, 'certificate' => 'not-a-url',
     ]))->assertSessionHasErrors('certificate');
 });
 

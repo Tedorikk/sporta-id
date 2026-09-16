@@ -53,12 +53,8 @@ class RosterService
                     }
                 },
             ],
-            'certificate' => [
-                Rule::requiredIf(fn () => $request->input('role') === Player::ROLE_MEDIC),
-                'nullable',
-                'url',
-                'max:255',
-            ],
+            // A medic's licence is welcome but not a condition of entry.
+            'certificate' => ['nullable', 'url', 'max:255'],
         ];
     }
 
@@ -85,21 +81,17 @@ class RosterService
             'roster.*.role' => ['required', Rule::in($roles)],
             // `nullable` short-circuits for staff, so `distinct` only compares the players' numbers.
             'roster.*.jersey_number' => ['required_if:roster.*.role,'.Player::ROLE_PLAYER, 'nullable', 'string', 'max:3', 'distinct'],
-            'roster.*.certificate' => [
-                $strict ? 'required_if:roster.*.role,'.Player::ROLE_MEDIC : 'nullable',
-                'nullable',
-                'url',
-                'max:255',
-            ],
+            'roster.*.certificate' => ['nullable', 'url', 'max:255'],
         ];
     }
 
     /**
      * Whether a member carries everything a tournament entry needs — the
      * same set the portal's strict rules demand: photo, identity document,
-     * birth details, a WhatsApp number, a jersey for players, a licence for
-     * medics, and an answer to every required extra question. A member added
-     * without details on the form stays incomplete until they are filled in.
+     * birth details, a WhatsApp number, a jersey for players, and an answer
+     * to every required extra question (a medic's licence is optional). A
+     * member added without details on the form stays incomplete until they
+     * are filled in.
      *
      * @param  array<int, array<string, mixed>>  $memberFields
      */
@@ -109,10 +101,6 @@ class RosterService
 
         if ($player->role === Player::ROLE_PLAYER) {
             $fixed[] = $player->jersey_number;
-        }
-
-        if ($player->role === Player::ROLE_MEDIC) {
-            $fixed[] = $player->certificate;
         }
 
         foreach ($fixed as $value) {
@@ -181,7 +169,7 @@ class RosterService
             'photo.required' => __('Upload a photo for the ID card.'),
             'roster.*.photo.required' => __('Upload a photo for the ID card.'),
             'roster.*.jersey_number.required_if' => __('Every player needs a jersey number.'),
-            'roster.*.certificate.required_if' => __('A medic needs a licence or certificate.'),
+
             'roster.*.jersey_number.distinct' => __('Two players share this jersey number.'),
         ];
     }

@@ -283,8 +283,10 @@ export function MemberDetailsFields({
             {isMedic && (
                 <Field data-invalid={Boolean(errors.certificate)}>
                     <FieldLabel>
-                        {t('Medic certificate')}
-                        <RequiredMark />
+                        {t('Medic certificate')}{' '}
+                        <span className="font-normal text-muted-foreground">
+                            {t('(Optional)')}
+                        </span>
                     </FieldLabel>
                     <UploadDocument
                         value={data.certificate}

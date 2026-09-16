@@ -21,7 +21,7 @@ export function RosterRequirementsCard({
     const slots = field.slots ?? [];
     const memberFields = field.member_fields ?? [];
     const detailsOnForm = rosterDetailsOnForm(field);
-    const hasMedic = slots.some((slot) => slot.role === 'medic');
+
     const requiredQuestions = memberFields.filter((mf) => mf.required);
 
     const perMember = [
@@ -30,7 +30,7 @@ export function RosterRequirementsCard({
         t('Place and date of birth'),
         t('WhatsApp number'),
         t('Jersey number (players)'),
-        ...(hasMedic ? [t('Licence or certificate (medic)')] : []),
+
         ...requiredQuestions.map((mf) => mf.label),
     ];
 

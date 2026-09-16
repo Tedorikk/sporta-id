@@ -157,11 +157,9 @@ test('a member is complete once every detail the portal demands is there', funct
     expect($service->isComplete($noExtra, $memberFields))->toBeFalse()
         ->and($service->isComplete($noExtra, []))->toBeTrue();
 
-    // Staff need no jersey; a medic needs a certificate.
-    $medic = new Player(array_merge(fullMember('medic', 'M'), ['certificate' => 'https://example.com/lic.pdf']));
+    // Staff need no jersey; a medic is complete with or without a certificate.
     expect($service->isComplete(new Player(fullMember('coach', 'C')), $memberFields))->toBeTrue()
-        ->and($service->isComplete(new Player(fullMember('medic', 'M')), $memberFields))->toBeFalse()
-        ->and($service->isComplete($medic, $memberFields))->toBeTrue();
+        ->and($service->isComplete(new Player(fullMember('medic', 'M')), $memberFields))->toBeTrue();
 });
 
 test('the portal flags each incomplete member and counts them, and completing one in the portal clears it', function () {
