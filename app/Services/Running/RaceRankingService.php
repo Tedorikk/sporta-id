@@ -16,9 +16,13 @@ class RaceRankingService
     /**
      * Finishers by net time, fastest first.
      *
-     * @return Collection<int, array{rank: int, participant_id: int, bib_number: ?string, name: string, duration_seconds: int, pace_seconds_per_km: float, gap_seconds: int}>
+     * A plain list rather than a Collection: every caller either serializes it
+     * straight to the page or indexes it, and Collection's generics are
+     * invariant, so an identical shape still fails to match the declared one.
+     *
+     * @return list<array{rank: int, participant_id: int, bib_number: ?string, name: string, duration_seconds: int, pace_seconds_per_km: float, gap_seconds: int}>
      */
-    public function forCategory(RunningEventCategory $category): Collection
+    public function forCategory(RunningEventCategory $category): array
     {
         $kilometers = $category->distanceKilometers();
 
@@ -34,10 +38,12 @@ class RaceRankingService
         // everyone else, so each read is narrowed here rather than trusted.
         $winningTime = $finishers->isEmpty() ? 0 : (int) $finishers->first()->duration_seconds;
 
-        return $finishers->values()->map(function (RaceParticipant $participant, int $index) use ($kilometers, $winningTime) {
+        $rows = [];
+
+        foreach ($finishers->values() as $index => $participant) {
             $duration = (int) $participant->duration_seconds;
 
-            return [
+            $rows[] = [
                 'rank' => $index + 1,
                 'participant_id' => $participant->id,
                 'bib_number' => $participant->bib_number,
@@ -48,7 +54,9 @@ class RaceRankingService
                     : 0.0,
                 'gap_seconds' => $duration - $winningTime,
             ];
-        });
+        }
+
+        return $rows;
     }
 
     /**

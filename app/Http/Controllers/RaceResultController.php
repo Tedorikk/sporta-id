@@ -95,8 +95,9 @@ class RaceResultController extends Controller
         $this->authorizeCategory($event, $category);
 
         $filename = Str::slug($category->name).'-results.csv';
-        $rankByParticipant = $this->rankings->forCategory($category)
-            ->pluck('rank', 'participant_id');
+        $rankByParticipant = array_column(
+            $this->rankings->forCategory($category), 'rank', 'participant_id'
+        );
 
         return response()->streamDownload(function () use ($category, $rankByParticipant) {
             $handle = fopen('php://output', 'w');

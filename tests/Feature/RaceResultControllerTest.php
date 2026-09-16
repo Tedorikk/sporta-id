@@ -127,9 +127,9 @@ test('the ranking is fastest first, with the gap measured from the winner', func
 
     $ranking = app(RaceRankingService::class)->forCategory($distance);
 
-    expect($ranking->pluck('name')->all())->toBe(['First', 'Second', 'Third'])
-        ->and($ranking->pluck('rank')->all())->toBe([1, 2, 3])
-        ->and($ranking->pluck('gap_seconds')->all())->toBe([0, 300, 600]);
+    expect(array_column($ranking, 'name'))->toBe(['First', 'Second', 'Third'])
+        ->and(array_column($ranking, 'rank'))->toBe([1, 2, 3])
+        ->and(array_column($ranking, 'gap_seconds'))->toBe([0, 300, 600]);
 });
 
 test('a results file is applied by bib number', function () {

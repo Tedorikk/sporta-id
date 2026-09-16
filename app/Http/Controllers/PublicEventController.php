@@ -115,7 +115,7 @@ class PublicEventController extends Controller
                     'id' => $category->id,
                     'name' => $category->name,
                     'distance_meters' => $category->distance_meters,
-                    'rankings' => $this->rankings->forCategory($category)->all(),
+                    'rankings' => $this->rankings->forCategory($category),
                     'unranked' => $this->rankings->unrankedFor($category)
                         ->map(fn (RaceParticipant $participant) => $participant->only(['id', 'bib_number', 'name', 'status']))
                         ->values()
