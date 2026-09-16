@@ -92,8 +92,9 @@ export interface RegistrationField {
     member_fields?: RosterMemberField[];
     /**
      * roster type only: ask for every member's photo, documents and birth
-     * details on the form (default true). When false the form takes only
-     * name, role and jersey; the rest is completed in the roster portal.
+     * details on the form. Off by default: the form takes only name, role
+     * and jersey and the rest is completed in the roster portal, by the
+     * manager or by each member through their own link.
      */
     details_on_form?: boolean;
 }
@@ -102,7 +103,7 @@ export interface RegistrationField {
 export function rosterDetailsOnForm(
     field: Pick<RegistrationField, 'details_on_form'>,
 ): boolean {
-    return field.details_on_form ?? true;
+    return field.details_on_form ?? false;
 }
 
 /** What the public form submits per roster member; mirrors RosterService::memberRules(). */

@@ -121,13 +121,13 @@ test('with details on the form (the default), the same submission is refused', f
         'roster.0.phone_number', 'roster.0.extra.asal_sekolah',
     ]);
 
-    // Omitting the key altogether means "on the form" too.
+    // Omitting the key altogether means deferred — the recommended default.
     $legacy = deferredCategory();
     $pages = $legacy->form_pages;
     unset($pages[0]['fields'][0]['details_on_form']);
     $legacy->update(['form_pages' => $pages]);
 
-    expect($legacy->fresh()->rosterDetailsOnForm())->toBeTrue();
+    expect($legacy->fresh()->rosterDetailsOnForm())->toBeFalse();
 });
 
 test('the form page carries the roster deadline for the requirements card', function () {

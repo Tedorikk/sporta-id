@@ -6,6 +6,7 @@ import {
     Clock,
     Loader2,
     Lock,
+    Save,
     Star,
     Users,
 } from 'lucide-react';
@@ -19,6 +20,7 @@ import { TeamIdCardCard } from '@/components/id-card/team-id-card-card';
 import { IdCardActions } from '@/components/id-card-actions';
 import { PayLinkShare } from '@/components/public/pay-link-share';
 import { PublicPageHeader } from '@/components/public/public-page-header';
+import { RequiredMark } from '@/components/public/required-mark';
 import {
     RosterBlock,
     defaultRoster,
@@ -305,7 +307,7 @@ function RegistrationSuccessView({
                     <div className="flex w-full max-w-sm flex-col items-center gap-2 rounded-2xl border border-white/15 bg-white/5 p-4 text-center">
                         <p className="text-sm text-white/80">
                             {t(
-                                'Next, add your players and staff. Keep the link — it is how you get back to the roster.',
+                                'Next, open the roster: send each member their personal link so they fill in their own details, or complete them yourself. Keep the link — it is how you get back to the roster.',
                             )}
                         </p>
                         <Button
@@ -767,6 +769,9 @@ export default function RegisterDynamic({
     // once the registration went through.
     const storageKey = draftKey(registrationCategory.id);
     const [restoredAt, setRestoredAt] = useState<string | null>(null);
+    // When the draft was last written — shown so the manager knows a
+    // refresh or a phone call won't cost them the form.
+    const [savedAt, setSavedAt] = useState<string | null>(null);
     const draftEnabled = useRef(false);
     const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -802,11 +807,14 @@ export default function RegisterDynamic({
                 return;
             }
 
+            const now = new Date().toISOString();
+
             writeDraft(storageKey, {
                 values: getValues(),
                 pageIndex,
-                savedAt: new Date().toISOString(),
+                savedAt: now,
             });
+            setSavedAt(now);
         };
 
         // Moving between steps is worth remembering at once; typing is
@@ -1109,6 +1117,24 @@ export default function RegisterDynamic({
                         </div>
                     )}
 
+                    {savedAt && (
+                        <p
+                            className="flex items-center gap-1.5 px-6 pt-3 text-[11px] text-neutral-500"
+                            suppressHydrationWarning
+                        >
+                            <Save className="h-3.5 w-3.5 text-emerald-600" />
+                            {t(
+                                'Saved automatically on this device at :time — you can close this page and continue later.',
+                                {
+                                    time: new Date(savedAt).toLocaleTimeString(
+                                        'id-ID',
+                                        { hour: '2-digit', minute: '2-digit' },
+                                    ),
+                                },
+                            )}
+                        </p>
+                    )}
+
                     <form
                         onSubmit={handleSubmit(onSubmit)}
                         className="px-6 py-6"
@@ -1166,6 +1192,7 @@ export default function RegisterDynamic({
                                                 {isTeam
                                                     ? t('Team Name')
                                                     : t('Full Name')}
+                                                <RequiredMark />
                                             </FieldLabel>
                                             <Input
                                                 {...field}
@@ -1234,6 +1261,9 @@ export default function RegisterDynamic({
                                                 >
                                                     <FieldLabel htmlFor={f.key}>
                                                         {f.label}
+                                                        {f.required && (
+                                                            <RequiredMark />
+                                                        )}
                                                         {!f.required && (
                                                             <span className="font-normal text-muted-foreground">
                                                                 {' '}

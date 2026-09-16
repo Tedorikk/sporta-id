@@ -75,16 +75,28 @@ export function RosterRequirementsCard({
             </ul>
 
             {!detailsOnForm && (
-                <p className="mt-3 text-neutral-700" suppressHydrationWarning>
-                    {t(
-                        'This form only asks for each member’s name, role and jersey number.',
-                    )}{' '}
-                    {rosterDeadline
-                        ? t('Complete the rest before :deadline.', {
-                              deadline: formatDateTime(rosterDeadline),
-                          })
-                        : t('Complete the rest before the roster deadline.')}
-                </p>
+                <div
+                    className="mt-3 rounded-lg border border-[var(--accent)]/30 bg-[var(--accent)]/5 px-3 py-2 text-neutral-800"
+                    suppressHydrationWarning
+                >
+                    <p className="font-semibold">
+                        {t(
+                            'This form only asks for each member’s name, role and jersey number.',
+                        )}
+                    </p>
+                    <p className="mt-1">
+                        {t(
+                            'After you register, every member gets a personal link — share it in the team’s WhatsApp group and they upload their own photo and document. Or fill it in yourself in the roster portal.',
+                        )}{' '}
+                        {rosterDeadline
+                            ? t('Complete the rest before :deadline.', {
+                                  deadline: formatDateTime(rosterDeadline),
+                              })
+                            : t(
+                                  'Complete the rest before the roster deadline.',
+                              )}
+                    </p>
+                </div>
             )}
         </div>
     );

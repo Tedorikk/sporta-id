@@ -23,7 +23,9 @@ function rosterCategory(array $blockOverrides = []): RegistrationCategory
         ]],
         ['key' => 'peserta', 'title' => 'Peserta', 'fields' => [
             array_merge([
-                'key' => 'roster', 'label' => 'Official & Pemain', 'type' => 'roster', 'required' => true,
+                // These tests exercise the strict path: every member's details on the form.
+                'key' => 'roster', 'label' => 'Official & Pemain', 'type' => 'roster', 'required' => true, 'details_on_form' => true,
+
                 'slots' => [
                     ['role' => 'manager', 'label' => 'Manager', 'min' => 1, 'max' => 1],
                     ['role' => 'coach', 'label' => 'Coach', 'min' => 1, 'max' => 1],

@@ -22,6 +22,7 @@ import {
 } from '@/components/public/member-details-fields';
 import type { MemberForm } from '@/components/public/member-details-fields';
 import { PublicPageHeader } from '@/components/public/public-page-header';
+import { RequiredMark } from '@/components/public/required-mark';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -200,6 +201,7 @@ function MemberDialog({
                             <Field data-invalid={Boolean(errors.role)}>
                                 <FieldLabel htmlFor="member_role">
                                     {t('Role')}
+                                    <RequiredMark />
                                 </FieldLabel>
                                 <Select
                                     value={data.role}
@@ -233,6 +235,7 @@ function MemberDialog({
                             <Field data-invalid={Boolean(errors.name)}>
                                 <FieldLabel htmlFor="member_name">
                                     {t('Full name')}
+                                    <RequiredMark />
                                 </FieldLabel>
                                 <Input
                                     id="member_name"
@@ -256,6 +259,7 @@ function MemberDialog({
                                 >
                                     <FieldLabel htmlFor="member_jersey">
                                         {t('Jersey number')}
+                                        <RequiredMark />
                                     </FieldLabel>
                                     <Input
                                         id="member_jersey"

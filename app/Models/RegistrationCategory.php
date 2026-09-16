@@ -276,13 +276,15 @@ class RegistrationCategory extends Model
 
     /**
      * Whether the roster block asks for every member's photo, documents and
-     * birth details on the form itself (the default), or only name, role and
-     * jersey — leaving the rest to the roster portal before the deadline, so
-     * a manager can register and pay before every parent has sent the akta.
+     * birth details on the form itself, or only name, role and jersey —
+     * leaving the rest to the roster portal before the deadline (each member
+     * gets a self-fill link), so a manager can register and pay before every
+     * parent has sent the akta. Deferring is the default and the recommended
+     * setup; an organiser opts into details-on-form explicitly.
      */
     public function rosterDetailsOnForm(): bool
     {
-        return (bool) ($this->rosterField()['details_on_form'] ?? true);
+        return (bool) ($this->rosterField()['details_on_form'] ?? false);
     }
 
     /**

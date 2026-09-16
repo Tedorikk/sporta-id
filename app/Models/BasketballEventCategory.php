@@ -85,11 +85,12 @@ class BasketballEventCategory extends Model
                         'label' => 'Official & Pemain',
                         'type' => 'roster',
                         'required' => true,
+                        'details_on_form' => false,
                         'help_text' => 'Daftarkan official dan pemain tim Anda.',
                         'slots' => [
                             ['role' => 'manager', 'label' => 'Manager', 'min' => 1, 'max' => 1],
                             ['role' => 'coach', 'label' => 'Coach', 'min' => 1, 'max' => 1],
-                            ['role' => 'assistant_coach', 'label' => 'Ass. Coach', 'min' => 0, 'max' => 1],
+                            ['role' => 'assistant_coach', 'label' => 'Ass. Coach', 'min' => 1, 'max' => 1],
                             ['role' => 'player', 'label' => 'Pemain', 'min' => 7, 'max' => 12],
                         ],
                         'member_fields' => [

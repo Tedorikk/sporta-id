@@ -1,3 +1,4 @@
+import { RequiredMark } from '@/components/public/required-mark';
 import {
     Field,
     FieldDescription,
@@ -86,7 +87,10 @@ export function MemberDetailsFields({
     return (
         <>
             <Field data-invalid={Boolean(errors.photo)} className="w-44">
-                <FieldLabel>{t('Photo')}</FieldLabel>
+                <FieldLabel>
+                    {t('Photo')}
+                    <RequiredMark />
+                </FieldLabel>
                 <UploadImage
                     ratio={4 / 5}
                     value={data.photo}
@@ -103,6 +107,7 @@ export function MemberDetailsFields({
                 <Field data-invalid={Boolean(errors.birthplace)}>
                     <FieldLabel htmlFor="member_birthplace">
                         {t('Place of birth')}
+                        <RequiredMark />
                     </FieldLabel>
                     <Input
                         id="member_birthplace"
@@ -117,6 +122,7 @@ export function MemberDetailsFields({
                 <Field data-invalid={Boolean(errors.dob)}>
                     <FieldLabel htmlFor="member_dob">
                         {t('Date of birth')}
+                        <RequiredMark />
                     </FieldLabel>
                     <Input
                         id="member_dob"
@@ -133,6 +139,7 @@ export function MemberDetailsFields({
                 <Field data-invalid={Boolean(errors.phone_number)}>
                     <FieldLabel htmlFor="member_phone">
                         {t('WhatsApp number')}
+                        <RequiredMark />
                     </FieldLabel>
                     <Input
                         id="member_phone"
@@ -181,6 +188,7 @@ export function MemberDetailsFields({
                             <Field key={mf.key} data-invalid={Boolean(error)}>
                                 <FieldLabel htmlFor={`member_extra_${mf.key}`}>
                                     {mf.label}
+                                    {mf.required && <RequiredMark />}
                                     {!mf.required && (
                                         <span className="font-normal text-muted-foreground">
                                             {' '}
@@ -250,7 +258,10 @@ export function MemberDetailsFields({
             )}
 
             <Field data-invalid={Boolean(errors.identity_card)}>
-                <FieldLabel>{t('Identity document')}</FieldLabel>
+                <FieldLabel>
+                    {t('Identity document')}
+                    <RequiredMark />
+                </FieldLabel>
                 <FieldDescription>
                     {t('A clear photo of the KTP, KK or birth certificate.')}
                 </FieldDescription>
@@ -271,7 +282,10 @@ export function MemberDetailsFields({
 
             {isMedic && (
                 <Field data-invalid={Boolean(errors.certificate)}>
-                    <FieldLabel>{t('Medic certificate')}</FieldLabel>
+                    <FieldLabel>
+                        {t('Medic certificate')}
+                        <RequiredMark />
+                    </FieldLabel>
                     <UploadDocument
                         value={data.certificate}
                         uploadUrl="/public-upload/document"

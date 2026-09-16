@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import type { Control, FieldErrors, UseFormSetError } from 'react-hook-form';
 import { Controller, useFieldArray } from 'react-hook-form';
 import * as z from 'zod';
+import { RequiredMark } from '@/components/public/required-mark';
 import { Button } from '@/components/ui/button';
 import {
     Field,
@@ -219,7 +220,7 @@ export function RosterBlock({
                     suppressHydrationWarning
                 >
                     {t(
-                        'Just names, roles and jersey numbers for now. Photos, identity documents and birth details are completed in the roster portal after you register',
+                        'Just names, roles and jersey numbers for now. After you register, each member gets a personal link to fill in their own photo, document and birth details — or you do it in the roster portal',
                     )}
                     {rosterDeadline
                         ? ` ${t('— before :deadline.', { deadline: formatDateTime(rosterDeadline) })}`
@@ -385,7 +386,10 @@ function MemberCard({
                                 data-invalid={Boolean(errors?.photo)}
                                 className="w-28"
                             >
-                                <FieldLabel>{t('Photo')}</FieldLabel>
+                                <FieldLabel>
+                                    {t('Photo')}
+                                    <RequiredMark />
+                                </FieldLabel>
                                 <UploadImage
                                     value={field.value as string}
                                     ratio={4 / 5}
@@ -417,6 +421,7 @@ function MemberCard({
                             <Field data-invalid={fieldState.invalid}>
                                 <FieldLabel htmlFor={`${base}.name`}>
                                     {t('Full name')}
+                                    <RequiredMark />
                                 </FieldLabel>
                                 <Input
                                     {...field}
@@ -443,6 +448,7 @@ function MemberCard({
                                             htmlFor={`${base}.jersey_number`}
                                         >
                                             {t('Jersey no.')}
+                                            <RequiredMark />
                                         </FieldLabel>
                                         <Input
                                             {...field}
@@ -498,6 +504,7 @@ function MemberCard({
                                 <Field data-invalid={fieldState.invalid}>
                                     <FieldLabel htmlFor={`${base}.birthplace`}>
                                         {t('Place of birth')}
+                                        <RequiredMark />
                                     </FieldLabel>
                                     <Input
                                         {...field}
@@ -520,6 +527,7 @@ function MemberCard({
                                 <Field data-invalid={fieldState.invalid}>
                                     <FieldLabel htmlFor={`${base}.dob`}>
                                         {t('Date of birth')}
+                                        <RequiredMark />
                                     </FieldLabel>
                                     <Input
                                         {...field}
@@ -545,6 +553,7 @@ function MemberCard({
                             <Field data-invalid={fieldState.invalid}>
                                 <FieldLabel htmlFor={`${base}.phone_number`}>
                                     {t('WhatsApp number')}
+                                    <RequiredMark />
                                 </FieldLabel>
                                 <Input
                                     {...field}
@@ -582,6 +591,9 @@ function MemberCard({
                                                 htmlFor={`${base}.${mf.key}`}
                                             >
                                                 {mf.label}
+                                                {mf.required && (
+                                                    <RequiredMark />
+                                                )}
                                                 {!mf.required && (
                                                     <span className="font-normal text-muted-foreground">
                                                         {' '}
@@ -664,6 +676,7 @@ function MemberCard({
                             >
                                 <FieldLabel>
                                     {t('Identity document')}
+                                    <RequiredMark />
                                 </FieldLabel>
                                 <FieldDescription>
                                     A clear photo of the KTP, KK or birth
@@ -701,6 +714,7 @@ function MemberCard({
                                 >
                                     <FieldLabel>
                                         {t('Medic licence / certificate')}
+                                        <RequiredMark />
                                     </FieldLabel>
                                     <UploadDocument
                                         value={field.value as string}

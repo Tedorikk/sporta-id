@@ -196,6 +196,7 @@ export default function RegistrationCategoryBuilder({
             // limits plus the usual bench of officials.
             ...(type === 'roster'
                 ? {
+                      details_on_form: false,
                       slots: [
                           {
                               role: 'manager' as const,
@@ -212,7 +213,7 @@ export default function RegistrationCategoryBuilder({
                           {
                               role: 'assistant_coach' as const,
                               label: 'Ass. Coach',
-                              min: 0,
+                              min: 1,
                               max: 1,
                           },
                           {

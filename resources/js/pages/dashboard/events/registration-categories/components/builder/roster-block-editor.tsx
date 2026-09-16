@@ -132,13 +132,12 @@ export function RosterBlockEditor({
                         Collect each member’s details on this form
                     </label>
                     <p className="text-xs text-muted-foreground">
-                        Photo, identity document, birth details and WhatsApp
-                        number for every member, before the team can submit.
-                        Unticked, the form only asks name, role and jersey
-                        number — the team completes the rest in the roster
-                        portal before the roster deadline, so a manager can
-                        register and pay before every parent has sent a
-                        document.
+                        Unticked (recommended), the form only asks name, role
+                        and jersey number; the manager completes the rest in the
+                        roster portal before the roster deadline, or sends each
+                        member a personal link to fill in their own photo,
+                        document and birth details. Ticked, every member’s
+                        details are required before the team can submit.
                     </p>
                 </div>
             </div>
