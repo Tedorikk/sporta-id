@@ -1,5 +1,5 @@
 export const CONTACT_ADDRESS =
-    'Jl. Pak Kasih, Gg. Merak II, Kelurahan Mariana, Kecamatan Pontianak Kota, Kota Pontianak, Kalimantan Barat, Indonesia';
+    'Jl. M.T. Haryono, No. 33-34, Komp. Galeri Olahraga Stadion Sultan Syarif Abdurachman Kota Pontianak, Kalimantan Barat';
 export const CONTACT_EMAIL = 'sportakalbar@gmail.com';
 export const CONTACT_PHONE = '+62 811-5639-555';
 
