@@ -301,7 +301,7 @@ class RosterService
             : [[
                 'role' => Player::ROLE_PLAYER,
                 'label' => 'Player',
-                'min' => (int) ($category?->min_player_per_team ?? 0),
+                'min' => (int) ($category->min_player_per_team ?? 0),
                 'max' => $category?->max_player_per_team,
             ]];
 
