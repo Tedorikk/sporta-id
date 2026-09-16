@@ -50,7 +50,7 @@ export default function ShowEvent({ event }: { event: Event }) {
     // The public event page lists every registration category with its
     // price and availability — that's the link to hand out.
     const handleCopyRegistrationLink = () => {
-        const url = `${window.location.origin}/events/${event.id}`;
+        const url = `${window.location.origin}/events/${event.slug}`;
         navigator.clipboard.writeText(url);
         toast.success('Event link copied to clipboard');
     };

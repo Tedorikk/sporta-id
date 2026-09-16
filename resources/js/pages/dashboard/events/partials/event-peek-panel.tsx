@@ -49,8 +49,8 @@ export function EventPeekPanel({
         ? formatPriceRange(event.price_from, event.price_to)
         : null;
 
-    function copyRegistrationLink(id: number) {
-        navigator.clipboard.writeText(`${window.location.origin}/events/${id}`);
+    function copyRegistrationLink(slug: string) {
+        navigator.clipboard.writeText(`${window.location.origin}/events/${slug}`);
         toast.success('Event link copied to clipboard');
     }
 
@@ -148,7 +148,7 @@ export function EventPeekPanel({
                                     variant="outline"
                                     className="justify-start"
                                     onClick={() =>
-                                        copyRegistrationLink(event.id)
+                                        copyRegistrationLink(event.slug)
                                     }
                                 >
                                     <Link2 className="mr-2 size-4" />
@@ -160,7 +160,7 @@ export function EventPeekPanel({
                                     asChild
                                 >
                                     <a
-                                        href={`/events/${event.id}`}
+                                        href={`/events/${event.slug}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                     >

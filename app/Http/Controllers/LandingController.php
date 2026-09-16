@@ -21,7 +21,7 @@ class LandingController extends Controller
             ->withMin('registrationCategories as price_from', 'price')
             ->withMax('registrationCategories as price_to', 'price')
             ->orderBy('start_date')
-            ->get(['id', 'name', 'description', 'category', 'is_published', 'start_date', 'end_date', 'banner'])
+            ->get(['id', 'name', 'slug', 'description', 'category', 'is_published', 'start_date', 'end_date', 'banner'])
             ->map(function (Event $event) {
                 // Each card lists the actual purchasable items with their prices,
                 // so the landing page itself is a price list — not just a teaser

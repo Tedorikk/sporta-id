@@ -37,7 +37,7 @@ class VoteController extends Controller
             : null;
 
         return Inertia::render('vote', [
-            'event' => $event->only(['id', 'name', 'logo', 'banner', 'accent_color']),
+            'event' => $event->only(['id', 'name', 'slug', 'logo', 'banner', 'accent_color']),
             'award' => [
                 ...$award->only([
                     'id', 'title', 'description', 'nominee_kind', 'allowed_voters',

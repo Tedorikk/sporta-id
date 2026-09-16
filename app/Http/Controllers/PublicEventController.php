@@ -44,7 +44,7 @@ class PublicEventController extends Controller
         $calendarEvents = Event::query()
             ->where('is_published', true)
             ->orderBy('start_date')
-            ->get(['id', 'name', 'start_date', 'end_date']);
+            ->get(['id', 'name', 'slug', 'start_date', 'end_date']);
 
         return Inertia::render('events/index', [
             'events' => $events,

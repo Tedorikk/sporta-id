@@ -7,6 +7,7 @@ import { APP_LOCALE } from '@/lib/format-date';
 interface CalendarEvent {
     id: number;
     name: string;
+    slug: string;
     start_date: string;
     end_date: string;
 }
@@ -136,7 +137,7 @@ export function EventsCalendar({ events }: Props) {
                                             .map((event) => (
                                                 <Link
                                                     key={event.id}
-                                                    href={`/events/${event.id}`}
+                                                    href={`/events/${event.slug}`}
                                                     className="block truncate rounded bg-red-600/20 px-1 py-0.5 text-[10px] font-medium text-red-300 transition hover:bg-red-600/40"
                                                 >
                                                     {event.name}

@@ -48,7 +48,7 @@ export default function RegistrationCategoriesPage({
                             {event.name}
                         </h1>
                         <Link
-                            href={`/events/${event.id}`}
+                            href={`/events/${event.slug}`}
                             className="w-fit text-sm text-white/60 underline-offset-2 hover:text-white hover:underline"
                         >
                             {t('View full event page')}

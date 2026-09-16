@@ -18,6 +18,7 @@ interface Props {
     event: {
         id: number;
         name: string;
+        slug: string;
         logo: string | null;
         banner: string | null;
         accent_color: string | null;
@@ -348,7 +349,7 @@ export default function Vote({ event, award, nominees, voter }: Props) {
 
                         <button
                             type="button"
-                            onClick={() => router.visit(`/events/${event.id}`)}
+                            onClick={() => router.visit(`/events/${event.slug}`)}
                             className="text-center text-xs font-medium text-neutral-500 underline"
                         >
                             {t('Back to :event', { event: event.name })}

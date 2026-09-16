@@ -69,7 +69,7 @@ Route::middleware('public.locale')->group(function () {
     Route::inertia('refund-policy', 'refund-policy')->name('refund-policy');
 
     Route::get('events', [PublicEventController::class, 'index'])->name('events.public.index');
-    Route::get('events/{event}', [PublicEventController::class, 'show'])->name('events.public.show');
+    Route::get('events/{event:slug}', [PublicEventController::class, 'show'])->name('events.public.show');
 
     // --- Public registration-categories page (one link, every category on one page) --
     Route::get('registration/{event:slug}', [PublicEventController::class, 'registrationCategoriesPage'])->name('registration.categories');
@@ -89,7 +89,7 @@ Route::middleware('public.locale')->group(function () {
     // --- Public Player Self-Registration & ID Card (shareable, no auth required) --
     // Kept for links already in circulation: sends visitors to wherever the event
     // takes registrations now.
-    Route::get('events/{event}/register', [PublicEventController::class, 'register'])->name('events.public.register');
+    Route::get('events/{event:slug}/register', [PublicEventController::class, 'register'])->name('events.public.register');
     Route::get('players/{player}/id-card', [PlayerQrController::class, 'idCard'])->name('players.id-card');
 
     // --- Public dynamic registration (team or individual, any event type) -----

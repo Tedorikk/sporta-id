@@ -14,6 +14,7 @@ import { EVENT_STATUS_LABEL } from '@/types/event';
 interface CalendarEvent {
     id: number;
     name: string;
+    slug: string;
     start_date: string;
     end_date: string;
 }
@@ -125,7 +126,7 @@ export default function EventsIndex({
                                 return (
                                     <Link
                                         key={event.id}
-                                        href={`/events/${event.id}`}
+                                        href={`/events/${event.slug}`}
                                         className="group flex flex-col overflow-hidden rounded-2xl border-2 border-white/15 bg-white/5 transition hover:border-red-500"
                                     >
                                         <div className="relative aspect-4/5 w-full overflow-hidden bg-gradient-to-br from-red-700 to-neutral-900">
