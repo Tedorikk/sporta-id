@@ -12,8 +12,16 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     strategy:
+      # Without this one version's failure cancels the others mid-run, which
+      # has been hiding the type analysis: it only runs in this job, and the
+      # job was usually cancelled before reaching it.
+      fail-fast: false
       matrix:
-        php-version: ['8.3', '8.4', '8.5']
+        # 8.3 cannot install at all: the lockfile's Laravel 13 pulls Symfony
+        # 8, which requires php >= 8.4.1, so the job dies at composer install.
+        # (composer.json still declares "php": "^8.3" — worth reconciling, but
+        # that is a dependency decision, not a CI one.)
+        php-version: ['8.4', '8.5']
 
     steps:
       - name: Checkout code

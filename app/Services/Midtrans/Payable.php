@@ -3,6 +3,7 @@
 namespace App\Services\Midtrans;
 
 use App\Models\Payment;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
@@ -13,10 +14,17 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
  * place a payment outcome is applied, no matter what was bought: it resolves
  * the payable and hands the outcome over, and the payable decides what being
  * paid actually means for it.
+ *
+ * @phpstan-require-extends Model
  */
 interface Payable
 {
-    /** @return MorphMany<Payment, $this> */
+    /**
+     * The payments made against this payable.
+     *
+     * Deliberately left ungenericised: the declaring model differs per
+     * implementor, and each one annotates its own payments() precisely.
+     */
     public function payments(): MorphMany;
 
     /**
