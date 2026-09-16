@@ -335,6 +335,9 @@ class RegistrationCategoryController extends Controller
             'form_pages.*.fields.*.member_fields.*.required' => ['nullable', 'boolean'],
             'form_pages.*.fields.*.member_fields.*.options' => ['nullable', 'array'],
             'form_pages.*.fields.*.member_fields.*.options.*' => ['string', 'max:255'],
+            // Which roles the question is asked of; empty means everyone.
+            'form_pages.*.fields.*.member_fields.*.roles' => ['nullable', 'array'],
+            'form_pages.*.fields.*.member_fields.*.roles.*' => [Rule::in(Player::ROLES)],
 
             'form_branding' => ['nullable', 'array'],
             'form_branding.primary_color' => ['nullable', 'string', 'max:20'],

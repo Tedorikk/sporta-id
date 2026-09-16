@@ -426,6 +426,63 @@ export function RosterBlockEditor({
                                 Required
                             </label>
                         </div>
+                        {slots.length > 1 && (
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                <span className="text-xs text-muted-foreground">
+                                    Ask this of:
+                                </span>
+                                {slots.map((slot) => {
+                                    // No `roles` means everyone — every box ticked.
+                                    const asked =
+                                        !mf.roles ||
+                                        mf.roles.length === 0 ||
+                                        mf.roles.includes(slot.role);
+
+                                    return (
+                                        <label
+                                            key={slot.role}
+                                            className="flex items-center gap-1.5 text-xs"
+                                        >
+                                            <Checkbox
+                                                checked={asked}
+                                                onCheckedChange={(checked) => {
+                                                    const current =
+                                                        !mf.roles ||
+                                                        mf.roles.length === 0
+                                                            ? slots.map(
+                                                                  (s) => s.role,
+                                                              )
+                                                            : mf.roles;
+                                                    const next = checked
+                                                        ? [
+                                                              ...current,
+                                                              slot.role,
+                                                          ]
+                                                        : current.filter(
+                                                              (r) =>
+                                                                  r !==
+                                                                  slot.role,
+                                                          );
+                                                    const unique = Array.from(
+                                                        new Set(next),
+                                                    );
+                                                    // Back to "everyone" once every slot is ticked again.
+                                                    updateMemberField(index, {
+                                                        roles:
+                                                            unique.length >=
+                                                            slots.length
+                                                                ? undefined
+                                                                : unique,
+                                                    });
+                                                }}
+                                            />
+                                            {slot.label ||
+                                                playerRoleLabel(slot.role)}
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                        )}
                         {mf.type === 'select' && (
                             <OptionEditor
                                 options={mf.options ?? []}

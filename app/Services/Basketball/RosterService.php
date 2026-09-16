@@ -110,12 +110,30 @@ class RosterService
         }
 
         foreach ($memberFields as $field) {
+            if (! $this->fieldAppliesTo($field, $player->role)) {
+                continue;
+            }
+
             if (($field['required'] ?? false) && blank(data_get($player->extra, $field['key']))) {
                 return false;
             }
         }
 
         return true;
+    }
+
+    /**
+     * Whether an extra question is asked of this role. A question with no
+     * `roles` is asked of everyone; "Asal Sekolah" with roles [player] is
+     * skipped for the coach.
+     *
+     * @param  array<string, mixed>  $field
+     */
+    public function fieldAppliesTo(array $field, string $role): bool
+    {
+        $roles = $field['roles'] ?? [];
+
+        return $roles === [] || in_array($role, $roles, true);
     }
 
     /**
@@ -143,8 +161,19 @@ class RosterService
         ];
 
         foreach ($memberFields as $field) {
+            // Required only for the roles the question is asked of; the
+            // role sits next to it under the same prefix (`roster.*.role`
+            // resolves per entry), so required_if does the narrowing.
+            $roles = $field['roles'] ?? [];
+            $requiredRule = match (true) {
+                ! ($field['required'] ?? false) || ! $strict => 'nullable',
+                $roles === [] => 'required',
+                default => 'required_if:'.$prefix('role').','.implode(',', $roles),
+            };
+
             $rules[$prefix('extra.'.$field['key'])] = [
-                ($field['required'] ?? false) && $strict ? 'required' : 'nullable',
+                $requiredRule,
+                'nullable',
                 ...match ($field['type'] ?? 'text') {
                     'number' => ['numeric'],
                     'date' => ['date'],
