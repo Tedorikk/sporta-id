@@ -15,11 +15,14 @@ export function PayLinkShare({
     qrToken,
     expiresAt,
     message,
+    basePath = 'registrations',
 }: {
     qrToken: string;
     expiresAt: string | null;
     /** The WhatsApp text, without the link — it is appended. */
     message: string;
+    /** `registrations` for a solo sign-up, `registration-orders` for a group order. */
+    basePath?: 'registrations' | 'registration-orders';
 }) {
     const { t } = useT();
     const [copied, copy] = useClipboard();
@@ -29,7 +32,7 @@ export function PayLinkShare({
         () => window.location.origin,
         () => '',
     );
-    const url = origin ? `${origin}/registrations/${qrToken}/status` : '';
+    const url = origin ? `${origin}/${basePath}/${qrToken}/status` : '';
 
     const whatsapp = url
         ? `https://wa.me/?text=${encodeURIComponent(`${message}\n${url}`)}`

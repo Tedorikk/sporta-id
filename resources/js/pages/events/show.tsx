@@ -12,6 +12,7 @@ import {
     Ticket,
     Trophy,
     Users,
+    UsersRound,
     Youtube,
 } from 'lucide-react';
 import { BasketballCategorySection } from '@/components/public/basketball-category-section';
@@ -273,6 +274,22 @@ export default function EventShow({
                                     );
                                 })}
                             </div>
+
+                            {registrationCategories.some(
+                                (c) =>
+                                    c.subject_type === 'individual' &&
+                                    c.is_available,
+                            ) && (
+                                <Link
+                                    href={`/events/${event.id}/group-registration`}
+                                    className="flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-white/20 p-4 text-sm font-semibold text-white/70 transition hover:border-white/40 hover:text-white"
+                                >
+                                    <UsersRound className="h-4 w-4" />
+                                    {t(
+                                        'Registering several people? Sign everyone up in one payment.',
+                                    )}
+                                </Link>
+                            )}
 
                             <p className="text-xs text-white/50">
                                 {t(

@@ -181,3 +181,45 @@ test('a category from a different event cannot be smuggled into an order', funct
 
     expect(Registration::count())->toBe(0);
 });
+
+// ─── Public pages ────────────────────────────────────────────────────────────
+
+test('the group registration form lists every individual category on the event', function () {
+    $event = Event::factory()->create();
+    $individual = groupOrderCategory($event, ['name' => '5K']);
+    RegistrationCategory::create([
+        'event_id' => $event->id,
+        'name' => 'Team Entry',
+        'subject_type' => RegistrationCategory::SUBJECT_TEAM,
+        'form_pages' => [],
+    ]);
+
+    $this->get(route('group_registration.create', $event))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('group-registration')
+            ->has('categories', 1)
+            ->where('categories.0.id', $individual->id)
+        );
+});
+
+test('the order status page lists every participant', function () {
+    $event = Event::factory()->create();
+    $category = groupOrderCategory($event);
+
+    $this->post(route('group_registration.store', $event), [
+        'participants' => [
+            ['registration_category_id' => $category->id, 'name' => 'Alpha', 'email' => 'alpha@example.com'],
+        ],
+    ])->assertOk();
+
+    $order = RegistrationOrder::sole();
+
+    $this->get(route('registration_orders.status', $order))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('registration-order-status')
+            ->where('order.status', RegistrationOrder::STATUS_CONFIRMED)
+            ->has('order.registrations', 1)
+        );
+});
