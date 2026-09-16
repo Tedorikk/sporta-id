@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { BasketballCategorySection } from '@/components/public/basketball-category-section';
 import { MatchesCalendar } from '@/components/public/matches-calendar';
+import { RaceResultsSection } from '@/components/public/race-results-section';
+import type { PublicRaceResult } from '@/components/public/race-results-section';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useT } from '@/hooks/use-t';
 import PublicLayout from '@/layouts/public-layout';
@@ -31,6 +33,8 @@ import type { PublicRegistrationCategory } from '@/types/registration-category';
 interface Props {
     event: Event;
     categories: PublicEventCategory[] | null;
+    /** Null until the organizer publishes the race's results. */
+    raceResults: PublicRaceResult[] | null;
     meetings: Meeting[];
     registrationCategories: PublicRegistrationCategory[];
 }
@@ -61,11 +65,13 @@ const SOCIAL_LINKS: {
 export default function EventShow({
     event,
     categories,
+    raceResults,
     meetings,
     registrationCategories,
 }: Props) {
     const { t, tc } = useT();
     const hasCategories = Boolean(categories && categories.length > 0);
+    const hasRaceResults = Boolean(raceResults && raceResults.length > 0);
     const hasMeetings = meetings.length > 0;
     const hasRegistration = registrationCategories.length > 0;
     const totalTeams =
@@ -377,6 +383,20 @@ export default function EventShow({
                         </div>
                     )}
 
+                    {hasRaceResults && (
+                        <div className="flex flex-col gap-6">
+                            <h2 className="text-2xl font-black tracking-tight uppercase">
+                                Results
+                            </h2>
+                            {raceResults?.map((result) => (
+                                <RaceResultsSection
+                                    key={result.id}
+                                    result={result}
+                                />
+                            ))}
+                        </div>
+                    )}
+
                     {hasCategories ? (
                         <div className="flex flex-col gap-6">
                             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -411,7 +431,8 @@ export default function EventShow({
                         </div>
                     ) : (
                         !hasMeetings &&
-                        !hasRegistration && (
+                        !hasRegistration &&
+                        !hasRaceResults && (
                             <p className="text-center text-sm text-white/40">
                                 {t(
                                     'Details for this event will be posted soon.',

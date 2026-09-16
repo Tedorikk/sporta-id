@@ -6,14 +6,21 @@ use App\Models\BasketballEvent;
 use App\Models\BasketballEventCategory;
 use App\Models\Event;
 use App\Models\Pool;
+use App\Models\RaceParticipant;
 use App\Models\RegistrationCategory;
+use App\Models\RunningEvent;
+use App\Models\RunningEventCategory;
 use App\Services\Basketball\StandingsService;
+use App\Services\Running\RaceRankingService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class PublicEventController extends Controller
 {
-    public function __construct(protected StandingsService $standings) {}
+    public function __construct(
+        protected StandingsService $standings,
+        protected RaceRankingService $rankings,
+    ) {}
 
     public function index(Request $request)
     {
@@ -96,6 +103,27 @@ class PublicEventController extends Controller
                 });
         }
 
+        // Results are a published thing, not a live one: a leaderboard only
+        // exists on this page once the organizer says the times are final.
+        $raceResults = null;
+
+        if ($event->specific instanceof RunningEvent && $event->specific->results_published) {
+            $raceResults = $event->specific->categories()
+                ->orderBy('distance_meters')
+                ->get()
+                ->map(fn (RunningEventCategory $category) => [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'distance_meters' => $category->distance_meters,
+                    'rankings' => $this->rankings->forCategory($category),
+                    'unranked' => $this->rankings->unrankedFor($category)
+                        ->map(fn (RaceParticipant $participant) => $participant->only(['id', 'bib_number', 'name', 'status']))
+                        ->values()
+                        ->all(),
+                ])
+                ->values();
+        }
+
         $meetings = $event->meetings()->with('speaker')->orderBy('scheduled_at')->get();
 
         // Every category is listed with its price, including ones that are
@@ -104,6 +132,7 @@ class PublicEventController extends Controller
         // same isOpen()/hasAvailableQuota() verdict the register page enforces,
         // so an unavailable row renders as a disabled card instead of a link.
         $registrationCategories = $event->registrationCategories()
+            ->with('runningCategory.runningEvent')
             ->orderBy('name')
             ->get()
             ->map(fn (RegistrationCategory $category) => $category->toPublicArray())
@@ -112,6 +141,7 @@ class PublicEventController extends Controller
         return Inertia::render('events/show', [
             'event' => $event,
             'categories' => $categories,
+            'raceResults' => $raceResults,
             'meetings' => $meetings,
             'registrationCategories' => $registrationCategories,
         ]);

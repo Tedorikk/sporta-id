@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\BasketballEvent;
 use App\Models\Event;
 use App\Models\Organization;
+use App\Models\RunningEvent;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -27,7 +28,7 @@ class EventFactory extends Factory
             'name' => fake()->company().' Tournament',
             'description' => fake()->sentence(),
             'contact_person' => fake()->name(),
-            'category' => 'BASKETBALL',
+            'category' => Event::CATEGORY_BASKETBALL,
             'is_published' => true,
             'start_date' => $start->format('Y-m-d'),
             'end_date' => $end->format('Y-m-d'),
@@ -39,9 +40,22 @@ class EventFactory extends Factory
     public function basketball(): static
     {
         return $this->state([
-            'category' => 'BASKETBALL',
+            'category' => Event::CATEGORY_BASKETBALL,
             'eventable_type' => BasketballEvent::class,
             'eventable_id' => BasketballEvent::factory(),
+        ]);
+    }
+
+    /**
+     * A road race, with its RunningEvent module already attached — the state
+     * every running test starts from.
+     */
+    public function running(): static
+    {
+        return $this->state(fn () => [
+            'category' => Event::CATEGORY_RUNNING,
+            'eventable_type' => RunningEvent::class,
+            'eventable_id' => RunningEvent::factory(),
         ]);
     }
 }

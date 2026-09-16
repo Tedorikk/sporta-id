@@ -14,6 +14,23 @@ class Event extends Model
 {
     use HasFactory;
 
+    public const CATEGORY_BASKETBALL = 'BASKETBALL';
+
+    public const CATEGORY_CONFERENCE = 'CONFERENCE';
+
+    public const CATEGORY_RUNNING = 'RUNNING';
+
+    /**
+     * The kinds of event an organizer may create. Stored as a plain string
+     * column, so adding a kind costs one entry here plus whatever module
+     * backs it — no migration.
+     */
+    public const CATEGORIES = [
+        self::CATEGORY_BASKETBALL,
+        self::CATEGORY_CONFERENCE,
+        self::CATEGORY_RUNNING,
+    ];
+
     protected $table = 'events';
 
     protected $primaryKey = 'id';
@@ -208,6 +225,24 @@ class Event extends Model
             'basketball_event_category_id', // FK on pools → basketball_event_categories
             'eventable_id',         // local key on events (points to basketball_events.id)
             'id'                    // local key on basketball_event_categories
+        );
+    }
+
+    /**
+     * Runners are scoped to RunningEventCategory, not directly to Event.
+     * Path: events → running_events → running_event_categories → race_participants
+     *
+     * @return HasManyThrough<RaceParticipant, RunningEventCategory, $this>
+     */
+    public function raceParticipants(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            RaceParticipant::class,
+            RunningEventCategory::class,
+            'running_event_id',      // FK on running_event_categories → running_events
+            'running_event_category_id', // FK on race_participants → running_event_categories
+            'eventable_id',          // local key on events (points to running_events.id)
+            'id'                     // local key on running_event_categories
         );
     }
 

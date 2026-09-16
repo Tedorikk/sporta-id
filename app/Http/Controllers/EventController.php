@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\BasketballEvent;
 use App\Models\Event;
+use App\Models\RunningEvent;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class EventController extends Controller
@@ -145,6 +147,24 @@ class EventController extends Controller
 
         $extra = [];
 
+        if ($event->specific instanceof RunningEvent) {
+            $extra = [
+                // The sign-up forms a distance may be linked to, for the
+                // distance dialog's picker.
+                'registration_category_options' => $event->registrationCategories()
+                    ->orderBy('name')
+                    ->get(['id', 'name']),
+                'running_categories' => $event->specific->categories()
+                    ->with('registrationCategory:id,name')
+                    ->withCount([
+                        'participants',
+                        'participants as finishers_count' => fn ($query) => $query->finishers(),
+                    ])
+                    ->orderBy('distance_meters')
+                    ->get(),
+            ];
+        }
+
         if ($event->specific instanceof BasketballEvent) {
             $event->specific->load('categories.registrationCategory');
 
@@ -231,7 +251,7 @@ class EventController extends Controller
             'name' => ['required', 'string', 'min:5', 'max:255'],
             'description' => ['nullable', 'string'],
             'contact_person' => ['required', 'string', 'regex:/^\+[1-9]\d{1,14}$/'],
-            'category' => ['required', 'string'],
+            'category' => ['required', Rule::in(Event::CATEGORIES)],
             'is_published' => ['required', 'boolean'],
             'registration_after_end' => ['nullable', 'boolean'],
             'start_date' => ['required', 'date'],

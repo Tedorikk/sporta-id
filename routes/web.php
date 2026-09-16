@@ -7,6 +7,7 @@ use App\Http\Controllers\AwardController;
 use App\Http\Controllers\AwardNomineeController;
 use App\Http\Controllers\BasketballClubController;
 use App\Http\Controllers\BasketballEventController;
+use App\Http\Controllers\BibAssignmentController;
 use App\Http\Controllers\BracketController;
 use App\Http\Controllers\CardTemplateController;
 use App\Http\Controllers\ContactController;
@@ -35,11 +36,15 @@ use App\Http\Controllers\PlayerLookupController;
 use App\Http\Controllers\PlayerQrController;
 use App\Http\Controllers\PoolController;
 use App\Http\Controllers\PublicEventController;
+use App\Http\Controllers\RaceParticipantController;
+use App\Http\Controllers\RaceResultController;
 use App\Http\Controllers\RegistrationCategoryController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\RegistrationQrController;
 use App\Http\Controllers\RegistrationRefundController;
 use App\Http\Controllers\RosterMemberSelfController;
+use App\Http\Controllers\RunningEventCategoryController;
+use App\Http\Controllers\RunningEventController;
 use App\Http\Controllers\SpeakerController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamQrController;
@@ -193,6 +198,11 @@ Route::middleware(['auth', 'verified', 'organization.current'])->group(function 
                 ->names('players')
                 ->except(['index', 'create', 'edit', 'show']);
 
+            Route::resource('running-categories', RunningEventCategoryController::class)
+                ->parameters(['running-categories' => 'category'])
+                ->names('running_categories')
+                ->except(['index', 'create', 'edit', 'show']);
+
             Route::resource('attendees', AttendeeController::class)
                 ->except(['create', 'edit', 'show']);
 
@@ -246,6 +256,20 @@ Route::middleware(['auth', 'verified', 'organization.current'])->group(function 
 
             Route::get('matches', [EventMatchController::class, 'index'])->name('events.matches.index');
 
+            Route::prefix('running-categories/{category}')->group(function () {
+                Route::post('bibs', [BibAssignmentController::class, 'store'])->name('race_bibs.assign');
+
+                Route::get('results', [RaceResultController::class, 'index'])->name('race_results.index');
+                Route::get('results/export', [RaceResultController::class, 'export'])->name('race_results.export');
+                Route::post('results/import', [RaceResultController::class, 'import'])->name('race_results.import');
+                Route::patch('results/{participant}', [RaceResultController::class, 'update'])->name('race_results.update');
+
+                Route::get('participants', [RaceParticipantController::class, 'index'])->name('race_participants.index');
+                Route::post('participants', [RaceParticipantController::class, 'store'])->name('race_participants.store');
+                Route::put('participants/{participant}', [RaceParticipantController::class, 'update'])->name('race_participants.update');
+                Route::delete('participants/{participant}', [RaceParticipantController::class, 'destroy'])->name('race_participants.destroy');
+            });
+
             Route::prefix('basketball-categories/{category}')->group(function () {
                 Route::post('pools/auto-assign', [PoolController::class, 'autoAssign'])->name('pools.auto-assign');
                 Route::delete('pools', [PoolController::class, 'destroyAll'])->name('pools.destroy-all');
@@ -273,6 +297,10 @@ Route::middleware(['auth', 'verified', 'organization.current'])->group(function 
 
     Route::resource('events', EventController::class)->only(['store', 'update', 'destroy'])
         ->middleware('event.org');
+    Route::post('events/{event}/running', [RunningEventController::class, 'store'])
+        ->middleware('event.org')->name('events.running.store');
+    Route::put('events/{event}/running', [RunningEventController::class, 'update'])
+        ->middleware('event.org')->name('events.running.update');
     Route::post('events/{event}/basketball', [BasketballEventController::class, 'store'])
         ->middleware('event.org')->name('events.basketball.store');
 

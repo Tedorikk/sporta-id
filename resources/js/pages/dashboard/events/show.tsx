@@ -19,15 +19,25 @@ import { toast } from 'sonner';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { formatDate } from '@/lib/format-date';
 import { formatImageUrl } from '@/lib/image-utils';
 import { cn } from '@/lib/utils';
 import events from '@/routes/events';
-import type { Event } from '@/types/event';
+import type { Event, RunningEventSpecific } from '@/types/event';
 import { BasketballManagement } from './basketball/basketball-management';
+import { RunningManagement } from './running/running-management';
 
 export default function ShowEvent({ event }: { event: Event }) {
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isTogglingRegistration, setIsTogglingRegistration] = useState(false);
+    const isRace = event.category === 'RUNNING';
+    // Only a race carries an event-level entries switch; basketball's moved
+    // to the registration category, so its module cannot answer for one.
+    const raceModule = isRace
+        ? (event.specific as RunningEventSpecific | null | undefined)
+        : null;
+    const registrationOpen = raceModule?.registration_open ?? true;
 
     const handleDelete = () => {
         setIsDeleting(true);
@@ -43,6 +53,18 @@ export default function ShowEvent({ event }: { event: Event }) {
         const url = `${window.location.origin}/events/${event.id}`;
         navigator.clipboard.writeText(url);
         toast.success('Event link copied to clipboard');
+    };
+
+    const handleToggleRegistration = (checked: boolean) => {
+        setIsTogglingRegistration(true);
+        router.put(
+            `/events/${event.id}/running`,
+            { registration_open: checked },
+            {
+                preserveScroll: true,
+                onFinish: () => setIsTogglingRegistration(false),
+            },
+        );
     };
 
     return (
@@ -143,8 +165,43 @@ export default function ShowEvent({ event }: { event: Event }) {
                             </Button>
                         </>
                     )}
+                    {/* A race carries a master switch for entries, closing
+                        every distance's sign-up form at once. Only a race that
+                        has actually been set up can answer for it. */}
+                    {isRace && raceModule && (
+                        <div className="flex items-center gap-2 rounded-md border px-3 py-2">
+                            <Switch
+                                id="registration-toggle"
+                                checked={registrationOpen}
+                                onCheckedChange={handleToggleRegistration}
+                                disabled={isTogglingRegistration}
+                            />
+                            <label
+                                htmlFor="registration-toggle"
+                                className="cursor-pointer text-sm font-medium select-none"
+                            >
+                                Registration{' '}
+                                {registrationOpen ? 'Open' : 'Closed'}
+                            </label>
+                        </div>
+                    )}
                 </div>
             </section>
+
+            {/* Rendered only for a race, for the same reason as the
+                basketball block below. */}
+            {isRace && (
+                <div className="grid min-w-0 grid-cols-1 gap-8">
+                    <RunningManagement
+                        key={event.id}
+                        event={event}
+                        categories={event.running_categories ?? []}
+                        registrationCategories={
+                            event.registration_category_options ?? []
+                        }
+                    />
+                </div>
+            )}
 
             {/* Rendered only for basketball: an empty wrapper still costs a
                 gap, which reads as dead space on a phone. */}

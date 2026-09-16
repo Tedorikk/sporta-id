@@ -78,6 +78,12 @@ class RegistrationCategory extends Model
         return $this->hasOne(BasketballEventCategory::class);
     }
 
+    /** @return HasOne<RunningEventCategory, $this> */
+    public function runningCategory(): HasOne
+    {
+        return $this->hasOne(RunningEventCategory::class);
+    }
+
     /** A team category that also runs a basketball tournament (pools, brackets, standings). */
     public function isTeamTournament(): bool
     {
@@ -92,6 +98,14 @@ class RegistrationCategory extends Model
     public function isOpen(): bool
     {
         if (! $this->registration_open || $this->eventBlocksRegistration()) {
+            return false;
+        }
+
+        // A race closes entries for every one of its distances at once, so
+        // the switch on the running event outranks this category's own.
+        $this->loadMissing('runningCategory.runningEvent');
+
+        if ($this->runningCategory?->runningEvent?->registration_open === false) {
             return false;
         }
 
