@@ -159,6 +159,43 @@ test('staff need no jersey number, and a medic’s certificate is optional', fun
     ]))->assertSessionHasErrors('certificate');
 });
 
+test('the roster block’s staff slots cap the portal too, and a full sheet locks "Add member"', function () {
+    $registration = enteredTeam(['min_player_per_team' => 1, 'max_player_per_team' => 1]);
+    $team = $registration->team;
+    $team->basketballEventCategory->registrationCategory->update(['form_pages' => [
+        ['key' => 'p', 'title' => 'Peserta', 'fields' => [[
+            'key' => 'roster', 'label' => 'Roster', 'type' => 'roster', 'required' => true,
+            'slots' => [
+                ['role' => 'coach', 'label' => 'Pelatih', 'min' => 1, 'max' => 1],
+                ['role' => 'player', 'label' => 'Pemain', 'min' => 1, 'max' => 12],
+            ],
+        ]]],
+    ]]);
+    $team->players()->create(memberPayload(['name' => 'Coach A', 'role' => Player::ROLE_COACH, 'jersey_number' => null]));
+
+    // The coach slot (1) is full; the player slot follows the tournament (max 1).
+    $this->post(route('team-roster.store', $registration), memberPayload([
+        'name' => 'Coach B', 'role' => Player::ROLE_COACH, 'jersey_number' => null,
+    ]))->assertSessionHasErrors('role');
+
+    // A role the block doesn't list has no cap.
+    $this->post(route('team-roster.store', $registration), memberPayload([
+        'name' => 'Manager', 'role' => Player::ROLE_MANAGER, 'jersey_number' => null,
+    ]))->assertSessionHasNoErrors();
+
+    $this->get(route('team-roster.show', $registration))
+        ->assertInertia(fn ($page) => $page
+            ->where('limits.full', false)
+            ->where('limits.slots.0.count', 1)
+            ->where('limits.slots.0.max', 1)
+            ->where('limits.slots.1.max', 1));
+
+    $this->post(route('team-roster.store', $registration), memberPayload(['jersey_number' => '7']))->assertSessionHasNoErrors();
+
+    $this->get(route('team-roster.show', $registration))
+        ->assertInertia(fn ($page) => $page->where('limits.full', true));
+});
+
 test('the player cap from the category is enforced, staff excluded', function () {
     $registration = enteredTeam(['max_player_per_team' => 2]);
     $team = $registration->team;

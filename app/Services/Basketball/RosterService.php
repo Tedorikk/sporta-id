@@ -234,24 +234,55 @@ class RosterService
     }
 
     /**
-     * Refuses to add a member that would push the team past the category's
-     * player cap. Staff roles don't count towards it.
+     * Refuses to add a member to a role whose slot is already full — the
+     * players' cap from the tournament, and any staff slot the roster block
+     * limits (one coach, one manager…). A role the block doesn't mention
+     * has no cap, so an organiser can still record a walk-in.
      */
     public function assertHasRoomFor(Team $team, string $role): void
     {
-        $max = $team->basketballEventCategory?->max_player_per_team;
+        $slot = collect($this->slots($team))->firstWhere('role', $role);
 
-        if ($role !== Player::ROLE_PLAYER || $max === null) {
+        if ($slot === null || $slot['max'] === null || $slot['count'] < $slot['max']) {
             return;
         }
 
-        $current = $team->players()->where('role', Player::ROLE_PLAYER)->count();
+        throw ValidationException::withMessages([
+            'role' => __('This team already has the maximum of :max :label.', ['max' => $slot['max'], 'label' => $slot['label']]),
+        ]);
+    }
 
-        if ($current >= $max) {
-            throw ValidationException::withMessages([
-                'role' => __('This team already has the maximum of :max players.', ['max' => $max]),
-            ]);
-        }
+    /**
+     * Each role a team may enter, how many it has and how many it may have —
+     * from the registration form's roster block (whose player slot follows
+     * the tournament limits), or just the tournament's player limits when
+     * the form has no block. What the portal uses to lock "Add member" and
+     * the role picker once a slot is full.
+     *
+     * @return array<int, array{role: string, label: string, min: int, max: int|null, count: int}>
+     */
+    public function slots(Team $team): array
+    {
+        $category = $team->basketballEventCategory;
+        $block = $category?->registrationCategory?->rosterField();
+        $counts = $team->players->countBy('role');
+
+        $slots = $block !== null
+            ? ($block['slots'] ?? [])
+            : [[
+                'role' => Player::ROLE_PLAYER,
+                'label' => 'Player',
+                'min' => (int) ($category?->min_player_per_team ?? 0),
+                'max' => $category?->max_player_per_team,
+            ]];
+
+        return collect($slots)->map(fn (array $slot) => [
+            'role' => $slot['role'],
+            'label' => $slot['label'] ?? ucfirst(str_replace('_', ' ', $slot['role'])),
+            'min' => (int) ($slot['min'] ?? 0),
+            'max' => isset($slot['max']) ? (int) $slot['max'] : null,
+            'count' => (int) $counts->get($slot['role'], 0),
+        ])->values()->all();
     }
 
     /**
@@ -259,7 +290,7 @@ class RosterService
      * shows the captain and what verification checks. `complete` means enough
      * players *and* nobody still missing their details.
      *
-     * @return array{players: int, staff: int, incomplete: int, min_players: int|null, max_players: int|null, complete: bool}
+     * @return array{players: int, staff: int, incomplete: int, min_players: int|null, max_players: int|null, complete: bool, slots: array<int, array<string, mixed>>, full: bool}
      */
     public function summary(Team $team): array
     {
@@ -268,6 +299,7 @@ class RosterService
         $players = $members->where('role', Player::ROLE_PLAYER)->count();
         $min = $category?->min_player_per_team;
         $incomplete = $this->incompleteCount($team);
+        $slots = $this->slots($team);
 
         return [
             'players' => $players,
@@ -276,6 +308,9 @@ class RosterService
             'min_players' => $min,
             'max_players' => $category?->max_player_per_team,
             'complete' => ($min === null || $players >= $min) && $incomplete === 0,
+            'slots' => $slots,
+            // Nobody else can be added: every slot has a ceiling and has reached it.
+            'full' => $slots !== [] && collect($slots)->every(fn (array $slot) => $slot['max'] !== null && $slot['count'] >= $slot['max']),
         ];
     }
 
