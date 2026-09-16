@@ -146,4 +146,26 @@ class PublicEventController extends Controller
             'registrationCategories' => $registrationCategories,
         ]);
     }
+
+    /**
+     * A single page listing every registration category an event sells,
+     * with nothing else on it — for sharing a direct "how do I sign up"
+     * link instead of the full event page.
+     */
+    public function registrationCategoriesPage(Event $event)
+    {
+        abort_unless($event->is_published, 404);
+
+        $registrationCategories = $event->registrationCategories()
+            ->with('runningCategory.runningEvent')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (RegistrationCategory $category) => $category->toPublicArray())
+            ->values();
+
+        return Inertia::render('registration-categories', [
+            'event' => $event,
+            'registrationCategories' => $registrationCategories,
+        ]);
+    }
 }
