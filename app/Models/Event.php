@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Str;
 
 class Event extends Model
 {
@@ -38,6 +39,7 @@ class Event extends Model
     protected $fillable = [
         'organization_id',
         'name',
+        'slug',
         'description',
         'contact_person',
         'category',
@@ -67,9 +69,32 @@ class Event extends Model
     {
         parent::boot();
 
+        static::creating(function (Event $event) {
+            if (empty($event->slug)) {
+                $event->slug = self::uniqueSlugFor($event->name);
+            }
+        });
+
         static::created(function (Event $event) {
             AttendeeType::seedDefaultsFor($event);
         });
+    }
+
+    /**
+     * A slug unique across every event, for the public registration link —
+     * appending a short random suffix rather than an incrementing counter so
+     * concurrent creates never race each other over the same slug.
+     */
+    public static function uniqueSlugFor(string $name): string
+    {
+        $base = Str::slug($name) ?: 'event';
+        $slug = $base;
+
+        while (self::where('slug', $slug)->exists()) {
+            $slug = $base.'-'.Str::lower(Str::random(4));
+        }
+
+        return $slug;
     }
 
     public function getStatusAttribute(): string

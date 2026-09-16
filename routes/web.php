@@ -72,7 +72,7 @@ Route::middleware('public.locale')->group(function () {
     Route::get('events/{event}', [PublicEventController::class, 'show'])->name('events.public.show');
 
     // --- Public registration-categories page (one link, every category on one page) --
-    Route::get('registration/{event}', [PublicEventController::class, 'registrationCategoriesPage'])->name('registration.categories');
+    Route::get('registration/{event:slug}', [PublicEventController::class, 'registrationCategoriesPage'])->name('registration.categories');
 
     Route::get('contact', [ContactController::class, 'create'])->name('contact');
     Route::post('contact', [ContactController::class, 'store'])->name('contact.store');

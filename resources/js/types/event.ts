@@ -20,6 +20,7 @@ export interface RunningEventSpecific {
 export interface Event {
     id: number;
     name: string;
+    slug: string;
     description: string | null;
     contact_person: string;
     category: string | null;

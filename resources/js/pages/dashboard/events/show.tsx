@@ -55,6 +55,14 @@ export default function ShowEvent({ event }: { event: Event }) {
         toast.success('Event link copied to clipboard');
     };
 
+    // A leaner page with nothing but the categories to sign up for — for
+    // sharing "how do I register" separately from the full event page.
+    const handleCopyRegistrationCategoriesLink = () => {
+        const url = `${window.location.origin}/registration/${event.slug}`;
+        navigator.clipboard.writeText(url);
+        toast.success('Registration link copied to clipboard');
+    };
+
     const handleToggleRegistration = (checked: boolean) => {
         setIsTogglingRegistration(true);
         router.put(
@@ -124,6 +132,14 @@ export default function ShowEvent({ event }: { event: Event }) {
                             <ClipboardList className="mr-2 h-4 w-4" />
                             Registration Categories
                         </Link>
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCopyRegistrationCategoriesLink}
+                    >
+                        <Link2 className="mr-2 h-4 w-4" />
+                        Copy Registration Link
                     </Button>
                     <Button variant="outline" size="sm" asChild>
                         <Link href={`/dashboard/events/${event.id}/meetings`}>
