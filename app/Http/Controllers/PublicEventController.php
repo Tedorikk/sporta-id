@@ -6,6 +6,7 @@ use App\Models\BasketballEvent;
 use App\Models\BasketballEventCategory;
 use App\Models\Event;
 use App\Models\Pool;
+use App\Models\RaceParticipant;
 use App\Models\RegistrationCategory;
 use App\Models\RunningEvent;
 use App\Models\RunningEventCategory;
@@ -114,9 +115,11 @@ class PublicEventController extends Controller
                     'id' => $category->id,
                     'name' => $category->name,
                     'distance_meters' => $category->distance_meters,
-                    'rankings' => $this->rankings->forCategory($category),
+                    'rankings' => $this->rankings->forCategory($category)->all(),
                     'unranked' => $this->rankings->unrankedFor($category)
-                        ->map(fn ($participant) => $participant->only(['id', 'bib_number', 'name', 'status'])),
+                        ->map(fn (RaceParticipant $participant) => $participant->only(['id', 'bib_number', 'name', 'status']))
+                        ->values()
+                        ->all(),
                 ])
                 ->values();
         }

@@ -23,12 +23,12 @@ class RaceResultController extends Controller
 
     public function index(Event $event, RunningEventCategory $category)
     {
-        $this->authorizeCategory($event, $category);
+        $runningEvent = $this->authorizeCategory($event, $category);
 
         return Inertia::render('dashboard/events/running/results/index', [
             'event' => $event->only(['id', 'name', 'category']),
             'category' => $category,
-            'results_published' => $event->specific->results_published,
+            'results_published' => $runningEvent->results_published,
             'participants' => $category->participants()
                 ->orderByRaw('bib_number is null desc')
                 ->orderBy('bib_number')
@@ -121,9 +121,14 @@ class RaceResultController extends Controller
         }, $filename, ['Content-Type' => 'text/csv']);
     }
 
-    private function authorizeCategory(Event $event, RunningEventCategory $category): void
+    /** Resolves the race behind an event, or 404s if this event is not one. */
+    private function authorizeCategory(Event $event, RunningEventCategory $category): RunningEvent
     {
-        abort_unless($event->specific instanceof RunningEvent, 404);
-        abort_unless($category->running_event_id === $event->eventable_id, 404);
+        $runningEvent = $event->specific;
+
+        abort_unless($runningEvent instanceof RunningEvent, 404);
+        abort_unless($category->running_event_id === $runningEvent->id, 404);
+
+        return $runningEvent;
     }
 }

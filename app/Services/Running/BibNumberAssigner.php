@@ -71,10 +71,7 @@ class BibNumberAssigner
      */
     private function numberUnnumberedRunners(RunningEventCategory $category): int
     {
-        $taken = $category->participants()
-            ->whereNotNull('bib_number')
-            ->pluck('bib_number')
-            ->flip();
+        $taken = $this->takenBibs($category);
 
         $unnumbered = $category->participants()
             ->whereNull('bib_number')
@@ -84,13 +81,13 @@ class BibNumberAssigner
         $next = max($category->bib_start_number, 1);
 
         foreach ($unnumbered as $participant) {
-            while ($taken->has($this->format($category, $next))) {
+            while (isset($taken[$this->format($category, $next)])) {
                 $next++;
             }
 
             $bib = $this->format($category, $next);
             $participant->update(['bib_number' => $bib]);
-            $taken->put($bib, true);
+            $taken[$bib] = true;
             $next++;
         }
 
@@ -103,15 +100,31 @@ class BibNumberAssigner
     }
 
     /**
+     * The bibs already handed out on a distance, as a set to test against.
+     *
+     * @return array<string, true>
+     */
+    private function takenBibs(RunningEventCategory $category): array
+    {
+        $taken = [];
+
+        foreach ($category->participants()->whereNotNull('bib_number')->pluck('bib_number') as $bib) {
+            $taken[(string) $bib] = true;
+        }
+
+        return $taken;
+    }
+
+    /**
      * The next free bib in a category — what a walk-in gets when staff add
      * them on race day without typing a number.
      */
     public function nextAvailable(RunningEventCategory $category): string
     {
-        $taken = $category->participants()->whereNotNull('bib_number')->pluck('bib_number')->flip();
+        $taken = $this->takenBibs($category);
         $next = max($category->bib_start_number, 1);
 
-        while ($taken->has($this->format($category, $next))) {
+        while (isset($taken[$this->format($category, $next)])) {
             $next++;
         }
 

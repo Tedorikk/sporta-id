@@ -38,7 +38,7 @@ class RaceResultImporter
         // deprecation of the implicit escape character.
         $header = fgetcsv($handle, escape: '');
 
-        if ($header === false || $header === null) {
+        if ($header === false) {
             fclose($handle);
 
             return ['updated' => 0, 'skipped' => 0, 'errors' => ['The file is empty.']];

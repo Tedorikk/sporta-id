@@ -30,19 +30,25 @@ class RaceRankingService
             ->orderBy('id')
             ->get();
 
-        $winningTime = $finishers->first()?->duration_seconds ?? 0;
+        // finishers() guarantees a duration; the column stays nullable for
+        // everyone else, so each read is narrowed here rather than trusted.
+        $winningTime = $finishers->isEmpty() ? 0 : (int) $finishers->first()->duration_seconds;
 
-        return $finishers->values()->map(fn (RaceParticipant $participant, int $index) => [
-            'rank' => $index + 1,
-            'participant_id' => $participant->id,
-            'bib_number' => $participant->bib_number,
-            'name' => $participant->name,
-            'duration_seconds' => $participant->duration_seconds,
-            'pace_seconds_per_km' => $kilometers > 0
-                ? round($participant->duration_seconds / $kilometers, 1)
-                : 0.0,
-            'gap_seconds' => $participant->duration_seconds - $winningTime,
-        ]);
+        return $finishers->values()->map(function (RaceParticipant $participant, int $index) use ($kilometers, $winningTime) {
+            $duration = (int) $participant->duration_seconds;
+
+            return [
+                'rank' => $index + 1,
+                'participant_id' => $participant->id,
+                'bib_number' => $participant->bib_number,
+                'name' => $participant->name,
+                'duration_seconds' => $duration,
+                'pace_seconds_per_km' => $kilometers > 0
+                    ? round($duration / $kilometers, 1)
+                    : 0.0,
+                'gap_seconds' => $duration - $winningTime,
+            ];
+        });
     }
 
     /**
