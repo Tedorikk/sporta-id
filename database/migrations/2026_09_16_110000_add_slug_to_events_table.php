@@ -28,6 +28,10 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('events', function (Blueprint $table) {
+            // SQLite refuses to drop a column that's still covered by an
+            // explicit index (unlike an inline unique constraint) — the
+            // index has to go first.
+            $table->dropUnique(['slug']);
             $table->dropColumn('slug');
         });
     }
