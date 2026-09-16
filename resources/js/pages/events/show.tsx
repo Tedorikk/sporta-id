@@ -386,7 +386,7 @@ export default function EventShow({
                     {hasRaceResults && (
                         <div className="flex flex-col gap-6">
                             <h2 className="text-2xl font-black tracking-tight uppercase">
-                                Results
+                                {t('Results')}
                             </h2>
                             {raceResults?.map((result) => (
                                 <RaceResultsSection
