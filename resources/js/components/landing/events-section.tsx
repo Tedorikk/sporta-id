@@ -176,7 +176,7 @@ export function EventsSection({ events }: EventsSectionProps) {
                                     )}
 
                                     <Link
-                                        href={`/events/${event.slug}`}
+                                        href={`/registration/${event.slug}`}
                                         className="mt-auto flex items-center justify-center gap-2 rounded-full bg-red-600 py-2.5 text-sm font-bold tracking-wide text-white uppercase transition hover:bg-red-700"
                                     >
                                         {t('View & Register')}
