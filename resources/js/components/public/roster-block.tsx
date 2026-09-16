@@ -33,6 +33,7 @@ import type {
 } from '@/types/registration-category';
 import {
     emptyRosterMember,
+    memberFieldAppliesTo,
     rosterDetailsOnForm,
 } from '@/types/registration-category';
 
@@ -95,6 +96,10 @@ export function rosterSchema(field: RegistrationField, t: Translate) {
             }
 
             memberFields.forEach((mf) => {
+                if (!memberFieldAppliesTo(mf, m.role as PlayerRole)) {
+                    return;
+                }
+
                 const value = m.extra[mf.key] ?? '';
 
                 if (details && mf.required && value.trim() === '') {
@@ -335,6 +340,10 @@ function MemberCard({
 }) {
     const { t } = useT();
     const base = `roster.${index}`;
+    // Only the extra questions the organiser aimed at this role.
+    const askedFields = memberFields.filter((mf) =>
+        memberFieldAppliesTo(mf, role),
+    );
     const isPlayer = role === 'player';
     const isMedic = role === 'medic';
 
@@ -569,9 +578,9 @@ function MemberCard({
                         )}
                     />
 
-                    {memberFields.length > 0 && (
+                    {askedFields.length > 0 && (
                         <div className="grid grid-cols-2 gap-3">
-                            {memberFields.map((mf) => (
+                            {askedFields.map((mf) => (
                                 <Controller
                                     key={mf.key}
                                     name={`${base}.extra.${mf.key}`}

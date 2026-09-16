@@ -67,6 +67,18 @@ export interface RosterMemberField {
     type: RosterMemberFieldType;
     required: boolean;
     options?: string[];
+    /** Roles the question is asked of; empty or absent means every member. */
+    roles?: PlayerRole[];
+}
+
+/** Mirrors RosterService::fieldAppliesTo(). */
+export function memberFieldAppliesTo(
+    field: Pick<RosterMemberField, 'roles'>,
+    role: PlayerRole,
+): boolean {
+    return (
+        !field.roles || field.roles.length === 0 || field.roles.includes(role)
+    );
 }
 
 export interface RegistrationField {

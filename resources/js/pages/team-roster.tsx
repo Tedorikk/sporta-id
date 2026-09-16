@@ -1,5 +1,6 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
 import {
+    CheckCircle2,
     Clock,
     Copy,
     IdCard,
@@ -14,7 +15,7 @@ import {
     UserRound,
 } from 'lucide-react';
 import type { CSSProperties } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { toast } from 'sonner';
 import {
     MemberDetailsFields,
@@ -72,7 +73,19 @@ interface Limits {
     min_players: number | null;
     max_players: number | null;
     complete: boolean;
+    /** Every role the team may enter, with how many it has and may have. */
+    slots: RosterSlotStatus[];
+    /** Every slot has a ceiling and has reached it — nobody else can be added. */
+    full: boolean;
     closes_at: string | null;
+}
+
+interface RosterSlotStatus {
+    role: PlayerRole;
+    label: string;
+    min: number;
+    max: number | null;
+    count: number;
 }
 
 /** Mirrors TeamRosterController::lockReason(). */
@@ -122,23 +135,52 @@ function MemberDialog({
     token,
     member,
     memberFields,
+    slots,
     open,
     onOpenChange,
+    onSaving,
+    onSaved,
 }: {
     token: string;
     member: Player | null;
     memberFields: RosterMemberField[];
+    slots: RosterSlotStatus[];
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    /** The save is being sent — the page mutes the server's toast for it. */
+    onSaving: (saving: boolean) => void;
+    /** After a successful save — the page shows its own confirmation. */
+    onSaved: (name: string, wasEditing: boolean) => void;
 }) {
     const { t } = useT();
     const isEditing = member !== null;
+    // The roles on offer: the block's slots when the form has one, else every
+    // role. A full slot is listed but can't be picked — unless it is the role
+    // this member already holds.
+    const roleOptions =
+        slots.length > 0
+            ? slots.map((slot) => ({
+                  value: slot.role,
+                  label: slot.label,
+                  full:
+                      slot.max !== null &&
+                      slot.count >= slot.max &&
+                      member?.role !== slot.role,
+              }))
+            : PLAYER_ROLES.map((role) => ({ ...role, full: false }));
+    const defaultRole =
+        member?.role ??
+        roleOptions.find((role) => !role.full)?.value ??
+        roleOptions[0]?.value ??
+        'player';
     // Mounted with a `key` per member (see TeamRoster), so the initial values
     // here are always the right member's; closing just rolls back to them.
-    const form = useForm<MemberForm>(
-        toMemberForm(member ?? undefined, memberFields),
-    );
-    const { data, setData, errors, processing, reset, clearErrors } = form;
+    const form = useForm<MemberForm>({
+        ...toMemberForm(member ?? undefined, memberFields),
+        role: defaultRole,
+    });
+    const { data, setData, errors, processing, reset, clearErrors, isDirty } =
+        form;
 
     function handleOpenChange(next: boolean) {
         if (!next) {
@@ -162,9 +204,15 @@ function MemberDialog({
             email: data.email || null,
             certificate: isMedic ? data.certificate : null,
         };
+        onSaving(true);
         const options = {
             preserveScroll: true,
-            onSuccess: () => handleOpenChange(false),
+            onSuccess: () => {
+                handleOpenChange(false);
+                onSaved(data.name, isEditing);
+            },
+            // A validation error brings no flash, so un-mute for the next one.
+            onError: () => onSaving(false),
         };
 
         form.transform(() => payload);
@@ -217,12 +265,16 @@ function MemberDialog({
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {PLAYER_ROLES.map((role) => (
+                                        {roleOptions.map((role) => (
                                             <SelectItem
                                                 key={role.value}
                                                 value={role.value}
+                                                disabled={role.full}
                                             >
                                                 {t(role.label)}
+                                                {role.full
+                                                    ? ` — ${t('full')}`
+                                                    : ''}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -318,11 +370,20 @@ function MemberDialog({
                         >
                             {t('Cancel')}
                         </Button>
-                        <Button type="submit" disabled={processing}>
+                        <Button
+                            type="submit"
+                            // Nothing changed → nothing to save; the button
+                            // says so instead of pretending.
+                            disabled={processing || (isEditing && !isDirty)}
+                        >
                             {processing && (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             )}
-                            {isEditing ? t('Save changes') : t('Add to roster')}
+                            {isEditing
+                                ? isDirty
+                                    ? t('Save changes')
+                                    : t('No changes')
+                                : t('Add to roster')}
                         </Button>
                     </DialogFooter>
                 </form>
@@ -545,10 +606,20 @@ export default function TeamRoster({
         flash: { toast: { title: string; description?: string } | null };
     }>().props;
 
+    // A member just saved gets a proper confirmation dialog rather than a
+    // toast in the corner — the server's flash toast is skipped for that one.
+    const [saved, setSaved] = useState<{
+        name: string;
+        wasEditing: boolean;
+    } | null>(null);
+    const suppressToast = useRef(false);
+
     useEffect(() => {
-        if (flash?.toast) {
+        if (flash?.toast && !suppressToast.current) {
             toast(flash.toast.title, { description: flash.toast.description });
         }
+
+        suppressToast.current = false;
     }, [flash]);
 
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -567,8 +638,12 @@ export default function TeamRoster({
 
     const players = members.filter((m) => m.role === 'player');
     const staff = members.filter((m) => m.role !== 'player');
-    const atCap =
-        limits.max_players !== null && limits.players >= limits.max_players;
+    const [, copyRosterLink] = useClipboard();
+    const rosterUrl = useSyncExternalStore(
+        () => () => {},
+        () => window.location.href.split('?')[0],
+        () => '',
+    );
 
     function openAdd() {
         setEditingId(null);
@@ -667,6 +742,66 @@ export default function TeamRoster({
                                 </div>
                             </div>
                         )}
+
+                        {/* The link *is* the login. Lose it and the roster is
+                            unreachable, so it gets a card of its own, not a
+                            footnote. */}
+                        <div className="flex flex-col gap-2 rounded-xl border-2 border-amber-300 bg-amber-50 p-4">
+                            <p className="flex items-center gap-1.5 text-sm font-bold text-amber-950">
+                                <Link2 className="h-4 w-4" />
+                                {t('Your roster link')}
+                            </p>
+                            <p className="text-xs text-amber-900">
+                                {t(
+                                    'Save this link — don’t lose it. There is no login: this link is the only way back to edit this roster. Keep it private; anyone who has it can change the team sheet.',
+                                )}
+                            </p>
+                            <p
+                                className="truncate rounded-md bg-white/70 px-2 py-1 font-mono text-[11px] text-neutral-700"
+                                suppressHydrationWarning
+                            >
+                                {rosterUrl}
+                            </p>
+                            <div className="flex flex-col gap-2 sm:flex-row">
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    className="flex-1 cursor-pointer bg-amber-600 text-white hover:bg-amber-700"
+                                    disabled={!rosterUrl}
+                                    onClick={() =>
+                                        void copyRosterLink(rosterUrl).then(
+                                            (ok) =>
+                                                ok &&
+                                                toast(t('Roster link copied'), {
+                                                    description: t(
+                                                        'Paste it somewhere safe — your notes, or a message to yourself.',
+                                                    ),
+                                                }),
+                                        )
+                                    }
+                                >
+                                    <Copy className="mr-1.5 h-3.5 w-3.5" />
+                                    {t('Copy roster link')}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex-1 border-amber-300 bg-white"
+                                    asChild
+                                >
+                                    <a
+                                        href={whatsappHref(
+                                            `${t('Roster link for :team (:event) — keep this message:', { team: team.name, event: event.name })}\n${rosterUrl}`,
+                                        )}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                    >
+                                        <MessageCircle className="mr-1.5 h-3.5 w-3.5" />
+                                        {t('Send to myself on WhatsApp')}
+                                    </a>
+                                </Button>
+                            </div>
+                        </div>
 
                         <div className="flex flex-col gap-2 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
                             <div>
@@ -796,6 +931,12 @@ export default function TeamRoster({
                                     <Button
                                         size="sm"
                                         onClick={openAdd}
+                                        disabled={limits.full}
+                                        title={
+                                            limits.full
+                                                ? t('Every slot is filled')
+                                                : undefined
+                                        }
                                         className="bg-[var(--accent)] text-white hover:bg-[var(--accent-dark)]"
                                     >
                                         <Plus className="mr-1.5 h-4 w-4" />
@@ -827,11 +968,17 @@ export default function TeamRoster({
                                     ))}
                                 </ul>
                             )}
-                            {editable && atCap && (
+                            {editable && limits.slots.length > 0 && (
                                 <p className="text-xs text-neutral-500">
-                                    {t(
-                                        'Player limit reached — staff can still be added.',
-                                    )}
+                                    {limits.full
+                                        ? `${t('Every slot is filled')} · `
+                                        : ''}
+                                    {limits.slots
+                                        .map(
+                                            (slot) =>
+                                                `${t(slot.label)} ${slot.count}/${slot.max ?? '∞'}`,
+                                        )
+                                        .join(' · ')}
                                 </p>
                             )}
                         </section>
@@ -889,10 +1036,49 @@ export default function TeamRoster({
                     token={registration.qr_token}
                     member={editing}
                     memberFields={memberFields}
+                    slots={limits.slots}
                     open={dialogOpen}
                     onOpenChange={setDialogOpen}
+                    onSaving={(saving) => {
+                        suppressToast.current = saving;
+                    }}
+                    onSaved={(name, wasEditing) =>
+                        setSaved({ name, wasEditing })
+                    }
                 />
             )}
+
+            <Dialog
+                open={saved !== null}
+                onOpenChange={(open) => !open && setSaved(null)}
+            >
+                <DialogContent className="sm:max-w-sm">
+                    <DialogHeader className="items-center text-center">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
+                            <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+                        </div>
+                        <DialogTitle className="text-xl">
+                            {t('Saved')}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {saved?.wasEditing
+                                ? t(':name updated.', { name: saved.name })
+                                : t(':name is on the roster.', {
+                                      name: saved?.name ?? '',
+                                  })}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="sm:justify-center">
+                        <Button
+                            type="button"
+                            onClick={() => setSaved(null)}
+                            className="w-full sm:w-auto"
+                        >
+                            {t('OK')}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }

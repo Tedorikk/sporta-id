@@ -85,9 +85,9 @@ class TeamRosterController extends Controller
             $this->roster->attributes($team->rosterMemberFields()),
         );
 
-        // Switching a staff member to a player counts against the cap.
-        if ($validated['role'] === Player::ROLE_PLAYER && $player->role !== Player::ROLE_PLAYER) {
-            $this->roster->assertHasRoomFor($team, Player::ROLE_PLAYER);
+        // Moving someone into another role needs room in that role's slot.
+        if ($validated['role'] !== $player->role) {
+            $this->roster->assertHasRoomFor($team, $validated['role']);
         }
 
         $player->update($validated);
