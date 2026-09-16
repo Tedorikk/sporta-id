@@ -295,7 +295,10 @@ class RegistrationCategoryController extends Controller
             'form_pages' => ['nullable', 'array'],
             'form_pages.*.key' => ['required', 'string', 'max:100'],
             'form_pages.*.title' => ['required', 'string', 'max:255'],
-            'form_pages.*.description' => ['nullable', 'string', 'max:1000'],
+            // Organisers paste whole rulebooks into these — a page intro, a
+            // Description block's body, the thank-you note. Room for that; the
+            // column is JSON, so the only ceiling worth having is a sane one.
+            'form_pages.*.description' => ['nullable', 'string', 'max:20000'],
             'form_pages.*.fields' => ['nullable', 'array'],
             'form_pages.*.fields.*.key' => [
                 'required', 'string', 'max:100', 'regex:/^[a-z0-9_]+$/',
@@ -310,7 +313,7 @@ class RegistrationCategoryController extends Controller
             'form_pages.*.fields.*.required' => ['nullable', 'boolean'],
             'form_pages.*.fields.*.options' => ['nullable', 'array'],
             'form_pages.*.fields.*.options.*' => ['string', 'max:255'],
-            'form_pages.*.fields.*.help_text' => ['nullable', 'string', 'max:2000'],
+            'form_pages.*.fields.*.help_text' => ['nullable', 'string', 'max:20000'],
             'form_pages.*.fields.*.min' => ['nullable', 'numeric'],
             'form_pages.*.fields.*.max' => ['nullable', 'numeric'],
             'form_pages.*.fields.*.error_message' => ['nullable', 'string', 'max:255'],
@@ -345,7 +348,7 @@ class RegistrationCategoryController extends Controller
 
             'form_settings' => ['nullable', 'array'],
             'form_settings.prevent_duplicate_by' => ['nullable', 'string', 'max:100'],
-            'form_settings.confirmation_message' => ['nullable', 'string', 'max:1000'],
+            'form_settings.confirmation_message' => ['nullable', 'string', 'max:20000'],
             'form_settings.notify_emails' => ['nullable', 'array'],
             'form_settings.notify_emails.*' => ['email', 'max:255'],
         ], [
