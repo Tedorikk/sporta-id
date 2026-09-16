@@ -4,6 +4,7 @@ use App\Models\Event;
 use App\Models\Payment;
 use App\Models\Registration;
 use App\Models\RegistrationCategory;
+use App\Models\RegistrationOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 
@@ -101,5 +102,57 @@ test('the command fails when the registration has no payment on record', functio
     ]);
 
     $this->artisan('payments:check-status', ['registration' => $registration->id])
+        ->assertFailed();
+});
+
+// ─── Group orders ────────────────────────────────────────────────────────────
+
+test('the command confirms a group order whose payment actually settled', function () {
+    $event = Event::factory()->create();
+    $category = RegistrationCategory::create([
+        'event_id' => $event->id,
+        'name' => 'Paid Category',
+        'subject_type' => RegistrationCategory::SUBJECT_INDIVIDUAL,
+        'price' => '100000',
+        'registration_open' => true,
+        'registered_count' => 1,
+        'form_pages' => [],
+    ]);
+    $order = RegistrationOrder::create([
+        'event_id' => $event->id,
+        'status' => RegistrationOrder::STATUS_PENDING_PAYMENT,
+        'expires_at' => now()->addDay(),
+    ]);
+    $registration = Registration::create([
+        'registration_category_id' => $category->id,
+        'registration_order_id' => $order->id,
+        'event_id' => $event->id,
+        'name' => 'Jane Doe',
+        'status' => Registration::STATUS_PENDING_PAYMENT,
+    ]);
+    $payment = Payment::create([
+        'payable_type' => RegistrationOrder::class,
+        'payable_id' => $order->id,
+        'order_id' => 'ORD-'.$order->id.'-test',
+        'amount' => '100000.00',
+    ]);
+
+    Http::fake([
+        "api.sandbox.midtrans.com/v2/{$payment->order_id}/status" => Http::response([
+            'order_id' => $payment->order_id,
+            'transaction_status' => 'settlement',
+            'transaction_id' => 'txn-order-1',
+        ], 200),
+    ]);
+
+    $this->artisan('payments:check-status', ['registration' => $order->id, '--order' => true])
+        ->assertSuccessful();
+
+    expect($order->fresh()->status)->toBe(RegistrationOrder::STATUS_CONFIRMED)
+        ->and($registration->fresh()->status)->toBe(Registration::STATUS_CONFIRMED);
+});
+
+test('the command fails for an unknown order', function () {
+    $this->artisan('payments:check-status', ['registration' => 999999, '--order' => true])
         ->assertFailed();
 });
