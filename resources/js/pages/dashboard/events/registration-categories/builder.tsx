@@ -33,6 +33,7 @@ import type { FormTemplate } from './components/builder/templates';
 import {
     BASKETBALL_TEAM_TEMPLATE,
     FORM_TEMPLATES,
+    RACE_ENTRY_TEMPLATE,
 } from './components/builder/templates';
 import type { TournamentDraft } from './components/builder/tournament-settings';
 import {
@@ -117,8 +118,12 @@ export default function RegistrationCategoryBuilder({
 
     const [details, setDetails] = useState({
         name: registrationCategory?.name ?? '',
+        // A new category defaults to whatever its event usually sells:
+        // teams on a basketball event, individuals on a running one.
         subject_type: (registrationCategory?.subject_type ??
-            'team') as RegistrationSubjectType,
+            (isRunningEvent
+                ? 'individual'
+                : 'team')) as RegistrationSubjectType,
         price: registrationCategory?.price ?? '',
         quota:
             registrationCategory?.quota != null
@@ -172,6 +177,10 @@ export default function RegistrationCategoryBuilder({
                 _uid: uid(),
             })),
         }));
+
+        if (template.subjectType) {
+            setDetails((d) => ({ ...d, subject_type: template.subjectType! }));
+        }
 
         setPages(draft);
         setActiveUid(draft[0]?._uid ?? '');
@@ -365,10 +374,13 @@ export default function RegistrationCategoryBuilder({
         ),
     ];
 
-    // Basketball events lead with the team-entry preset the tournament expects.
+    // Basketball events lead with the team-entry preset the tournament
+    // expects; running events lead with the race-entry preset.
     const templates = isBasketballEvent
         ? [BASKETBALL_TEAM_TEMPLATE, ...FORM_TEMPLATES]
-        : FORM_TEMPLATES;
+        : isRunningEvent
+          ? [RACE_ENTRY_TEMPLATE, ...FORM_TEMPLATES]
+          : FORM_TEMPLATES;
 
     if (showTemplates) {
         return (

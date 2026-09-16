@@ -1,11 +1,109 @@
-import type { FormPage } from '@/types/registration-category';
+import type {
+    FormPage,
+    RegistrationSubjectType,
+} from '@/types/registration-category';
 
 export interface FormTemplate {
     key: string;
     name: string;
     description: string;
     pages: Omit<FormPage, 'key'>[];
+    /** Sets "Who registers" when the template implies one — a race entry is always individual, a team entry always team. */
+    subjectType?: RegistrationSubjectType;
 }
+
+/**
+ * What a race entry collects on top of the built-in name: contact details,
+ * date of birth and gender (what the bib sequence and age check read),
+ * jersey size, the face photo and identity card a race pack hands out
+ * against, and the rules acknowledgement. Mirrors
+ * RunningEventCategory::defaultFormPages().
+ */
+export const RACE_ENTRY_TEMPLATE: FormTemplate = {
+    key: 'race_entry',
+    name: 'Race entry',
+    description:
+        'Contact details, date of birth, gender and jersey size, plus a face photo and ID for race-pack collection.',
+    subjectType: 'individual',
+    pages: [
+        {
+            title: 'Data Pelari',
+            fields: [
+                {
+                    key: 'email',
+                    label: 'Email',
+                    type: 'email',
+                    required: true,
+                },
+                {
+                    key: 'phone',
+                    label: 'No. WhatsApp',
+                    type: 'phone',
+                    required: true,
+                },
+                {
+                    key: 'dob',
+                    label: 'Tanggal Lahir',
+                    type: 'date',
+                    required: true,
+                },
+                {
+                    key: 'gender',
+                    label: 'Jenis Kelamin',
+                    type: 'gender',
+                    required: true,
+                },
+                {
+                    key: 'nationality',
+                    label: 'Kewarganegaraan',
+                    type: 'select',
+                    required: true,
+                    options: ['WNI', 'WNA'],
+                },
+                {
+                    key: 'jersey_size',
+                    label: 'Ukuran Jersey',
+                    type: 'select',
+                    required: true,
+                    options: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'],
+                },
+                {
+                    key: 'emergency_contact',
+                    label: 'Kontak Darurat',
+                    type: 'phone',
+                    required: false,
+                },
+            ],
+        },
+        {
+            title: 'Foto & Identitas',
+            fields: [
+                {
+                    key: 'photo',
+                    label: 'Foto Wajah',
+                    type: 'file',
+                    required: true,
+                    image_ratio: 'portrait',
+                },
+                {
+                    key: 'identity_card',
+                    label: 'Kartu Identitas (KTP/Paspor)',
+                    type: 'file',
+                    required: true,
+                    image_ratio: 'landscape',
+                },
+                {
+                    key: 'agree_rules',
+                    label: 'Persetujuan',
+                    type: 'checkbox',
+                    required: true,
+                    help_text:
+                        'Saya telah membaca dan menyetujui peraturan lomba.',
+                },
+            ],
+        },
+    ],
+};
 
 /**
  * What a basketball team entry collects on top of the built-in team name:
