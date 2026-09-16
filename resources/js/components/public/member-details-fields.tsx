@@ -18,6 +18,7 @@ import { UploadImage } from '@/components/upload-image';
 import { useT } from '@/hooks/use-t';
 import type { Player, PlayerRole } from '@/types/player';
 import type { RosterMemberField } from '@/types/registration-category';
+import { memberFieldAppliesTo } from '@/types/registration-category';
 
 /** What both member forms edit; mirrors RosterService::rules(). */
 export type MemberForm = {
@@ -83,6 +84,10 @@ export function MemberDetailsFields({
 }: MemberDetailsProps) {
     const { t } = useT();
     const isMedic = data.role === 'medic';
+    // Only the extra questions the organiser aimed at this member's role.
+    const askedFields = memberFields.filter((mf) =>
+        memberFieldAppliesTo(mf, data.role),
+    );
 
     return (
         <>
@@ -177,9 +182,9 @@ export function MemberDetailsFields({
                 </Field>
             </div>
 
-            {memberFields.length > 0 && (
+            {askedFields.length > 0 && (
                 <div className="grid grid-cols-2 gap-3">
-                    {memberFields.map((mf) => {
+                    {askedFields.map((mf) => {
                         const error = (
                             errors as Record<string, string | undefined>
                         )[`extra.${mf.key}`];

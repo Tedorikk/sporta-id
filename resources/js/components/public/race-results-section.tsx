@@ -1,3 +1,4 @@
+import { useT } from '@/hooks/use-t';
 import { formatDistance, formatDuration, formatPace } from '@/lib/format-race';
 import type { RaceRankingEntry } from '@/types/race-participant';
 
@@ -16,6 +17,8 @@ export interface PublicRaceResult {
 
 /** The finishers of one distance, as published on the public event page. */
 export function RaceResultsSection({ result }: { result: PublicRaceResult }) {
+    const { t, tc } = useT();
+
     return (
         <div className="flex flex-col gap-4 rounded-2xl border-2 border-white/15 bg-white/5 p-6">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -24,13 +27,18 @@ export function RaceResultsSection({ result }: { result: PublicRaceResult }) {
                 </h3>
                 <div className="flex flex-wrap gap-3 text-xs text-white/60">
                     <span>{formatDistance(result.distance_meters)}</span>
-                    <span>{result.rankings.length} finishers</span>
+                    <span>
+                        {tc(
+                            ':count finisher|:count finishers',
+                            result.rankings.length,
+                        )}
+                    </span>
                 </div>
             </div>
 
             {result.rankings.length === 0 ? (
                 <p className="text-sm text-white/40">
-                    No finish times for this distance.
+                    {t('No finish times for this distance.')}
                 </p>
             ) : (
                 <div className="overflow-x-auto">
@@ -38,10 +46,12 @@ export function RaceResultsSection({ result }: { result: PublicRaceResult }) {
                         <thead>
                             <tr className="text-xs tracking-wide text-white/50 uppercase">
                                 <th className="py-2 pr-3">#</th>
-                                <th className="py-2 pr-3">Bib</th>
-                                <th className="py-2 pr-3">Name</th>
-                                <th className="py-2 pr-3 text-right">Pace</th>
-                                <th className="py-2 text-right">Time</th>
+                                <th className="py-2 pr-3">{t('Bib')}</th>
+                                <th className="py-2 pr-3">{t('Name')}</th>
+                                <th className="py-2 pr-3 text-right">
+                                    {t('Pace')}
+                                </th>
+                                <th className="py-2 text-right">{t('Time')}</th>
                             </tr>
                         </thead>
                         <tbody>

@@ -207,6 +207,27 @@ test('a description block field type is accepted and excluded from input fields'
         ->and($category->inputFields()[0]['key'])->toBe('coach_name');
 });
 
+test('a description block can hold a whole rulebook', function () {
+    $event = Event::factory()->create();
+    $rules = str_repeat('1. Keputusan Panitia tidak dapat diganggu gugat.
+', 200); // ~10,000 chars
+
+    $this->actingAs(organizerOf($event))
+        ->post(route('registration_categories.store', $event), categoryPayload([
+            'form_pages' => [
+                ['key' => 'page-1', 'title' => 'Peraturan', 'description' => $rules, 'fields' => [
+                    ['key' => 'rules', 'label' => 'Peraturan Umum', 'type' => 'description', 'required' => false, 'help_text' => $rules],
+                ]],
+            ],
+            'form_settings' => ['confirmation_message' => $rules],
+        ]))
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('registration_categories.index', $event));
+
+    // TrimStrings takes the trailing newline; the body itself is intact.
+    expect(RegistrationCategory::firstOrFail()->allFields()[0]['help_text'])->toBe(trim($rules));
+});
+
 test('an organizer can update a registration category', function () {
     $event = Event::factory()->create();
     $user = organizerOf($event);

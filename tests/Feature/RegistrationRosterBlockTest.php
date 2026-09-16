@@ -5,6 +5,7 @@ use App\Models\Event;
 use App\Models\Player;
 use App\Models\Registration;
 use App\Models\RegistrationCategory;
+use App\Services\Basketball\RosterService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -190,6 +191,39 @@ test('each member needs the identity details and players need distinct jersey nu
         member('player', 'A', ['jersey_number' => null]),
         member('player', 'B', ['jersey_number' => '2']),
     ])->assertSessionHasErrors('roster.2.jersey_number');
+});
+
+test('an extra question can be aimed at some roles only', function () {
+    // "Asal Sekolah" for players only; "Kelas" stays for everyone.
+    $category = rosterCategory(['member_fields' => [
+        ['key' => 'asal_sekolah', 'label' => 'Asal Sekolah', 'type' => 'text', 'required' => true, 'roles' => ['player']],
+        ['key' => 'kelas', 'label' => 'Kelas', 'type' => 'select', 'required' => true, 'options' => ['7', '8', '9']],
+    ]]);
+
+    // A coach without a school passes; a player without one doesn't.
+    submitRoster($category, [
+        member('manager', 'Manager M', ['extra' => ['asal_sekolah' => '', 'kelas' => '8']]),
+        member('coach', 'Coach C', ['extra' => ['kelas' => '8']]),
+        member('player', 'A', ['jersey_number' => '1', 'extra' => ['asal_sekolah' => '', 'kelas' => '8']]),
+        member('player', 'B', ['jersey_number' => '2']),
+    ])->assertSessionHasErrors(['roster.2.extra.asal_sekolah'])
+        ->assertSessionDoesntHaveErrors(['roster.0.extra.asal_sekolah', 'roster.1.extra.asal_sekolah']);
+
+    submitRoster($category, [
+        member('manager', 'Manager M', ['extra' => ['kelas' => '8']]),
+        member('coach', 'Coach C', ['extra' => ['kelas' => '8']]),
+        member('player', 'A', ['jersey_number' => '1']),
+        member('player', 'B', ['jersey_number' => '2']),
+    ])->assertOk();
+
+    // …and the same narrowing decides who counts as complete.
+    $service = app(RosterService::class);
+    $fields = $category->fresh()->rosterMemberFields();
+    $coach = new Player(member('coach', 'C', ['extra' => ['kelas' => '8']]));
+    $player = new Player(member('player', 'P', ['jersey_number' => '3', 'extra' => ['kelas' => '8']]));
+
+    expect($service->isComplete($coach, $fields))->toBeTrue()
+        ->and($service->isComplete($player, $fields))->toBeFalse();
 });
 
 test('the organiser\'s extra questions are validated per member', function () {

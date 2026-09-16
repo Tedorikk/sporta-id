@@ -31,7 +31,16 @@ export function RosterRequirementsCard({
         t('WhatsApp number'),
         t('Jersey number (players)'),
 
-        ...requiredQuestions.map((mf) => mf.label),
+        ...requiredQuestions.map((mf) => {
+            // A question aimed at some roles says so: "Asal Sekolah (Pemain)".
+            const forRoles = (mf.roles ?? [])
+                .map((role) => slots.find((slot) => slot.role === role)?.label)
+                .filter((label): label is string => Boolean(label));
+
+            return forRoles.length > 0
+                ? `${mf.label} (${forRoles.map((label) => t(label)).join(', ')})`
+                : mf.label;
+        }),
     ];
 
     return (
