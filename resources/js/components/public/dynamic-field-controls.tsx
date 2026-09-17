@@ -102,7 +102,7 @@ export function ChoiceGroup({
 
 const URL_PATTERN = /(https?:\/\/[^\s]+)/g;
 
-function linkifyText(text: string) {
+export function linkifyText(text: string) {
     // split() with a capturing group puts the URL matches at odd indices.
     return text.split(URL_PATTERN).map((part, i) =>
         i % 2 === 1 ? (

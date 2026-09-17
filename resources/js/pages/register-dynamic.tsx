@@ -21,6 +21,7 @@ import {
     ChoiceGroup,
     DescriptionBlock,
     GenderChoice,
+    linkifyText,
     RatingInput,
 } from '@/components/public/dynamic-field-controls';
 import { PayLinkShare } from '@/components/public/pay-link-share';
@@ -278,11 +279,12 @@ function RegistrationSuccessView({
                 </div>
 
                 {(confirmationMessage || !showCard) && (
-                    <p className="max-w-sm text-center text-sm text-ink/80">
-                        {confirmationMessage ||
-                            t(
-                                "You're all set — we've also sent a confirmation to your email.",
-                            )}
+                    <p className="max-w-sm text-center text-sm whitespace-pre-line text-ink/80">
+                        {confirmationMessage
+                            ? linkifyText(confirmationMessage)
+                            : t(
+                                  "You're all set — we've also sent a confirmation to your email.",
+                              )}
                     </p>
                 )}
 
