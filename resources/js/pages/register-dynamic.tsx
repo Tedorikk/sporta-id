@@ -398,6 +398,24 @@ function rosterFieldOf(pages: FormPage[]): RegistrationField | undefined {
     return pages.flatMap((page) => page.fields).find(isRosterField);
 }
 
+/** Which page a field key lives on, so a cross-page error can jump there first. */
+function pageIndexOf(pages: FormPage[], key: string): number {
+    return pages.findIndex((page) =>
+        page.fields.some((f) =>
+            key === 'roster' ? isRosterField(f) : f.key === key,
+        ),
+    );
+}
+
+/** Radio/gender choices only tag their `<input>`s with `name`, not `id`. */
+function scrollToField(key: string) {
+    const el =
+        document.getElementById(key) ??
+        document.querySelector<HTMLElement>(`[name="${key}"]`);
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el?.focus?.({ preventScroll: true });
+}
+
 function buildSchema(pages: FormPage[], t: Translate) {
     const fields = inputFieldsOf(pages);
     const shape: Record<string, z.ZodTypeAny> = {
@@ -552,6 +570,7 @@ export default function RegisterDynamic({
         trigger,
         subscribe,
         getValues,
+        getFieldState,
         reset,
         formState: { errors },
     } = useForm<FormValues>({
@@ -723,13 +742,29 @@ export default function RegisterDynamic({
             {
                 onFinish: () => setIsSaving(false),
                 onError: (errors) => {
+                    let firstKey: string | null = null;
+
                     Object.entries(errors).forEach(([field, message]) => {
                         const key = field.replace(/^form_data\./, '');
+                        firstKey ??= key;
                         setError(key as never, {
                             type: 'manual',
                             message: message as string,
                         });
                     });
+
+                    if (firstKey) {
+                        const key = firstKey;
+                        const target = pageIndexOf(pages, key);
+
+                        if (target !== -1) {
+                            setPageIndex(target);
+                        }
+
+                        // rAF, so the page switch above has painted before we
+                        // look for the field to scroll to.
+                        requestAnimationFrame(() => scrollToField(key));
+                    }
                 },
             },
         );
@@ -755,6 +790,16 @@ export default function RegisterDynamic({
 
         if (valid) {
             setPageIndex((i) => Math.min(i + 1, pages.length - 1));
+
+            return;
+        }
+
+        const firstInvalid = namesToCheck.find(
+            (k) => getFieldState(k).invalid,
+        );
+
+        if (firstInvalid) {
+            requestAnimationFrame(() => scrollToField(firstInvalid as string));
         }
     }
 

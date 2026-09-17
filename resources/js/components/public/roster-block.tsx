@@ -206,7 +206,7 @@ export function RosterBlock({
     const rootMessage = errors?.root?.message ?? errors?.message;
 
     return (
-        <div className="flex flex-col gap-6">
+        <div id="roster" className="flex flex-col gap-6">
             {field.help_text && (
                 <FieldDescription>{field.help_text}</FieldDescription>
             )}
