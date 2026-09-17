@@ -155,7 +155,7 @@ function PaymentPendingView({
                     </span>
                 </div>
 
-                <div className="w-full max-w-sm overflow-hidden rounded-3xl border-2 border-black bg-ink shadow-2xl">
+                <div className="w-full max-w-sm overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
                     <PublicPageHeader
                         eyebrow={t('Registration')}
                         title={event.name}
@@ -182,7 +182,7 @@ function PaymentPendingView({
                                 type="button"
                                 onClick={payNow}
                                 disabled={isPaying}
-                                className="mt-2 w-full cursor-pointer bg-[var(--accent)] font-bold tracking-wide text-ink uppercase hover:bg-[var(--accent-dark)]"
+                                className="mt-2 w-full cursor-pointer bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
                             >
                                 {isPaying ? (
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -316,7 +316,7 @@ function RegistrationSuccessView({
                         </p>
                         <Button
                             asChild
-                            className="w-full bg-[var(--accent)] font-bold tracking-wide text-ink uppercase hover:bg-[var(--accent-dark)]"
+                            className="w-full bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
                         >
                             <a
                                 href={`/registrations/${registration.qr_token}/roster`}
@@ -800,7 +800,7 @@ export default function RegisterDynamic({
                     className="relative flex min-h-screen items-center justify-center bg-paper px-4 py-10"
                     style={accentStyle}
                 >
-                    <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-ink shadow-2xl">
+                    <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
                         <PublicPageHeader
                             eyebrow={t('Registration')}
                             title={event.name}
@@ -844,7 +844,7 @@ export default function RegisterDynamic({
                 style={accentStyle}
             >
                 <div
-                    className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-ink shadow-2xl"
+                    className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl"
                     style={cardStyle}
                 >
                     <PublicPageHeader
@@ -1367,7 +1367,7 @@ export default function RegisterDynamic({
                                 {isLastPage ? (
                                     <Button
                                         type="submit"
-                                        className="flex-1 cursor-pointer bg-[var(--accent)] font-bold tracking-wide text-ink uppercase hover:bg-[var(--accent-dark)]"
+                                        className="flex-1 cursor-pointer bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
                                         disabled={isSaving}
                                         style={controlStyle}
                                     >
@@ -1384,7 +1384,7 @@ export default function RegisterDynamic({
                                 ) : (
                                     <Button
                                         type="button"
-                                        className="flex-1 cursor-pointer bg-[var(--accent)] font-bold tracking-wide text-ink uppercase hover:bg-[var(--accent-dark)]"
+                                        className="flex-1 cursor-pointer bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
                                         onClick={goNext}
                                         style={controlStyle}
                                     >
