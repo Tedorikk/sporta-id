@@ -228,6 +228,8 @@ Route::middleware(['auth', 'verified', 'organization.current'])->group(function 
                 ->name('registrations.refund');
             Route::patch('registrations/{registration}/verification-code', [VerificationCodeController::class, 'registration'])
                 ->name('registrations.verification-code');
+            Route::delete('registrations/{registration}', [RegistrationController::class, 'destroy'])
+                ->name('registrations.destroy');
             Route::patch('attendees/{attendee}/verification-code', [VerificationCodeController::class, 'attendee'])
                 ->name('attendees.verification-code');
 

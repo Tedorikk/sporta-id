@@ -1,8 +1,10 @@
 <?php
 
+use App\Models\BasketballEventCategory;
 use App\Models\CardTemplate;
 use App\Models\Event;
 use App\Models\Payment;
+use App\Models\Pool;
 use App\Models\Registration;
 use App\Models\RegistrationCategory;
 use App\Models\Team;
@@ -289,4 +291,140 @@ test('registration is rejected once the category is closed', function () {
         ->assertForbidden();
 
     expect(Registration::count())->toBe(0);
+});
+
+// ─── Deleting a registration answer ─────────────────────────────────────────
+
+test('guests cannot delete a registration', function () {
+    $category = makeRegistrationCategory();
+    $registration = Registration::create([
+        'registration_category_id' => $category->id,
+        'event_id' => $category->event_id,
+        'name' => 'Jane Doe',
+        'status' => Registration::STATUS_CONFIRMED,
+    ]);
+
+    $this->delete(route('registrations.destroy', [$category->event, $registration]))
+        ->assertRedirect(route('login'));
+
+    expect(Registration::find($registration->id))->not->toBeNull();
+});
+
+test('an organizer can delete a registration and its quota is released', function () {
+    $category = makeRegistrationCategory(['quota' => 5, 'registered_count' => 1]);
+    $user = organizerOf($category->event);
+    $registration = Registration::create([
+        'registration_category_id' => $category->id,
+        'event_id' => $category->event_id,
+        'name' => 'Jane Doe',
+        'status' => Registration::STATUS_CONFIRMED,
+    ]);
+
+    $this->actingAs($user)
+        ->delete(route('registrations.destroy', [$category->event, $registration]))
+        ->assertRedirect();
+
+    expect(Registration::find($registration->id))->toBeNull()
+        ->and($category->fresh()->registered_count)->toBe(0);
+});
+
+test('deleting an already-withdrawn registration does not release quota twice', function () {
+    $category = makeRegistrationCategory(['registered_count' => 0]);
+    $user = organizerOf($category->event);
+    $registration = Registration::create([
+        'registration_category_id' => $category->id,
+        'event_id' => $category->event_id,
+        'name' => 'Jane Doe',
+        'status' => Registration::STATUS_CANCELLED,
+    ]);
+
+    $this->actingAs($user)
+        ->delete(route('registrations.destroy', [$category->event, $registration]))
+        ->assertRedirect();
+
+    expect($category->fresh()->registered_count)->toBe(0);
+});
+
+test('a registration with a settled payment cannot be deleted', function () {
+    $category = makeRegistrationCategory(['price' => '100000']);
+    $user = organizerOf($category->event);
+    $registration = Registration::create([
+        'registration_category_id' => $category->id,
+        'event_id' => $category->event_id,
+        'name' => 'Jane Doe',
+        'status' => Registration::STATUS_CONFIRMED,
+    ]);
+    $registration->payments()->create([
+        'order_id' => 'REG-TEST-SETTLED',
+        'amount' => 100000,
+        'status' => Payment::STATUS_SETTLEMENT,
+    ]);
+
+    $this->actingAs($user)
+        ->delete(route('registrations.destroy', [$category->event, $registration]))
+        ->assertStatus(422);
+
+    expect(Registration::find($registration->id))->not->toBeNull();
+});
+
+test('a team already placed in a pool cannot be deleted, but a fresh one can', function () {
+    $category = makeRegistrationCategory([
+        'subject_type' => RegistrationCategory::SUBJECT_TEAM,
+        'form_pages' => [],
+        'registered_count' => 2,
+    ]);
+    $user = organizerOf($category->event);
+    $tournament = BasketballEventCategory::factory()->forEvent($category->event)->create();
+
+    $placedTeam = Team::create(['event_id' => $category->event_id, 'name' => 'Placed Team', 'status' => Team::STATUS_PENDING]);
+    Pool::create(['basketball_event_category_id' => $tournament->id, 'name' => 'Pool A'])
+        ->teams()->attach($placedTeam);
+    $placedRegistration = Registration::create([
+        'registration_category_id' => $category->id,
+        'event_id' => $category->event_id,
+        'team_id' => $placedTeam->id,
+        'name' => 'Placed Team',
+        'status' => Registration::STATUS_CONFIRMED,
+    ]);
+
+    $freshTeam = Team::create(['event_id' => $category->event_id, 'name' => 'Fresh Team', 'status' => Team::STATUS_PENDING]);
+    $freshRegistration = Registration::create([
+        'registration_category_id' => $category->id,
+        'event_id' => $category->event_id,
+        'team_id' => $freshTeam->id,
+        'name' => 'Fresh Team',
+        'status' => Registration::STATUS_CONFIRMED,
+    ]);
+
+    $this->actingAs($user)
+        ->delete(route('registrations.destroy', [$category->event, $placedRegistration]))
+        ->assertStatus(422);
+
+    expect(Registration::find($placedRegistration->id))->not->toBeNull();
+
+    $this->actingAs($user)
+        ->delete(route('registrations.destroy', [$category->event, $freshRegistration]))
+        ->assertRedirect();
+
+    expect(Registration::find($freshRegistration->id))->toBeNull()
+        ->and(Team::find($freshTeam->id))->toBeNull()
+        ->and($category->fresh()->registered_count)->toBe(1);
+});
+
+test('deleting a registration from another event 404s', function () {
+    $category = makeRegistrationCategory();
+    $otherEvent = Event::factory()->create();
+    $user = organizerOf($otherEvent);
+    $registration = Registration::create([
+        'registration_category_id' => $category->id,
+        'event_id' => $category->event_id,
+        'name' => 'Jane Doe',
+        'status' => Registration::STATUS_CONFIRMED,
+    ]);
+
+    $this->actingAs($user)
+        ->delete(route('registrations.destroy', [$otherEvent, $registration]))
+        ->assertNotFound();
+
+    expect(Registration::find($registration->id))->not->toBeNull();
 });

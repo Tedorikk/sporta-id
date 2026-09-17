@@ -145,6 +145,65 @@ class RegistrationController extends Controller
     }
 
     /**
+     * Removes a registration answer outright — for a mistaken or duplicate
+     * submission, not a legitimate withdrawal (that stays as a record via
+     * refund/cancel instead). Blocked once the entry has produced downstream
+     * data that would be lost with it: a settled payment, a team that has
+     * already played, or a finished race result.
+     */
+    public function destroy(Event $event, Registration $registration)
+    {
+        abort_unless($registration->event_id === $event->id, 404);
+
+        $registration->loadMissing([
+            'team.homeMatches', 'team.awayMatches', 'team.pools', 'raceParticipant', 'registrationOrder',
+        ]);
+
+        $hasSettledPayment = $registration->registration_order_id !== null
+            ? $registration->registrationOrder?->payments()->where('status', Payment::STATUS_SETTLEMENT)->exists()
+            : $registration->payments()->where('status', Payment::STATUS_SETTLEMENT)->exists();
+
+        abort_if($hasSettledPayment, 422, 'This registration has a settled payment — refund it instead of deleting.');
+
+        if ($registration->team !== null) {
+            $hasCompeted = $registration->team->homeMatches->isNotEmpty()
+                || $registration->team->awayMatches->isNotEmpty()
+                || $registration->team->pools->isNotEmpty();
+
+            abort_if($hasCompeted, 422, 'This team has already been placed in the tournament — reject it instead of deleting.');
+        }
+
+        abort_if(
+            $registration->raceParticipant?->duration_seconds !== null,
+            422,
+            'This entry already has a race result recorded — it cannot be deleted.'
+        );
+
+        DB::transaction(function () use ($registration) {
+            $locked = Registration::whereKey($registration->id)->lockForUpdate()->first();
+
+            if (! $locked->isWithdrawn()) {
+                $locked->registrationCategory()->decrement('registered_count');
+            }
+
+            // Abandoned Snap tokens, not real transactions — the settled-payment
+            // guard above already ruled out anything that actually moved money.
+            if ($locked->registration_order_id === null) {
+                $locked->payments()->delete();
+            }
+
+            $team = $locked->team;
+            $locked->delete();
+            $team?->delete();
+        });
+
+        return back()->with(['toast' => [
+            'title' => 'Success',
+            'description' => 'Registration deleted.',
+        ]]);
+    }
+
+    /**
      * Issues a fresh Snap token for a still-pending registration — used when
      * the organizer's "Pay Now" retry is clicked from the status page,
      * e.g. after the first token has expired or the popup was closed.

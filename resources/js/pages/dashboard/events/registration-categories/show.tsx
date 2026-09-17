@@ -6,10 +6,12 @@ import {
     Printer,
     RefreshCw,
     Search,
+    Trash2,
     Undo2,
     Users,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { LocalTime } from '@/components/local-time';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -144,6 +146,7 @@ export default function RegistrationCategoryShow({
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [recoding, setRecoding] = useState<Registration | null>(null);
     const [isRecoding, setIsRecoding] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const isPaidCategory =
         Boolean(registrationCategory.price) &&
@@ -186,6 +189,18 @@ export default function RegistrationCategoryShow({
                     setIsRecoding(false);
                     setRecoding(null);
                 },
+            },
+        );
+    };
+
+    const submitDelete = (registration: Registration) => {
+        setIsDeleting(true);
+
+        router.delete(
+            `/dashboard/events/${event.id}/registrations/${registration.id}`,
+            {
+                preserveScroll: true,
+                onFinish: () => setIsDeleting(false),
             },
         );
     };
@@ -593,6 +608,43 @@ export default function RegistrationCategoryShow({
                                                 <Undo2 className="h-4 w-4" />
                                             </Button>
                                         )}
+                                        <DeleteConfirmationDialog
+                                            trigger={
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    title="Delete this registration"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            }
+                                            title="Delete this registration?"
+                                            confirmationValue={
+                                                registration.name
+                                            }
+                                            description={
+                                                <>
+                                                    This permanently deletes{' '}
+                                                    <strong>
+                                                        {registration.name}
+                                                    </strong>
+                                                    &apos;s answer — for a
+                                                    mistaken or duplicate
+                                                    submission, not a
+                                                    legitimate withdrawal.
+                                                    Blocked if it has a
+                                                    settled payment, a team
+                                                    that has played, or a
+                                                    recorded race result; use
+                                                    refund/reject for those
+                                                    instead.
+                                                </>
+                                            }
+                                            onConfirm={() =>
+                                                submitDelete(registration)
+                                            }
+                                            isDeleting={isDeleting}
+                                        />
                                     </TableCell>
                                 </TableRow>
                             ))}
