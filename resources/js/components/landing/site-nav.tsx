@@ -29,7 +29,7 @@ export function SiteNav() {
     }
 
     return (
-        <nav className="border-ink/10 bg-paper/90 sticky top-0 z-40 animate-in border-b shadow-sm backdrop-blur-md duration-500 fade-in slide-in-from-top-4">
+        <nav className="border-ink/10 bg-paper/90 sticky top-0 z-40 border-b shadow-sm backdrop-blur-md">
             <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
                 <Link href="/" className="group flex items-center gap-2">
                     <SiteLogo className="h-8 w-auto transition-transform duration-300 ease-out group-hover:scale-105 sm:h-9" />
