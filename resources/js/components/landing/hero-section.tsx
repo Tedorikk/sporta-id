@@ -59,9 +59,10 @@ export function HeroSection() {
                     </div>
 
                     <div className="relative h-64 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-transparent sm:h-72">
-                        <Flag
-                            className="absolute top-1/2 left-1/2 h-56 w-56 -translate-x-1/2 -translate-y-1/2 text-white/[0.06]"
-                            strokeWidth={1}
+                        <img
+                            src="/images/image.JPG"
+                            alt=""
+                            className="absolute inset-0 h-full w-full object-cover opacity-50"
                         />
 
                         <div className="absolute top-4 left-4 rounded-2xl bg-black/40 px-4 py-3 backdrop-blur-sm">
