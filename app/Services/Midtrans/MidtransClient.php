@@ -23,6 +23,8 @@ class MidtransClient
 
         $response = Http::withBasicAuth(config('services.midtrans.server_key'), '')
             ->acceptJson()
+            ->connectTimeout(5)
+            ->timeout(15)
             ->post($this->baseUrl().'/snap/v1/transactions', [
                 'transaction_details' => [
                     'order_id' => $payment->order_id,
@@ -68,6 +70,8 @@ class MidtransClient
     {
         $response = Http::withBasicAuth(config('services.midtrans.server_key'), '')
             ->acceptJson()
+            ->connectTimeout(5)
+            ->timeout(15)
             ->get($this->coreApiBaseUrl()."/v2/{$orderId}/status");
 
         if ($response->failed()) {
