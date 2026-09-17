@@ -145,7 +145,7 @@ export default function FindId({ events }: Props) {
                     <div className="absolute -right-40 -bottom-40 h-96 w-96 rounded-full bg-red-900/20 blur-3xl" />
                 </div>
 
-                <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-paper shadow-2xl">
+                <div className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-ink/10 bg-paper">
                     <PublicPageHeader
                         eyebrow={t('Player Lookup')}
                         title={t('Find My ID Card')}

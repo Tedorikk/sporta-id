@@ -37,7 +37,7 @@ export default function RegistrationCategoriesPage({
 
             <div className="flex min-h-screen flex-col bg-paper">
                 <div className="relative flex flex-1 items-center justify-center px-4 py-10">
-                    <div className="relative z-10 w-full max-w-lg border border-ink/12 bg-paper">
+                    <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl border border-ink/10 bg-paper">
                         <PublicPageHeader
                             eyebrow={t('Registration')}
                             title={event.name}

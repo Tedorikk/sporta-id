@@ -155,7 +155,7 @@ function PaymentPendingView({
                     </span>
                 </div>
 
-                <div className="w-full max-w-sm overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
+                <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-ink/10 bg-paper">
                     <PublicPageHeader
                         eyebrow={t('Registration')}
                         title={event.name}
@@ -800,7 +800,7 @@ export default function RegisterDynamic({
                     className="relative flex min-h-screen items-center justify-center bg-paper px-4 py-10"
                     style={accentStyle}
                 >
-                    <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
+                    <div className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-ink/10 bg-paper">
                         <PublicPageHeader
                             eyebrow={t('Registration')}
                             title={event.name}
@@ -844,7 +844,7 @@ export default function RegisterDynamic({
                 style={accentStyle}
             >
                 <div
-                    className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl"
+                    className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-ink/10 bg-paper"
                     style={cardStyle}
                 >
                     <PublicPageHeader

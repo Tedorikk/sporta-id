@@ -719,7 +719,7 @@ export default function TeamRoster({
                 className="relative flex min-h-screen items-start justify-center bg-paper px-4 py-10"
                 style={accentStyle}
             >
-                <div className="relative z-10 w-full max-w-2xl overflow-hidden rounded-3xl border-2 border-black bg-paper shadow-2xl">
+                <div className="relative z-10 w-full max-w-2xl overflow-hidden rounded-2xl border border-ink/10 bg-paper">
                     <PublicPageHeader
                         eyebrow={t('Team Roster')}
                         title={team.name}

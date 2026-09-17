@@ -109,7 +109,7 @@ export default function RegistrationOrderStatus({ order }: Props) {
             />
 
             <div className="relative flex min-h-screen items-center justify-center bg-paper px-4 py-10">
-                <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-paper shadow-2xl">
+                <div className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-ink/10 bg-paper">
                     <PublicPageHeader
                         eyebrow={t('Group Registration')}
                         title={order.event?.name ?? ''}

@@ -97,7 +97,7 @@ export default function VoteStatus({ vote, award, event }: Props) {
                 className="flex min-h-screen flex-col items-center justify-center bg-paper px-4 py-10"
                 style={accentStyle}
             >
-                <div className="w-full max-w-sm overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
+                <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-ink/10 bg-paper">
                     <PublicPageHeader
                         eyebrow={t('Vote')}
                         title={award?.title ?? t('Your vote')}
