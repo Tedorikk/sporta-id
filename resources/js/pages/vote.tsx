@@ -87,10 +87,10 @@ export default function Vote({ event, award, nominees, voter }: Props) {
             <Head title={`${award.title} — ${event.name}`} />
 
             <div
-                className="flex min-h-screen flex-col items-center bg-neutral-950 px-4 py-10"
+                className="flex min-h-screen flex-col items-center bg-paper px-4 py-10"
                 style={accentStyle}
             >
-                <div className="w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
+                <div className="w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-ink shadow-2xl">
                     <PublicPageHeader
                         eyebrow={t('Vote')}
                         title={award.title}

@@ -1,6 +1,6 @@
 import { Head } from '@inertiajs/react';
 import type { ReactNode } from 'react';
-import { PublicPageHeader } from '@/components/public/public-page-header';
+import { MarketingPageHeader } from '@/components/public/marketing-page-header';
 import PublicLayout from '@/layouts/public-layout';
 
 interface LegalPageProps {
@@ -24,18 +24,17 @@ export function LegalPage({
             <Head title={`${title} — Sporta Indonesia`} />
 
             <PublicLayout>
-                <PublicPageHeader
-                    languageToggle={false}
+                <MarketingPageHeader
                     eyebrow={eyebrow}
                     title={title}
                     subtitle={subtitle}
                 />
 
                 <section className="mx-auto max-w-3xl px-6 py-14">
-                    <p className="mb-8 text-xs tracking-wide text-white/40 uppercase">
+                    <p className="mb-8 text-xs tracking-wide text-ink/40 uppercase">
                         Last updated: {lastUpdated}
                     </p>
-                    <div className="flex flex-col gap-8 text-white/75">
+                    <div className="flex flex-col gap-8 text-ink/75">
                         {children}
                     </div>
                 </section>
@@ -53,7 +52,7 @@ export function LegalSection({
 }) {
     return (
         <div className="flex flex-col gap-3">
-            <h2 className="text-lg font-black tracking-tight text-white uppercase">
+            <h2 className="text-lg font-black tracking-tight text-ink uppercase">
                 {heading}
             </h2>
             {children}

@@ -114,9 +114,9 @@ export function MatchesCalendar({ matches }: Props) {
     return (
         <div className="flex flex-col gap-3">
             {scheduledMatches.length > 0 && (
-                <div className="rounded-xl border-2 border-white/10 bg-black/20 p-4">
+                <div className="rounded-xl border-2 border-ink/12 p-4">
                     <div className="mb-3 flex items-center justify-between">
-                        <span className="text-sm font-bold tracking-wide text-white/80 uppercase">
+                        <span className="text-sm font-bold tracking-wide text-ink/80 uppercase">
                             {monthLabel}
                         </span>
                         <div className="flex items-center gap-1.5">
@@ -125,7 +125,7 @@ export function MatchesCalendar({ matches }: Props) {
                                 onClick={() =>
                                     setCursor(new Date(year, month - 1, 1))
                                 }
-                                className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white/15 text-white/70 transition hover:border-red-500 hover:text-white"
+                                className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-ink/15 text-ink/70 transition hover:border-poster-red hover:text-ink"
                                 aria-label={t('Previous month')}
                             >
                                 <ChevronLeft className="h-3.5 w-3.5" />
@@ -135,7 +135,7 @@ export function MatchesCalendar({ matches }: Props) {
                                 onClick={() =>
                                     setCursor(new Date(year, month + 1, 1))
                                 }
-                                className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white/15 text-white/70 transition hover:border-red-500 hover:text-white"
+                                className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-ink/15 text-ink/70 transition hover:border-poster-red hover:text-ink"
                                 aria-label={t('Next month')}
                             >
                                 <ChevronRight className="h-3.5 w-3.5" />
@@ -143,11 +143,11 @@ export function MatchesCalendar({ matches }: Props) {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-7 gap-px overflow-hidden rounded-lg border border-white/10 bg-white/10">
+                    <div className="grid grid-cols-7 gap-px overflow-hidden rounded-lg border border-ink/10 bg-ink/10">
                         {WEEKDAYS.map((day) => (
                             <div
                                 key={day}
-                                className="bg-black/40 py-1.5 text-center text-[10px] font-bold tracking-wide text-white/40 uppercase"
+                                className="bg-ink/5 py-1.5 text-center text-[10px] font-bold tracking-wide text-ink/40 uppercase"
                             >
                                 {t(day)}
                             </div>
@@ -172,21 +172,21 @@ export function MatchesCalendar({ matches }: Props) {
                                         key &&
                                         setSelectedKey(isSelected ? null : key)
                                     }
-                                    className={`min-h-14 bg-neutral-950 p-1 text-left sm:min-h-16 ${isToday ? 'ring-2 ring-red-500 ring-inset' : ''} ${
-                                        isSelected ? 'bg-red-600/20' : ''
-                                    } ${hasMatches ? 'cursor-pointer hover:bg-white/5' : 'cursor-default'}`}
+                                    className={`min-h-14 bg-paper p-1 text-left sm:min-h-16 ${isToday ? 'ring-2 ring-red-500 ring-inset' : ''} ${
+                                        isSelected ? 'bg-poster-red/20' : ''
+                                    } ${hasMatches ? 'cursor-pointer hover:bg-ink/5' : 'cursor-default'}`}
                                 >
                                     {cell.date && (
                                         <>
                                             <div
-                                                className={`text-xs font-semibold ${isToday ? 'text-red-400' : 'text-white/50'}`}
+                                                className={`text-xs font-semibold ${isToday ? 'text-poster-red' : 'text-ink/50'}`}
                                             >
                                                 {cell.date.getDate()}
                                             </div>
                                             {hasMatches && (
                                                 <div className="mt-1 flex items-center gap-1">
                                                     <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
-                                                    <span className="text-[10px] text-white/50">
+                                                    <span className="text-[10px] text-ink/50">
                                                         {cell.matches.length}
                                                     </span>
                                                 </div>
@@ -215,7 +215,7 @@ export function MatchesCalendar({ matches }: Props) {
             {unscheduledMatches.length > 0 && (
                 <div className="flex flex-col gap-2">
                     {scheduledMatches.length > 0 && (
-                        <span className="text-xs font-semibold tracking-wide text-white/40 uppercase">
+                        <span className="text-xs font-semibold tracking-wide text-ink/40 uppercase">
                             {t('Not yet scheduled')}
                         </span>
                     )}

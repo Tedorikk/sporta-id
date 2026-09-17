@@ -102,10 +102,10 @@ export default function RosterMemberSelf({
             />
 
             <div
-                className="relative flex min-h-screen items-start justify-center bg-neutral-950 px-4 py-10"
+                className="relative flex min-h-screen items-start justify-center bg-paper px-4 py-10"
                 style={accentStyle}
             >
-                <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
+                <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-3xl border-2 border-black bg-paper shadow-2xl">
                     <PublicPageHeader
                         eyebrow={t('Team Roster')}
                         title={member.name}
@@ -184,7 +184,7 @@ export default function RosterMemberSelf({
                                     <Button
                                         type="submit"
                                         disabled={processing}
-                                        className="w-full bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
+                                        className="w-full bg-[var(--accent)] font-bold tracking-wide text-ink uppercase hover:bg-[var(--accent-dark)]"
                                     >
                                         {processing && (
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

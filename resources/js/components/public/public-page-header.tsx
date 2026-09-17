@@ -1,4 +1,4 @@
-import { isValidHexColor, shadeColor } from '@/lib/color';
+import { isValidHexColor } from '@/lib/color';
 import { formatImageUrl } from '@/lib/image-utils';
 import { SiteLogo } from '../landing/site-logo';
 import { LanguageToggle } from './language-toggle';
@@ -26,68 +26,31 @@ export function PublicPageHeader({
 
     return (
         <div
-            className={
-                accent
-                    ? 'relative flex flex-col items-center gap-2 overflow-hidden px-6 py-10 text-center'
-                    : 'relative flex flex-col items-center gap-2 overflow-hidden bg-gradient-to-br from-red-600 via-red-700 to-rose-950 px-6 py-10 text-center'
-            }
-            style={{
-                clipPath: 'polygon(0 0, 100% 0, 100% 88%, 50% 100%, 0 88%)',
-                ...(accent && {
-                    backgroundImage: `linear-gradient(to bottom right, ${accent}, ${shadeColor(accent, -10)}, ${shadeColor(accent, -55)})`,
-                }),
-            }}
+            className="relative flex flex-col items-center gap-2 bg-poster-red px-6 pt-10 pb-8 text-center text-paper"
+            style={accent ? { backgroundColor: accent } : undefined}
         >
-            <div className="pointer-events-none absolute inset-0 opacity-10">
-                <svg
-                    className="h-full w-full"
-                    xmlns="http://www.w3.org/2000/svg"
-                >
-                    <defs>
-                        <pattern
-                            id="ppgrid"
-                            width="22"
-                            height="22"
-                            patternUnits="userSpaceOnUse"
-                        >
-                            <path
-                                d="M 22 0 L 0 0 0 22"
-                                fill="none"
-                                stroke="white"
-                                strokeWidth="0.5"
-                            />
-                        </pattern>
-                    </defs>
-                    <rect width="100%" height="100%" fill="url(#ppgrid)" />
-                </svg>
-            </div>
-
             {languageToggle && (
-                <LanguageToggle className="absolute top-3 right-3 z-20" />
+                <LanguageToggle className="absolute top-4 right-4 z-10" />
             )}
 
-            <div className="relative z-10 flex flex-col items-center gap-2">
-                <div className="flex items-center justify-center">
-                    {logoUrl ? (
-                        <img
-                            src={formatImageUrl(logoUrl)}
-                            alt=""
-                            className="h-16 w-auto object-contain"
-                        />
-                    ) : (
-                        <SiteLogo className="h-16 w-auto" />
-                    )}
-                </div>
-                <span className="text-xs font-bold tracking-[0.3em] text-white/70 uppercase">
-                    {eyebrow}
-                </span>
-                <h1 className="text-2xl font-black tracking-tight text-white uppercase">
-                    {title}
-                </h1>
-                {subtitle && (
-                    <p className="max-w-sm text-sm text-white/80">{subtitle}</p>
+            <div className="flex items-center justify-center">
+                {logoUrl ? (
+                    <img
+                        src={formatImageUrl(logoUrl)}
+                        alt=""
+                        className="h-16 w-auto object-contain"
+                    />
+                ) : (
+                    <SiteLogo className="h-16 w-auto" />
                 )}
             </div>
+            <span className="bg-ink px-3 py-1 text-xs font-semibold tracking-wide text-poster-yellow uppercase">
+                {eyebrow}
+            </span>
+            <h1 className="font-display text-3xl font-bold">{title}</h1>
+            {subtitle && (
+                <p className="max-w-sm text-sm text-paper/80">{subtitle}</p>
+            )}
         </div>
     );
 }

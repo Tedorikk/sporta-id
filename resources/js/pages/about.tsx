@@ -1,6 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { StatsStrip } from '@/components/landing/stats-strip';
-import { PublicPageHeader } from '@/components/public/public-page-header';
+import { MarketingPageHeader } from '@/components/public/marketing-page-header';
 import { useT } from '@/hooks/use-t';
 import PublicLayout from '@/layouts/public-layout';
 
@@ -12,8 +12,7 @@ export default function About() {
             <Head title={t('About Us — Sporta Indonesia')} />
 
             <PublicLayout>
-                <PublicPageHeader
-                    languageToggle={false}
+                <MarketingPageHeader
                     eyebrow={t('About Us')}
                     title={t('Our Story')}
                     subtitle={t(
@@ -21,8 +20,8 @@ export default function About() {
                     )}
                 />
 
-                <section className="mx-auto max-w-3xl px-6 py-14">
-                    <div className="flex flex-col gap-6 text-white/80">
+                <section className="mx-auto max-w-2xl px-6 py-14">
+                    <div className="flex flex-col gap-6 text-lg leading-relaxed text-ink/80">
                         <p>
                             {t(
                                 'Sporta Indonesia began in 2011 as a community of friends organizing local running events in Pontianak, West Kalimantan. What started as a shared passion for sports grew steadily, and in 2019 we became a formal company — turning that community spirit into a professional event organization.',
@@ -35,7 +34,7 @@ export default function About() {
                         </p>
                         <p>
                             {t('Our tagline,')}{' '}
-                            <span className="font-bold text-red-400">
+                            <span className="font-medium text-poster-red italic">
                                 &ldquo;Support Your Talent&rdquo;
                             </span>
                             {t(

@@ -47,9 +47,9 @@ const UNAVAILABLE_LABEL: Record<string, string> = {
 };
 
 const STATUS_STYLE: Record<string, string> = {
-    upcoming: 'bg-amber-400 text-amber-950',
-    ongoing: 'bg-emerald-500 text-white',
-    past: 'bg-neutral-400 text-neutral-950',
+    upcoming: 'bg-poster-yellow text-ink',
+    ongoing: 'bg-emerald-500 text-ink',
+    past: 'bg-ink/60 text-paper/70',
 };
 
 const SOCIAL_LINKS: {
@@ -117,7 +117,7 @@ export default function EventShow({
                     <div className="relative mx-auto flex max-w-5xl flex-col gap-4 px-6 py-16 sm:py-20">
                         <div className="flex flex-wrap items-center gap-2">
                             <span
-                                className={`w-fit rounded-full px-3 py-1 text-xs font-bold tracking-wide uppercase ${STATUS_STYLE[event.status] ?? 'bg-white text-black'}`}
+                                className={`w-fit rounded-full px-3 py-1 text-xs font-bold tracking-wide uppercase ${STATUS_STYLE[event.status] ?? 'bg-ink text-paper'}`}
                             >
                                 {t(
                                     EVENT_STATUS_LABEL[event.status] ??
@@ -125,17 +125,17 @@ export default function EventShow({
                                 )}
                             </span>
                             {event.category && (
-                                <span className="w-fit rounded-full border-2 border-white/25 px-3 py-1 text-xs font-bold tracking-wide text-white/80 uppercase">
+                                <span className="w-fit rounded-full border-2 border-paper/30 px-3 py-1 text-xs font-bold tracking-wide text-paper/80 uppercase">
                                     {event.category}
                                 </span>
                             )}
                         </div>
 
-                        <h1 className="text-4xl leading-[1.05] font-black tracking-tight uppercase sm:text-5xl">
+                        <h1 className="text-4xl leading-[1.05] font-black tracking-tight text-paper uppercase sm:text-5xl">
                             {event.name}
                         </h1>
 
-                        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-white/80">
+                        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-paper/75">
                             <div className="flex items-center gap-2">
                                 <Calendar className="h-4 w-4" />
                                 {formatDate(event.start_date)} –{' '}
@@ -144,7 +144,7 @@ export default function EventShow({
                             {event.contact_person && (
                                 <a
                                     href={`tel:${event.contact_person}`}
-                                    className="flex items-center gap-2 transition hover:text-white"
+                                    className="flex items-center gap-2 transition hover:text-paper"
                                 >
                                     <Phone className="h-4 w-4" />
                                     {event.contact_person}
@@ -153,7 +153,7 @@ export default function EventShow({
                         </div>
 
                         {event.description && (
-                            <p className="max-w-2xl text-sm text-white/70 sm:text-base">
+                            <p className="max-w-2xl text-sm text-paper/65 sm:text-base">
                                 {event.description}
                             </p>
                         )}
@@ -170,7 +170,7 @@ export default function EventShow({
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             aria-label={social.label}
-                                            className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white/25 text-white/80 transition hover:border-white hover:text-white"
+                                            className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-paper/25 text-paper/80 transition hover:border-paper hover:text-paper"
                                         >
                                             <Icon className="h-4 w-4" />
                                         </a>
@@ -187,13 +187,13 @@ export default function EventShow({
                                     return (
                                         <div
                                             key={stat.label}
-                                            className="flex items-center gap-2 rounded-xl border-2 border-white/15 bg-white/5 px-3 py-2"
+                                            className="flex items-center gap-2 rounded-xl border-2 border-paper/15 bg-white/5 px-3 py-2"
                                         >
-                                            <Icon className="h-4 w-4 text-white/50" />
-                                            <span className="text-sm font-bold tabular-nums">
+                                            <Icon className="h-4 w-4 text-paper/50" />
+                                            <span className="text-sm font-bold text-paper tabular-nums">
                                                 {stat.value}
                                             </span>
-                                            <span className="text-xs text-white/50 uppercase">
+                                            <span className="text-xs text-paper/50 uppercase">
                                                 {stat.label}
                                             </span>
                                         </div>
@@ -208,26 +208,26 @@ export default function EventShow({
                     {hasRegistration && (
                         <div className="flex flex-col gap-6">
                             <h2 className="flex items-center gap-2 text-2xl font-black tracking-tight uppercase">
-                                <Ticket className="h-5 w-5 text-white/50" />
+                                <Ticket className="h-5 w-5 text-ink/50" />
                                 {t('Register')}
                             </h2>
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 {registrationCategories.map((category) => {
                                     const details = (
                                         <div className="flex flex-col gap-1">
-                                            <span className="text-lg font-bold text-white">
+                                            <span className="text-lg font-bold text-ink">
                                                 {category.name}
                                             </span>
                                             {formatPublicPrice(
                                                 category.price,
                                             ) && (
-                                                <span className="text-xl font-black text-white">
+                                                <span className="text-xl font-black text-ink">
                                                     {formatPublicPrice(
                                                         category.price,
                                                     )}
                                                 </span>
                                             )}
-                                            <span className="text-xs text-white/50">
+                                            <span className="text-xs text-ink/50">
                                                 {category.subject_type ===
                                                 'team'
                                                     ? t('Per team')
@@ -244,10 +244,10 @@ export default function EventShow({
                                         return (
                                             <div
                                                 key={category.id}
-                                                className="flex items-center justify-between gap-4 rounded-2xl border-2 border-white/10 bg-white/5 p-5 opacity-60"
+                                                className="flex items-center justify-between gap-4 rounded-2xl border-2 border-ink/10 bg-ink/5 p-5 opacity-60"
                                             >
                                                 {details}
-                                                <span className="rounded-full border-2 border-white/20 px-4 py-2 text-xs font-bold tracking-wide text-white/60 uppercase">
+                                                <span className="rounded-full border-2 border-ink/20 px-4 py-2 text-xs font-bold tracking-wide text-ink/60 uppercase">
                                                     {t(
                                                         UNAVAILABLE_LABEL[
                                                             category.unavailable_reason ??
@@ -263,10 +263,10 @@ export default function EventShow({
                                         <Link
                                             key={category.id}
                                             href={`/events/${event.id}/registration-categories/${category.id}/register`}
-                                            className="group flex items-center justify-between gap-4 rounded-2xl border-2 border-white/10 bg-white/5 p-5 transition hover:border-red-500 hover:bg-white/10"
+                                            className="group flex items-center justify-between gap-4 rounded-2xl border-2 border-ink/10 bg-ink/5 p-5 transition hover:border-poster-red hover:bg-ink/10"
                                         >
                                             {details}
-                                            <span className="flex items-center gap-1.5 rounded-full bg-red-600 px-4 py-2 text-xs font-bold tracking-wide text-white uppercase transition group-hover:bg-red-700">
+                                            <span className="flex items-center gap-1.5 rounded-full bg-poster-red px-4 py-2 text-xs font-bold tracking-wide text-paper uppercase transition group-hover:bg-ink">
                                                 {t('Register')}
                                                 <ArrowRight className="h-3.5 w-3.5" />
                                             </span>
@@ -282,7 +282,7 @@ export default function EventShow({
                             ) && (
                                 <Link
                                     href={`/events/${event.id}/group-registration`}
-                                    className="flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-white/20 p-4 text-sm font-semibold text-white/70 transition hover:border-white/40 hover:text-white"
+                                    className="flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-ink/20 p-4 text-sm font-semibold text-ink/70 transition hover:border-ink/40 hover:text-ink"
                                 >
                                     <UsersRound className="h-4 w-4" />
                                     {t(
@@ -291,20 +291,20 @@ export default function EventShow({
                                 </Link>
                             )}
 
-                            <p className="text-xs text-white/50">
+                            <p className="text-xs text-ink/50">
                                 {t(
                                     'Prices are per registration and include the event entry described above. Paid registrations are settled online through Midtrans (bank transfer / virtual account, e-wallet, QRIS, or card) right after you submit the form. See our',
                                 )}{' '}
                                 <Link
                                     href="/terms"
-                                    className="text-red-400 underline-offset-2 hover:underline"
+                                    className="text-poster-red underline-offset-2 hover:underline"
                                 >
                                     {t('Terms & Conditions')}
                                 </Link>{' '}
                                 {t('and')}{' '}
                                 <Link
                                     href="/refund-policy"
-                                    className="text-red-400 underline-offset-2 hover:underline"
+                                    className="text-poster-red underline-offset-2 hover:underline"
                                 >
                                     {t('Refund Policy')}
                                 </Link>
@@ -325,20 +325,20 @@ export default function EventShow({
                     {hasMeetings && (
                         <div className="flex flex-col gap-6">
                             <h2 className="flex items-center gap-2 text-2xl font-black tracking-tight uppercase">
-                                <Mic className="h-5 w-5 text-white/50" />
+                                <Mic className="h-5 w-5 text-ink/50" />
                                 {t('Schedule')}
                             </h2>
                             <div className="flex flex-col gap-3">
                                 {meetings.map((meeting) => (
                                     <div
                                         key={meeting.id}
-                                        className="flex flex-col gap-3 rounded-2xl border-2 border-white/10 bg-white/5 p-5 sm:flex-row sm:items-center sm:justify-between"
+                                        className="flex flex-col gap-3 rounded-2xl border-2 border-ink/10 bg-ink/5 p-5 sm:flex-row sm:items-center sm:justify-between"
                                     >
                                         <div className="flex flex-col gap-1">
-                                            <span className="text-lg font-bold text-white">
+                                            <span className="text-lg font-bold text-ink">
                                                 {meeting.title}
                                             </span>
-                                            <span className="text-sm text-white/50">
+                                            <span className="text-sm text-ink/50">
                                                 {formatDateTime(
                                                     meeting.scheduled_at,
                                                 )}
@@ -350,7 +350,7 @@ export default function EventShow({
                                                     : ''}
                                             </span>
                                             {meeting.description && (
-                                                <p className="max-w-xl text-sm text-white/60">
+                                                <p className="max-w-xl text-sm text-ink/60">
                                                     {meeting.description}
                                                 </p>
                                             )}
@@ -380,11 +380,11 @@ export default function EventShow({
                                                     </AvatarFallback>
                                                 </Avatar>
                                                 <div className="flex flex-col">
-                                                    <span className="text-sm font-semibold text-white">
+                                                    <span className="text-sm font-semibold text-ink">
                                                         {meeting.speaker.name}
                                                     </span>
                                                     {meeting.speaker.title && (
-                                                        <span className="text-xs text-white/50">
+                                                        <span className="text-xs text-ink/50">
                                                             {
                                                                 meeting.speaker
                                                                     .title
@@ -426,7 +426,7 @@ export default function EventShow({
                                             <a
                                                 key={category.id}
                                                 href={`#category-${category.id}`}
-                                                className="rounded-full border-2 border-white/15 px-3 py-1 text-xs font-bold tracking-wide text-white/60 uppercase transition hover:border-red-500 hover:text-white"
+                                                className="rounded-full border-2 border-ink/15 px-3 py-1 text-xs font-bold tracking-wide text-ink/60 uppercase transition hover:border-poster-red hover:text-ink"
                                             >
                                                 {category.name}
                                             </a>
@@ -450,13 +450,13 @@ export default function EventShow({
                         !hasMeetings &&
                         !hasRegistration &&
                         !hasRaceResults && (
-                            <p className="text-center text-sm text-white/40">
+                            <p className="text-center text-sm text-ink/40">
                                 {t(
                                     'Details for this event will be posted soon.',
                                 )}{' '}
                                 <Link
                                     href="/events"
-                                    className="text-red-400 hover:underline"
+                                    className="text-poster-red hover:underline"
                                 >
                                     {t('Browse other events')}
                                 </Link>

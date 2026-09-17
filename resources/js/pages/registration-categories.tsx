@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowRight, UsersRound } from 'lucide-react';
+import { UsersRound } from 'lucide-react';
 import { SiteFooter } from '@/components/landing/site-footer';
 import { PublicPageHeader } from '@/components/public/public-page-header';
 import { useForceLightMode } from '@/hooks/use-force-light-mode';
@@ -35,9 +35,9 @@ export default function RegistrationCategoriesPage({
                 title={`${t('Register')} — ${event.name} — Sporta Indonesia`}
             />
 
-            <div className="flex min-h-screen flex-col bg-neutral-950">
+            <div className="flex min-h-screen flex-col bg-paper">
                 <div className="relative flex flex-1 items-center justify-center px-4 py-10">
-                    <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
+                    <div className="relative z-10 w-full max-w-lg border border-ink/12 bg-paper">
                         <PublicPageHeader
                             eyebrow={t('Registration')}
                             title={event.name}
@@ -54,10 +54,10 @@ export default function RegistrationCategoriesPage({
                                             (category) => {
                                                 const details = (
                                                     <div className="flex min-w-0 flex-col">
-                                                        <span className="truncate font-bold text-neutral-900">
+                                                        <span className="truncate font-semibold text-ink">
                                                             {category.name}
                                                         </span>
-                                                        <span className="text-xs text-neutral-500">
+                                                        <span className="text-xs text-ink/50">
                                                             {category.subject_type ===
                                                             'team'
                                                                 ? t('Per team')
@@ -77,10 +77,10 @@ export default function RegistrationCategoriesPage({
                                                     return (
                                                         <div
                                                             key={category.id}
-                                                            className="flex items-center justify-between gap-3 rounded-2xl border-2 border-neutral-200 px-4 py-3 opacity-60"
+                                                            className="flex items-center justify-between gap-3 border-2 border-ink/15 px-4 py-3 opacity-60"
                                                         >
                                                             {details}
-                                                            <span className="shrink-0 rounded-full border-2 border-neutral-300 px-3 py-1.5 text-[11px] font-bold tracking-wide text-neutral-500 uppercase">
+                                                            <span className="shrink-0 border-2 border-ink/20 px-3 py-1.5 text-[11px] font-semibold tracking-wide text-ink/60 uppercase">
                                                                 {t(
                                                                     UNAVAILABLE_LABEL[
                                                                         category.unavailable_reason ??
@@ -97,22 +97,21 @@ export default function RegistrationCategoriesPage({
                                                     <Link
                                                         key={category.id}
                                                         href={`/events/${event.id}/registration-categories/${category.id}/register`}
-                                                        className="group flex items-center justify-between gap-3 rounded-2xl border-2 border-black px-4 py-3 transition hover:bg-neutral-50"
+                                                        className="group flex items-center justify-between gap-3 border-2 border-ink px-4 py-3 transition hover:bg-poster-red/5"
                                                     >
                                                         {details}
                                                         <span className="flex shrink-0 items-center gap-2">
                                                             {formatPublicPrice(
                                                                 category.price,
                                                             ) && (
-                                                                <span className="text-sm font-black text-neutral-900">
+                                                                <span className="text-sm font-bold text-ink">
                                                                     {formatPublicPrice(
                                                                         category.price,
                                                                     )}
                                                                 </span>
                                                             )}
-                                                            <span className="flex items-center gap-1 rounded-full bg-red-600 px-3 py-1.5 text-[11px] font-bold tracking-wide text-white uppercase transition group-hover:bg-red-700">
+                                                            <span className="bg-poster-red px-3 py-1.5 text-[11px] font-semibold tracking-wide text-paper uppercase transition group-hover:bg-ink">
                                                                 {t('Register')}
-                                                                <ArrowRight className="h-3 w-3" />
                                                             </span>
                                                         </span>
                                                     </Link>
@@ -124,7 +123,7 @@ export default function RegistrationCategoriesPage({
                                     {hasIndividualOpen && (
                                         <Link
                                             href={`/events/${event.id}/group-registration`}
-                                            className="flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-neutral-300 p-3 text-sm font-semibold text-neutral-600 transition hover:border-neutral-400 hover:text-neutral-900"
+                                            className="flex items-center justify-center gap-2 border-2 border-dashed border-ink/25 p-3 text-sm font-semibold text-ink/70 transition hover:border-ink/50 hover:text-ink"
                                         >
                                             <UsersRound className="h-4 w-4" />
                                             {t(
@@ -133,20 +132,20 @@ export default function RegistrationCategoriesPage({
                                         </Link>
                                     )}
 
-                                    <p className="text-center text-xs text-neutral-400">
+                                    <p className="text-center text-xs text-ink/40">
                                         {t(
                                             'Paid registrations are settled online through Midtrans right after you submit the form. See our',
                                         )}{' '}
                                         <Link
                                             href="/terms"
-                                            className="text-red-600 underline-offset-2 hover:underline"
+                                            className="text-poster-red underline-offset-2 hover:underline"
                                         >
                                             {t('Terms & Conditions')}
                                         </Link>{' '}
                                         {t('and')}{' '}
                                         <Link
                                             href="/refund-policy"
-                                            className="text-red-600 underline-offset-2 hover:underline"
+                                            className="text-poster-red underline-offset-2 hover:underline"
                                         >
                                             {t('Refund Policy')}
                                         </Link>
@@ -154,7 +153,7 @@ export default function RegistrationCategoriesPage({
                                     </p>
                                 </>
                             ) : (
-                                <p className="py-6 text-center text-sm text-neutral-500">
+                                <p className="py-6 text-center text-sm text-ink/50">
                                     {t(
                                         'This event has no registration categories yet.',
                                     )}
@@ -163,7 +162,7 @@ export default function RegistrationCategoriesPage({
 
                             <Link
                                 href={`/events/${event.slug}`}
-                                className="text-center text-xs font-medium text-neutral-400 underline-offset-2 hover:text-neutral-600 hover:underline"
+                                className="text-center text-xs font-medium text-ink/40 underline-offset-2 hover:text-ink/70 hover:underline"
                             >
                                 {t('View full event page')}
                             </Link>

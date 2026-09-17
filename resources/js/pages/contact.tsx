@@ -5,7 +5,11 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
-import { PublicPageHeader } from '@/components/public/public-page-header';
+import { MarketingPageHeader } from '@/components/public/marketing-page-header';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
     CONTACT_ADDRESS,
     CONTACT_EMAIL,
@@ -14,6 +18,9 @@ import {
 import { useT } from '@/hooks/use-t';
 import PublicLayout from '@/layouts/public-layout';
 import type { Translate } from '@/lib/i18n';
+
+const darkFieldClass =
+    'border-white/15 bg-white/5 text-paper placeholder:text-paper/40 focus-visible:border-poster-red focus-visible:ring-poster-red/30';
 
 const contactSchema = (t: Translate) =>
     z.object({
@@ -77,8 +84,7 @@ export default function Contact() {
             <Head title={t('Contact Us — Sporta Indonesia')} />
 
             <PublicLayout>
-                <PublicPageHeader
-                    languageToggle={false}
+                <MarketingPageHeader
                     eyebrow={t('Get In Touch')}
                     title={t('Contact Us')}
                     subtitle={t(
@@ -86,116 +92,101 @@ export default function Contact() {
                     )}
                 />
 
-                <section className="mx-auto grid max-w-5xl grid-cols-1 gap-10 px-6 py-14 lg:grid-cols-2">
-                    <div className="flex flex-col gap-4">
+                <section className="mx-auto grid max-w-5xl grid-cols-1 gap-6 px-6 py-14 lg:grid-cols-2">
+                    <div className="flex flex-col gap-4 rounded-2xl bg-[#0c0d0a] p-6 text-paper">
                         <h2 className="text-xl font-black tracking-tight uppercase">
                             {t('Contact Info')}
                         </h2>
                         {CONTACT_INFO.map(({ icon: Icon, label }) => (
-                            <div
-                                key={label}
-                                className="flex items-center gap-3 text-white/80"
-                            >
-                                <div className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-red-500 bg-red-600/20">
-                                    <Icon className="h-4 w-4 text-red-400" />
+                            <div key={label} className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-poster-red/20">
+                                    <Icon className="h-4 w-4 text-poster-red" />
                                 </div>
-                                <p className="w-full">{label}</p>
+                                <p className="w-full text-paper/80">{label}</p>
                             </div>
                         ))}
                     </div>
 
                     <form
                         onSubmit={handleSubmit(onSubmit)}
-                        className="flex flex-col gap-4 rounded-2xl border-2 border-white/15 bg-white/5 p-6"
+                        className="flex flex-col gap-4 rounded-2xl bg-[#0c0d0a] p-6 text-paper"
                     >
                         <div className="flex flex-col gap-1.5">
-                            <label
-                                htmlFor="name"
-                                className="text-xs font-bold tracking-wide text-white/70 uppercase"
-                            >
+                            <Label htmlFor="name" className="text-xs font-bold tracking-wide text-paper/70 uppercase">
                                 {t('Name')}
-                            </label>
-                            <input
+                            </Label>
+                            <Input
                                 id="name"
                                 {...register('name')}
                                 disabled={isSending}
                                 placeholder={t('Your name')}
-                                className="rounded-xl border-2 border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:border-red-500 focus:outline-none"
+                                className={darkFieldClass}
                             />
                             {errors.name && (
-                                <span className="text-xs text-red-400">
+                                <span className="text-xs text-poster-red">
                                     {errors.name.message}
                                 </span>
                             )}
                         </div>
 
                         <div className="flex flex-col gap-1.5">
-                            <label
-                                htmlFor="email"
-                                className="text-xs font-bold tracking-wide text-white/70 uppercase"
-                            >
+                            <Label htmlFor="email" className="text-xs font-bold tracking-wide text-paper/70 uppercase">
                                 {t('Email')}
-                            </label>
-                            <input
+                            </Label>
+                            <Input
                                 id="email"
                                 type="email"
                                 {...register('email')}
                                 disabled={isSending}
                                 placeholder="you@example.com"
-                                className="rounded-xl border-2 border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:border-red-500 focus:outline-none"
+                                className={darkFieldClass}
                             />
                             {errors.email && (
-                                <span className="text-xs text-red-400">
+                                <span className="text-xs text-poster-red">
                                     {errors.email.message}
                                 </span>
                             )}
                         </div>
 
                         <div className="flex flex-col gap-1.5">
-                            <label
-                                htmlFor="phone"
-                                className="text-xs font-bold tracking-wide text-white/70 uppercase"
-                            >
+                            <Label htmlFor="phone" className="text-xs font-bold tracking-wide text-paper/70 uppercase">
                                 {t('Phone')}{' '}
-                                <span className="font-normal text-white/40 normal-case">
+                                <span className="font-normal text-paper/40 normal-case">
                                     {t('(Optional)')}
                                 </span>
-                            </label>
-                            <input
+                            </Label>
+                            <Input
                                 id="phone"
                                 {...register('phone')}
                                 disabled={isSending}
                                 placeholder="+62..."
-                                className="rounded-xl border-2 border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:border-red-500 focus:outline-none"
+                                className={darkFieldClass}
                             />
                         </div>
 
                         <div className="flex flex-col gap-1.5">
-                            <label
-                                htmlFor="message"
-                                className="text-xs font-bold tracking-wide text-white/70 uppercase"
-                            >
+                            <Label htmlFor="message" className="text-xs font-bold tracking-wide text-paper/70 uppercase">
                                 {t('Message')}
-                            </label>
-                            <textarea
+                            </Label>
+                            <Textarea
                                 id="message"
                                 {...register('message')}
                                 disabled={isSending}
                                 rows={5}
                                 placeholder={t('How can we help?')}
-                                className="rounded-xl border-2 border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:border-red-500 focus:outline-none"
+                                className={darkFieldClass}
                             />
                             {errors.message && (
-                                <span className="text-xs text-red-400">
+                                <span className="text-xs text-poster-red">
                                     {errors.message.message}
                                 </span>
                             )}
                         </div>
 
-                        <button
+                        <Button
                             type="submit"
                             disabled={isSending}
-                            className="mt-2 flex items-center justify-center gap-2 rounded-full bg-red-600 py-3 text-sm font-bold tracking-wide text-white uppercase transition hover:bg-red-700 disabled:opacity-60"
+                            className="mt-2 rounded-full bg-poster-red text-paper hover:bg-poster-red/90"
                         >
                             {isSending ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -203,7 +194,7 @@ export default function Contact() {
                                 <Send className="h-4 w-4" />
                             )}
                             {isSending ? t('Sending…') : t('Send Message')}
-                        </button>
+                        </Button>
                     </form>
                 </section>
             </PublicLayout>

@@ -63,7 +63,7 @@ export function ChoiceGroup({
                             'has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[var(--accent)] has-[:focus-visible]:ring-offset-2',
                             checked
                                 ? 'border-[var(--accent)] bg-[var(--accent)]/10'
-                                : 'border-black hover:bg-black/5',
+                                : 'border-black hover:bg-ink/5',
                             invalid && !checked && 'border-destructive',
                             disabled && 'cursor-not-allowed opacity-60',
                         )}
@@ -87,7 +87,7 @@ export function ChoiceGroup({
                             )}
                         >
                             {checked && (
-                                <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                                <span className="h-1.5 w-1.5 rounded-full bg-ink" />
                             )}
                         </span>
                         <span className="min-w-0 break-words">
@@ -146,7 +146,7 @@ export function BooleanChoice({
                 'has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[var(--accent)] has-[:focus-visible]:ring-offset-2',
                 checked
                     ? 'border-[var(--accent)] bg-[var(--accent)]/10'
-                    : 'border-black hover:bg-black/5',
+                    : 'border-black hover:bg-ink/5',
                 disabled && 'cursor-not-allowed opacity-60',
             )}
         >
@@ -167,7 +167,7 @@ export function BooleanChoice({
                         : 'border-black',
                 )}
             >
-                {checked && <Check className="h-3.5 w-3.5 text-white" />}
+                {checked && <Check className="h-3.5 w-3.5 text-ink" />}
             </span>
             <span className="min-w-0 break-words">{label}</span>
         </label>

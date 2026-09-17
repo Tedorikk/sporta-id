@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { QrCode, ShieldCheck, Trophy } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useT } from '@/hooks/use-t';
 
 const FEATURES = [
@@ -24,44 +25,47 @@ export function IdToolsSection() {
     const { t } = useT();
 
     return (
-        <section className="border-y-2 border-white/10 bg-white/5">
-            <div className="mx-auto max-w-6xl px-6 py-14">
-                <div className="mb-8 flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <section className="mx-auto max-w-6xl px-6 py-14">
+            <div className="relative overflow-hidden rounded-[28px] bg-[#0c0d0a] px-6 py-12 text-paper sm:px-12">
+                <div
+                    className="pointer-events-none absolute inset-0"
+                    style={{
+                        background:
+                            'radial-gradient(circle at 85% 0%, rgba(224,51,42,0.25), transparent 60%)',
+                    }}
+                />
+
+                <div className="relative mb-8 flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <span className="text-xs font-bold tracking-[0.3em] text-blue-400 uppercase">
-                            Sporta ID
-                        </span>
-                        <h2 className="text-3xl font-black tracking-tight uppercase">
+                        <h2 className="font-display text-3xl font-bold">
                             {t('Already Registered?')}
                         </h2>
-                        <p className="mt-2 max-w-lg text-sm text-white/60">
+                        <p className="mt-2 max-w-lg text-sm text-paper/60">
                             {t(
                                 'Manage your digital player ID card — find it again anytime, no app required.',
                             )}
                         </p>
                     </div>
-                    <Link
-                        href="/find-id"
-                        className="flex items-center gap-2 rounded-full border-2 border-blue-400 px-6 py-3 text-sm font-bold tracking-wide text-blue-200 uppercase transition hover:bg-blue-500/10 active:scale-95"
+                    <Button
+                        asChild
+                        className="rounded-full bg-poster-red text-paper hover:bg-poster-red/90"
                     >
-                        <QrCode className="h-4 w-4" />
-                        {t('Find My ID Card')}
-                    </Link>
+                        <Link href="/find-id">
+                            <QrCode className="h-4 w-4" />
+                            {t('Find My ID Card')}
+                        </Link>
+                    </Button>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="relative grid grid-cols-1 gap-4 sm:grid-cols-3">
                     {FEATURES.map(({ icon: Icon, title, desc }) => (
                         <div
                             key={title}
-                            className="flex flex-col gap-3 rounded-2xl border-2 border-white/15 bg-black/20 p-6"
+                            className="flex flex-col gap-3 rounded-2xl border border-white/10 p-6"
                         >
-                            <div className="flex h-11 w-11 items-center justify-center rounded-xl border-2 border-red-500 bg-red-600/20">
-                                <Icon className="h-5 w-5 text-red-400" />
-                            </div>
-                            <h3 className="text-base font-bold tracking-tight uppercase">
-                                {t(title)}
-                            </h3>
-                            <p className="text-sm text-white/60">{t(desc)}</p>
+                            <Icon className="h-6 w-6 text-poster-red" />
+                            <h3 className="text-base font-semibold">{t(title)}</h3>
+                            <p className="text-sm text-paper/60">{t(desc)}</p>
                         </div>
                     ))}
                 </div>

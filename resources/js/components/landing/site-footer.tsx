@@ -39,13 +39,13 @@ export function SiteFooter() {
     const { t } = useT();
 
     return (
-        <footer className="border-t-2 border-white/10 bg-black/20">
+        <footer className="border-t border-ink/10">
             <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-6 py-14 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-2">
                         <SiteLogo className="h-8 w-auto" />
                     </div>
-                    <p className="text-sm text-white/60">
+                    <p className="text-sm text-ink/60">
                         {t(
                             'Support Your Talent — organizing sports and arts events across Indonesia since 2011.',
                         )}
@@ -61,7 +61,7 @@ export function SiteFooter() {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label={social.label}
-                                    className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white/15 text-white/60 transition hover:border-red-500 hover:text-white"
+                                    className="flex h-9 w-9 items-center justify-center border border-ink/15 text-ink/60 transition hover:border-poster-red hover:text-poster-red"
                                 >
                                     {Icon && <Icon className="h-4 w-4" />}
                                 </a>
@@ -71,14 +71,14 @@ export function SiteFooter() {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <h3 className="text-xs font-bold tracking-[0.2em] text-white/40 uppercase">
+                    <h3 className="text-xs font-semibold tracking-widest text-ink/40 uppercase">
                         {t('Explore')}
                     </h3>
                     {EXPLORE_LINKS.map((link) => (
                         <Link
                             key={link.href}
                             href={link.href}
-                            className="text-sm text-white/70 transition hover:text-white"
+                            className="text-sm text-ink/70 transition hover:text-poster-red"
                         >
                             {t(link.label)}
                         </Link>
@@ -86,12 +86,12 @@ export function SiteFooter() {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <h3 className="text-xs font-bold tracking-[0.2em] text-white/40 uppercase">
+                    <h3 className="text-xs font-semibold tracking-widest text-ink/40 uppercase">
                         {t('Our Events')}
                     </h3>
                     <Link
                         href="/events"
-                        className="text-sm text-white/70 transition hover:text-white"
+                        className="text-sm text-ink/70 transition hover:text-poster-red"
                     >
                         {t('All Events')}
                     </Link>
@@ -99,45 +99,45 @@ export function SiteFooter() {
                         href="https://pontianakcityrun.com"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-white/70 transition hover:text-white"
+                        className="text-sm text-ink/70 transition hover:text-poster-red"
                     >
                         Pontianak City Run ↗
                     </a>
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <h3 className="text-xs font-bold tracking-[0.2em] text-white/40 uppercase">
+                    <h3 className="text-xs font-semibold tracking-widest text-ink/40 uppercase">
                         {t('Contact')}
                     </h3>
-                    <div className="flex items-start gap-2 text-sm text-white/70">
-                        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-white/40" />
+                    <div className="flex items-start gap-2 text-sm text-ink/70">
+                        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-ink/35" />
                         {CONTACT_ADDRESS}
                     </div>
                     <a
                         href={`mailto:${CONTACT_EMAIL}`}
-                        className="flex items-center gap-2 text-sm text-white/70 transition hover:text-white"
+                        className="flex items-center gap-2 text-sm text-ink/70 transition hover:text-poster-red"
                     >
-                        <Mail className="h-4 w-4 shrink-0 text-white/40" />
+                        <Mail className="h-4 w-4 shrink-0 text-ink/35" />
                         {CONTACT_EMAIL}
                     </a>
                     <a
                         href={`tel:${CONTACT_PHONE.replace(/\s/g, '')}`}
-                        className="flex items-center gap-2 text-sm text-white/70 transition hover:text-white"
+                        className="flex items-center gap-2 text-sm text-ink/70 transition hover:text-poster-red"
                     >
-                        <Phone className="h-4 w-4 shrink-0 text-white/40" />
+                        <Phone className="h-4 w-4 shrink-0 text-ink/35" />
                         {CONTACT_PHONE}
                     </a>
                 </div>
             </div>
 
-            <div className="border-t border-white/10 px-6 py-6">
-                <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 text-xs text-white/40">
+            <div className="border-t border-ink/10 px-6 py-6">
+                <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 text-xs text-ink/40">
                     <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
                         {LEGAL_LINKS.map((link) => (
                             <Link
                                 key={link.href}
                                 href={link.href}
-                                className="transition hover:text-white"
+                                className="transition hover:text-ink"
                             >
                                 {t(link.label)}
                             </Link>

@@ -33,17 +33,17 @@ function BracketSlot({ match }: { match: GameMatch }) {
         match.away_score > match.home_score;
 
     return (
-        <div className="flex min-w-[180px] flex-col overflow-hidden rounded-lg border-2 border-white/10 bg-black/30">
+        <div className="flex min-w-[180px] flex-col overflow-hidden rounded-lg border-2 border-ink/10 bg-ink/30">
             <div
-                className={`flex items-center justify-between gap-2 border-b border-white/10 px-3 py-2 ${homeWon ? 'bg-red-600/20' : ''}`}
+                className={`flex items-center justify-between gap-2 border-b border-ink/10 px-3 py-2 ${homeWon ? 'bg-poster-red/20' : ''}`}
             >
                 <span
-                    className={`truncate text-sm ${homeWon ? 'font-semibold text-red-400' : match.home_team ? 'text-white/80' : 'text-white/30 italic'}`}
+                    className={`truncate text-sm ${homeWon ? 'font-semibold text-poster-red' : match.home_team ? 'text-ink/80' : 'text-ink/30 italic'}`}
                 >
                     {homeName}
                 </span>
                 <span
-                    className={`min-w-[1.5rem] text-right text-sm font-bold tabular-nums ${homeWon ? 'text-red-400' : 'text-white/40'}`}
+                    className={`min-w-[1.5rem] text-right text-sm font-bold tabular-nums ${homeWon ? 'text-poster-red' : 'text-ink/40'}`}
                 >
                     {isCompleted && match.home_score !== null
                         ? match.home_score
@@ -51,22 +51,22 @@ function BracketSlot({ match }: { match: GameMatch }) {
                 </span>
             </div>
             <div
-                className={`flex items-center justify-between gap-2 px-3 py-2 ${awayWon ? 'bg-red-600/20' : ''}`}
+                className={`flex items-center justify-between gap-2 px-3 py-2 ${awayWon ? 'bg-poster-red/20' : ''}`}
             >
                 <span
-                    className={`truncate text-sm ${awayWon ? 'font-semibold text-red-400' : match.away_team ? 'text-white/80' : 'text-white/30 italic'}`}
+                    className={`truncate text-sm ${awayWon ? 'font-semibold text-poster-red' : match.away_team ? 'text-ink/80' : 'text-ink/30 italic'}`}
                 >
                     {awayName}
                 </span>
                 <span
-                    className={`min-w-[1.5rem] text-right text-sm font-bold tabular-nums ${awayWon ? 'text-red-400' : 'text-white/40'}`}
+                    className={`min-w-[1.5rem] text-right text-sm font-bold tabular-nums ${awayWon ? 'text-poster-red' : 'text-ink/40'}`}
                 >
                     {isCompleted && match.away_score !== null
                         ? match.away_score
                         : '—'}
                 </span>
             </div>
-            <div className="flex items-center justify-between border-t border-white/10 bg-white/5 px-3 py-1 text-[10px] text-white/40">
+            <div className="flex items-center justify-between border-t border-ink/10 bg-ink/5 px-3 py-1 text-[10px] text-ink/40">
                 <span>
                     {match.match_number ? `#${match.match_number}` : ''}
                 </span>
@@ -77,7 +77,7 @@ function BracketSlot({ match }: { match: GameMatch }) {
                     <Play className="h-3 w-3 text-amber-400" />
                 )}
                 {match.status === 'scheduled' && (
-                    <Circle className="h-3 w-3 text-white/20" />
+                    <Circle className="h-3 w-3 text-ink/20" />
                 )}
             </div>
         </div>
@@ -116,10 +116,10 @@ export function BracketTree({ matches }: Props) {
 
     return (
         <div className="flex flex-col gap-3">
-            <h4 className="text-sm font-bold tracking-wide text-white/70 uppercase">
+            <h4 className="text-sm font-bold tracking-wide text-ink/70 uppercase">
                 {t('Bracket')}
             </h4>
-            <div className="overflow-x-auto rounded-xl border-2 border-white/10 bg-black/20 p-4">
+            <div className="overflow-x-auto rounded-xl border-2 border-ink/10 bg-ink/20 p-4">
                 <div className="flex min-w-max items-start gap-6">
                     {allRounds.map(({ round, matches: roundMatches }) => (
                         <div
@@ -130,7 +130,7 @@ export function BracketTree({ matches }: Props) {
                                 className={`rounded-md px-2 py-1 text-center text-xs font-semibold tracking-wide uppercase ${
                                     round === 'final'
                                         ? 'bg-amber-500/20 text-amber-300'
-                                        : 'bg-white/10 text-white/60'
+                                        : 'bg-ink/10 text-ink/60'
                                 }`}
                             >
                                 {round === 'final' && (

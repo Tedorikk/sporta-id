@@ -492,7 +492,7 @@ function ParticipantForm({
                     </Button>
                     <Button
                         type="submit"
-                        className="flex-1 bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
+                        className="flex-1 bg-[var(--accent)] font-bold tracking-wide text-ink uppercase hover:bg-[var(--accent-dark)]"
                         disabled={isSaving}
                     >
                         {t('Save participant')}
@@ -664,10 +664,10 @@ export default function GroupRegistration({ event, categories }: Props) {
             <Head title={t('Group Registration — :event', { event: event.name })} />
 
             <div
-                className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10"
+                className="relative flex min-h-screen items-center justify-center bg-paper px-4 py-10"
                 style={accentStyle}
             >
-                <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
+                <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-paper shadow-2xl">
                     <PublicPageHeader
                         eyebrow={t('Group Registration')}
                         title={event.name}
@@ -770,7 +770,7 @@ export default function GroupRegistration({ event, categories }: Props) {
                                 type="button"
                                 disabled={!allComplete}
                                 onClick={() => setStep('review')}
-                                className="w-full bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
+                                className="w-full bg-[var(--accent)] font-bold tracking-wide text-ink uppercase hover:bg-[var(--accent-dark)]"
                             >
                                 {t('Continue')}
                                 <ChevronRight className="ml-2 h-4 w-4" />
@@ -897,7 +897,7 @@ export default function GroupRegistration({ event, categories }: Props) {
                                 type="button"
                                 onClick={submitOrder}
                                 disabled={isSubmitting}
-                                className="w-full bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
+                                className="w-full bg-[var(--accent)] font-bold tracking-wide text-ink uppercase hover:bg-[var(--accent-dark)]"
                             >
                                 {isSubmitting ? (
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -926,7 +926,7 @@ export default function GroupRegistration({ event, categories }: Props) {
                                     type="button"
                                     onClick={payNow}
                                     disabled={isPaying}
-                                    className="w-full bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
+                                    className="w-full bg-[var(--accent)] font-bold tracking-wide text-ink uppercase hover:bg-[var(--accent-dark)]"
                                 >
                                     {isPaying ? (
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />

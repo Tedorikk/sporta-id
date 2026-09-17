@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Zalando+Sans+Expanded:ital,wght@0,200..900;1,200..900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap');
 
 @import 'tailwindcss';
 @import 'tw-animate-css';
@@ -17,6 +18,17 @@
 
     /* Create a custom utility for the heading font */
     --font-heading: 'Zalando Sans Expanded', sans-serif;
+
+    /* Numeral/data shout face (prices, stats, tags) — public site only, never the dashboard's h1-h4 */
+    --font-display: 'Oswald', 'Zalando Sans Expanded', sans-serif;
+
+    /* Public-site palette — light by default, additive to the shadcn tokens
+       below so the admin dashboard is unaffected. */
+    --color-poster-red: #e0332a;
+    --color-poster-yellow: #f2b705;
+    --color-navy: #1e2a6b;
+    --color-ink: #1a1512;
+    --color-paper: #faf7ee;
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -186,4 +198,8 @@
         opacity: 0.8;
         transform: translateY(-10px);
     }
+}
+
+.font-display {
+    font-family: var(--font-display);
 }

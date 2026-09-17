@@ -145,7 +145,7 @@ function PaymentPendingView({
             />
 
             <div
-                className="relative flex min-h-screen flex-col items-center justify-center gap-6 bg-neutral-950 px-4 py-10"
+                className="relative flex min-h-screen flex-col items-center justify-center gap-6 bg-paper px-4 py-10"
                 style={accentStyle}
             >
                 <div className="flex items-center gap-2 text-amber-400">
@@ -155,7 +155,7 @@ function PaymentPendingView({
                     </span>
                 </div>
 
-                <div className="w-full max-w-sm overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
+                <div className="w-full max-w-sm overflow-hidden rounded-3xl border-2 border-black bg-ink shadow-2xl">
                     <PublicPageHeader
                         eyebrow={t('Registration')}
                         title={event.name}
@@ -182,7 +182,7 @@ function PaymentPendingView({
                                 type="button"
                                 onClick={payNow}
                                 disabled={isPaying}
-                                className="mt-2 w-full cursor-pointer bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
+                                className="mt-2 w-full cursor-pointer bg-[var(--accent)] font-bold tracking-wide text-ink uppercase hover:bg-[var(--accent-dark)]"
                             >
                                 {isPaying ? (
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -219,7 +219,7 @@ function PaymentPendingView({
 
                 <a
                     href={`/registrations/${registration.qr_token}/status`}
-                    className="text-sm font-medium text-white/70 underline-offset-2 hover:text-white hover:underline"
+                    className="text-sm font-medium text-ink/70 underline-offset-2 hover:text-ink hover:underline"
                 >
                     {t('Check registration status')}
                 </a>
@@ -266,7 +266,7 @@ function RegistrationSuccessView({
             <Head title={t('Registered — :event', { event: event.name })} />
 
             <div
-                className="relative flex min-h-screen flex-col items-center justify-center gap-6 bg-neutral-950 px-4 py-10"
+                className="relative flex min-h-screen flex-col items-center justify-center gap-6 bg-paper px-4 py-10"
                 style={accentStyle}
             >
                 <div className="flex items-center gap-2 text-emerald-400">
@@ -277,7 +277,7 @@ function RegistrationSuccessView({
                 </div>
 
                 {confirmationMessage && (
-                    <p className="max-w-sm text-center text-sm text-white/80">
+                    <p className="max-w-sm text-center text-sm text-ink/80">
                         {confirmationMessage}
                     </p>
                 )}
@@ -308,15 +308,15 @@ function RegistrationSuccessView({
                 />
 
                 {team?.basketball_event_category_id && (
-                    <div className="flex w-full max-w-sm flex-col items-center gap-2 rounded-2xl border border-white/15 bg-white/5 p-4 text-center">
-                        <p className="text-sm text-white/80">
+                    <div className="flex w-full max-w-sm flex-col items-center gap-2 rounded-2xl border border-ink/15 bg-ink/5 p-4 text-center">
+                        <p className="text-sm text-ink/80">
                             {t(
                                 'Next, open the roster: send each member their personal link so they fill in their own details, or complete them yourself. Keep the link — it is how you get back to the roster.',
                             )}
                         </p>
                         <Button
                             asChild
-                            className="w-full bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
+                            className="w-full bg-[var(--accent)] font-bold tracking-wide text-ink uppercase hover:bg-[var(--accent-dark)]"
                         >
                             <a
                                 href={`/registrations/${registration.qr_token}/roster`}
@@ -330,7 +330,7 @@ function RegistrationSuccessView({
 
                 <a
                     href={`/events/${event.id}/registration-categories/${registrationCategory.id}/register`}
-                    className="text-sm font-medium text-white/70 underline-offset-2 hover:text-white hover:underline"
+                    className="text-sm font-medium text-ink/70 underline-offset-2 hover:text-ink hover:underline"
                 >
                     {t('Register another')}
                 </a>
@@ -797,10 +797,10 @@ export default function RegisterDynamic({
                 />
 
                 <div
-                    className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10"
+                    className="relative flex min-h-screen items-center justify-center bg-paper px-4 py-10"
                     style={accentStyle}
                 >
-                    <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
+                    <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-ink shadow-2xl">
                         <PublicPageHeader
                             eyebrow={t('Registration')}
                             title={event.name}
@@ -840,11 +840,11 @@ export default function RegisterDynamic({
             />
 
             <div
-                className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10"
+                className="relative flex min-h-screen items-center justify-center bg-paper px-4 py-10"
                 style={accentStyle}
             >
                 <div
-                    className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl"
+                    className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-ink shadow-2xl"
                     style={cardStyle}
                 >
                     <PublicPageHeader
@@ -971,7 +971,7 @@ export default function RegisterDynamic({
                                 <button
                                     type="button"
                                     onClick={startOver}
-                                    className="shrink-0 cursor-pointer text-left font-semibold underline underline-offset-2 hover:text-amber-950"
+                                    className="shrink-0 cursor-pointer text-left font-semibold underline underline-offset-2 hover:text-ink"
                                 >
                                     {t('Start over')}
                                 </button>
@@ -1367,7 +1367,7 @@ export default function RegisterDynamic({
                                 {isLastPage ? (
                                     <Button
                                         type="submit"
-                                        className="flex-1 cursor-pointer bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
+                                        className="flex-1 cursor-pointer bg-[var(--accent)] font-bold tracking-wide text-ink uppercase hover:bg-[var(--accent-dark)]"
                                         disabled={isSaving}
                                         style={controlStyle}
                                     >
@@ -1384,7 +1384,7 @@ export default function RegisterDynamic({
                                 ) : (
                                     <Button
                                         type="button"
-                                        className="flex-1 cursor-pointer bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
+                                        className="flex-1 cursor-pointer bg-[var(--accent)] font-bold tracking-wide text-ink uppercase hover:bg-[var(--accent-dark)]"
                                         onClick={goNext}
                                         style={controlStyle}
                                     >

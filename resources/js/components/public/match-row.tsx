@@ -7,7 +7,7 @@ import type { GameMatch } from '@/types/game-match';
 import type { Team } from '@/types/team';
 
 const STATUS_STYLE: Record<string, string> = {
-    scheduled: 'bg-white/10 text-white/60',
+    scheduled: 'bg-ink/10 text-ink/60',
     ongoing: 'bg-amber-500/20 text-amber-300',
     finished: 'bg-emerald-500/20 text-emerald-300',
 };
@@ -24,13 +24,13 @@ function TeamLogo({ team }: { team?: Team | null }) {
             <img
                 src={formatImageUrl(team.logo)}
                 alt={team.name}
-                className="h-6 w-6 shrink-0 rounded-full bg-white/10 object-cover"
+                className="h-6 w-6 shrink-0 rounded-full bg-ink/10 object-cover"
             />
         );
     }
 
     return (
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/10 text-white/30">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-ink/10 text-ink/30">
             <Shield className="h-3.5 w-3.5" />
         </span>
     );
@@ -53,14 +53,14 @@ export function MatchRow({
         isCompleted && (match.away_score ?? 0) > (match.home_score ?? 0);
 
     return (
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border-2 border-white/10 bg-white/5 px-4 py-3">
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border-2 border-ink/10 bg-ink/5 px-4 py-3">
             {categoryLabel && (
-                <span className="w-full shrink-0 text-[10px] font-bold tracking-wide text-red-400 uppercase sm:w-auto">
+                <span className="w-full shrink-0 text-[10px] font-bold tracking-wide text-poster-red uppercase sm:w-auto">
                     {categoryLabel}
                 </span>
             )}
             {match.match_number && (
-                <span className="w-6 shrink-0 text-xs text-white/40">
+                <span className="w-6 shrink-0 text-xs text-ink/40">
                     #{match.match_number}
                 </span>
             )}
@@ -68,7 +68,7 @@ export function MatchRow({
             <div className="flex min-w-0 flex-1 items-center gap-2">
                 <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
                     <span
-                        className={`truncate text-right text-sm font-semibold ${homeWon ? 'text-red-400' : 'text-white/80'}`}
+                        className={`truncate text-right text-sm font-semibold ${homeWon ? 'text-poster-red' : 'text-ink/80'}`}
                     >
                         {homeWon && (
                             <Trophy className="mr-1 inline h-3 w-3 text-amber-400" />
@@ -82,26 +82,26 @@ export function MatchRow({
                     {isCompleted && match.home_score !== null ? (
                         <div className="flex items-center gap-1.5">
                             <span
-                                className={`text-lg font-black tabular-nums ${homeWon ? 'text-red-400' : 'text-white/50'}`}
+                                className={`text-lg font-black tabular-nums ${homeWon ? 'text-poster-red' : 'text-ink/50'}`}
                             >
                                 {match.home_score}
                             </span>
-                            <span className="text-white/30">–</span>
+                            <span className="text-ink/30">–</span>
                             <span
-                                className={`text-lg font-black tabular-nums ${awayWon ? 'text-red-400' : 'text-white/50'}`}
+                                className={`text-lg font-black tabular-nums ${awayWon ? 'text-poster-red' : 'text-ink/50'}`}
                             >
                                 {match.away_score}
                             </span>
                         </div>
                     ) : (
-                        <span className="px-2 text-xs text-white/40">vs</span>
+                        <span className="px-2 text-xs text-ink/40">vs</span>
                     )}
                 </div>
 
                 <div className="flex min-w-0 flex-1 items-center gap-2">
                     <TeamLogo team={match.away_team} />
                     <span
-                        className={`truncate text-sm font-semibold ${awayWon ? 'text-red-400' : 'text-white/80'}`}
+                        className={`truncate text-sm font-semibold ${awayWon ? 'text-poster-red' : 'text-ink/80'}`}
                     >
                         {awayName}
                         {awayWon && (
@@ -113,7 +113,7 @@ export function MatchRow({
 
             <div className="flex shrink-0 items-center gap-2">
                 {match.scheduled_at && (
-                    <span className="flex items-center gap-1 text-xs text-white/40">
+                    <span className="flex items-center gap-1 text-xs text-ink/40">
                         <Calendar className="h-3 w-3" />
                         <LocalTime value={match.scheduled_at} />
                     </span>

@@ -59,7 +59,7 @@ export default function AttendeeIdCard({ attendee, template }: Props) {
                 })}
             />
 
-            <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-neutral-950 px-4 py-10 print:bg-white print:p-0">
+            <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-paper px-4 py-10 print:bg-ink print:p-0">
                 {/*
                  * Unlike a registration, a revoked pass still resolves here —
                  * so this has a real failing state rather than a 404, which is

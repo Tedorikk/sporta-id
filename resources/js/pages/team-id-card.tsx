@@ -34,10 +34,10 @@ export default function TeamIdCard({ team }: Props) {
             <Head title={t(':name — ID Card', { name: team.name })} />
 
             {/* Full-page background */}
-            <div className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10 print:bg-white print:p-0">
+            <div className="relative flex min-h-screen items-center justify-center bg-paper px-4 py-10 print:bg-ink print:p-0">
                 {/* Decorative orbs */}
                 <div className="pointer-events-none absolute inset-0 overflow-hidden print:hidden">
-                    <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-red-600/10 blur-3xl" />
+                    <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-poster-red/10 blur-3xl" />
                     <div className="absolute -right-40 -bottom-40 h-96 w-96 rounded-full bg-red-900/20 blur-3xl" />
                 </div>
 

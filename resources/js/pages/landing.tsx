@@ -1,9 +1,7 @@
 import { Head } from '@inertiajs/react';
+import { BentoSection } from '@/components/landing/bento-section';
 import { EventsSection } from '@/components/landing/events-section';
-import { FlagshipEventSection } from '@/components/landing/flagship-event-section';
 import { HeroSection } from '@/components/landing/hero-section';
-import { ReachSection } from '@/components/landing/reach-section';
-import { StatsStrip } from '@/components/landing/stats-strip';
 import { useT } from '@/hooks/use-t';
 import PublicLayout from '@/layouts/public-layout';
 import type { Event } from '@/types/event';
@@ -24,9 +22,7 @@ export default function Landing({ events }: Props) {
                 {/* Directly under the hero: what we sell and what it costs. The
                     company story below is context, not the reason to be here. */}
                 <EventsSection events={events} />
-                <StatsStrip />
-                <FlagshipEventSection />
-                <ReachSection />
+                <BentoSection />
             </PublicLayout>
         </>
     );

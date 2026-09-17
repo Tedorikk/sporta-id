@@ -716,10 +716,10 @@ export default function TeamRoster({
             />
 
             <div
-                className="relative flex min-h-screen items-start justify-center bg-neutral-950 px-4 py-10"
+                className="relative flex min-h-screen items-start justify-center bg-paper px-4 py-10"
                 style={accentStyle}
             >
-                <div className="relative z-10 w-full max-w-2xl overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
+                <div className="relative z-10 w-full max-w-2xl overflow-hidden rounded-3xl border-2 border-black bg-paper shadow-2xl">
                     <PublicPageHeader
                         eyebrow={t('Team Roster')}
                         title={team.name}
@@ -747,7 +747,7 @@ export default function TeamRoster({
                             unreachable, so it gets a card of its own, not a
                             footnote. */}
                         <div className="flex flex-col gap-2 rounded-xl border-2 border-amber-300 bg-amber-50 p-4">
-                            <p className="flex items-center gap-1.5 text-sm font-bold text-amber-950">
+                            <p className="flex items-center gap-1.5 text-sm font-bold text-ink">
                                 <Link2 className="h-4 w-4" />
                                 {t('Your roster link')}
                             </p>
@@ -766,7 +766,7 @@ export default function TeamRoster({
                                 <Button
                                     type="button"
                                     size="sm"
-                                    className="flex-1 cursor-pointer bg-amber-600 text-white hover:bg-amber-700"
+                                    className="flex-1 cursor-pointer bg-amber-600 text-paper hover:bg-amber-700"
                                     disabled={!rosterUrl}
                                     onClick={() =>
                                         void copyRosterLink(rosterUrl).then(
@@ -937,7 +937,7 @@ export default function TeamRoster({
                                                 ? t('Every slot is filled')
                                                 : undefined
                                         }
-                                        className="bg-[var(--accent)] text-white hover:bg-[var(--accent-dark)]"
+                                        className="bg-[var(--accent)] text-ink hover:bg-[var(--accent-dark)]"
                                     >
                                         <Plus className="mr-1.5 h-4 w-4" />
                                         {t('Add member')}

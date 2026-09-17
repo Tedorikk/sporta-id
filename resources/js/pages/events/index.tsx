@@ -3,7 +3,7 @@ import { Calendar, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { IdToolsSection } from '@/components/landing/id-tools-section';
 import { EventsCalendar } from '@/components/public/events-calendar';
-import { PublicPageHeader } from '@/components/public/public-page-header';
+import { MarketingPageHeader } from '@/components/public/marketing-page-header';
 import { useT } from '@/hooks/use-t';
 import PublicLayout from '@/layouts/public-layout';
 import { formatDate } from '@/lib/format-date';
@@ -27,9 +27,9 @@ interface Props {
 }
 
 const STATUS_STYLE: Record<string, string> = {
-    upcoming: 'bg-amber-400 text-amber-950',
-    ongoing: 'bg-emerald-500 text-white',
-    past: 'bg-neutral-400 text-neutral-950',
+    upcoming: 'bg-poster-yellow text-ink',
+    ongoing: 'bg-poster-red text-paper',
+    past: 'bg-ink/60 text-paper/70',
 };
 
 export default function EventsIndex({
@@ -67,8 +67,7 @@ export default function EventsIndex({
             <Head title={t('Events — Sporta Indonesia')} />
 
             <PublicLayout>
-                <PublicPageHeader
-                    languageToggle={false}
+                <MarketingPageHeader
                     eyebrow={t('Events')}
                     title={t('All Events')}
                     subtitle={t(
@@ -83,12 +82,12 @@ export default function EventsIndex({
 
                     <div className="mb-8 flex flex-wrap items-center gap-3">
                         <div className="relative w-full max-w-xs">
-                            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/40" />
+                            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-ink/40" />
                             <input
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 placeholder={t('Search events…')}
-                                className="w-full rounded-full border-2 border-white/15 bg-white/5 py-2 pr-4 pl-9 text-sm text-white placeholder:text-white/40 focus:border-red-500 focus:outline-none"
+                                className="w-full border border-ink/15 py-2 pr-4 pl-9 text-sm text-ink placeholder:text-ink/40 focus:border-poster-red focus:outline-none"
                             />
                         </div>
 
@@ -99,17 +98,11 @@ export default function EventsIndex({
                                     category: e.target.value || undefined,
                                 })
                             }
-                            className="rounded-full border-2 border-white/15 bg-white/5 px-4 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
+                            className="border border-ink/15 bg-paper px-4 py-2 text-sm text-ink focus:border-poster-red focus:outline-none"
                         >
-                            <option value="" className="bg-neutral-900">
-                                {t('All categories')}
-                            </option>
+                            <option value="">{t('All categories')}</option>
                             {categories.map((category) => (
-                                <option
-                                    key={category}
-                                    value={category}
-                                    className="bg-neutral-900"
-                                >
+                                <option key={category} value={category}>
                                     {category}
                                 </option>
                             ))}
@@ -117,7 +110,7 @@ export default function EventsIndex({
                     </div>
 
                     {events.data.length === 0 ? (
-                        <div className="rounded-2xl border-2 border-dashed border-white/20 p-12 text-center text-white/50">
+                        <div className="border border-dashed border-ink/20 p-12 text-center text-ink/50">
                             {t('No events match your search.')}
                         </div>
                     ) : (
@@ -127,20 +120,20 @@ export default function EventsIndex({
                                     <Link
                                         key={event.id}
                                         href={`/events/${event.slug}`}
-                                        className="group flex flex-col overflow-hidden rounded-2xl border-2 border-white/15 bg-white/5 transition hover:border-red-500"
+                                        className="group flex flex-col overflow-hidden border border-ink/12 transition hover:border-poster-red"
                                     >
-                                        <div className="relative aspect-4/5 w-full overflow-hidden bg-gradient-to-br from-red-700 to-neutral-900">
+                                        <div className="relative aspect-4/5 w-full overflow-hidden bg-ink">
                                             {event.banner && (
                                                 <img
                                                     src={formatImageUrl(
                                                         event.banner,
                                                     )}
                                                     alt={event.name}
-                                                    className="h-full w-full object-cover opacity-80 transition group-hover:opacity-100"
+                                                    className="h-full w-full object-cover"
                                                 />
                                             )}
                                             <span
-                                                className={`absolute top-3 left-3 rounded-full px-3 py-0.5 text-[10px] font-bold tracking-wide uppercase ${STATUS_STYLE[event.status] ?? 'bg-white text-black'}`}
+                                                className={`absolute top-0 left-0 px-3 py-1 text-xs font-semibold uppercase ${STATUS_STYLE[event.status] ?? 'bg-paper text-ink'}`}
                                             >
                                                 {t(
                                                     EVENT_STATUS_LABEL[
@@ -150,10 +143,10 @@ export default function EventsIndex({
                                             </span>
                                         </div>
                                         <div className="flex flex-1 flex-col gap-3 p-5">
-                                            <h3 className="text-lg font-bold tracking-tight">
+                                            <h3 className="font-display text-lg font-bold">
                                                 {event.name}
                                             </h3>
-                                            <div className="flex items-center gap-1.5 text-xs text-white/60">
+                                            <div className="flex items-center gap-1.5 text-xs text-ink/60">
                                                 <Calendar className="h-3.5 w-3.5" />
                                                 {formatDate(event.start_date)} –{' '}
                                                 {formatDate(event.end_date)}
@@ -181,12 +174,12 @@ export default function EventsIndex({
                                     dangerouslySetInnerHTML={{
                                         __html: link.label,
                                     }}
-                                    className={`rounded-full border-2 px-4 py-1.5 text-sm font-semibold tracking-wide uppercase transition ${
+                                    className={`border px-4 py-1.5 text-sm font-semibold tracking-wide uppercase transition ${
                                         link.active
-                                            ? 'border-red-500 bg-red-600 text-white'
+                                            ? 'border-poster-red bg-poster-red text-paper'
                                             : link.url
-                                              ? 'border-white/15 text-white/70 hover:border-white/40'
-                                              : 'cursor-not-allowed border-white/10 text-white/20'
+                                              ? 'border-ink/15 text-ink/70 hover:border-ink/40'
+                                              : 'cursor-not-allowed border-ink/10 text-ink/20'
                                     }`}
                                 />
                             ))}

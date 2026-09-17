@@ -14,7 +14,7 @@ export function StandingsTable({ standings, teams }: Props) {
 
     if (standings.length === 0) {
         return (
-            <p className="text-sm text-white/40">
+            <p className="text-sm text-ink/40">
                 {t('No completed matches yet.')}
             </p>
         );
@@ -24,7 +24,7 @@ export function StandingsTable({ standings, teams }: Props) {
         <div className="overflow-x-auto">
             <table className="w-full text-xs">
                 <thead>
-                    <tr className="border-b border-white/15 text-white/50">
+                    <tr className="border-b border-ink/15 text-ink/50">
                         <th className="py-2 pr-3 text-left font-semibold tracking-wide uppercase">
                             {t('Team')}
                         </th>
@@ -52,7 +52,7 @@ export function StandingsTable({ standings, teams }: Props) {
                     {standings.map((row, i) => (
                         <tr
                             key={row.team_id}
-                            className={`border-b border-white/10 last:border-0 ${i === 0 ? 'font-bold text-red-400' : 'text-white/80'}`}
+                            className={`border-b border-ink/10 last:border-0 ${i === 0 ? 'font-bold text-poster-red' : 'text-ink/80'}`}
                         >
                             <td className="py-2 pr-3">
                                 {i === 0 && (

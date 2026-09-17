@@ -33,7 +33,7 @@ export function LanguageToggle({ className }: { className?: string }) {
             role="group"
             aria-label="Language"
             className={cn(
-                'inline-flex overflow-hidden rounded-full border border-white/30 bg-black/20 text-[11px] font-bold tracking-wide backdrop-blur-sm',
+                'inline-flex overflow-hidden rounded-full border border-ink/30 bg-ink/20 text-[11px] font-bold tracking-wide backdrop-blur-sm',
                 className,
             )}
         >
@@ -49,8 +49,8 @@ export function LanguageToggle({ className }: { className?: string }) {
                     className={cn(
                         'cursor-pointer px-2.5 py-1 uppercase transition-colors',
                         locale === current
-                            ? 'bg-white text-neutral-900'
-                            : 'text-white/80 hover:bg-white/15 hover:text-white',
+                            ? 'bg-ink text-paper'
+                            : 'text-ink/80 hover:bg-ink/15 hover:text-ink',
                     )}
                 >
                     {locale}

@@ -7,7 +7,7 @@ interface PublicLayoutProps {
 
 export default function PublicLayout({ children }: PublicLayoutProps) {
     return (
-        <div className="min-h-screen bg-neutral-950 text-white">
+        <div className="min-h-screen bg-paper text-ink">
             <SiteNav />
             {children}
             <SiteFooter />

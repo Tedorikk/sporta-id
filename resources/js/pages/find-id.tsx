@@ -139,13 +139,13 @@ export default function FindId({ events }: Props) {
         <>
             <Head title={t('Find My ID Card')} />
 
-            <div className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10">
+            <div className="relative flex min-h-screen items-center justify-center bg-paper px-4 py-10">
                 <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                    <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-red-600/10 blur-3xl" />
+                    <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-poster-red/10 blur-3xl" />
                     <div className="absolute -right-40 -bottom-40 h-96 w-96 rounded-full bg-red-900/20 blur-3xl" />
                 </div>
 
-                <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl">
+                <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-black bg-paper shadow-2xl">
                     <PublicPageHeader
                         eyebrow={t('Player Lookup')}
                         title={t('Find My ID Card')}
@@ -284,7 +284,7 @@ export default function FindId({ events }: Props) {
                         <Button
                             onClick={handleReveal}
                             disabled={!playerId}
-                            className="mt-2 w-full cursor-pointer bg-red-600 font-bold tracking-wide text-white uppercase hover:bg-red-700"
+                            className="mt-2 w-full cursor-pointer bg-poster-red font-bold tracking-wide text-paper uppercase hover:bg-ink"
                         >
                             <Search className="mr-2 h-4 w-4" />
                             {t('View My ID Card')}

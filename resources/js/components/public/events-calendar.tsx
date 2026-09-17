@@ -69,16 +69,16 @@ export function EventsCalendar({ events }: Props) {
     const today = stripTime(new Date());
 
     return (
-        <div className="rounded-2xl border-2 border-white/15 bg-white/5 p-6">
+        <div className="border border-ink/12 p-6">
             <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-lg font-black tracking-tight uppercase">
+                <h3 className="font-display text-lg font-bold">
                     {monthLabel}
                 </h3>
                 <div className="flex items-center gap-2">
                     <button
                         type="button"
                         onClick={() => setCursor(new Date(year, month - 1, 1))}
-                        className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white/15 text-white/70 transition hover:border-red-500 hover:text-white"
+                        className="flex h-8 w-8 items-center justify-center border border-ink/15 text-ink/70 transition hover:border-poster-red hover:text-poster-red"
                     >
                         <ChevronLeft className="h-4 w-4" />
                     </button>
@@ -90,25 +90,25 @@ export function EventsCalendar({ events }: Props) {
                                 new Date(now.getFullYear(), now.getMonth(), 1),
                             );
                         }}
-                        className="rounded-full border-2 border-white/15 px-3 py-1 text-xs font-bold tracking-wide text-white/70 uppercase transition hover:border-red-500 hover:text-white"
+                        className="border border-ink/15 px-3 py-1 text-xs font-semibold tracking-wide text-ink/70 uppercase transition hover:border-poster-red hover:text-poster-red"
                     >
                         {t('Today')}
                     </button>
                     <button
                         type="button"
                         onClick={() => setCursor(new Date(year, month + 1, 1))}
-                        className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white/15 text-white/70 transition hover:border-red-500 hover:text-white"
+                        className="flex h-8 w-8 items-center justify-center border border-ink/15 text-ink/70 transition hover:border-poster-red hover:text-poster-red"
                     >
                         <ChevronRight className="h-4 w-4" />
                     </button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-7 gap-px overflow-hidden rounded-xl border-2 border-white/10 bg-white/10">
+            <div className="grid grid-cols-7 gap-px overflow-hidden border border-ink/10 bg-ink/10">
                 {WEEKDAYS.map((day) => (
                     <div
                         key={day}
-                        className="bg-black/40 py-2 text-center text-[10px] font-bold tracking-wide text-white/40 uppercase"
+                        className="bg-ink/5 py-2 text-center text-[10px] font-semibold tracking-wide text-ink/40 uppercase"
                     >
                         {t(day)}
                     </div>
@@ -122,12 +122,12 @@ export function EventsCalendar({ events }: Props) {
                     return (
                         <div
                             key={i}
-                            className={`min-h-20 bg-neutral-950 p-1.5 sm:min-h-24 ${isToday ? 'ring-2 ring-red-500 ring-inset' : ''}`}
+                            className={`min-h-20 bg-paper p-1.5 sm:min-h-24 ${isToday ? 'ring-2 ring-poster-red ring-inset' : ''}`}
                         >
                             {cell.date && (
                                 <>
                                     <div
-                                        className={`mb-1 text-xs font-semibold ${isToday ? 'text-red-400' : 'text-white/50'}`}
+                                        className={`mb-1 text-xs font-semibold ${isToday ? 'text-poster-red' : 'text-ink/50'}`}
                                     >
                                         {cell.date.getDate()}
                                     </div>
@@ -138,13 +138,13 @@ export function EventsCalendar({ events }: Props) {
                                                 <Link
                                                     key={event.id}
                                                     href={`/events/${event.slug}`}
-                                                    className="block truncate rounded bg-red-600/20 px-1 py-0.5 text-[10px] font-medium text-red-300 transition hover:bg-red-600/40"
+                                                    className="block truncate bg-poster-red/10 px-1 py-0.5 text-[10px] font-medium text-poster-red transition hover:bg-poster-red/20"
                                                 >
                                                     {event.name}
                                                 </Link>
                                             ))}
                                         {cell.events.length > 2 && (
-                                            <span className="text-[10px] text-white/40">
+                                            <span className="text-[10px] text-ink/40">
                                                 +{cell.events.length - 2} more
                                             </span>
                                         )}

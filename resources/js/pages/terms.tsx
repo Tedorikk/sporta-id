@@ -92,7 +92,7 @@ export default function Terms() {
                     registered with. If an event is cancelled outright, the{' '}
                     <Link
                         href="/refund-policy"
-                        className="text-red-400 underline-offset-2 hover:underline"
+                        className="text-poster-red underline-offset-2 hover:underline"
                     >
                         Refund &amp; Cancellation Policy
                     </Link>{' '}

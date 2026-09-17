@@ -39,7 +39,7 @@ export default function RegistrationIdCard({ registration, template }: Props) {
                 })}
             />
 
-            <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-neutral-950 px-4 py-10 print:bg-white print:p-0">
+            <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-paper px-4 py-10 print:bg-ink print:p-0">
                 {/*
                  * This page 404s for anything but a confirmed registration, so
                  * reaching it is already half the answer; the code is the other
