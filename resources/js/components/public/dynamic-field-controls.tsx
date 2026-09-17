@@ -100,6 +100,27 @@ export function ChoiceGroup({
     );
 }
 
+const URL_PATTERN = /(https?:\/\/[^\s]+)/g;
+
+function linkifyText(text: string) {
+    // split() with a capturing group puts the URL matches at odd indices.
+    return text.split(URL_PATTERN).map((part, i) =>
+        i % 2 === 1 ? (
+            <a
+                key={i}
+                href={part}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-[var(--accent)]"
+            >
+                {part}
+            </a>
+        ) : (
+            part
+        ),
+    );
+}
+
 export function DescriptionBlock({ field }: { field: RegistrationField }) {
     const body = field.help_text?.trim();
 
@@ -116,7 +137,7 @@ export function DescriptionBlock({ field }: { field: RegistrationField }) {
                         field.label && 'mt-1',
                     )}
                 >
-                    {body}
+                    {linkifyText(body)}
                 </p>
             )}
         </div>
