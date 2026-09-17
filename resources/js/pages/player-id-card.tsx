@@ -37,7 +37,7 @@ export default function PlayerIdCard({ player }: Props) {
         <>
             <Head title={t(':name — Player ID Card', { name: player.name })} />
 
-            <div className="relative flex min-h-screen items-center justify-center bg-paper px-4 py-10 print:bg-ink print:p-0">
+            <div className="relative flex min-h-screen items-center justify-center bg-paper px-4 py-10 print:bg-white print:p-0">
                 <div className="pointer-events-none absolute inset-0 overflow-hidden print:hidden">
                     <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-poster-red/10 blur-3xl" />
                     <div className="absolute -right-40 -bottom-40 h-96 w-96 rounded-full bg-red-900/20 blur-3xl" />
@@ -46,9 +46,9 @@ export default function PlayerIdCard({ player }: Props) {
                 <div
                     id="player-id-card"
                     ref={cardRef}
-                    className="relative z-10 w-full max-w-sm overflow-hidden rounded-3xl border-2 border-black bg-ink shadow-2xl print:rounded-none print:border-0 print:shadow-none"
+                    className="relative z-10 w-full max-w-sm overflow-hidden rounded-3xl border-2 border-black bg-white shadow-2xl print:rounded-none print:border-0 print:shadow-none"
                 >
-                    <div className="relative h-40 overflow-hidden bg-ink print:bg-ink">
+                    <div className="relative h-40 overflow-hidden bg-white print:bg-white">
                         <img
                             src="/images/swoosh.svg"
                             alt=""
@@ -73,10 +73,10 @@ export default function PlayerIdCard({ player }: Props) {
                                 <img
                                     src={player.photo}
                                     alt={player.name}
-                                    className="h-20 w-20 rounded-2xl border-4 border-ink bg-ink object-cover shadow-lg"
+                                    className="h-20 w-20 rounded-2xl border-4 border-white bg-white object-cover shadow-lg"
                                 />
                             ) : (
-                                <div className="flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-ink bg-gradient-to-br from-red-600 to-rose-900 text-2xl font-extrabold text-ink shadow-lg">
+                                <div className="flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-white bg-gradient-to-br from-red-600 to-rose-900 text-2xl font-extrabold text-white shadow-lg">
                                     {player.name.substring(0, 2).toUpperCase()}
                                 </div>
                             )}
@@ -128,7 +128,7 @@ export default function PlayerIdCard({ player }: Props) {
                                     className="h-10 w-10 shrink-0 object-cover"
                                 />
                             ) : (
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-ink text-slate-300">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-300">
                                     <Shield className="h-5 w-5" />
                                 </div>
                             )}
@@ -155,7 +155,7 @@ export default function PlayerIdCard({ player }: Props) {
                                     <span className="absolute top-0 right-0 h-5 w-5 rounded-tr-lg border-t-2 border-r-2 border-red-600" />
                                     <span className="absolute bottom-0 left-0 h-5 w-5 rounded-bl-lg border-b-2 border-l-2 border-red-600" />
                                     <span className="absolute right-0 bottom-0 h-5 w-5 rounded-br-lg border-r-2 border-b-2 border-red-600" />
-                                    <div className="rounded-2xl border border-slate-100 bg-ink p-3 shadow-inner">
+                                    <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-inner">
                                         <img
                                             src={qrDataUrl}
                                             alt="Player QR Code"
