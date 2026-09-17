@@ -176,7 +176,7 @@ class GroupRegistrationController extends Controller
 
             $rules["$prefix.registration_category_id"] = ['required', 'integer'];
             $rules["$prefix.name"] = ['required', 'string', 'max:255'];
-            $attributes["$prefix.name"] = __('Full Name');
+            $attributes["$prefix.name"] = $category?->form_settings['name_field_label'] ?? __('Full Name');
 
             if ($category === null) {
                 continue;

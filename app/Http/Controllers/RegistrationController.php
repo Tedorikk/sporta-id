@@ -238,7 +238,7 @@ class RegistrationController extends Controller
         $messages = [];
         // Errors name the field the way the organiser labelled it on the form,
         // not "form data.shirt size".
-        $attributes = ['name' => __('Full Name')];
+        $attributes = ['name' => $registrationCategory->form_settings['name_field_label'] ?? __('Full Name')];
 
         foreach ($registrationCategory->inputFields() as $field) {
             $key = $field['key'];

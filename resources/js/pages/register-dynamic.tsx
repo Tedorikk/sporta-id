@@ -1040,9 +1040,12 @@ export default function RegisterDynamic({
                                             data-invalid={fieldState.invalid}
                                         >
                                             <FieldLabel htmlFor="name">
-                                                {isTeam
-                                                    ? t('Team Name')
-                                                    : t('Full Name')}
+                                                {registrationCategory
+                                                    .form_settings
+                                                    ?.name_field_label ||
+                                                    (isTeam
+                                                        ? t('Team Name')
+                                                        : t('Full Name'))}
                                                 <RequiredMark />
                                             </FieldLabel>
                                             <Input

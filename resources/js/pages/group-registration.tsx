@@ -264,7 +264,8 @@ function ParticipantForm({
                     render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>
                             <FieldLabel htmlFor="name">
-                                {t('Full Name')}
+                                {category.form_settings?.name_field_label ||
+                                    t('Full Name')}
                                 <RequiredMark />
                             </FieldLabel>
                             <Input

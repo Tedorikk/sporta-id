@@ -514,7 +514,14 @@ export default function RegistrationCategoryBuilder({
                                             : 'Full Name'
                                     }
                                     typeLabel="Text"
-                                    note="Always the first question on the form. Every registration needs a name, so this field can't be edited or removed."
+                                    note="Always the first question on the form. Every registration needs a name, so this field can't be edited, reordered or removed — but you can relabel it."
+                                    labelValue={settings.name_field_label ?? ''}
+                                    onLabelChange={(value) =>
+                                        setSettings((s) => ({
+                                            ...s,
+                                            name_field_label: value || null,
+                                        }))
+                                    }
                                 />
                             )}
 
