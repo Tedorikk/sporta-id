@@ -619,6 +619,36 @@ export function SettingsPanel({
                     </Field>
 
                     <Field>
+                        <FieldLabel>After submitting, show</FieldLabel>
+                        <FieldDescription>
+                            The confirmation email always goes out either
+                            way — this only controls what the registrant
+                            sees on screen.
+                        </FieldDescription>
+                        <Select
+                            value={settings.post_submit_display ?? 'id_card'}
+                            onValueChange={(value) =>
+                                onSettingsChange({
+                                    post_submit_display:
+                                        value as FormSettings['post_submit_display'],
+                                })
+                            }
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="id_card">
+                                    The ID card
+                                </SelectItem>
+                                <SelectItem value="message">
+                                    Just the message below
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </Field>
+
+                    <Field>
                         <FieldLabel>Confirmation message</FieldLabel>
                         <Textarea
                             value={settings.confirmation_message ?? ''}

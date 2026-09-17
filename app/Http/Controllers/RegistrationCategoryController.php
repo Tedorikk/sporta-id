@@ -387,6 +387,7 @@ class RegistrationCategoryController extends Controller
             'form_settings' => ['nullable', 'array'],
             'form_settings.prevent_duplicate_by' => ['nullable', 'string', 'max:100'],
             'form_settings.confirmation_message' => ['nullable', 'string', 'max:20000'],
+            'form_settings.post_submit_display' => ['nullable', Rule::in(['id_card', 'message'])],
             'form_settings.notify_emails' => ['nullable', 'array'],
             'form_settings.notify_emails.*' => ['email', 'max:255'],
         ], [

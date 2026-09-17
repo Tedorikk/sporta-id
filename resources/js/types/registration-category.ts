@@ -192,6 +192,8 @@ export interface FormSettings {
     prevent_duplicate_by?: string | null;
     confirmation_message?: string | null;
     notify_emails?: string[];
+    /** What the success screen shows after a confirmed submission. Defaults to 'id_card'. */
+    post_submit_display?: 'id_card' | 'message' | null;
 }
 
 export type TournamentFormat = 'round_robin' | 'pool_stage';

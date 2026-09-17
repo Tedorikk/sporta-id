@@ -247,6 +247,7 @@ function RegistrationSuccessView({
     const cardRef = useRef<HTMLDivElement>(null);
     const [qrDataUrl, setQrDataUrl] = useState('');
     const team = registration.team ?? null;
+    const showCard = registrationCategory.form_settings?.post_submit_display !== 'message';
 
     const idCardUrl = team
         ? `${window.location.origin}/teams/${team.id}/id-card`
@@ -276,36 +277,42 @@ function RegistrationSuccessView({
                     </span>
                 </div>
 
-                {confirmationMessage && (
+                {(confirmationMessage || !showCard) && (
                     <p className="max-w-sm text-center text-sm text-ink/80">
-                        {confirmationMessage}
+                        {confirmationMessage ||
+                            t(
+                                "You're all set — we've also sent a confirmation to your email.",
+                            )}
                     </p>
                 )}
 
-                {team ? (
-                    <TeamIdCardCard
-                        team={team}
-                        qrDataUrl={qrDataUrl}
-                        cardRef={cardRef}
-                    />
-                ) : cardTemplate ? (
-                    <RegistrationIdCardCard
-                        registration={registration}
-                        template={cardTemplate}
-                        qrDataUrl={qrDataUrl}
-                        cardRef={cardRef}
-                    />
-                ) : null}
+                {showCard &&
+                    (team ? (
+                        <TeamIdCardCard
+                            team={team}
+                            qrDataUrl={qrDataUrl}
+                            cardRef={cardRef}
+                        />
+                    ) : cardTemplate ? (
+                        <RegistrationIdCardCard
+                            registration={registration}
+                            template={cardTemplate}
+                            qrDataUrl={qrDataUrl}
+                            cardRef={cardRef}
+                        />
+                    ) : null)}
 
-                <IdCardActions
-                    targetRef={cardRef}
-                    fileName={`${registration.name}-id-card`}
-                    shareTitle={t(':name — :category ID Card', {
-                        name: registration.name,
-                        category: registrationCategory.name,
-                    })}
-                    shareUrl={idCardUrl}
-                />
+                {showCard && (
+                    <IdCardActions
+                        targetRef={cardRef}
+                        fileName={`${registration.name}-id-card`}
+                        shareTitle={t(':name — :category ID Card', {
+                            name: registration.name,
+                            category: registrationCategory.name,
+                        })}
+                        shareUrl={idCardUrl}
+                    />
+                )}
 
                 {team?.basketball_event_category_id && (
                     <div className="flex w-full max-w-sm flex-col items-center gap-2 rounded-2xl border border-ink/15 bg-ink/5 p-4 text-center">
