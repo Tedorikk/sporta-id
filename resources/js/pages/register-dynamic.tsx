@@ -88,6 +88,8 @@ interface Props {
     confirmedRegistration?: Registration | null;
     /** When roster edits close, for team forms with a roster block. */
     rosterDeadline?: string | null;
+    /** Whether this category feeds a bracket — the roster block's jersey/identity fields only apply then. */
+    isTournament?: boolean;
     cardTemplate?: CardTemplate | null;
     snapToken?: string | null;
     midtransClientKey?: string | null;
@@ -425,7 +427,7 @@ function scrollToField(key: string) {
     el?.focus?.({ preventScroll: true });
 }
 
-function buildSchema(pages: FormPage[], t: Translate) {
+function buildSchema(pages: FormPage[], t: Translate, isTournament: boolean) {
     const fields = inputFieldsOf(pages);
     const shape: Record<string, z.ZodTypeAny> = {
         name: z.string().min(1, t('Input a name')).max(255),
@@ -442,7 +444,7 @@ function buildSchema(pages: FormPage[], t: Translate) {
     const roster = rosterFieldOf(pages);
 
     if (roster) {
-        shape.roster = rosterSchema(roster, t);
+        shape.roster = rosterSchema(roster, t, isTournament);
     }
 
     return z.object(shape).superRefine((data, ctx) => {
@@ -546,6 +548,7 @@ export default function RegisterDynamic({
     registrationClosed,
     confirmedRegistration,
     rosterDeadline = null,
+    isTournament = false,
     cardTemplate,
     snapToken,
     midtransClientKey,
@@ -569,7 +572,10 @@ export default function RegisterDynamic({
     );
     const branding = registrationCategory.form_branding ?? {};
 
-    const schema = useMemo(() => buildSchema(pages, t), [pages, t]);
+    const schema = useMemo(
+        () => buildSchema(pages, t, isTournament),
+        [pages, t, isTournament],
+    );
     type FormValues = z.infer<typeof schema>;
 
     const {
@@ -1008,6 +1014,7 @@ export default function RegisterDynamic({
                             <RosterRequirementsCard
                                 field={rosterField}
                                 rosterDeadline={rosterDeadline}
+                                isTournament={isTournament}
                             />
                         )}
 
@@ -1086,6 +1093,7 @@ export default function RegisterDynamic({
                                             key={f.key}
                                             field={f}
                                             rosterDeadline={rosterDeadline}
+                                            isTournament={isTournament}
                                             control={control}
                                             errors={
                                                 (

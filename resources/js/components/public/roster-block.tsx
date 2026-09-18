@@ -44,7 +44,11 @@ const LOOSE_PHONE = /^[0-9+\-\s()]{6,25}$/;
  * Client-side mirror of RosterService::submissionRules() + assertSubmissionFits():
  * what the server will reject, checked before the visitor leaves the page.
  */
-export function rosterSchema(field: RegistrationField, t: Translate) {
+export function rosterSchema(
+    field: RegistrationField,
+    t: Translate,
+    isTournament: boolean,
+) {
     const slots = field.slots ?? [];
     const memberFields = field.member_fields ?? [];
     // Deferred details are completed in the portal, so only name, role and
@@ -77,10 +81,13 @@ export function rosterSchema(field: RegistrationField, t: Translate) {
 
             if (details) {
                 need('photo', t('Upload a photo for the ID card'));
-                need('identity_card', t('Upload an identity document'));
-                need('birthplace', t('Place of birth is required'));
-                need('dob', t('Date of birth is required'));
                 need('phone_number', t('WhatsApp number is required'));
+
+                if (isTournament) {
+                    need('identity_card', t('Upload an identity document'));
+                    need('birthplace', t('Place of birth is required'));
+                    need('dob', t('Date of birth is required'));
+                }
             }
 
             if (m.phone_number.trim() !== '' && !E164.test(m.phone_number)) {
@@ -91,7 +98,7 @@ export function rosterSchema(field: RegistrationField, t: Translate) {
                 });
             }
 
-            if (m.role === 'player') {
+            if (isTournament && m.role === 'player') {
                 need('jersey_number', t('Every player needs a jersey number'));
             }
 
@@ -175,6 +182,8 @@ interface RosterBlockProps {
     field: RegistrationField;
     /** When roster edits close — quoted when details are deferred to the portal. */
     rosterDeadline?: string | null;
+    /** Whether this category feeds a bracket — jersey number and identity/birth details only apply then. */
+    isTournament: boolean;
     // The page's form has a dynamic shape; the block only ever touches `roster`.
     control: Control<any>;
     errors: RosterErrors;
@@ -186,6 +195,7 @@ interface RosterBlockProps {
 export function RosterBlock({
     field,
     rosterDeadline = null,
+    isTournament,
     control,
     errors,
     setError,
@@ -217,9 +227,13 @@ export function RosterBlock({
                     className="rounded-md border-l-4 border-[var(--accent)] bg-[var(--accent)]/5 px-4 py-3 text-sm text-neutral-700"
                     suppressHydrationWarning
                 >
-                    {t(
-                        'Just names, roles and jersey numbers for now. After you register, each member gets a personal link to fill in their own photo, document and birth details — or you do it in the roster portal',
-                    )}
+                    {isTournament
+                        ? t(
+                              'Just names, roles and jersey numbers for now. After you register, each member gets a personal link to fill in their own photo, document and birth details — or you do it in the roster portal',
+                          )
+                        : t(
+                              'Just names and roles for now. After you register, each member gets a personal link to fill in their own photo — or you do it in the roster portal',
+                          )}
                     {rosterDeadline
                         ? ` ${t('— before :deadline.', { deadline: formatDateTime(rosterDeadline) })}`
                         : '.'}
@@ -296,6 +310,7 @@ export function RosterBlock({
                                 role={slot.role}
                                 memberFields={memberFields}
                                 detailsOnForm={detailsOnForm}
+                                isTournament={isTournament}
                                 control={control}
                                 errors={errors?.[index]}
                                 setError={setError}
@@ -319,6 +334,7 @@ function MemberCard({
     role,
     memberFields,
     detailsOnForm,
+    isTournament,
     control,
     errors,
     setError,
@@ -331,6 +347,7 @@ function MemberCard({
     role: PlayerRole;
     memberFields: RosterMemberField[];
     detailsOnForm: boolean;
+    isTournament: boolean;
     control: Control<any>;
     errors: NonNullable<RosterErrors>[number] | undefined;
     setError: UseFormSetError<any>;
@@ -439,7 +456,7 @@ function MemberCard({
                         )}
                     />
 
-                    {isPlayer && (
+                    {isPlayer && isTournament && (
                         <div className="grid grid-cols-2 gap-3">
                             <Controller
                                 name={`${base}.jersey_number`}
@@ -498,55 +515,59 @@ function MemberCard({
 
             {detailsOnForm && (
                 <>
-                    <div className="grid grid-cols-2 gap-3">
-                        <Controller
-                            name={`${base}.birthplace`}
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel htmlFor={`${base}.birthplace`}>
-                                        {t('Place of birth')}
-                                        <RequiredMark />
-                                    </FieldLabel>
-                                    <Input
-                                        {...field}
-                                        id={`${base}.birthplace`}
-                                        disabled={disabled}
-                                        style={controlStyle}
-                                    />
-                                    {fieldState.invalid && (
-                                        <FieldError
-                                            errors={[fieldState.error]}
+                    {isTournament && (
+                        <div className="grid grid-cols-2 gap-3">
+                            <Controller
+                                name={`${base}.birthplace`}
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <Field data-invalid={fieldState.invalid}>
+                                        <FieldLabel
+                                            htmlFor={`${base}.birthplace`}
+                                        >
+                                            {t('Place of birth')}
+                                            <RequiredMark />
+                                        </FieldLabel>
+                                        <Input
+                                            {...field}
+                                            id={`${base}.birthplace`}
+                                            disabled={disabled}
+                                            style={controlStyle}
                                         />
-                                    )}
-                                </Field>
-                            )}
-                        />
-                        <Controller
-                            name={`${base}.dob`}
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel htmlFor={`${base}.dob`}>
-                                        {t('Date of birth')}
-                                        <RequiredMark />
-                                    </FieldLabel>
-                                    <Input
-                                        {...field}
-                                        id={`${base}.dob`}
-                                        type="date"
-                                        disabled={disabled}
-                                        style={controlStyle}
-                                    />
-                                    {fieldState.invalid && (
-                                        <FieldError
-                                            errors={[fieldState.error]}
+                                        {fieldState.invalid && (
+                                            <FieldError
+                                                errors={[fieldState.error]}
+                                            />
+                                        )}
+                                    </Field>
+                                )}
+                            />
+                            <Controller
+                                name={`${base}.dob`}
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <Field data-invalid={fieldState.invalid}>
+                                        <FieldLabel htmlFor={`${base}.dob`}>
+                                            {t('Date of birth')}
+                                            <RequiredMark />
+                                        </FieldLabel>
+                                        <Input
+                                            {...field}
+                                            id={`${base}.dob`}
+                                            type="date"
+                                            disabled={disabled}
+                                            style={controlStyle}
                                         />
-                                    )}
-                                </Field>
-                            )}
-                        />
-                    </div>
+                                        {fieldState.invalid && (
+                                            <FieldError
+                                                errors={[fieldState.error]}
+                                            />
+                                        )}
+                                    </Field>
+                                )}
+                            />
+                        </div>
+                    )}
 
                     <Controller
                         name={`${base}.phone_number`}
@@ -669,42 +690,48 @@ function MemberCard({
                         </div>
                     )}
 
-                    <Controller
-                        name={`${base}.identity_card`}
-                        control={control}
-                        render={({ field }) => (
-                            <Field
-                                data-invalid={Boolean(errors?.identity_card)}
-                            >
-                                <FieldLabel>
-                                    {t('Identity document')}
-                                    <RequiredMark />
-                                </FieldLabel>
-                                <FieldDescription>
-                                    A clear photo of the KTP, KK or birth
-                                    certificate.
-                                </FieldDescription>
-                                <UploadImage
-                                    value={field.value as string}
-                                    ratio={16 / 10}
-                                    uploadUrl="/public-upload/image"
-                                    deleteUrl="/public-upload/image"
-                                    onChange={(value) =>
-                                        field.onChange(value ?? '')
-                                    }
-                                    onError={uploadError('identity_card')}
-                                    disabled={disabled}
-                                    className="rounded-2xl border-2 border-black"
-                                    placeholder={t('Upload identity document')}
-                                />
-                                {errors?.identity_card?.message && (
-                                    <FieldError>
-                                        {errors.identity_card.message}
-                                    </FieldError>
-                                )}
-                            </Field>
-                        )}
-                    />
+                    {isTournament && (
+                        <Controller
+                            name={`${base}.identity_card`}
+                            control={control}
+                            render={({ field }) => (
+                                <Field
+                                    data-invalid={Boolean(
+                                        errors?.identity_card,
+                                    )}
+                                >
+                                    <FieldLabel>
+                                        {t('Identity document')}
+                                        <RequiredMark />
+                                    </FieldLabel>
+                                    <FieldDescription>
+                                        A clear photo of the KTP, KK or birth
+                                        certificate.
+                                    </FieldDescription>
+                                    <UploadImage
+                                        value={field.value as string}
+                                        ratio={16 / 10}
+                                        uploadUrl="/public-upload/image"
+                                        deleteUrl="/public-upload/image"
+                                        onChange={(value) =>
+                                            field.onChange(value ?? '')
+                                        }
+                                        onError={uploadError('identity_card')}
+                                        disabled={disabled}
+                                        className="rounded-2xl border-2 border-black"
+                                        placeholder={t(
+                                            'Upload identity document',
+                                        )}
+                                    />
+                                    {errors?.identity_card?.message && (
+                                        <FieldError>
+                                            {errors.identity_card.message}
+                                        </FieldError>
+                                    )}
+                                </Field>
+                            )}
+                        />
+                    )}
 
                     {isMedic && (
                         <Controller

@@ -13,9 +13,11 @@ import { rosterDetailsOnForm } from '@/types/registration-category';
 export function RosterRequirementsCard({
     field,
     rosterDeadline,
+    isTournament,
 }: {
     field: RegistrationField;
     rosterDeadline: string | null;
+    isTournament: boolean;
 }) {
     const { t } = useT();
     const slots = field.slots ?? [];
@@ -26,10 +28,14 @@ export function RosterRequirementsCard({
 
     const perMember = [
         t('Photo for the ID card (portrait, plain background)'),
-        t('Identity document — KTP, KK or birth certificate (akta)'),
-        t('Place and date of birth'),
+        ...(isTournament
+            ? [
+                  t('Identity document — KTP, KK or birth certificate (akta)'),
+                  t('Place and date of birth'),
+              ]
+            : []),
         t('WhatsApp number'),
-        t('Jersey number (players)'),
+        ...(isTournament ? [t('Jersey number (players)')] : []),
 
         ...requiredQuestions.map((mf) => {
             // A question aimed at some roles says so: "Asal Sekolah (Pemain)".
@@ -89,9 +95,13 @@ export function RosterRequirementsCard({
                     suppressHydrationWarning
                 >
                     <p className="font-semibold">
-                        {t(
-                            'This form only asks for each member’s name, role and jersey number.',
-                        )}
+                        {isTournament
+                            ? t(
+                                  'This form only asks for each member’s name, role and jersey number.',
+                              )
+                            : t(
+                                  'This form only asks for each member’s name and role.',
+                              )}
                     </p>
                     <p className="mt-1">
                         {t(

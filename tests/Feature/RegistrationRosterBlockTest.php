@@ -251,6 +251,31 @@ test('a form without a roster block ignores any roster input', function () {
     expect(Registration::sole()->team->players()->count())->toBe(0);
 });
 
+test('a roster block outside a tournament only needs a name and role — no jersey or identity details', function () {
+    $event = Event::factory()->create(['category' => 'CONFERENCE']);
+    $category = RegistrationCategory::factory()->team()->for($event)->create(['form_pages' => [
+        ['key' => 'p', 'title' => 'Peserta', 'fields' => [[
+            'key' => 'roster', 'label' => 'Roster', 'type' => 'roster', 'required' => true, 'details_on_form' => true,
+            'slots' => [['role' => 'player', 'label' => 'Member', 'min' => 1, 'max' => null]],
+            'member_fields' => [],
+        ]]],
+    ]]);
+
+    submitRoster($category, [[
+        'role' => 'player',
+        'name' => 'Ade Putra',
+        'photo' => 'https://example.com/ade.jpg',
+        'phone_number' => '+6281234567890',
+    ]], ['form_data' => []])->assertOk();
+
+    $player = Registration::sole()->team->players()->sole();
+
+    expect($player->name)->toBe('Ade Putra')
+        ->and($player->jersey_number)->toBeNull()
+        ->and($player->identity_card)->toBeNull()
+        ->and($player->birthplace)->toBeNull();
+});
+
 test('a paid registration with a roster still creates the sheet and waits for payment', function () {
     $category = rosterCategory();
     $category->update(['price' => 250000]);

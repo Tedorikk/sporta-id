@@ -41,6 +41,9 @@ class RegistrationController extends Controller
             // For the "what you'll need" card: when a team must have its
             // roster complete, if the form defers member details to the portal.
             'rosterDeadline' => $registrationCategory->rosterField() ? $registrationCategory->rosterClosesAt() : null,
+            // The roster block only asks for a jersey number and identity/birth
+            // details when they feed a bracket.
+            'isTournament' => $registrationCategory->isTeamTournament(),
         ]);
     }
 
