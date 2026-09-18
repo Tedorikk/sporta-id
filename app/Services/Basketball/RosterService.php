@@ -292,8 +292,8 @@ class RosterService
      */
     public function slots(Team $team): array
     {
-        $category = $team->basketballEventCategory;
-        $block = $category?->registrationCategory?->rosterField();
+        $tournament = $team->basketballEventCategory;
+        $block = $team->registrationCategory()?->rosterField();
         $counts = $team->players->countBy('role');
 
         $slots = $block !== null
@@ -301,8 +301,8 @@ class RosterService
             : [[
                 'role' => Player::ROLE_PLAYER,
                 'label' => 'Player',
-                'min' => (int) ($category?->min_player_per_team ?? 0),
-                'max' => $category?->max_player_per_team,
+                'min' => (int) ($tournament?->min_player_per_team ?? 0),
+                'max' => $tournament?->max_player_per_team,
             ]];
 
         return collect($slots)->map(fn (array $slot) => [
@@ -324,18 +324,22 @@ class RosterService
     public function summary(Team $team): array
     {
         $members = $team->players;
-        $category = $team->basketballEventCategory;
         $players = $members->where('role', Player::ROLE_PLAYER)->count();
-        $min = $category?->min_player_per_team;
         $incomplete = $this->incompleteCount($team);
         $slots = $this->slots($team);
+        $playerSlot = collect($slots)->firstWhere('role', Player::ROLE_PLAYER);
+        // A slot with no minimum reports 0 rather than null; treat that as
+        // "no requirement" so a plain team category (no block, no tournament)
+        // doesn't tell the captain to recruit "at least 0 players".
+        $min = $playerSlot !== null && $playerSlot['min'] > 0 ? $playerSlot['min'] : null;
+        $max = $playerSlot['max'] ?? null;
 
         return [
             'players' => $players,
             'staff' => $members->count() - $players,
             'incomplete' => $incomplete,
             'min_players' => $min,
-            'max_players' => $category?->max_player_per_team,
+            'max_players' => $max,
             'complete' => ($min === null || $players >= $min) && $incomplete === 0,
             'slots' => $slots,
             // Nobody else can be added: every slot has a ceiling and has reached it.
@@ -370,7 +374,7 @@ class RosterService
             return 'verified';
         }
 
-        if (! ($team->basketballEventCategory?->rosterIsOpen() ?? true)) {
+        if ($team->rosterLocked()) {
             return 'closed';
         }
 

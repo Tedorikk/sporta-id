@@ -25,7 +25,7 @@ class RosterMemberSelfController extends Controller
         $registration = $team->registration;
         $memberFields = $team->rosterMemberFields();
 
-        $team->load('event', 'basketballEventCategory.registrationCategory');
+        $team->load('event', 'registration.registrationCategory');
 
         return Inertia::render('roster-member-self', [
             'token' => $token,
@@ -36,7 +36,7 @@ class RosterMemberSelfController extends Controller
                 'is_complete' => $this->roster->isComplete($player, $memberFields),
             ],
             'memberFields' => $memberFields,
-            'closesAt' => $team->basketballEventCategory?->registrationCategory?->rosterClosesAt(),
+            'closesAt' => $team->registrationCategory()?->rosterClosesAt(),
             'lock' => $this->roster->lockReason($registration, $team),
         ]);
     }
@@ -76,9 +76,8 @@ class RosterMemberSelfController extends Controller
     {
         $found = $this->roster->memberByInviteToken($token);
 
-        // A team outside a tournament has no roster to complete, and one
-        // without a registration has nothing to lock against.
-        abort_unless($found && $found['team']->basketballEventCategory !== null && $found['team']->registration !== null, 404);
+        // A team without a registration has nothing to lock against.
+        abort_unless($found && $found['team']->registration !== null, 404);
 
         return $found;
     }

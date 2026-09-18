@@ -74,13 +74,25 @@ class Team extends Model
     }
 
     /**
+     * The category this team entered. Goes through the registration first —
+     * the only link a plain team category (no basketball bracket) has — and
+     * falls back to the tournament link for a team created before its
+     * registration exists.
+     */
+    public function registrationCategory(): ?RegistrationCategory
+    {
+        return $this->registration?->registrationCategory
+            ?? $this->basketballEventCategory?->registrationCategory;
+    }
+
+    /**
      * The per-member questions this team's category asks on its roster block.
      *
      * @return array<int, array<string, mixed>>
      */
     public function rosterMemberFields(): array
     {
-        return $this->basketballEventCategory?->registrationCategory?->rosterMemberFields() ?? [];
+        return $this->registrationCategory()?->rosterMemberFields() ?? [];
     }
 
     /**
@@ -94,7 +106,9 @@ class Team extends Model
             return true;
         }
 
-        return ! ($this->basketballEventCategory?->rosterIsOpen() ?? true);
+        $closesAt = $this->registrationCategory()?->rosterClosesAt();
+
+        return $closesAt !== null && now()->gt($closesAt);
     }
 
     /** @return HasMany<GameMatch, $this> */

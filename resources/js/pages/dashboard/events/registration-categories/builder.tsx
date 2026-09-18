@@ -485,9 +485,7 @@ export default function RegistrationCategoryBuilder({
                         onAdd={addField}
                         disabled={!activePage}
                         allowRoster={
-                            isBasketballEvent &&
                             details.subject_type === 'team' &&
-                            tournamentEnabled &&
                             !pages.some((p) =>
                                 p.fields.some((f) => f.type === 'roster'),
                             )

@@ -20,7 +20,7 @@ class TeamRosterController extends Controller
 
     public function show(Registration $registration)
     {
-        $team = $this->tournamentTeam($registration);
+        $team = $this->teamFor($registration);
 
         $team->load(['players' => fn ($query) => $query->orderByRaw(
             "case when role = 'player' then 0 else 1 end"
@@ -54,7 +54,7 @@ class TeamRosterController extends Controller
 
     public function store(Request $request, Registration $registration)
     {
-        $team = $this->tournamentTeam($registration);
+        $team = $this->teamFor($registration);
         $this->assertEditable($registration, $team);
 
         $validated = $request->validate(
@@ -75,7 +75,7 @@ class TeamRosterController extends Controller
 
     public function update(Request $request, Registration $registration, Player $player)
     {
-        $team = $this->tournamentTeam($registration);
+        $team = $this->teamFor($registration);
         $this->assertEditable($registration, $team);
         $this->assertOnTeam($team, $player);
 
@@ -104,7 +104,7 @@ class TeamRosterController extends Controller
      */
     public function regenerateInvite(Registration $registration, Player $player)
     {
-        $team = $this->tournamentTeam($registration);
+        $team = $this->teamFor($registration);
         $this->assertEditable($registration, $team);
         $this->assertOnTeam($team, $player);
 
@@ -118,7 +118,7 @@ class TeamRosterController extends Controller
 
     public function destroy(Registration $registration, Player $player)
     {
-        $team = $this->tournamentTeam($registration);
+        $team = $this->teamFor($registration);
         $this->assertEditable($registration, $team);
         $this->assertOnTeam($team, $player);
 
@@ -132,12 +132,12 @@ class TeamRosterController extends Controller
         ]]);
     }
 
-    /** The registration's team, which must be entered in a tournament category. */
-    private function tournamentTeam(Registration $registration): Team
+    /** The registration's team — any team category, tournament or not. */
+    private function teamFor(Registration $registration): Team
     {
         $team = $registration->team;
 
-        abort_unless($team !== null && $team->basketballEventCategory !== null, 404);
+        abort_unless($team !== null, 404);
 
         return $team;
     }

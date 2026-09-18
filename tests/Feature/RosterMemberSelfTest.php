@@ -191,12 +191,20 @@ test('a link cannot be regenerated for someone else’s member or a locked roste
     $this->post(route('team-roster.invite', [$registration, $player]))->assertForbidden();
 });
 
-test('an unknown or revoked token is a 404, and a team outside a tournament has no member pages', function () {
+test('an unknown or revoked token is a 404, and a team without a registration has no member pages', function () {
     $this->get(route('roster-member.show', 'nope'))->assertNotFound();
 
-    [, $team, $player] = selfFillTeam();
+    [$registration, $team, $player] = selfFillTeam();
     $token = app(RosterService::class)->inviteTokenFor($team, $player);
-    $team->update(['basketball_event_category_id' => null]);
+    $registration->delete();
 
     $this->get(route('roster-member.show', $token))->assertNotFound();
+});
+
+test('a team outside a tournament still has member pages', function () {
+    [, $team, $player] = selfFillTeam();
+    $team->update(['basketball_event_category_id' => null]);
+    $token = app(RosterService::class)->inviteTokenFor($team, $player);
+
+    $this->get(route('roster-member.show', $token))->assertOk();
 });

@@ -44,7 +44,7 @@ const PALETTE: {
 interface FieldPaletteProps {
     onAdd: (type: RegistrationFieldType) => void;
     disabled?: boolean;
-    /** Offer the roster block — a team category on a basketball event that doesn't have one yet. */
+    /** Offer the roster block — a team category that doesn't have one yet. */
     allowRoster?: boolean;
 }
 

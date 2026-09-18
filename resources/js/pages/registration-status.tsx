@@ -57,7 +57,7 @@ export default function RegistrationStatus({ registration }: Props) {
 
     const copy = STATUS_COPY[registration.status] ?? STATUS_COPY.confirmed;
     const statusLabel = t(copy.label);
-    const hasRoster = Boolean(registration.team?.basketball_event_category_id);
+    const hasRoster = Boolean(registration.team);
     const Icon =
         registration.status === 'confirmed'
             ? CheckCircle2

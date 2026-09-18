@@ -316,7 +316,7 @@ function RegistrationSuccessView({
                     />
                 )}
 
-                {team?.basketball_event_category_id && (
+                {team && (
                     <div className="flex w-full max-w-sm flex-col items-center gap-2 rounded-2xl border border-ink/15 bg-ink/5 p-4 text-center">
                         <p className="text-sm text-ink/80">
                             {t(

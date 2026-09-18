@@ -87,7 +87,7 @@ test('an individual registration has no roster page', function () {
     $this->get(route('team-roster.show', $registration))->assertNotFound();
 });
 
-test('a team outside any tournament category has no roster page', function () {
+test('a team outside any tournament category still has a roster page, with no player cap', function () {
     $event = Event::factory()->basketball()->create();
     $category = RegistrationCategory::factory()->team()->for($event)->create();
     $team = Team::factory()->create(['event_id' => $event->id, 'basketball_event_category_id' => null]);
@@ -96,6 +96,24 @@ test('a team outside any tournament category has no roster page', function () {
         'event_id' => $event->id,
         'team_id' => $team->id,
         'name' => $team->name,
+        'status' => Registration::STATUS_CONFIRMED,
+    ]);
+
+    $this->get(route('team-roster.show', $registration))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('team-roster')
+            ->where('limits.min_players', null)
+            ->where('limits.max_players', null));
+});
+
+test('a registration with no team has no roster page', function () {
+    $event = Event::factory()->basketball()->create();
+    $category = RegistrationCategory::factory()->team()->for($event)->create();
+    $registration = Registration::create([
+        'registration_category_id' => $category->id,
+        'event_id' => $event->id,
+        'name' => 'No Team Yet',
         'status' => Registration::STATUS_CONFIRMED,
     ]);
 
