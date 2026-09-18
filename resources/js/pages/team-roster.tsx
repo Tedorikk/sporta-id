@@ -99,6 +99,8 @@ interface Props {
     members: Player[];
     /** The organiser's extra per-member questions from the form's roster block. */
     memberFields: RosterMemberField[];
+    /** Whether this team feeds a bracket — hides jersey/identity fields that only apply there. */
+    isTournament: boolean;
     limits: Limits;
     lock: LockReason | null;
 }
@@ -135,6 +137,7 @@ function MemberDialog({
     token,
     member,
     memberFields,
+    isTournament,
     slots,
     open,
     onOpenChange,
@@ -144,6 +147,7 @@ function MemberDialog({
     token: string;
     member: Player | null;
     memberFields: RosterMemberField[];
+    isTournament: boolean;
     slots: RosterSlotStatus[];
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -238,9 +242,11 @@ function MemberDialog({
                                 : t('Add member')}
                         </DialogTitle>
                         <DialogDescription>
-                            {t(
-                                'Every member needs an identity document and a photo for their ID card.',
-                            )}
+                            {isTournament
+                                ? t(
+                                      'Every member needs an identity document and a photo for their ID card.',
+                                  )
+                                : t('Every member needs a photo for their ID card.')}
                         </DialogDescription>
                     </DialogHeader>
 
@@ -304,7 +310,7 @@ function MemberDialog({
                             </Field>
                         </FieldGroup>
 
-                        {isPlayer && (
+                        {isPlayer && isTournament && (
                             <div className="grid grid-cols-2 gap-3">
                                 <Field
                                     data-invalid={Boolean(errors.jersey_number)}
@@ -358,6 +364,7 @@ function MemberDialog({
                             errors={errors}
                             processing={processing}
                             memberFields={memberFields}
+                            isTournament={isTournament}
                         />
                     </FieldGroup>
 
@@ -596,6 +603,7 @@ export default function TeamRoster({
     team,
     members,
     memberFields,
+    isTournament,
     limits,
     lock,
 }: Props) {
@@ -1036,6 +1044,7 @@ export default function TeamRoster({
                     token={registration.qr_token}
                     member={editing}
                     memberFields={memberFields}
+                    isTournament={isTournament}
                     slots={limits.slots}
                     open={dialogOpen}
                     onOpenChange={setDialogOpen}

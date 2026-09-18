@@ -39,6 +39,7 @@ interface Props {
     team: { id: number; name: string; logo: string | null; status: string };
     member: Player;
     memberFields: RosterMemberField[];
+    isTournament: boolean;
     closesAt: string | null;
     lock: LockReason | null;
 }
@@ -55,6 +56,7 @@ export default function RosterMemberSelf({
     team,
     member,
     memberFields,
+    isTournament,
     closesAt,
     lock,
 }: Props) {
@@ -152,9 +154,13 @@ export default function RosterMemberSelf({
                             </div>
                         ) : (
                             <p className="text-sm text-neutral-600">
-                                {t(
-                                    'Your team manager asked you to complete your own details for the tournament ID card. Everything here is required.',
-                                )}
+                                {isTournament
+                                    ? t(
+                                          'Your team manager asked you to complete your own details for the tournament ID card. Everything here is required.',
+                                      )
+                                    : t(
+                                          'Your team manager asked you to complete your own details for your ID card. Everything here is required.',
+                                      )}
                             </p>
                         )}
 
@@ -179,6 +185,7 @@ export default function RosterMemberSelf({
                                         errors={errors}
                                         processing={processing}
                                         memberFields={memberFields}
+                                        isTournament={isTournament}
                                     />
 
                                     <Button

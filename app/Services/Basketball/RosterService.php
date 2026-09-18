@@ -27,14 +27,19 @@ class RosterService
      * The public portal is strict: a tournament entry needs the identity
      * document, birth details, a WhatsApp number and a photo for every
      * member. Organisers editing on a team's behalf keep the lenient rules so
-     * a half-known walk-in can still be recorded.
+     * a half-known walk-in can still be recorded. A team outside a tournament
+     * has no bracket to feed, so its jersey number and identity/birth details
+     * are never required — only what applies to any team (name, role, photo,
+     * phone) and whatever the organiser asked for in member_fields.
      */
     public function rules(Request $request, Team $team, ?Player $player = null, bool $strict = false): array
     {
+        $isTournament = $team->basketballEventCategory !== null;
+
         return [
-            ...$this->memberRules($strict, $team->rosterMemberFields(), fn (string $rule) => $rule),
+            ...$this->memberRules($strict, $isTournament, $team->rosterMemberFields(), fn (string $rule) => $rule),
             'jersey_number' => [
-                Rule::requiredIf(fn () => $request->input('role', Player::ROLE_PLAYER) === Player::ROLE_PLAYER),
+                Rule::requiredIf(fn () => $isTournament && $request->input('role', Player::ROLE_PLAYER) === Player::ROLE_PLAYER),
                 'nullable',
                 'string',
                 'max:3',
@@ -69,7 +74,7 @@ class RosterService
      *
      * @param  array<string, mixed>  $rosterField  The category's roster block definition.
      */
-    public function submissionRules(array $rosterField): array
+    public function submissionRules(array $rosterField, bool $isTournament = true): array
     {
         $roles = collect($rosterField['slots'] ?? [])->pluck('role')->unique()->values()->all();
         $prefix = fn (string $rule) => "roster.*.{$rule}";
@@ -77,30 +82,39 @@ class RosterService
 
         return [
             'roster' => ['required', 'array'],
-            ...$this->memberRules($strict, $rosterField['member_fields'] ?? [], $prefix),
+            ...$this->memberRules($strict, $isTournament, $rosterField['member_fields'] ?? [], $prefix),
             'roster.*.role' => ['required', Rule::in($roles)],
             // `nullable` short-circuits for staff, so `distinct` only compares the players' numbers.
-            'roster.*.jersey_number' => ['required_if:roster.*.role,'.Player::ROLE_PLAYER, 'nullable', 'string', 'max:3', 'distinct'],
+            'roster.*.jersey_number' => [
+                $isTournament ? 'required_if:roster.*.role,'.Player::ROLE_PLAYER : 'nullable',
+                'nullable', 'string', 'max:3', 'distinct',
+            ],
             'roster.*.certificate' => ['nullable', 'url', 'max:255'],
         ];
     }
 
     /**
-     * Whether a member carries everything a tournament entry needs — the
-     * same set the portal's strict rules demand: photo, identity document,
-     * birth details, a WhatsApp number, a jersey for players, and an answer
-     * to every required extra question (a medic's licence is optional). A
-     * member added without details on the form stays incomplete until they
-     * are filled in.
+     * Whether a member carries everything they need — photo and a WhatsApp
+     * number for any team, plus (in a tournament) the identity document,
+     * birth details and a jersey for players — and an answer to every
+     * required extra question (a medic's licence is optional). A member
+     * added without details on the form stays incomplete until they are
+     * filled in.
      *
      * @param  array<int, array<string, mixed>>  $memberFields
      */
-    public function isComplete(Player $player, array $memberFields = []): bool
+    public function isComplete(Player $player, array $memberFields = [], bool $isTournament = true): bool
     {
-        $fixed = [$player->photo, $player->identity_card, $player->birthplace, $player->dob, $player->phone_number];
+        $fixed = [$player->photo, $player->phone_number];
 
-        if ($player->role === Player::ROLE_PLAYER) {
-            $fixed[] = $player->jersey_number;
+        if ($isTournament) {
+            $fixed[] = $player->identity_card;
+            $fixed[] = $player->birthplace;
+            $fixed[] = $player->dob;
+
+            if ($player->role === Player::ROLE_PLAYER) {
+                $fixed[] = $player->jersey_number;
+            }
         }
 
         foreach ($fixed as $value) {
@@ -138,23 +152,27 @@ class RosterService
 
     /**
      * The per-member rules every entry point shares. `$prefix` turns a bare
-     * field name into the attribute path the caller validates under.
+     * field name into the attribute path the caller validates under. The
+     * identity document and birth details only matter for a tournament
+     * entry (age-group eligibility, the bracket's ID cards) — a plain team
+     * never requires them, whatever `$strict` says.
      *
      * @param  array<int, array<string, mixed>>  $memberFields
      * @param  Closure(string): string  $prefix
      */
-    private function memberRules(bool $strict, array $memberFields, Closure $prefix): array
+    private function memberRules(bool $strict, bool $isTournament, array $memberFields, Closure $prefix): array
     {
         $required = $strict ? 'required' : 'nullable';
+        $tournamentRequired = $strict && $isTournament ? 'required' : 'nullable';
 
         $rules = [
             $prefix('name') => ['required', 'string', 'max:255'],
             $prefix('role') => ['required', Rule::in(Player::ROLES)],
             $prefix('position') => ['nullable', 'string', 'max:255'],
             $prefix('photo') => [$required, 'url', 'max:255'],
-            $prefix('identity_card') => [$required, 'url', 'max:255'],
-            $prefix('birthplace') => [$required, 'string', 'max:255'],
-            $prefix('dob') => [$required, 'date', 'before:today'],
+            $prefix('identity_card') => [$tournamentRequired, 'url', 'max:255'],
+            $prefix('birthplace') => [$tournamentRequired, 'string', 'max:255'],
+            $prefix('dob') => [$tournamentRequired, 'date', 'before:today'],
             $prefix('phone_number') => [$required, 'string', 'regex:/^\+[1-9]\d{1,14}$/'],
             $prefix('email') => ['nullable', 'email', 'max:255'],
             $prefix('extra') => ['nullable', 'array'],
@@ -351,8 +369,9 @@ class RosterService
     public function incompleteCount(Team $team): int
     {
         $memberFields = $team->rosterMemberFields();
+        $isTournament = $team->basketballEventCategory !== null;
 
-        return $team->players->reject(fn (Player $player) => $this->isComplete($player, $memberFields))->count();
+        return $team->players->reject(fn (Player $player) => $this->isComplete($player, $memberFields, $isTournament))->count();
     }
 
     /**

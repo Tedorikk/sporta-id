@@ -28,6 +28,7 @@ class TeamRosterController extends Controller
 
         $registration->loadMissing(['event', 'registrationCategory.basketballCategory']);
         $memberFields = $team->rosterMemberFields();
+        $isTournament = $team->basketballEventCategory !== null;
 
         return Inertia::render('team-roster', [
             'registration' => $registration->only('qr_token', 'status', 'name'),
@@ -39,11 +40,14 @@ class TeamRosterController extends Controller
             // link the manager can send them to fill it in themselves.
             'members' => $team->players->map(fn (Player $player) => [
                 ...$player->toArray(),
-                'is_complete' => $this->roster->isComplete($player, $memberFields),
+                'is_complete' => $this->roster->isComplete($player, $memberFields, $isTournament),
                 'invite_url' => route('roster-member.show', $this->roster->inviteTokenFor($team, $player)),
             ]),
             // The organiser's extra per-member questions, so the dialog can ask them.
             'memberFields' => $memberFields,
+            // Whether this team feeds a bracket — the jersey number and
+            // identity/birth-detail fields only make sense when it does.
+            'isTournament' => $isTournament,
             'limits' => [
                 ...$this->roster->summary($team),
                 'closes_at' => $registration->registrationCategory->rosterClosesAt(),

@@ -24,6 +24,7 @@ class RosterMemberSelfController extends Controller
         ['team' => $team, 'player' => $player] = $this->resolve($token);
         $registration = $team->registration;
         $memberFields = $team->rosterMemberFields();
+        $isTournament = $team->basketballEventCategory !== null;
 
         $team->load('event', 'registration.registrationCategory');
 
@@ -33,9 +34,10 @@ class RosterMemberSelfController extends Controller
             'team' => $team->only('id', 'name', 'logo', 'status'),
             'member' => [
                 ...$player->toArray(),
-                'is_complete' => $this->roster->isComplete($player, $memberFields),
+                'is_complete' => $this->roster->isComplete($player, $memberFields, $isTournament),
             ],
             'memberFields' => $memberFields,
+            'isTournament' => $isTournament,
             'closesAt' => $team->registrationCategory()?->rosterClosesAt(),
             'lock' => $this->roster->lockReason($registration, $team),
         ]);

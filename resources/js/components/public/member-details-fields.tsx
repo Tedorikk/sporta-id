@@ -66,14 +66,18 @@ interface MemberDetailsProps {
     errors: MemberFormErrors;
     processing: boolean;
     memberFields: RosterMemberField[];
+    /** Whether this team feeds a tournament bracket — see RosterService::isComplete(). */
+    isTournament: boolean;
 }
 
 /**
- * The details every tournament entry needs — photo, birth details, WhatsApp
- * number, the organiser's extra questions, identity document, and a medic's
- * certificate. Shared by the manager's portal dialog and a member's own
- * self-fill page, so what "complete" asks for is rendered once. Validation
- * lives on the server (RosterService); this only shows what comes back.
+ * The details a member carries — photo and WhatsApp number for any team,
+ * the organiser's extra questions, and (in a tournament) birth details,
+ * identity document and a medic's certificate for age-group eligibility
+ * and the bracket's ID cards. Shared by the manager's portal dialog and a
+ * member's own self-fill page, so what "complete" asks for is rendered
+ * once. Validation lives on the server (RosterService); this only shows
+ * what comes back.
  */
 export function MemberDetailsFields({
     data,
@@ -81,6 +85,7 @@ export function MemberDetailsFields({
     errors,
     processing,
     memberFields,
+    isTournament,
 }: MemberDetailsProps) {
     const { t } = useT();
     const isMedic = data.role === 'medic';
@@ -108,37 +113,41 @@ export function MemberDetailsFields({
                 />
                 {errors.photo && <FieldError>{errors.photo}</FieldError>}
             </Field>
-            <div className="grid grid-cols-2 gap-3">
-                <Field data-invalid={Boolean(errors.birthplace)}>
-                    <FieldLabel htmlFor="member_birthplace">
-                        {t('Place of birth')}
-                        <RequiredMark />
-                    </FieldLabel>
-                    <Input
-                        id="member_birthplace"
-                        value={data.birthplace}
-                        onChange={(e) => setData('birthplace', e.target.value)}
-                        disabled={processing}
-                    />
-                    {errors.birthplace && (
-                        <FieldError>{errors.birthplace}</FieldError>
-                    )}
-                </Field>
-                <Field data-invalid={Boolean(errors.dob)}>
-                    <FieldLabel htmlFor="member_dob">
-                        {t('Date of birth')}
-                        <RequiredMark />
-                    </FieldLabel>
-                    <Input
-                        id="member_dob"
-                        type="date"
-                        value={data.dob}
-                        onChange={(e) => setData('dob', e.target.value)}
-                        disabled={processing}
-                    />
-                    {errors.dob && <FieldError>{errors.dob}</FieldError>}
-                </Field>
-            </div>
+            {isTournament && (
+                <div className="grid grid-cols-2 gap-3">
+                    <Field data-invalid={Boolean(errors.birthplace)}>
+                        <FieldLabel htmlFor="member_birthplace">
+                            {t('Place of birth')}
+                            <RequiredMark />
+                        </FieldLabel>
+                        <Input
+                            id="member_birthplace"
+                            value={data.birthplace}
+                            onChange={(e) =>
+                                setData('birthplace', e.target.value)
+                            }
+                            disabled={processing}
+                        />
+                        {errors.birthplace && (
+                            <FieldError>{errors.birthplace}</FieldError>
+                        )}
+                    </Field>
+                    <Field data-invalid={Boolean(errors.dob)}>
+                        <FieldLabel htmlFor="member_dob">
+                            {t('Date of birth')}
+                            <RequiredMark />
+                        </FieldLabel>
+                        <Input
+                            id="member_dob"
+                            type="date"
+                            value={data.dob}
+                            onChange={(e) => setData('dob', e.target.value)}
+                            disabled={processing}
+                        />
+                        {errors.dob && <FieldError>{errors.dob}</FieldError>}
+                    </Field>
+                </div>
+            )}
 
             <div className="grid grid-cols-2 gap-3">
                 <Field data-invalid={Boolean(errors.phone_number)}>
@@ -262,28 +271,34 @@ export function MemberDetailsFields({
                 </div>
             )}
 
-            <Field data-invalid={Boolean(errors.identity_card)}>
-                <FieldLabel>
-                    {t('Identity document')}
-                    <RequiredMark />
-                </FieldLabel>
-                <FieldDescription>
-                    {t('A clear photo of the KTP, KK or birth certificate.')}
-                </FieldDescription>
-                <UploadImage
-                    ratio={16 / 10}
-                    value={data.identity_card}
-                    uploadUrl="/public-upload/image"
-                    deleteUrl="/public-upload/image"
-                    onChange={(value) => setData('identity_card', value ?? '')}
-                    disabled={processing}
-                    className="rounded-xl border"
-                    placeholder={t('Upload identity document')}
-                />
-                {errors.identity_card && (
-                    <FieldError>{errors.identity_card}</FieldError>
-                )}
-            </Field>
+            {isTournament && (
+                <Field data-invalid={Boolean(errors.identity_card)}>
+                    <FieldLabel>
+                        {t('Identity document')}
+                        <RequiredMark />
+                    </FieldLabel>
+                    <FieldDescription>
+                        {t(
+                            'A clear photo of the KTP, KK or birth certificate.',
+                        )}
+                    </FieldDescription>
+                    <UploadImage
+                        ratio={16 / 10}
+                        value={data.identity_card}
+                        uploadUrl="/public-upload/image"
+                        deleteUrl="/public-upload/image"
+                        onChange={(value) =>
+                            setData('identity_card', value ?? '')
+                        }
+                        disabled={processing}
+                        className="rounded-xl border"
+                        placeholder={t('Upload identity document')}
+                    />
+                    {errors.identity_card && (
+                        <FieldError>{errors.identity_card}</FieldError>
+                    )}
+                </Field>
+            )}
 
             {isMedic && (
                 <Field data-invalid={Boolean(errors.certificate)}>

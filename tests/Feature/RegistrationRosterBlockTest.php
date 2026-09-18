@@ -329,7 +329,7 @@ test('an organiser can put a roster block on a tournament category', function ()
         ->and($category->inputFields())->toHaveCount(0);
 });
 
-test('a roster block is refused on an individual category, a non-basketball event, and twice on one form', function () {
+test('a roster block is refused on an individual category, and twice on one form', function () {
     $event = Event::factory()->basketball()->create();
     $this->actingAs(organizerOf($event));
 
@@ -343,11 +343,17 @@ test('a roster block is refused on an individual category, a non-basketball even
         ]]],
     ]))->assertSessionHasErrors('form_pages');
 
-    $conference = Event::factory()->create(['organization_id' => $event->organization_id, 'category' => 'CONFERENCE']);
-    $this->post(route('registration_categories.store', $conference), categoryWithBlock(rosterBlockPayload(), ['tournament' => null]))
-        ->assertSessionHasErrors('form_pages');
-
     expect(RegistrationCategory::count())->toBe(0);
+});
+
+test('a roster block is allowed on a team category outside a basketball event', function () {
+    $conference = Event::factory()->create(['category' => 'CONFERENCE']);
+    $this->actingAs(organizerOf($conference));
+
+    $this->post(route('registration_categories.store', $conference), categoryWithBlock(rosterBlockPayload(), ['tournament' => null]))
+        ->assertRedirect()->assertSessionHasNoErrors();
+
+    expect(RegistrationCategory::sole()->rosterField())->not->toBeNull();
 });
 
 test('roster block slots and member fields are validated', function () {

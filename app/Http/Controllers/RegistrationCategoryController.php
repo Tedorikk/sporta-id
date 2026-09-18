@@ -258,11 +258,12 @@ class RegistrationCategoryController extends Controller
     }
 
     /**
-     * A roster block writes Player rows on a basketball team, so only a team
-     * category on a basketball event may carry one — and only one, since
-     * the members all land on the same team sheet.
+     * A roster block writes Player rows on a team, so only a team category
+     * may carry one — and only one, since the members all land on the same
+     * team sheet. It doesn't require a basketball tournament: a plain team
+     * category can use it to collect members without a bracket.
      */
-    private function validateRosterBlocks(Collection $fields, string $subjectType, Event $event): void
+    private function validateRosterBlocks(Collection $fields, string $subjectType): void
     {
         $rosterBlocks = $fields->where('type', RegistrationCategory::ROSTER_TYPE);
 
@@ -274,8 +275,8 @@ class RegistrationCategoryController extends Controller
             throw ValidationException::withMessages(['form_pages' => 'A form can only have one roster block.']);
         }
 
-        if ($subjectType !== RegistrationCategory::SUBJECT_TEAM || ! $this->isBasketballEvent($event)) {
-            throw ValidationException::withMessages(['form_pages' => 'A roster block needs a team category on a basketball event.']);
+        if ($subjectType !== RegistrationCategory::SUBJECT_TEAM) {
+            throw ValidationException::withMessages(['form_pages' => 'A roster block needs a team category.']);
         }
 
         $block = $rosterBlocks->first();
@@ -407,7 +408,7 @@ class RegistrationCategoryController extends Controller
             abort(422, 'Field keys must be unique within a form.');
         }
 
-        $this->validateRosterBlocks($fields, $validated['subject_type'], $event);
+        $this->validateRosterBlocks($fields, $validated['subject_type']);
 
         return $validated;
     }

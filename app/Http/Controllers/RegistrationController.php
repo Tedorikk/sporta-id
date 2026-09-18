@@ -276,7 +276,7 @@ class RegistrationController extends Controller
         $roster = app(RosterService::class);
 
         $validated = $request->validate(
-            $roster->submissionRules($rosterField),
+            $roster->submissionRules($rosterField, $registrationCategory->isTeamTournament()),
             $roster->messages(),
             $roster->attributes($rosterField['member_fields'] ?? []),
         );

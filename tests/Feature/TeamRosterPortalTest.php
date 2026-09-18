@@ -107,6 +107,34 @@ test('a team outside any tournament category still has a roster page, with no pl
             ->where('limits.max_players', null));
 });
 
+test('a team outside a tournament only needs a name, role, photo and phone number', function () {
+    $event = Event::factory()->basketball()->create();
+    $category = RegistrationCategory::factory()->team()->for($event)->create();
+    $team = Team::factory()->pending()->create(['event_id' => $event->id, 'basketball_event_category_id' => null]);
+    $registration = Registration::create([
+        'registration_category_id' => $category->id,
+        'event_id' => $event->id,
+        'team_id' => $team->id,
+        'name' => $team->name,
+        'status' => Registration::STATUS_CONFIRMED,
+    ]);
+
+    // No jersey number, identity document or birth details — none apply
+    // outside a tournament.
+    $this->post(route('team-roster.store', $registration), [
+        'name' => 'Ade Putra',
+        'role' => Player::ROLE_PLAYER,
+        'photo' => 'https://example.com/ade.jpg',
+        'phone_number' => '+6281234567890',
+    ])->assertRedirect()->assertSessionHasNoErrors();
+
+    $player = $team->players()->sole();
+
+    expect($player->name)->toBe('Ade Putra')
+        ->and($player->jersey_number)->toBeNull()
+        ->and($player->identity_card)->toBeNull();
+});
+
 test('a registration with no team has no roster page', function () {
     $event = Event::factory()->basketball()->create();
     $category = RegistrationCategory::factory()->team()->for($event)->create();
