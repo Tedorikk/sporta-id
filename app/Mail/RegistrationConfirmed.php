@@ -54,6 +54,9 @@ class RegistrationConfirmed extends Mailable implements ShouldQueue
                 // registered without their details — and by when.
                 'rosterIncomplete' => $tournamentTeam && ! app(RosterService::class)->summary($team)['complete'],
                 'rosterClosesAt' => $tournamentTeam ? $this->registration->registrationCategory->rosterClosesAt() : null,
+                // Whether the category uses the non-basketball "Organize
+                // Members" block instead of the roster block.
+                'teamMembersField' => $this->registration->registrationCategory->teamMembersField(),
             ],
         );
     }

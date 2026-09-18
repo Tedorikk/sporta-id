@@ -35,6 +35,16 @@
 </x-mail::button>
 @endif
 
+@if ($registration->team && ! $registration->team->basketball_event_category_id && $teamMembersField)
+## {{ __('Team members') }}
+
+{{ __('Add your team’s members. Each member gets their own ID card once added.') }}
+
+<x-mail::button :url="route('team-members.show', $registration)">
+{{ __('Manage your members') }}
+</x-mail::button>
+@endif
+
 @if ($registration->team)
 <x-mail::button :url="route('teams.id-card', $registration->team)">
 {{ __('Open your team ID card') }}

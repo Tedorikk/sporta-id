@@ -12,6 +12,7 @@ import { loadSnapScript } from '@/lib/midtrans';
 import type { Event } from '@/types/event';
 import type { Registration } from '@/types/registration';
 import type { RegistrationCategory } from '@/types/registration-category';
+import { isTeamMembersField } from '@/types/registration-category';
 
 interface Props {
     registration: Registration & {
@@ -58,6 +59,9 @@ export default function RegistrationStatus({ registration }: Props) {
     const copy = STATUS_COPY[registration.status] ?? STATUS_COPY.confirmed;
     const statusLabel = t(copy.label);
     const hasRoster = Boolean(registration.team);
+    const isTeamMembersCategory = (
+        registration.registration_category.form_pages ?? []
+    ).some((page) => page.fields.some(isTeamMembersField));
     const Icon =
         registration.status === 'confirmed'
             ? CheckCircle2
@@ -175,10 +179,12 @@ export default function RegistrationStatus({ registration }: Props) {
                                 className="w-full font-bold tracking-wide uppercase"
                             >
                                 <a
-                                    href={`/registrations/${registration.qr_token}/roster`}
+                                    href={`/registrations/${registration.qr_token}/${isTeamMembersCategory ? 'organize-member' : 'roster'}`}
                                 >
                                     <Users className="mr-2 h-4 w-4" />
-                                    {t('Manage roster')}
+                                    {isTeamMembersCategory
+                                        ? t('Manage members')
+                                        : t('Manage roster')}
                                 </a>
                             </Button>
                         )}

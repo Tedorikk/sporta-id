@@ -257,6 +257,10 @@ function RegistrationSuccessView({
     const [qrDataUrl, setQrDataUrl] = useState('');
     const team = registration.team ?? null;
     const showCard = registrationCategory.form_settings?.post_submit_display !== 'message';
+    const rosterField = rosterFieldOf(registrationCategory.form_pages ?? []);
+    const teamMembersField = teamMembersFieldOf(
+        registrationCategory.form_pages ?? [],
+    );
 
     const idCardUrl = team
         ? `${window.location.origin}/teams/${team.id}/id-card`
@@ -324,7 +328,7 @@ function RegistrationSuccessView({
                     />
                 )}
 
-                {team && (
+                {team && rosterField && (
                     <div className="flex w-full max-w-sm flex-col items-center gap-2 rounded-2xl border border-ink/15 bg-ink/5 p-4 text-center">
                         <p className="text-sm text-ink/80">
                             {t(
@@ -340,6 +344,27 @@ function RegistrationSuccessView({
                             >
                                 <Users className="mr-2 h-4 w-4" />
                                 {t('Add your roster')}
+                            </a>
+                        </Button>
+                    </div>
+                )}
+
+                {team && teamMembersField && (
+                    <div className="flex w-full max-w-sm flex-col items-center gap-2 rounded-2xl border border-ink/15 bg-ink/5 p-4 text-center">
+                        <p className="text-sm text-ink/80">
+                            {t(
+                                'Next, open the member list to add or edit members. Keep the link — it is how you get back to it.',
+                            )}
+                        </p>
+                        <Button
+                            asChild
+                            className="w-full bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
+                        >
+                            <a
+                                href={`/registrations/${registration.qr_token}/organize-member`}
+                            >
+                                <Users className="mr-2 h-4 w-4" />
+                                {t('Add your members')}
                             </a>
                         </Button>
                     </div>
