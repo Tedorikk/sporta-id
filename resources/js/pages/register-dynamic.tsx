@@ -33,6 +33,11 @@ import {
     rosterSchema,
 } from '@/components/public/roster-block';
 import { RosterRequirementsCard } from '@/components/public/roster-requirements-card';
+import {
+    TeamMembersBlock,
+    defaultTeamMembers,
+    teamMembersSchema,
+} from '@/components/public/team-members-block';
 import { SignaturePad } from '@/components/signature-pad';
 import { Button } from '@/components/ui/button';
 import {
@@ -79,6 +84,7 @@ import {
     imageRatioOf,
     isInputField,
     isRosterField,
+    isTeamMembersField,
 } from '@/types/registration-category';
 
 interface Props {
@@ -409,12 +415,24 @@ function rosterFieldOf(pages: FormPage[]): RegistrationField | undefined {
     return pages.flatMap((page) => page.fields).find(isRosterField);
 }
 
+function teamMembersFieldOf(pages: FormPage[]): RegistrationField | undefined {
+    return pages.flatMap((page) => page.fields).find(isTeamMembersField);
+}
+
 /** Which page a field key lives on, so a cross-page error can jump there first. */
 function pageIndexOf(pages: FormPage[], key: string): number {
     return pages.findIndex((page) =>
-        page.fields.some((f) =>
-            key === 'roster' ? isRosterField(f) : f.key === key,
-        ),
+        page.fields.some((f) => {
+            if (key === 'roster') {
+                return isRosterField(f);
+            }
+
+            if (key === 'members') {
+                return isTeamMembersField(f);
+            }
+
+            return f.key === key;
+        }),
     );
 }
 
@@ -445,6 +463,12 @@ function buildSchema(pages: FormPage[], t: Translate, isTournament: boolean) {
 
     if (roster) {
         shape.roster = rosterSchema(roster, t, isTournament);
+    }
+
+    const teamMembers = teamMembersFieldOf(pages);
+
+    if (teamMembers) {
+        shape.members = teamMembersSchema(teamMembers, t);
     }
 
     return z.object(shape).superRefine((data, ctx) => {
@@ -539,6 +563,12 @@ function defaultValuesFor(pages: FormPage[]) {
         defaults.roster = defaultRoster(roster);
     }
 
+    const teamMembers = teamMembersFieldOf(pages);
+
+    if (teamMembers) {
+        defaults.members = defaultTeamMembers(teamMembers);
+    }
+
     return defaults;
 }
 
@@ -594,6 +624,7 @@ export default function RegisterDynamic({
         mode: 'onChange',
     });
     const rosterField = rosterFieldOf(pages);
+    const teamMembersField = teamMembersFieldOf(pages);
 
     // --- Draft: what's typed so far lives in localStorage ------------------
     // Restored silently on mount (one less tap on a phone); the banner says
@@ -745,10 +776,15 @@ export default function RegisterDynamic({
             }
         });
 
-        // The roster block's members go up as their own array: the server
-        // turns them into the team sheet rather than storing them as answers.
+        // The roster/team-members block's members go up as their own array:
+        // the server turns them into the team sheet rather than storing them
+        // as answers.
         if (rosterField) {
             payload.roster = raw.roster;
+        }
+
+        if (teamMembersField) {
+            payload.members = raw.members;
         }
 
         router.post(
@@ -796,6 +832,10 @@ export default function RegisterDynamic({
 
         if (currentPage.fields.some(isRosterField)) {
             keys.push('roster');
+        }
+
+        if (currentPage.fields.some(isTeamMembersField)) {
+            keys.push('members');
         }
 
         const namesToCheck = (
@@ -1106,6 +1146,22 @@ export default function RegisterDynamic({
                                             setError={setError}
                                             disabled={isSaving}
                                             controlStyle={controlStyle}
+                                        />
+                                    ) : isTeamMembersField(f) ? (
+                                        <TeamMembersBlock
+                                            key={f.key}
+                                            field={f}
+                                            control={control}
+                                            errors={
+                                                (
+                                                    errors as Record<
+                                                        string,
+                                                        unknown
+                                                    >
+                                                ).members as never
+                                            }
+                                            setError={setError}
+                                            disabled={isSaving}
                                         />
                                     ) : !isInputField(f) ? (
                                         <DescriptionBlock

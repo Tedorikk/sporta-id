@@ -13,6 +13,7 @@ use App\Services\Midtrans\MidtransClient;
 use App\Services\RegistrationConfirmationNotifier;
 use App\Services\RegistrationFieldRules;
 use App\Services\Running\RaceEntryService;
+use App\Services\TeamMembers\TeamMemberService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -52,11 +53,11 @@ class RegistrationController extends Controller
         abort_unless($registrationCategory->event_id === $event->id, 404);
 
         $validated = $this->validated($request, $registrationCategory);
-        $roster = $this->validatedRoster($request, $registrationCategory);
+        $members = $this->validatedTeamEntries($request, $registrationCategory);
 
         $this->guardAgainstDuplicate($validated, $registrationCategory);
 
-        $registration = DB::transaction(function () use ($validated, $roster, $event, $registrationCategory) {
+        $registration = DB::transaction(function () use ($validated, $members, $event, $registrationCategory) {
             $category = RegistrationCategory::whereKey($registrationCategory->id)->lockForUpdate()->first();
 
             abort_unless($category->isOpen(), 403, __('Registration is closed for this category.'));
@@ -75,10 +76,10 @@ class RegistrationController extends Controller
                     'basketball_event_category_id' => $category->basketballCategory?->id,
                 ]);
 
-                // The roster block's officials and players go straight onto
+                // The roster/team-members block's entries go straight onto
                 // the team sheet, so the entry is complete at registration;
-                // the captain's portal takes over for edits after this.
-                foreach ($roster as $member) {
+                // the manager's portal takes over for edits after this.
+                foreach ($members as $member) {
                     $team->players()->create($member);
                 }
             }
@@ -263,6 +264,24 @@ class RegistrationController extends Controller
     }
 
     /**
+     * The category's roster or team-members block entries, validated against
+     * the block's slots and per-member questions. A category never carries
+     * both, so at most one of these returns anything.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function validatedTeamEntries(Request $request, RegistrationCategory $registrationCategory): array
+    {
+        $roster = $this->validatedRoster($request, $registrationCategory);
+
+        if ($roster !== []) {
+            return $roster;
+        }
+
+        return $this->validatedTeamMembers($request, $registrationCategory);
+    }
+
+    /**
      * The roster block's members, validated against the block's slots and
      * per-member questions; an empty array when the form has no block.
      *
@@ -287,6 +306,33 @@ class RegistrationController extends Controller
         $roster->assertSubmissionFits($validated['roster'], $rosterField);
 
         return $validated['roster'];
+    }
+
+    /**
+     * The team-members block's entries, validated against the block's slots
+     * and per-member questions; an empty array when the form has no block.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function validatedTeamMembers(Request $request, RegistrationCategory $registrationCategory): array
+    {
+        $block = $registrationCategory->teamMembersField();
+
+        if ($block === null) {
+            return [];
+        }
+
+        $service = app(TeamMemberService::class);
+
+        $validated = $request->validate(
+            $service->submissionRules($block),
+            $service->messages(),
+            $service->attributes($block['member_fields'] ?? []),
+        );
+
+        $service->assertSubmissionFits($validated['members'], $block);
+
+        return $validated['members'];
     }
 
     private function validated(Request $request, RegistrationCategory $registrationCategory): array

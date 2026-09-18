@@ -46,19 +46,31 @@ interface FieldPaletteProps {
     disabled?: boolean;
     /** Offer the roster block — a team category that doesn't have one yet. */
     allowRoster?: boolean;
+    /** Offer the team-members block — a team category that doesn't have one yet. */
+    allowTeamMembers?: boolean;
 }
 
 export function FieldPalette({
     onAdd,
     disabled,
     allowRoster = false,
+    allowTeamMembers = false,
 }: FieldPaletteProps) {
-    const palette = allowRoster
-        ? [
-              ...PALETTE,
-              { type: 'roster' as const, label: 'Team roster', icon: Users },
-          ]
-        : PALETTE;
+    const palette = [
+        ...PALETTE,
+        ...(allowRoster
+            ? [{ type: 'roster' as const, label: 'Team roster', icon: Users }]
+            : []),
+        ...(allowTeamMembers
+            ? [
+                  {
+                      type: 'team_members' as const,
+                      label: 'Organize Members',
+                      icon: Users,
+                  },
+              ]
+            : []),
+    ];
 
     return (
         <div className="space-y-1">

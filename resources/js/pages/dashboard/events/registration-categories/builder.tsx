@@ -203,14 +203,32 @@ export default function RegistrationCategoryBuilder({
 
         const newField: DraftField = {
             _uid: uid(),
-            key: type === 'roster' ? 'roster' : slugify(label, existingKeys),
-            label: type === 'roster' ? 'Official & Pemain' : label,
+            key:
+                type === 'roster'
+                    ? 'roster'
+                    : type === 'team_members'
+                      ? 'members'
+                      : slugify(label, existingKeys),
+            label:
+                type === 'roster'
+                    ? 'Official & Pemain'
+                    : type === 'team_members'
+                      ? 'Members'
+                      : label,
             type,
-            required: type === 'roster',
+            required: type === 'roster' || type === 'team_members',
             options: OPTION_FIELD_TYPES.includes(type)
                 ? ['Option 1', 'Option 2']
                 : undefined,
             max_rating: type === 'rating' ? 5 : undefined,
+            ...((type === 'team_members'
+                ? {
+                      slots: [
+                          { role: 'member', label: 'Member', min: 1, max: null },
+                      ],
+                      member_fields: [],
+                  }
+                : {}) as Partial<DraftField>),
             // A fresh roster block starts from the tournament's own player
             // limits plus the usual bench of officials.
             ...(type === 'roster'
@@ -487,7 +505,21 @@ export default function RegistrationCategoryBuilder({
                         allowRoster={
                             details.subject_type === 'team' &&
                             !pages.some((p) =>
-                                p.fields.some((f) => f.type === 'roster'),
+                                p.fields.some(
+                                    (f) =>
+                                        f.type === 'roster' ||
+                                        f.type === 'team_members',
+                                ),
+                            )
+                        }
+                        allowTeamMembers={
+                            details.subject_type === 'team' &&
+                            !pages.some((p) =>
+                                p.fields.some(
+                                    (f) =>
+                                        f.type === 'roster' ||
+                                        f.type === 'team_members',
+                                ),
                             )
                         }
                     />

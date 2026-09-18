@@ -9,6 +9,7 @@ use App\Models\Payment;
 use App\Models\Player;
 use App\Models\RegistrationCategory;
 use App\Models\RunningEvent;
+use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -292,6 +293,51 @@ class RegistrationCategoryController extends Controller
         }
     }
 
+    /**
+     * The team-members block: a team category's generic, non-basketball
+     * equivalent of the roster block. Its slot roles are whatever the
+     * organiser typed (validated only for shape by the general rules, not
+     * against Player::ROLES) rather than basketball's fixed set.
+     */
+    private function validateTeamMembersBlocks(Collection $fields, string $subjectType): void
+    {
+        $blocks = $fields->where('type', RegistrationCategory::TEAM_MEMBERS_TYPE);
+
+        if ($blocks->isEmpty()) {
+            return;
+        }
+
+        if ($blocks->count() > 1) {
+            throw ValidationException::withMessages(['form_pages' => 'A form can only have one team-members block.']);
+        }
+
+        if ($subjectType !== RegistrationCategory::SUBJECT_TEAM) {
+            throw ValidationException::withMessages(['form_pages' => 'A team-members block needs a team category.']);
+        }
+
+        if ($fields->where('type', RegistrationCategory::ROSTER_TYPE)->isNotEmpty()) {
+            throw ValidationException::withMessages(['form_pages' => 'A form can\'t have both a roster block and a team-members block.']);
+        }
+
+        $block = $blocks->first();
+
+        if (empty($block['slots'])) {
+            throw ValidationException::withMessages(['form_pages' => 'The team-members block needs at least one role (e.g. 4–10 members).']);
+        }
+
+        $roleKeys = collect($block['slots'])->pluck('role');
+
+        if ($roleKeys->count() !== $roleKeys->unique()->count()) {
+            throw ValidationException::withMessages(['form_pages' => 'Team-members roles must be unique.']);
+        }
+
+        $memberKeys = collect($block['member_fields'] ?? [])->pluck('key');
+
+        if ($memberKeys->count() !== $memberKeys->unique()->count()) {
+            throw ValidationException::withMessages(['form_pages' => 'Team-members field keys must be unique.']);
+        }
+    }
+
     private function validated(Request $request, Event $event): array
     {
         $runningEventId = $event->specific instanceof RunningEvent ? $event->specific->id : null;
@@ -344,7 +390,7 @@ class RegistrationCategoryController extends Controller
             'form_pages.*.fields.*.type' => ['required', Rule::in([
                 'text', 'number', 'email', 'phone', 'date', 'select', 'radio', 'checkbox',
                 'textarea', 'rating', 'signature', 'file', 'document', 'description',
-                RegistrationCategory::ROSTER_TYPE,
+                RegistrationCategory::ROSTER_TYPE, RegistrationCategory::TEAM_MEMBERS_TYPE,
             ])],
             'form_pages.*.fields.*.required' => ['nullable', 'boolean'],
             'form_pages.*.fields.*.options' => ['nullable', 'array'],
@@ -359,8 +405,21 @@ class RegistrationCategoryController extends Controller
             // Roster block: which roles, how many of each, and the extra
             // questions asked per member (their answers land in players.extra).
             'form_pages.*.fields.*.details_on_form' => ['nullable', 'boolean'],
+            // The role slug: for a roster block, one of Player::ROLES; for a
+            // team-members block, whatever the organiser typed (checked for
+            // uniqueness in validateTeamMembersBlocks instead).
             'form_pages.*.fields.*.slots' => ['nullable', 'array'],
-            'form_pages.*.fields.*.slots.*.role' => ['required', Rule::in(Player::ROLES)],
+            'form_pages.*.fields.*.slots.*.role' => [
+                'required', 'string', 'max:50', 'regex:/^[a-z0-9_]+$/',
+                function (string $attribute, mixed $value, Closure $fail) use ($request) {
+                    preg_match('/^(form_pages\.\d+\.fields\.\d+)\./', $attribute, $matches);
+                    $fieldType = $request->input($matches[1].'.type');
+
+                    if ($fieldType === RegistrationCategory::ROSTER_TYPE && ! in_array($value, Player::ROLES, true)) {
+                        $fail('The selected :attribute is invalid.');
+                    }
+                },
+            ],
             'form_pages.*.fields.*.slots.*.label' => ['nullable', 'string', 'max:100'],
             'form_pages.*.fields.*.slots.*.min' => ['required', 'integer', 'min:0'],
             'form_pages.*.fields.*.slots.*.max' => ['nullable', 'integer', 'gte:form_pages.*.fields.*.slots.*.min'],
@@ -409,6 +468,7 @@ class RegistrationCategoryController extends Controller
         }
 
         $this->validateRosterBlocks($fields, $validated['subject_type']);
+        $this->validateTeamMembersBlocks($fields, $validated['subject_type']);
 
         return $validated;
     }

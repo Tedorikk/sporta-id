@@ -18,6 +18,7 @@ export type RegistrationFieldType =
     | 'document'
     | 'description'
     | 'roster'
+    | 'team_members'
     | 'gender';
 
 /** Mirrors RegistrationCategory::GENDER_KEY/DOB_KEY — the keys a race entry's start-list wiring reads out of form_data. */
@@ -84,6 +85,60 @@ export function memberFieldAppliesTo(
     return (
         !field.roles || field.roles.length === 0 || field.roles.includes(role)
     );
+}
+
+/**
+ * The non-basketball "Organize Members" block's equivalent of RosterSlot —
+ * the role is whatever the organiser typed, not Player::ROLES.
+ */
+export interface TeamMemberSlot {
+    role: string;
+    label: string;
+    min: number;
+    max: number | null;
+}
+
+/** TeamMembersBlock's per-member extra question; same shape as RosterMemberField but roles are free text. */
+export interface TeamMemberField {
+    key: string;
+    label: string;
+    type: RosterMemberFieldType;
+    required: boolean;
+    options?: string[];
+    roles?: string[];
+}
+
+export function teamMemberFieldAppliesTo(
+    field: Pick<TeamMemberField, 'roles'>,
+    role: string,
+): boolean {
+    return (
+        !field.roles || field.roles.length === 0 || field.roles.includes(role)
+    );
+}
+
+/** What the public form submits per team member; mirrors TeamMemberService::memberRules(). */
+export interface TeamMemberInput {
+    role: string;
+    name: string;
+    photo: string;
+    phone_number: string;
+    email: string;
+    extra: Record<string, string>;
+}
+
+export function emptyTeamMember(
+    role: string,
+    memberFields: TeamMemberField[] = [],
+): TeamMemberInput {
+    return {
+        role,
+        name: '',
+        photo: '',
+        phone_number: '',
+        email: '',
+        extra: Object.fromEntries(memberFields.map((f) => [f.key, ''])),
+    };
 }
 
 export interface RegistrationField {
@@ -299,6 +354,7 @@ export const REGISTRATION_FIELD_TYPES: {
     { value: 'document', label: 'Document upload (PDF, Word)' },
     { value: 'description', label: 'Description' },
     { value: 'roster', label: 'Team roster' },
+    { value: 'team_members', label: 'Organize Members' },
     { value: 'gender', label: 'Gender' },
 ];
 
@@ -322,12 +378,19 @@ export const DISPLAY_ONLY_FIELD_TYPES: RegistrationFieldType[] = [
 export function isInputField(field: Pick<RegistrationField, 'type'>): boolean {
     return (
         !DISPLAY_ONLY_FIELD_TYPES.includes(field.type) &&
-        field.type !== 'roster'
+        field.type !== 'roster' &&
+        field.type !== 'team_members'
     );
 }
 
 export function isRosterField(field: Pick<RegistrationField, 'type'>): boolean {
     return field.type === 'roster';
+}
+
+export function isTeamMembersField(
+    field: Pick<RegistrationField, 'type'>,
+): boolean {
+    return field.type === 'team_members';
 }
 
 /** Mirrors RegistrationController::RESERVED_KEYS — these already have dedicated fixed bindings. */

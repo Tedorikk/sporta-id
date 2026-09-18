@@ -46,9 +46,12 @@ import {
 import type {
     ImageRatio,
     RegistrationField,
+    TeamMemberField,
+    TeamMemberSlot,
 } from '@/types/registration-category';
 import { OptionEditor } from './option-editor';
 import { RosterBlockEditor } from './roster-block-editor';
+import { TeamMembersBlockEditor } from './team-members-block-editor';
 
 export interface DraftField extends RegistrationField {
     _uid: string;
@@ -157,12 +160,18 @@ function SortableFieldRow({
     const isReserved = RESERVED_FIELD_KEYS.includes(field.key);
     // A description block has no answer, so key / required / error message
     // are meaningless for it — the editor collapses to heading + body text.
-    const isDisplayOnly = !isInputField(field) && field.type !== 'roster';
     const isRoster = field.type === 'roster';
-    // A roster block can't be turned into a plain field (its slots would be
-    // lost) and a plain field can't become one — it is added from the palette.
+    const isTeamMembers = field.type === 'team_members';
+    const isDisplayOnly = !isInputField(field) && !isRoster && !isTeamMembers;
+    // A roster/team-members block can't be turned into a plain field (its
+    // slots would be lost) and a plain field can't become one — it is added
+    // from the palette.
     const typeChoices = REGISTRATION_FIELD_TYPES.filter((t) =>
-        isRoster ? t.value === 'roster' : t.value !== 'roster',
+        isRoster
+            ? t.value === 'roster'
+            : isTeamMembers
+              ? t.value === 'team_members'
+              : t.value !== 'roster' && t.value !== 'team_members',
     );
     const typeLabel =
         REGISTRATION_FIELD_TYPES.find((t) => t.value === field.type)?.label ??
@@ -287,7 +296,7 @@ function SortableFieldRow({
                             <FieldLabel>Type</FieldLabel>
                             <Select
                                 value={field.type}
-                                disabled={isRoster}
+                                disabled={isRoster || isTeamMembers}
                                 onValueChange={(value) => {
                                     const type = value as DraftField['type'];
 
@@ -347,6 +356,18 @@ function SortableFieldRow({
                             detailsOnForm={rosterDetailsOnForm(field)}
                             playerLimits={playerLimits}
                             onChange={(patch) => onChange(patch)}
+                        />
+                    )}
+
+                    {isTeamMembers && (
+                        <TeamMembersBlockEditor
+                            slots={(field.slots ?? []) as TeamMemberSlot[]}
+                            memberFields={
+                                (field.member_fields ?? []) as TeamMemberField[]
+                            }
+                            onChange={(patch) =>
+                                onChange(patch as Partial<DraftField>)
+                            }
                         />
                     )}
 

@@ -49,6 +49,7 @@ use App\Http\Controllers\RunningEventController;
 use App\Http\Controllers\SpeakerController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamQrController;
+use App\Http\Controllers\TeamMembersController;
 use App\Http\Controllers\TeamRosterController;
 use App\Http\Controllers\VerificationCodeController;
 use App\Http\Controllers\VoteController;
@@ -123,6 +124,15 @@ Route::middleware('public.locale')->group(function () {
     Route::get('roster-members/{token}', [RosterMemberSelfController::class, 'show'])->name('roster-member.show');
     Route::put('roster-members/{token}', [RosterMemberSelfController::class, 'update'])
         ->middleware('throttle:30,1')->name('roster-member.update');
+
+    // --- Organize members portal (non-basketball team categories) --------------
+    Route::get('registrations/{registration:qr_token}/organize-member', [TeamMembersController::class, 'show'])->name('team-members.show');
+    Route::post('registrations/{registration:qr_token}/organize-member/players', [TeamMembersController::class, 'store'])
+        ->middleware('throttle:60,1')->name('team-members.store');
+    Route::put('registrations/{registration:qr_token}/organize-member/players/{player}', [TeamMembersController::class, 'update'])
+        ->middleware('throttle:60,1')->name('team-members.update');
+    Route::delete('registrations/{registration:qr_token}/organize-member/players/{player}', [TeamMembersController::class, 'destroy'])
+        ->middleware('throttle:60,1')->name('team-members.destroy');
 
     // --- Public award voting (shareable, no auth required) --------------------
     // Identified voters arrive with ?token=<qr_token> from their own ID card.

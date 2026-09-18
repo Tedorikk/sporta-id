@@ -194,6 +194,14 @@ class RegistrationCategory extends Model
      */
     public const ROSTER_TYPE = 'roster';
 
+    /**
+     * The team-members block: a non-basketball team category's equivalent of
+     * the roster block. Same shape (slots + member_fields), but the slot's
+     * role is whatever the organiser types — not Player::ROLES — and no
+     * jersey/identity/birth fields are ever asked.
+     */
+    public const TEAM_MEMBERS_TYPE = 'team_members';
+
     /** Answer types an organiser may ask per roster member, beyond the fixed identity fields. */
     public const ROSTER_MEMBER_FIELD_TYPES = ['text', 'number', 'date', 'select', 'phone'];
 
@@ -236,9 +244,22 @@ class RegistrationCategory extends Model
     public function inputFields(): array
     {
         return collect($this->allFields())
-            ->reject(fn (array $field) => in_array($field['type'] ?? null, [...self::DISPLAY_ONLY_TYPES, self::ROSTER_TYPE], true))
+            ->reject(fn (array $field) => in_array($field['type'] ?? null, [...self::DISPLAY_ONLY_TYPES, self::ROSTER_TYPE, self::TEAM_MEMBERS_TYPE], true))
             ->values()
             ->all();
+    }
+
+    /** The form's team-members block, if the organiser placed one. */
+    public function teamMembersField(): ?array
+    {
+        return collect($this->allFields())
+            ->first(fn (array $field) => ($field['type'] ?? null) === self::TEAM_MEMBERS_TYPE);
+    }
+
+    /** The organiser-defined per-member questions from the team-members block. */
+    public function teamMembersMemberFields(): array
+    {
+        return $this->teamMembersField()['member_fields'] ?? [];
     }
 
     /**
