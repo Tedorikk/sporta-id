@@ -2,6 +2,7 @@ import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import { CheckCircle2, Clock, Loader2, Users, XCircle } from 'lucide-react';
 import { useState } from 'react';
+import { ManualPaymentPanel } from '@/components/public/manual-payment-panel';
 import { PayLinkShare } from '@/components/public/pay-link-share';
 import { PublicPageHeader } from '@/components/public/public-page-header';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import { useT } from '@/hooks/use-t';
 import { formatRupiah } from '@/lib/format-currency';
 import { loadSnapScript } from '@/lib/midtrans';
 import type { Event } from '@/types/event';
+import type { Payment } from '@/types/payment';
 import type { Registration } from '@/types/registration';
 import type { RegistrationCategory } from '@/types/registration-category';
 import { isTeamMembersField } from '@/types/registration-category';
@@ -19,6 +21,7 @@ interface Props {
         event: Event;
         registration_category: RegistrationCategory;
     };
+    payment: Payment | null;
 }
 
 const STATUS_COPY: Record<string, { label: string; description: string }> = {
@@ -50,11 +53,14 @@ interface PayResponse {
     midtrans_is_production: boolean;
 }
 
-export default function RegistrationStatus({ registration }: Props) {
+export default function RegistrationStatus({ registration, payment }: Props) {
     useForceLightMode();
 
     const { t } = useT();
     const [isPaying, setIsPaying] = useState(false);
+    const isManualPayment =
+        registration.registration_category.payment_method ===
+        'manual_transfer';
 
     const copy = STATUS_COPY[registration.status] ?? STATUS_COPY.confirmed;
     const statusLabel = t(copy.label);
@@ -130,48 +136,71 @@ export default function RegistrationStatus({ registration }: Props) {
                             {registration.name}
                         </p>
 
-                        {registration.status === 'pending_payment' && (
-                            <>
-                                <p className="text-2xl font-bold text-neutral-900">
-                                    {formatRupiah(
-                                        registration.registration_category
-                                            .price,
-                                    )}
-                                </p>
-                                <Button
-                                    type="button"
-                                    onClick={payNow}
-                                    disabled={isPaying}
-                                    className="w-full font-bold tracking-wide uppercase"
-                                >
-                                    {isPaying ? (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    ) : null}
-                                    {isPaying
-                                        ? t('Opening payment…')
-                                        : t('Pay Now')}
-                                </Button>
-                                <PayLinkShare
+                        {registration.status === 'pending_payment' &&
+                            isManualPayment && (
+                                <ManualPaymentPanel
                                     qrToken={registration.qr_token}
-                                    expiresAt={registration.expires_at}
-                                    message={t(
-                                        'Please pay the registration fee of :price for :name (:category — :event) here:',
-                                        {
-                                            price: formatRupiah(
-                                                registration
-                                                    .registration_category
-                                                    .price,
-                                            ),
-                                            name: registration.name,
-                                            category:
-                                                registration
-                                                    .registration_category.name,
-                                            event: registration.event.name,
-                                        },
-                                    )}
+                                    amount={
+                                        registration.registration_category
+                                            .price
+                                    }
+                                    instructions={
+                                        registration.registration_category
+                                            .form_settings
+                                            ?.manual_payment_instructions
+                                    }
+                                    payment={payment}
+                                    onSubmitted={() =>
+                                        window.location.reload()
+                                    }
                                 />
-                            </>
-                        )}
+                            )}
+
+                        {registration.status === 'pending_payment' &&
+                            !isManualPayment && (
+                                <>
+                                    <p className="text-2xl font-bold text-neutral-900">
+                                        {formatRupiah(
+                                            registration.registration_category
+                                                .price,
+                                        )}
+                                    </p>
+                                    <Button
+                                        type="button"
+                                        onClick={payNow}
+                                        disabled={isPaying}
+                                        className="w-full font-bold tracking-wide uppercase"
+                                    >
+                                        {isPaying ? (
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        ) : null}
+                                        {isPaying
+                                            ? t('Opening payment…')
+                                            : t('Pay Now')}
+                                    </Button>
+                                    <PayLinkShare
+                                        qrToken={registration.qr_token}
+                                        expiresAt={registration.expires_at}
+                                        message={t(
+                                            'Please pay the registration fee of :price for :name (:category — :event) here:',
+                                            {
+                                                price: formatRupiah(
+                                                    registration
+                                                        .registration_category
+                                                        .price,
+                                                ),
+                                                name: registration.name,
+                                                category:
+                                                    registration
+                                                        .registration_category
+                                                        .name,
+                                                event: registration.event
+                                                    .name,
+                                            },
+                                        )}
+                                    />
+                                </>
+                            )}
 
                         {hasRoster && registration.status === 'confirmed' && (
                             <Button

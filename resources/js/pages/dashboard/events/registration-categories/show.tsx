@@ -6,6 +6,7 @@ import {
     Printer,
     RefreshCw,
     Search,
+    ShieldCheck,
     Trash2,
     Undo2,
     Users,
@@ -147,6 +148,8 @@ export default function RegistrationCategoryShow({
     const [recoding, setRecoding] = useState<Registration | null>(null);
     const [isRecoding, setIsRecoding] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [reviewing, setReviewing] = useState<Registration | null>(null);
+    const [isReviewing, setIsReviewing] = useState(false);
 
     const isPaidCategory =
         Boolean(registrationCategory.price) &&
@@ -188,6 +191,26 @@ export default function RegistrationCategoryShow({
                 onFinish: () => {
                     setIsRecoding(false);
                     setRecoding(null);
+                },
+            },
+        );
+    };
+
+    const submitPaymentDecision = (decision: 'verify' | 'reject') => {
+        if (!reviewing) {
+            return;
+        }
+
+        setIsReviewing(true);
+
+        router.post(
+            `/dashboard/events/${event.id}/registrations/${reviewing.id}/${decision === 'verify' ? 'verify-payment' : 'reject-payment'}`,
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    setIsReviewing(false);
+                    setReviewing(null);
                 },
             },
         );
@@ -596,6 +619,23 @@ export default function RegistrationCategoryShow({
                                                 </Button>
                                             )}
                                         {registration.payment?.status ===
+                                            'pending' &&
+                                            registration.payment
+                                                ?.proof_path && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    title="Review payment proof"
+                                                    onClick={() =>
+                                                        setReviewing(
+                                                            registration,
+                                                        )
+                                                    }
+                                                >
+                                                    <ShieldCheck className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                        {registration.payment?.status ===
                                             'settlement' && (
                                             <Button
                                                 variant="ghost"
@@ -759,6 +799,57 @@ export default function RegistrationCategoryShow({
                         </Button>
                         <Button onClick={submitRefund} disabled={isRefunding}>
                             {isRefunding ? 'Recording…' : 'Record refund'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={reviewing !== null}
+                onOpenChange={(open) => !open && setReviewing(null)}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Review payment proof</DialogTitle>
+                        <DialogDescription>
+                            <strong>{reviewing?.name}</strong> uploaded this
+                            as proof of a manual transfer for{' '}
+                            {formatRupiah(
+                                reviewing?.payment?.amount ?? null,
+                            )}
+                            .
+                            Verifying confirms the registration; rejecting
+                            marks it rejected and releases the slot.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {reviewing?.payment?.proof_path && (
+                        <a
+                            href={reviewing.payment.proof_path}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            <img
+                                src={reviewing.payment.proof_path}
+                                alt="Payment proof"
+                                className="max-h-96 w-full rounded-lg border object-contain"
+                            />
+                        </a>
+                    )}
+
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => submitPaymentDecision('reject')}
+                            disabled={isReviewing}
+                        >
+                            {isReviewing ? 'Working…' : 'Reject'}
+                        </Button>
+                        <Button
+                            onClick={() => submitPaymentDecision('verify')}
+                            disabled={isReviewing}
+                        >
+                            {isReviewing ? 'Working…' : 'Verify & confirm'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

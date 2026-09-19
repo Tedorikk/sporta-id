@@ -24,6 +24,7 @@ import type { Event } from '@/types/event';
 import type {
     FormBranding,
     FormSettings,
+    PaymentMethod,
     RegistrationSubjectType,
 } from '@/types/registration-category';
 import {
@@ -39,6 +40,7 @@ interface DetailsValue {
     name: string;
     subject_type: RegistrationSubjectType;
     price: string;
+    payment_method: PaymentMethod;
     quota: string;
     registration_open: boolean;
     running_event_category_id: string;
@@ -510,6 +512,64 @@ export function SettingsPanel({
                             />
                         </Field>
                     </div>
+
+                    {Number(details.price) > 0 && (
+                        <Field>
+                            <FieldLabel>Payment method</FieldLabel>
+                            <Select
+                                value={details.payment_method}
+                                onValueChange={(value) =>
+                                    onDetailsChange({
+                                        payment_method: value as PaymentMethod,
+                                    })
+                                }
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="midtrans">
+                                        Midtrans (card, e-wallet, etc.)
+                                    </SelectItem>
+                                    <SelectItem value="manual_transfer">
+                                        Manual transfer — registrant uploads
+                                        proof
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                            {details.payment_method === 'manual_transfer' && (
+                                <FieldDescription>
+                                    No Midtrans transaction is created.
+                                    Registrants see your instructions below,
+                                    upload a transfer screenshot, and you
+                                    verify it from the registrations list.
+                                </FieldDescription>
+                            )}
+                        </Field>
+                    )}
+
+                    {Number(details.price) > 0 &&
+                        details.payment_method === 'manual_transfer' && (
+                            <Field>
+                                <FieldLabel>
+                                    Payment instructions
+                                </FieldLabel>
+                                <Textarea
+                                    value={
+                                        settings.manual_payment_instructions ??
+                                        ''
+                                    }
+                                    onChange={(e) =>
+                                        onSettingsChange({
+                                            manual_payment_instructions:
+                                                e.target.value,
+                                        })
+                                    }
+                                    placeholder="e.g. Transfer to BCA 1234567890 (a/n Sporta Indonesia), then upload your receipt below."
+                                    className="min-h-20"
+                                />
+                            </Field>
+                        )}
 
                     {runningCategories && details.subject_type === 'individual' && (
                         <Field>

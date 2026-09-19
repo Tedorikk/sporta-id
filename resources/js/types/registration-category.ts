@@ -2,6 +2,9 @@ import type { PlayerRole } from './player';
 
 export type RegistrationSubjectType = 'team' | 'individual';
 
+/** Mirrors RegistrationCategory::PAYMENT_METHODS. */
+export type PaymentMethod = 'midtrans' | 'manual_transfer';
+
 export type RegistrationFieldType =
     | 'text'
     | 'number'
@@ -251,6 +254,8 @@ export interface FormSettings {
     post_submit_display?: 'id_card' | 'message' | null;
     /** Overrides the built-in name field's label (default "Full Name" / "Team Name"). */
     name_field_label?: string | null;
+    /** Bank details / instructions shown on the manual-transfer payment screen. */
+    manual_payment_instructions?: string | null;
 }
 
 export type TournamentFormat = 'round_robin' | 'pool_stage';
@@ -279,6 +284,7 @@ export interface RegistrationCategory {
     slug: string;
     subject_type: RegistrationSubjectType;
     price: string | null;
+    payment_method: PaymentMethod;
     quota: number | null;
     registered_count: number;
     registration_open: boolean;

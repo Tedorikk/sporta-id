@@ -23,6 +23,7 @@ use App\Http\Controllers\IdCardPrintController;
 use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\InvitationAcceptanceController;
 use App\Http\Controllers\LandingController;
+use App\Http\Controllers\ManualPaymentVerificationController;
 use App\Http\Controllers\MeetingAttendanceController;
 use App\Http\Controllers\MeetingCheckInController;
 use App\Http\Controllers\MeetingController;
@@ -48,8 +49,8 @@ use App\Http\Controllers\RunningEventCategoryController;
 use App\Http\Controllers\RunningEventController;
 use App\Http\Controllers\SpeakerController;
 use App\Http\Controllers\TeamController;
-use App\Http\Controllers\TeamQrController;
 use App\Http\Controllers\TeamMembersController;
+use App\Http\Controllers\TeamQrController;
 use App\Http\Controllers\TeamRosterController;
 use App\Http\Controllers\VerificationCodeController;
 use App\Http\Controllers\VoteController;
@@ -100,6 +101,8 @@ Route::middleware('public.locale')->group(function () {
     Route::get('registrations/{registration:qr_token}/status', [RegistrationController::class, 'status'])->name('registrations.status');
     Route::post('registrations/{registration:qr_token}/pay', [RegistrationController::class, 'pay'])
         ->middleware('throttle:20,1')->name('registrations.pay');
+    Route::post('registrations/{registration:qr_token}/proof', [RegistrationController::class, 'uploadProof'])
+        ->middleware('throttle:20,1')->name('registrations.proof');
 
     // --- Public group registration (several individuals, one payment) ----------
     Route::get('events/{event}/group-registration', [GroupRegistrationController::class, 'create'])->name('group_registration.create');
@@ -236,6 +239,10 @@ Route::middleware(['auth', 'verified', 'organization.current'])->group(function 
 
             Route::post('registrations/{registration}/refund', [RegistrationRefundController::class, 'store'])
                 ->name('registrations.refund');
+            Route::post('registrations/{registration}/verify-payment', [ManualPaymentVerificationController::class, 'approve'])
+                ->name('registrations.verify-payment');
+            Route::post('registrations/{registration}/reject-payment', [ManualPaymentVerificationController::class, 'reject'])
+                ->name('registrations.reject-payment');
             Route::patch('registrations/{registration}/verification-code', [VerificationCodeController::class, 'registration'])
                 ->name('registrations.verification-code');
             Route::delete('registrations/{registration}', [RegistrationController::class, 'destroy'])

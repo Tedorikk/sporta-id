@@ -17,4 +17,7 @@ export interface Payment {
     payment_type: string | null;
     snap_token: string | null;
     paid_at: string | null;
+    /** Set once a registrant uploads a manual-transfer screenshot; null for a Midtrans payment. */
+    proof_path: string | null;
+    verified_at: string | null;
 }

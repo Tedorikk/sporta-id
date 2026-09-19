@@ -48,6 +48,36 @@ class PaymentReconciler
     }
 
     /**
+     * The manual-transfer equivalent of reconcile(): an organizer looked at
+     * the uploaded proof and decided settlement or denial themselves, so
+     * there's no Midtrans transaction to resolve a status from — the caller
+     * already knows it. Same locking and side-effect guarantees as reconcile().
+     */
+    public function applyManualDecision(Payment $payment, string $paymentStatus, ?int $verifiedBy): void
+    {
+        $settled = DB::transaction(function () use ($payment, $paymentStatus, $verifiedBy) {
+            $payment = Payment::whereKey($payment->id)->lockForUpdate()->first();
+
+            $payment->update([
+                'status' => $paymentStatus,
+                'verified_by' => $verifiedBy,
+                'verified_at' => now(),
+                'paid_at' => $paymentStatus === Payment::STATUS_SETTLEMENT ? now() : $payment->paid_at,
+            ]);
+
+            $payable = $this->lockPayable($payment);
+
+            if ($payable === null) {
+                return null;
+            }
+
+            return $payable->applyPaymentStatus($payment, $paymentStatus) ? $payable : null;
+        });
+
+        $settled?->handlePaymentSettled();
+    }
+
+    /**
      * Loads the paid-for record with its row locked, so two notifications for
      * the same order can't both decide they were the one that settled it.
      */

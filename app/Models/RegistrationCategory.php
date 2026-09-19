@@ -23,9 +23,18 @@ class RegistrationCategory extends Model
         self::SUBJECT_INDIVIDUAL,
     ];
 
+    public const PAYMENT_METHOD_MIDTRANS = 'midtrans';
+
+    public const PAYMENT_METHOD_MANUAL_TRANSFER = 'manual_transfer';
+
+    public const PAYMENT_METHODS = [
+        self::PAYMENT_METHOD_MIDTRANS,
+        self::PAYMENT_METHOD_MANUAL_TRANSFER,
+    ];
+
     protected $fillable = [
         'event_id', 'running_event_category_id', 'name', 'slug', 'subject_type', 'price', 'quota',
-        'registered_count', 'registration_open', 'opens_at', 'closes_at',
+        'registered_count', 'registration_open', 'opens_at', 'closes_at', 'payment_method',
         'form_pages', 'form_branding', 'form_settings', 'status',
     ];
 
@@ -47,6 +56,7 @@ class RegistrationCategory extends Model
         'registered_count' => 0,
         'registration_open' => true,
         'status' => 'active',
+        'payment_method' => self::PAYMENT_METHOD_MIDTRANS,
     ];
 
     protected static function boot()
@@ -105,6 +115,12 @@ class RegistrationCategory extends Model
     public function isFree(): bool
     {
         return $this->price === null || (float) $this->price === 0.0;
+    }
+
+    /** A paid category that collects a bank-transfer screenshot instead of going through Midtrans. */
+    public function usesManualPayment(): bool
+    {
+        return $this->payment_method === self::PAYMENT_METHOD_MANUAL_TRANSFER;
     }
 
     public function isOpen(): bool

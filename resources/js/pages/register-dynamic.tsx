@@ -24,6 +24,7 @@ import {
     linkifyText,
     RatingInput,
 } from '@/components/public/dynamic-field-controls';
+import { ManualPaymentPanel } from '@/components/public/manual-payment-panel';
 import { PayLinkShare } from '@/components/public/pay-link-share';
 import { PublicPageHeader } from '@/components/public/public-page-header';
 import { RequiredMark } from '@/components/public/required-mark';
@@ -222,6 +223,77 @@ function PaymentPendingView({
                                     event: event.name,
                                 },
                             )}
+                        />
+                    </div>
+                </div>
+
+                <a
+                    href={`/registrations/${registration.qr_token}/status`}
+                    className="text-sm font-medium text-ink/70 underline-offset-2 hover:text-ink hover:underline"
+                >
+                    {t('Check registration status')}
+                </a>
+            </div>
+        </>
+    );
+}
+
+function ManualPaymentPendingView({
+    event,
+    registrationCategory,
+    registration,
+    accentStyle,
+}: {
+    event: Event;
+    registrationCategory: Props['registrationCategory'];
+    registration: Registration;
+    accentStyle: CSSProperties;
+}) {
+    const { t } = useT();
+
+    return (
+        <>
+            <Head
+                title={t('Complete Payment — :event', { event: event.name })}
+            />
+
+            <div
+                className="relative flex min-h-screen flex-col items-center justify-center gap-6 bg-paper px-4 py-10"
+                style={accentStyle}
+            >
+                <div className="flex items-center gap-2 text-amber-400">
+                    <Clock className="h-5 w-5" />
+                    <span className="text-sm font-semibold tracking-wide uppercase">
+                        {t('Awaiting payment')}
+                    </span>
+                </div>
+
+                <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-ink/10 bg-paper">
+                    <PublicPageHeader
+                        eyebrow={t('Registration')}
+                        title={event.name}
+                        subtitle={registrationCategory.name}
+                        logoUrl={event.logo}
+                        accentColor={event.accent_color}
+                    />
+
+                    <div className="flex flex-col items-center gap-4 px-6 py-10 text-center">
+                        <p className="text-sm font-medium text-neutral-500">
+                            {registration.name}
+                        </p>
+
+                        <ManualPaymentPanel
+                            qrToken={registration.qr_token}
+                            amount={registrationCategory.price}
+                            instructions={
+                                registrationCategory.form_settings
+                                    ?.manual_payment_instructions
+                            }
+                            onSubmitted={() =>
+                                router.visit(
+                                    `/registrations/${registration.qr_token}/status`,
+                                )
+                            }
                         />
                     </div>
                 </div>
@@ -884,7 +956,14 @@ export default function RegisterDynamic({
     }
 
     if (confirmedRegistration?.status === 'pending_payment') {
-        return (
+        return registrationCategory.payment_method === 'manual_transfer' ? (
+            <ManualPaymentPendingView
+                event={event}
+                registrationCategory={registrationCategory}
+                registration={confirmedRegistration}
+                accentStyle={accentStyle}
+            />
+        ) : (
             <PaymentPendingView
                 event={event}
                 registrationCategory={registrationCategory}
@@ -1007,14 +1086,24 @@ export default function RegisterDynamic({
                         </div>
                         {!isFreeCategory && (
                             <p className="mt-2 text-xs text-neutral-500">
-                                {t(
-                                    'After you submit this form your slot is reserved and you’ll be taken to the Midtrans payment page to pay :price. The registration is confirmed once payment settles.',
-                                    {
-                                        price: formatRupiah(
-                                            registrationCategory.price,
-                                        ),
-                                    },
-                                )}
+                                {registrationCategory.payment_method ===
+                                'manual_transfer'
+                                    ? t(
+                                          'After you submit this form your slot is reserved and you’ll be asked to upload proof of a :price transfer. The registration is confirmed once an organizer verifies it.',
+                                          {
+                                              price: formatRupiah(
+                                                  registrationCategory.price,
+                                              ),
+                                          },
+                                      )
+                                    : t(
+                                          'After you submit this form your slot is reserved and you’ll be taken to the Midtrans payment page to pay :price. The registration is confirmed once payment settles.',
+                                          {
+                                              price: formatRupiah(
+                                                  registrationCategory.price,
+                                              ),
+                                          },
+                                      )}
                             </p>
                         )}
                     </div>

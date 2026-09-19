@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Payment extends Model
@@ -37,12 +38,14 @@ class Payment extends Model
     protected $fillable = [
         'payable_type', 'payable_id', 'order_id', 'amount', 'status', 'midtrans_transaction_id',
         'payment_type', 'snap_token', 'raw_notification', 'paid_at',
+        'proof_path', 'verified_by', 'verified_at',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
         'raw_notification' => 'array',
         'paid_at' => 'datetime',
+        'verified_at' => 'datetime',
     ];
 
     protected $attributes = [
@@ -57,5 +60,11 @@ class Payment extends Model
     public function payable(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    /** Who approved or rejected a manual-transfer payment, if any. */
+    public function verifier(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'verified_by');
     }
 }

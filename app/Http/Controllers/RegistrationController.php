@@ -122,14 +122,20 @@ class RegistrationController extends Controller
         $snapToken = null;
 
         if ($registration->status === Registration::STATUS_PENDING_PAYMENT) {
-            // The registration itself (and its quota slot) is already committed at
-            // this point — if Midtrans is unreachable or misconfigured, don't turn
-            // that into a 500. The registrant lands on the pending-payment view
-            // with no token yet; "Pay Now" there (or on the status page) retries.
-            try {
-                $snapToken = $this->createPayment($registration, $registrationCategory)->snap_token;
-            } catch (\Throwable $e) {
-                report($e);
+            if ($registrationCategory->usesManualPayment()) {
+                // No gateway to call — the registrant uploads a transfer proof
+                // (uploadProof()) and an organizer verifies it by hand.
+                $this->createManualPayment($registration, $registrationCategory);
+            } else {
+                // The registration itself (and its quota slot) is already committed at
+                // this point — if Midtrans is unreachable or misconfigured, don't turn
+                // that into a 500. The registrant lands on the pending-payment view
+                // with no token yet; "Pay Now" there (or on the status page) retries.
+                try {
+                    $snapToken = $this->createPayment($registration, $registrationCategory)->snap_token;
+                } catch (\Throwable $e) {
+                    report($e);
+                }
             }
         }
 
@@ -215,6 +221,7 @@ class RegistrationController extends Controller
     public function pay(Registration $registration)
     {
         abort_unless($registration->status === Registration::STATUS_PENDING_PAYMENT, 403, __('This registration is not awaiting payment.'));
+        abort_if($registration->registrationCategory->usesManualPayment(), 404);
 
         $payment = $this->createPayment($registration, $registration->registrationCategory);
 
@@ -231,7 +238,38 @@ class RegistrationController extends Controller
 
         return Inertia::render('registration-status', [
             'registration' => $registration,
+            'payment' => $registration->latestPayment(),
         ]);
+    }
+
+    /**
+     * Attaches a registrant's uploaded transfer screenshot to their pending
+     * manual payment. This never changes the payment's status — it stays
+     * `pending` until an organizer approves or rejects it (ManualPaymentVerificationController) —
+     * so it can safely be called again if the registrant replaces the file
+     * before it's been reviewed.
+     */
+    public function uploadProof(Request $request, Registration $registration)
+    {
+        abort_unless($registration->status === Registration::STATUS_PENDING_PAYMENT, 403, __('This registration is not awaiting payment.'));
+
+        $registration->loadMissing('registrationCategory');
+        abort_unless($registration->registrationCategory->usesManualPayment(), 404);
+
+        $validated = $request->validate([
+            'proof_path' => ['required', 'string', 'max:2048'],
+        ]);
+
+        $payment = $registration->payments()->whereNull('verified_at')->latest('id')->first();
+
+        abort_if($payment === null, 422, __('No pending payment found for this registration.'));
+
+        $payment->update(['proof_path' => $validated['proof_path']]);
+
+        return back()->with(['toast' => [
+            'title' => 'Success',
+            'description' => __('Payment proof submitted — we’ll confirm your registration once it’s reviewed.'),
+        ]]);
     }
 
     /**
@@ -261,6 +299,14 @@ class RegistrationController extends Controller
         $payment->save();
 
         return $payment;
+    }
+
+    private function createManualPayment(Registration $registration, RegistrationCategory $registrationCategory): Payment
+    {
+        return $registration->payments()->create([
+            'order_id' => 'REG-'.$registration->id.'-'.Str::random(6),
+            'amount' => $registrationCategory->price,
+        ]);
     }
 
     /**

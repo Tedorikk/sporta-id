@@ -125,6 +125,7 @@ export default function RegistrationCategoryBuilder({
                 ? 'individual'
                 : 'team')) as RegistrationSubjectType,
         price: registrationCategory?.price ?? '',
+        payment_method: registrationCategory?.payment_method ?? 'midtrans',
         quota:
             registrationCategory?.quota != null
                 ? String(registrationCategory.quota)
@@ -332,6 +333,7 @@ export default function RegistrationCategoryBuilder({
             name: details.name,
             subject_type: details.subject_type,
             price: details.price || null,
+            payment_method: details.payment_method,
             quota: details.quota || null,
             registration_open: details.registration_open,
             running_event_category_id:

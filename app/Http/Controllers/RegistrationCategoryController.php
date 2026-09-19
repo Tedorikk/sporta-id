@@ -347,6 +347,7 @@ class RegistrationCategoryController extends Controller
             'subject_type' => ['required', Rule::in(RegistrationCategory::SUBJECT_TYPES)],
             'price' => ['nullable', 'numeric', 'min:0'],
             'quota' => ['nullable', 'integer', 'min:1'],
+            'payment_method' => ['nullable', Rule::in(RegistrationCategory::PAYMENT_METHODS)],
             'registration_open' => ['nullable', 'boolean'],
             'opens_at' => ['nullable', 'date'],
             'closes_at' => ['nullable', 'date', 'after_or_equal:opens_at'],
@@ -451,6 +452,9 @@ class RegistrationCategoryController extends Controller
             'form_settings.name_field_label' => ['nullable', 'string', 'max:100'],
             'form_settings.notify_emails' => ['nullable', 'array'],
             'form_settings.notify_emails.*' => ['email', 'max:255'],
+            // Bank details / instructions shown on the manual-transfer payment
+            // screen; meaningless (and left alone) for a Midtrans category.
+            'form_settings.manual_payment_instructions' => ['nullable', 'string', 'max:5000'],
         ], [
             'tournament.prohibited' => 'This event does not run a basketball tournament.',
             'form_pages.*.fields.*.key.regex' => 'Field key may only contain lowercase letters, numbers and underscores.',
