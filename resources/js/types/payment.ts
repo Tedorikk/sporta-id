@@ -19,5 +19,6 @@ export interface Payment {
     paid_at: string | null;
     /** Set once a registrant uploads a manual-transfer screenshot; null for a Midtrans payment. */
     proof_path: string | null;
+    payer_account_name: string | null;
     verified_at: string | null;
 }

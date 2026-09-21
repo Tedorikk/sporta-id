@@ -823,6 +823,17 @@ export default function RegistrationCategoryShow({
                         </DialogDescription>
                     </DialogHeader>
 
+                    {reviewing?.payment?.payer_account_name && (
+                        <div>
+                            <p className="text-sm text-muted-foreground">
+                                Nama Rekening yang Melakukan Pembayaran
+                            </p>
+                            <p className="font-medium">
+                                {reviewing.payment.payer_account_name}
+                            </p>
+                        </div>
+                    )}
+
                     {reviewing?.payment?.proof_path && (
                         <a
                             href={reviewing.payment.proof_path}

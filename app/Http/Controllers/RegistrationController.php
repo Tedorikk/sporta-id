@@ -258,13 +258,14 @@ class RegistrationController extends Controller
 
         $validated = $request->validate([
             'proof_path' => ['required', 'string', 'max:2048'],
+            'payer_account_name' => ['required', 'string', 'max:255'],
         ]);
 
         $payment = $registration->payments()->whereNull('verified_at')->latest('id')->first();
 
         abort_if($payment === null, 422, __('No pending payment found for this registration.'));
 
-        $payment->update(['proof_path' => $validated['proof_path']]);
+        $payment->update($validated);
 
         return back()->with(['toast' => [
             'title' => 'Success',

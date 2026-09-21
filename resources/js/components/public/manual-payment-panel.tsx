@@ -2,9 +2,12 @@ import axios from 'axios';
 import { Clock, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { UploadImage } from '@/components/upload-image';
 import { useT } from '@/hooks/use-t';
 import { formatRupiah } from '@/lib/format-currency';
+import { proof } from '@/routes/registrations';
 import type { Payment } from '@/types/payment';
 
 interface Props {
@@ -32,6 +35,7 @@ export function ManualPaymentPanel({
 }: Props) {
     const { t } = useT();
     const [proofUrl, setProofUrl] = useState<string>(payment?.proof_path ?? '');
+    const [accountName, setAccountName] = useState(payment?.payer_account_name ?? '');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -52,7 +56,7 @@ export function ManualPaymentPanel({
     }
 
     const submit = () => {
-        if (!proofUrl) {
+        if (!proofUrl || !accountName.trim()) {
             return;
         }
 
@@ -60,7 +64,10 @@ export function ManualPaymentPanel({
         setError(null);
 
         axios
-            .post(`/registrations/${qrToken}/proof`, { proof_path: proofUrl })
+            .post(proof.url(qrToken), {
+                proof_path: proofUrl,
+                payer_account_name: accountName.trim(),
+            })
             .then(() => onSubmitted?.())
             .catch(() => setError(t('Couldn’t submit — please try again.')))
             .finally(() => setIsSubmitting(false));
@@ -77,6 +84,21 @@ export function ManualPaymentPanel({
                     {instructions}
                 </p>
             )}
+
+            <div className="w-full space-y-2 text-left">
+                <Label htmlFor="payer-account-name">
+                    Nama Rekening yang Melakukan Pembayaran
+                </Label>
+                <Input
+                    id="payer-account-name"
+                    name="payer_account_name"
+                    value={accountName}
+                    onChange={(event) => setAccountName(event.target.value)}
+                    maxLength={255}
+                    required
+                    disabled={isSubmitting}
+                />
+            </div>
 
             <div className="w-full max-w-48">
                 <UploadImage
@@ -95,7 +117,7 @@ export function ManualPaymentPanel({
             <Button
                 type="button"
                 onClick={submit}
-                disabled={!proofUrl || isSubmitting}
+                disabled={!proofUrl || !accountName.trim() || isSubmitting}
                 className="w-full cursor-pointer bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
             >
                 {isSubmitting ? (

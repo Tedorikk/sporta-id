@@ -38,7 +38,7 @@ class Payment extends Model
     protected $fillable = [
         'payable_type', 'payable_id', 'order_id', 'amount', 'status', 'midtrans_transaction_id',
         'payment_type', 'snap_token', 'raw_notification', 'paid_at',
-        'proof_path', 'verified_by', 'verified_at',
+        'proof_path', 'payer_account_name', 'verified_by', 'verified_at',
     ];
 
     protected $casts = [
