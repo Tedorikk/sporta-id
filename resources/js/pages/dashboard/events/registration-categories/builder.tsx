@@ -366,8 +366,12 @@ export default function RegistrationCategoryBuilder({
             preserveScroll: true,
             onStart: () => setIsSaving(true),
             onFinish: () => setIsSaving(false),
-            onError: () =>
-                toast.error("Couldn't save — check the form for errors."),
+            onError: (errors: Record<string, string>) => {
+                toast.error("Couldn't save category", {
+                    description: Object.values(errors).join(' '),
+                    duration: 10000,
+                });
+            },
         };
 
         if (isEditing && registrationCategory) {

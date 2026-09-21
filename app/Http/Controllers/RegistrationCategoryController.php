@@ -390,7 +390,7 @@ class RegistrationCategoryController extends Controller
             'form_pages.*.fields.*.label' => ['required', 'string', 'max:255'],
             'form_pages.*.fields.*.type' => ['required', Rule::in([
                 'text', 'number', 'email', 'phone', 'date', 'select', 'radio', 'checkbox',
-                'textarea', 'rating', 'signature', 'file', 'document', 'description',
+                'textarea', 'rating', 'signature', 'file', 'document', 'description', 'gender',
                 RegistrationCategory::ROSTER_TYPE, RegistrationCategory::TEAM_MEMBERS_TYPE,
             ])],
             'form_pages.*.fields.*.required' => ['nullable', 'boolean'],

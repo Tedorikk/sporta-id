@@ -365,3 +365,31 @@ test('a distance link is rejected on a non-running event', function () {
         ]))
         ->assertInvalid('running_event_category_id');
 });
+
+test('organizers can create and update race forms with gender fields', function (string $paymentMethod) {
+    $event = Event::factory()->running()->create();
+    $this->actingAs(organizerOf($event));
+    $payload = categoryPayload([
+        'name' => '5K Tanpa Jersey',
+        'subject_type' => 'individual',
+        'price' => '99000',
+        'quota' => null,
+        'payment_method' => $paymentMethod,
+        'form_pages' => RunningEventCategory::defaultFormPages(),
+    ]);
+
+    $this->post(route('registration_categories.store', $event), $payload)
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('registration_categories.index', $event));
+
+    $category = RegistrationCategory::sole();
+    expect(collect($category->allFields())->firstWhere('key', 'gender')['type'])->toBe('gender');
+
+    $payload['name'] = '5K Updated';
+    $this->put(route('registration_categories.update', [$event, $category]), $payload)
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('registration_categories.index', $event));
+
+    expect($category->fresh()->name)->toBe('5K Updated')
+        ->and(collect($category->fresh()->allFields())->firstWhere('key', 'gender')['type'])->toBe('gender');
+})->with(['midtrans', 'manual_transfer']);
