@@ -9,13 +9,21 @@ use Illuminate\Support\Facades\Hash;
 
 class AdminAccountSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
+        $name = config('admin.name');
+        $email = config('admin.email');
+        $password = config('admin.password');
+
+        if (blank($name) || blank($email) || blank($password)) {
+            return;
+        }
+
         $user = User::updateOrCreate(
-            ['email' => config('admin.email')],
+            ['email' => $email],
             [
-                'name' => config('admin.name'),
-                'password' => Hash::make(config('admin.password')),
+                'name' => $name,
+                'password' => Hash::make($password),
             ]
         );
 

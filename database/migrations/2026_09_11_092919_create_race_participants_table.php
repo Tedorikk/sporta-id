@@ -30,7 +30,10 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(['running_event_category_id', 'bib_number']);
-            $table->unique(['running_event_category_id', 'registration_id']);
+            $table->unique(
+                ['running_event_category_id', 'registration_id'],
+                'race_participants_category_registration_unique',
+            );
         });
     }
 
