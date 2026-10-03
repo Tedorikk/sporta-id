@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Services\Midtrans\Payable;
+use App\Services\Payments\Payable;
 use App\Services\RegistrationConfirmationNotifier;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
 /**
- * One buyer, several {@see Registration} rows, one Midtrans payment for the
+ * One buyer, several {@see Registration} rows, one payment for the
  * summed total — how a group of runners checks out together.
  *
  * The order itself carries no form data or price; it only carries status and
@@ -118,33 +118,71 @@ class RegistrationOrder extends Model implements Payable
         }
     }
 
+    // --- Provider-neutral Payable methods ---
+
     /**
-     * One Midtrans line per participant, so the Snap page shows the buyer
+     * One line per participant, so the checkout page shows the buyer
      * what they're paying for rather than a bare total.
-     *
-     * @return array<int, array<string, mixed>>
      */
-    public function midtransItemDetails(Payment $payment): array
+    public function getPaymentItems(Payment $payment): array
     {
         $this->loadMissing('registrations.registrationCategory');
 
         return $this->registrations->map(fn (Registration $registration) => [
-            'id' => (string) $registration->registration_category_id,
+            'reference_id' => (string) $registration->registration_category_id,
             'name' => Str::limit(trim($registration->name.' — '.$registration->registrationCategory?->name), 50, ''),
-            'price' => (int) $registration->registrationCategory?->price,
             'quantity' => 1,
+            'unit_amount' => (int) $registration->registrationCategory?->price,
         ])->all();
     }
 
-    /** The first participant stands in as the buyer — Midtrans needs one contact, not a name per runner. */
-    public function midtransCustomerDetails(): array
+    /** The first participant stands in as the buyer — payment needs one contact, not a name per runner. */
+    public function getPaymentCustomer(): array
     {
         $first = $this->registrations->first();
 
         return [
-            'first_name' => $first?->name,
             'email' => $first?->email,
-            'phone' => $first?->phone,
+            'mobile_number' => $first?->phone,
+            'given_names' => $first?->name,
+        ];
+    }
+
+    public function getPaymentAmount(): int
+    {
+        $this->loadMissing('registrations.registrationCategory');
+        
+        return (int) $this->registrations->sum(fn($r) => $r->registrationCategory?->price ?? 0);
+    }
+
+    public function getPaymentDescription(): string
+    {
+        $count = $this->registrations->count();
+        return "Group Registration ({$count} participant".($count > 1 ? 's' : '').")";
+    }
+
+    // --- Legacy Midtrans methods (deprecated, kept for compatibility) ---
+
+    public function midtransItemDetails(Payment $payment): array
+    {
+        $items = $this->getPaymentItems($payment);
+        
+        return array_map(fn($item) => [
+            'id' => $item['reference_id'],
+            'name' => $item['name'],
+            'price' => $item['unit_amount'],
+            'quantity' => $item['quantity'],
+        ], $items);
+    }
+
+    public function midtransCustomerDetails(): array
+    {
+        $customer = $this->getPaymentCustomer();
+        
+        return [
+            'first_name' => $customer['given_names'],
+            'email' => $customer['email'],
+            'phone' => $customer['mobile_number'] ?? null,
         ];
     }
 }

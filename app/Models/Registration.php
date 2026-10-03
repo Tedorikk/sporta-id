@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Concerns\HasVerificationCode;
-use App\Services\Midtrans\Payable;
+use App\Services\Payments\Payable;
 use App\Services\RegistrationConfirmationNotifier;
 use App\Services\Running\RaceEntryService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -221,28 +221,69 @@ class Registration extends Model implements Payable
         app(RegistrationConfirmationNotifier::class)->notify($this);
     }
 
-    public function midtransItemDetails(Payment $payment): array
+    // --- Provider-neutral Payable methods ---
+
+    public function getPaymentItems(Payment $payment): array
     {
         $this->loadMissing(['event', 'registrationCategory']);
 
         return [[
-            'id' => (string) $this->registration_category_id,
+            'reference_id' => (string) $this->registration_category_id,
             'name' => Str::limit(
                 trim(($this->event?->name ? $this->event->name.' — ' : '').$this->registrationCategory?->name),
                 50,
                 ''
             ),
-            'price' => (int) $payment->amount,
             'quantity' => 1,
+            'unit_amount' => (int) $payment->amount,
         ]];
+    }
+
+    public function getPaymentCustomer(): array
+    {
+        return [
+            'email' => $this->email,
+            'mobile_number' => $this->phone,
+            'given_names' => $this->name,
+        ];
+    }
+
+    public function getPaymentAmount(): int
+    {
+        return (int) $this->registrationCategory->price;
+    }
+
+    public function getPaymentDescription(): string
+    {
+        $this->loadMissing(['event', 'registrationCategory']);
+        
+        return trim(($this->event?->name ?? 'Event').' — '.($this->registrationCategory?->name ?? 'Registration'));
+    }
+
+    // --- Legacy Midtrans methods (deprecated, kept for compatibility) ---
+
+    public function midtransItemDetails(Payment $payment): array
+    {
+        $items = $this->getPaymentItems($payment);
+        
+        // Convert to Midtrans format
+        return array_map(fn($item) => [
+            'id' => $item['reference_id'],
+            'name' => $item['name'],
+            'price' => $item['unit_amount'],
+            'quantity' => $item['quantity'],
+        ], $items);
     }
 
     public function midtransCustomerDetails(): array
     {
+        $customer = $this->getPaymentCustomer();
+        
+        // Convert to Midtrans format
         return [
-            'first_name' => $this->name,
-            'email' => $this->email,
-            'phone' => $this->phone,
+            'first_name' => $customer['given_names'],
+            'email' => $customer['email'],
+            'phone' => $customer['mobile_number'] ?? null,
         ];
     }
 }

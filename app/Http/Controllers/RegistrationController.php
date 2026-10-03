@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\PaymentResource;
 use App\Models\CardTemplate;
 use App\Models\Event;
 use App\Models\Payment;
@@ -9,7 +10,7 @@ use App\Models\Registration;
 use App\Models\RegistrationCategory;
 use App\Models\Team;
 use App\Services\Basketball\RosterService;
-use App\Services\Midtrans\MidtransClient;
+use App\Services\Payments\PaymentCheckoutService;
 use App\Services\RegistrationConfirmationNotifier;
 use App\Services\RegistrationFieldRules;
 use App\Services\Running\RaceEntryService;
@@ -25,7 +26,7 @@ class RegistrationController extends Controller
     private const RESERVED_KEYS = ['name', 'email', 'phone', 'photo'];
 
     public function __construct(
-        private readonly MidtransClient $midtrans,
+        private readonly PaymentCheckoutService $checkoutService,
         private readonly RegistrationConfirmationNotifier $notifier,
         private readonly RegistrationFieldRules $fieldRuleBuilder,
         private readonly RaceEntryService $raceEntries,
@@ -119,7 +120,7 @@ class RegistrationController extends Controller
             $this->notifier->notify($registration);
         }
 
-        $snapToken = null;
+        $checkoutResult = null;
 
         if ($registration->status === Registration::STATUS_PENDING_PAYMENT) {
             if ($registrationCategory->usesManualPayment()) {
@@ -128,11 +129,11 @@ class RegistrationController extends Controller
                 $this->createManualPayment($registration, $registrationCategory);
             } else {
                 // The registration itself (and its quota slot) is already committed at
-                // this point — if Midtrans is unreachable or misconfigured, don't turn
+                // this point — if the gateway is unreachable or misconfigured, don't turn
                 // that into a 500. The registrant lands on the pending-payment view
-                // with no token yet; "Pay Now" there (or on the status page) retries.
+                // with no checkout yet; "Pay Now" there (or on the status page) retries.
                 try {
-                    $snapToken = $this->createPayment($registration, $registrationCategory)->snap_token;
+                    $checkoutResult = $this->createCheckout($registration);
                 } catch (\Throwable $e) {
                     report($e);
                 }
@@ -148,9 +149,7 @@ class RegistrationController extends Controller
                 && $registrationCategory->subject_type === RegistrationCategory::SUBJECT_INDIVIDUAL
                 ? CardTemplate::resolveFor($event, CardTemplate::SUBJECT_REGISTRATION, registrationCategoryId: $registrationCategory->id)
                 : null,
-            'snapToken' => $snapToken,
-            'midtransClientKey' => config('services.midtrans.client_key'),
-            'midtransIsProduction' => (bool) config('services.midtrans.is_production'),
+            'checkoutResult' => $checkoutResult,
         ]);
     }
 
@@ -214,21 +213,26 @@ class RegistrationController extends Controller
     }
 
     /**
-     * Issues a fresh Snap token for a still-pending registration — used when
-     * the organizer's "Pay Now" retry is clicked from the status page,
-     * e.g. after the first token has expired or the popup was closed.
+     * Issues a fresh checkout for a still-pending registration — used when
+     * the organizer's "Pay Now" retry is clicked from the status page.
      */
     public function pay(Registration $registration)
     {
         abort_unless($registration->status === Registration::STATUS_PENDING_PAYMENT, 403, __('This registration is not awaiting payment.'));
         abort_if($registration->registrationCategory->usesManualPayment(), 404);
 
-        $payment = $this->createPayment($registration, $registration->registrationCategory);
+        $result = $this->createCheckout($registration);
+
+        if (!$result->success) {
+            return response()->json([
+                'error' => $result->error,
+                'can_retry' => $result->canRetry,
+            ], $result->canRetry ? 503 : 400);
+        }
 
         return response()->json([
-            'snap_token' => $payment->snap_token,
-            'midtrans_client_key' => config('services.midtrans.client_key'),
-            'midtrans_is_production' => (bool) config('services.midtrans.is_production'),
+            'checkout_url' => $result->checkoutUrl,
+            'expires_at' => $result->expiresAt->toISOString(),
         ]);
     }
 
@@ -238,7 +242,9 @@ class RegistrationController extends Controller
 
         return Inertia::render('registration-status', [
             'registration' => $registration,
-            'payment' => $registration->latestPayment(),
+            'payment' => $registration->latestPayment() 
+                ? PaymentResource::make($registration->latestPayment())
+                : null,
         ]);
     }
 
@@ -287,19 +293,16 @@ class RegistrationController extends Controller
         ];
     }
 
-    private function createPayment(Registration $registration, RegistrationCategory $registrationCategory): Payment
+    private function createCheckout(Registration $registration): \App\Services\Payments\CheckoutResult
     {
-        $payment = $registration->payments()->create([
-            'order_id' => 'REG-'.$registration->id.'-'.Str::random(6),
-            'amount' => $registrationCategory->price,
-        ]);
+        $successUrl = route('registrations.status', $registration);
+        $failureUrl = route('registrations.status', $registration);
 
-        $payment->setRelation('payable', $registration);
-
-        $payment->snap_token = $this->midtrans->createSnapTransaction($payment);
-        $payment->save();
-
-        return $payment;
+        return $this->checkoutService->getOrCreateCheckout(
+            $registration,
+            $successUrl,
+            $failureUrl
+        );
     }
 
     private function createManualPayment(Registration $registration, RegistrationCategory $registrationCategory): Payment
@@ -307,6 +310,8 @@ class RegistrationController extends Controller
         return $registration->payments()->create([
             'order_id' => 'REG-'.$registration->id.'-'.Str::random(6),
             'amount' => $registrationCategory->price,
+            'provider' => Payment::PROVIDER_MANUAL,
+            'currency' => 'IDR',
         ]);
     }
 

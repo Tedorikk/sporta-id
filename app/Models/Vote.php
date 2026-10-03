@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Services\Midtrans\Payable;
+use App\Services\Payments\Payable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,7 +14,7 @@ use Illuminate\Support\Str;
 /**
  * One ballot cast for a nominee. A free vote is counted the moment it is cast;
  * a paid one carries a quantity, starts pending, and is only counted once
- * Midtrans settles it — so an abandoned checkout never shows up in a tally.
+ * payment settles it — so an abandoned checkout never shows up in a tally.
  */
 class Vote extends Model implements Payable
 {
@@ -138,31 +138,70 @@ class Vote extends Model implements Payable
     public function handlePaymentSettled(): void
     {
         // Nothing to do — a counted vote needs no confirmation mail. The voter
-        // is redirected to the vote's own status page by Snap.
+        // is redirected to the vote's own status page by the payment flow.
     }
 
-    public function midtransItemDetails(Payment $payment): array
+    // --- Provider-neutral Payable methods ---
+
+    public function getPaymentItems(Payment $payment): array
     {
         $this->loadMissing(['award', 'awardNominee']);
 
         return [[
-            'id' => (string) $this->award_nominee_id,
+            'reference_id' => (string) $this->award_nominee_id,
             'name' => Str::limit(
                 trim(($this->award?->title ? $this->award->title.' — ' : '').$this->awardNominee?->name),
                 50,
                 ''
             ),
-            'price' => (int) ($this->award?->price_per_vote ?? 0),
             'quantity' => $this->quantity,
+            'unit_amount' => (int) ($this->award?->price_per_vote ?? 0),
         ]];
+    }
+
+    public function getPaymentCustomer(): array
+    {
+        return [
+            'email' => $this->voter_email,
+            'mobile_number' => $this->voter_phone,
+            'given_names' => $this->voter_name,
+        ];
+    }
+
+    public function getPaymentAmount(): int
+    {
+        return (int) (($this->award?->price_per_vote ?? 0) * $this->quantity);
+    }
+
+    public function getPaymentDescription(): string
+    {
+        $this->loadMissing(['award', 'awardNominee']);
+        
+        return trim(($this->award?->title ?? 'Award').' — '.($this->awardNominee?->name ?? 'Nominee').' (×'.$this->quantity.')');
+    }
+
+    // --- Legacy Midtrans methods (deprecated, kept for compatibility) ---
+
+    public function midtransItemDetails(Payment $payment): array
+    {
+        $items = $this->getPaymentItems($payment);
+        
+        return array_map(fn($item) => [
+            'id' => $item['reference_id'],
+            'name' => $item['name'],
+            'price' => $item['unit_amount'],
+            'quantity' => $item['quantity'],
+        ], $items);
     }
 
     public function midtransCustomerDetails(): array
     {
+        $customer = $this->getPaymentCustomer();
+        
         return [
-            'first_name' => $this->voter_name,
-            'email' => $this->voter_email,
-            'phone' => $this->voter_phone,
+            'first_name' => $customer['given_names'],
+            'email' => $customer['email'],
+            'phone' => $customer['mobile_number'] ?? null,
         ];
     }
 }
