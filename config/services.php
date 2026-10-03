@@ -41,4 +41,16 @@ return [
         'is_production' => env('MIDTRANS_IS_PRODUCTION', false),
     ],
 
+    'xendit' => [
+        'secret_key' => env('XENDIT_SECRET_KEY'),
+        'webhook_token' => env('XENDIT_WEBHOOK_TOKEN'),
+        'business_id' => env('XENDIT_BUSINESS_ID'),
+        'mode' => env('XENDIT_MODE', 'test'), // 'test' or 'live'
+        'api_base_url' => env('XENDIT_API_BASE_URL', 'https://api.xendit.co'),
+        'currency' => env('XENDIT_CURRENCY', 'IDR'),
+        'country' => env('XENDIT_COUNTRY', 'ID'),
+        'connect_timeout_seconds' => (int) env('XENDIT_CONNECT_TIMEOUT_SECONDS', 5),
+        'timeout_seconds' => (int) env('XENDIT_TIMEOUT_SECONDS', 15),
+    ],
+
 ];
