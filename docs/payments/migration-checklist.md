@@ -411,7 +411,7 @@
   - [x] Use `PaymentCheckoutService` for new payments
   - [x] Return provider-aware checkout payload
   - [x] Use `PaymentResource` on the status page
-  - [ ] Handle deletion with active remote checkout safely
+  - [x] Handle deletion with active remote checkout safely
 - [x] Update `app/Http/Controllers/GroupRegistrationController.php`
   - [x] Use checkout service
   - [x] Immutable group total
@@ -471,7 +471,7 @@
   - [ ] Idempotency
 - [x] Update existing feature tests for the dual-provider controller flow
 - [ ] Browser test coverage for checkout UX
-- [ ] Add focused coverage for deletion safety with active remote checkout attempts
+- [x] Add focused coverage for deletion safety with active remote checkout attempts
 - [ ] Add/finish Sprint 3 dedicated lifecycle tests (`XenditWebhookTest`, `PaymentReconciliationTest`, `PaymentEffectRecoveryTest`)
 
 ### Deployment Checklist (Sprint 4)
@@ -485,6 +485,8 @@
 - [ ] Ready for cutover
 
 **Verified locally on 2026-10-03:** 106 focused payment/checkout/Xendit/legacy/manual/status/controller tests (455 assertions), TypeScript type-check, targeted ESLint/Prettier, Pint, `git diff --check`, and production Vite build. The full Pest suite exceeded the 5-minute harness limit and is not recorded as passing.
+
+**Verified locally on 2026-10-04:** Registration deletion-safety and checkout regression suites: 35 tests, 186 assertions passing; Pint and `git diff --check` passing.
 
 ## Sprint 5: Production Cutover & Coexistence Testing
 

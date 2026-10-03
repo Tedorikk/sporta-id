@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,11 +14,17 @@ class Payment extends Model
 
     // Payment statuses (financial state)
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_SETTLEMENT = 'settlement';
+
     public const STATUS_EXPIRE = 'expire';
+
     public const STATUS_CANCEL = 'cancel';
+
     public const STATUS_DENY = 'deny';
+
     public const STATUS_FAILURE = 'failure';
+
     public const STATUS_REFUND = 'refund';
 
     public const STATUSES = [
@@ -32,21 +39,31 @@ class Payment extends Model
 
     // Checkout states (session creation/availability)
     public const CHECKOUT_CREATING = 'creating';
+
     public const CHECKOUT_READY = 'ready';
+
     public const CHECKOUT_UNKNOWN = 'unknown';
+
     public const CHECKOUT_FAILED = 'failed';
+
     public const CHECKOUT_CLOSED = 'closed';
 
     // Fulfillment states (settlement outcome)
     public const FULFILLMENT_PENDING = 'pending';
+
     public const FULFILLMENT_FULFILLED = 'fulfilled';
+
     public const FULFILLMENT_LATE_PAYMENT = 'late_payment';
+
     public const FULFILLMENT_EXCESS_PAYMENT = 'excess_payment';
+
     public const FULFILLMENT_REVIEW_REQUIRED = 'review_required';
 
     // Supported providers
     public const PROVIDER_MIDTRANS = 'midtrans';
+
     public const PROVIDER_XENDIT = 'xendit';
+
     public const PROVIDER_MANUAL = 'manual_transfer';
 
     protected $fillable = [
@@ -108,7 +125,7 @@ class Payment extends Model
             self::CHECKOUT_UNKNOWN,
         ])->orWhere(function ($q) {
             $q->where('status', self::STATUS_PENDING)
-              ->whereNull('checkout_state');
+                ->whereNull('checkout_state');
         });
     }
 
@@ -120,7 +137,7 @@ class Payment extends Model
         return $query->where('status', self::STATUS_PENDING)
             ->where(function ($q) {
                 $q->whereNull('last_reconciled_at')
-                  ->orWhere('last_reconciled_at', '<', now()->subHour());
+                    ->orWhere('last_reconciled_at', '<', now()->subHour());
             });
     }
 
@@ -130,6 +147,24 @@ class Payment extends Model
     public function scopeByProvider($query, string $provider)
     {
         return $query->where('provider', $provider);
+    }
+
+    /**
+     * Scope: payments that may still have a remote checkout capable of settling.
+     */
+    public function scopeDeletionBlockingCheckout(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_PENDING)
+            ->whereIn('provider', [self::PROVIDER_MIDTRANS, self::PROVIDER_XENDIT])
+            ->where(function (Builder $query) {
+                $query->where(function (Builder $query) {
+                    $query->where('checkout_state', self::CHECKOUT_READY)
+                        ->where('checkout_expires_at', '>', now());
+                })->orWhere(function (Builder $query) {
+                    $query->where('checkout_state', self::CHECKOUT_CREATING)
+                        ->where('creation_lease_expires_at', '>', now());
+                })->orWhere('checkout_state', self::CHECKOUT_UNKNOWN);
+            });
     }
 
     /**
@@ -158,6 +193,26 @@ class Payment extends Model
     }
 
     /**
+     * Check if deleting the payable could orphan a remote checkout.
+     */
+    public function blocksPayableDeletion(): bool
+    {
+        if ($this->status !== self::STATUS_PENDING || ! $this->isOnlinePayment()) {
+            return false;
+        }
+
+        if ($this->checkout_state === self::CHECKOUT_UNKNOWN) {
+            return true;
+        }
+
+        if ($this->checkout_state === self::CHECKOUT_CREATING) {
+            return $this->creation_lease_expires_at?->isFuture() ?? false;
+        }
+
+        return $this->hasActiveCheckout();
+    }
+
+    /**
      * Check if payment is from an online provider (not manual).
      */
     public function isOnlinePayment(): bool
@@ -165,4 +220,3 @@ class Payment extends Model
         return in_array($this->provider, [self::PROVIDER_MIDTRANS, self::PROVIDER_XENDIT]);
     }
 }
-

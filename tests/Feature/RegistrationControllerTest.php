@@ -369,6 +369,88 @@ test('a registration with a settled payment cannot be deleted', function () {
     expect(Registration::find($registration->id))->not->toBeNull();
 });
 
+test('a registration with an active remote checkout cannot be deleted', function () {
+    $category = makeRegistrationCategory(['price' => '100000', 'registered_count' => 1]);
+    $user = organizerOf($category->event);
+    $registration = Registration::create([
+        'registration_category_id' => $category->id,
+        'event_id' => $category->event_id,
+        'name' => 'Jane Doe',
+        'status' => Registration::STATUS_PENDING_PAYMENT,
+    ]);
+    $payment = $registration->payments()->create([
+        'order_id' => 'REG-TEST-ACTIVE-XENDIT',
+        'amount' => 100000,
+        'status' => Payment::STATUS_PENDING,
+        'provider' => Payment::PROVIDER_XENDIT,
+        'checkout_state' => Payment::CHECKOUT_READY,
+        'checkout_url' => 'https://checkout.xendit.co/web/active-session',
+        'checkout_expires_at' => now()->addMinutes(30),
+    ]);
+
+    $this->actingAs($user)
+        ->delete(route('registrations.destroy', [$category->event, $registration]))
+        ->assertStatus(422);
+
+    expect(Registration::find($registration->id))->not->toBeNull()
+        ->and(Payment::find($payment->id))->not->toBeNull()
+        ->and($category->fresh()->registered_count)->toBe(1);
+});
+
+test('a registration with an unresolved checkout outcome cannot be deleted', function () {
+    $category = makeRegistrationCategory(['price' => '100000', 'registered_count' => 1]);
+    $user = organizerOf($category->event);
+    $registration = Registration::create([
+        'registration_category_id' => $category->id,
+        'event_id' => $category->event_id,
+        'name' => 'Jane Doe',
+        'status' => Registration::STATUS_PENDING_PAYMENT,
+    ]);
+    $payment = $registration->payments()->create([
+        'order_id' => 'REG-TEST-UNKNOWN-XENDIT',
+        'amount' => 100000,
+        'status' => Payment::STATUS_PENDING,
+        'provider' => Payment::PROVIDER_XENDIT,
+        'checkout_state' => Payment::CHECKOUT_UNKNOWN,
+    ]);
+
+    $this->actingAs($user)
+        ->delete(route('registrations.destroy', [$category->event, $registration]))
+        ->assertStatus(422);
+
+    expect(Registration::find($registration->id))->not->toBeNull()
+        ->and(Payment::find($payment->id))->not->toBeNull()
+        ->and($category->fresh()->registered_count)->toBe(1);
+});
+
+test('a registration with only an expired checkout can still be deleted', function () {
+    $category = makeRegistrationCategory(['price' => '100000', 'registered_count' => 1]);
+    $user = organizerOf($category->event);
+    $registration = Registration::create([
+        'registration_category_id' => $category->id,
+        'event_id' => $category->event_id,
+        'name' => 'Jane Doe',
+        'status' => Registration::STATUS_PENDING_PAYMENT,
+    ]);
+    $payment = $registration->payments()->create([
+        'order_id' => 'REG-TEST-EXPIRED-XENDIT',
+        'amount' => 100000,
+        'status' => Payment::STATUS_PENDING,
+        'provider' => Payment::PROVIDER_XENDIT,
+        'checkout_state' => Payment::CHECKOUT_READY,
+        'checkout_url' => 'https://checkout.xendit.co/web/expired-session',
+        'checkout_expires_at' => now()->subMinute(),
+    ]);
+
+    $this->actingAs($user)
+        ->delete(route('registrations.destroy', [$category->event, $registration]))
+        ->assertRedirect();
+
+    expect(Registration::find($registration->id))->toBeNull()
+        ->and(Payment::find($payment->id))->toBeNull()
+        ->and($category->fresh()->registered_count)->toBe(0);
+});
+
 test('a team already placed in a pool cannot be deleted, but a fresh one can', function () {
     $category = makeRegistrationCategory([
         'subject_type' => RegistrationCategory::SUBJECT_TEAM,

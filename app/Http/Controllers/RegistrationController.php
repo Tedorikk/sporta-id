@@ -175,6 +175,12 @@ class RegistrationController extends Controller
 
         abort_if($hasSettledPayment, 422, 'This registration has a settled payment — refund it instead of deleting.');
 
+        $hasRemoteCheckout = $registration->registration_order_id !== null
+            ? $registration->registrationOrder?->payments()->deletionBlockingCheckout()->exists()
+            : $registration->payments()->deletionBlockingCheckout()->exists();
+
+        abort_if($hasRemoteCheckout, 422, 'This registration has an active or unresolved online checkout — cancel, expire, or reconcile it before deleting.');
+
         if ($registration->team !== null) {
             $hasCompeted = $registration->team->homeMatches->isNotEmpty()
                 || $registration->team->awayMatches->isNotEmpty()
@@ -196,8 +202,9 @@ class RegistrationController extends Controller
                 $locked->registrationCategory()->decrement('registered_count');
             }
 
-            // Abandoned Snap tokens, not real transactions — the settled-payment
-            // guard above already ruled out anything that actually moved money.
+            // Abandoned or expired attempts only — the settled-payment and active
+            // checkout guards above already ruled out anything that moved money
+            // or can still settle remotely.
             if ($locked->registration_order_id === null) {
                 $locked->payments()->delete();
             }
