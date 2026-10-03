@@ -1,7 +1,15 @@
 # Payment Gateway Test Matrix
 
-**Last updated:** 2026-10-03  
+**Last updated:** 2026-10-04<br>
 **Sprint 0 verification status:** ✅ Completed 2026-10-02
+
+## Current Local Verification Snapshot
+
+- Focused payment/checkout/Xendit/legacy/manual/status/controller suites: ✅ 106 tests, 455 assertions passing on 2026-10-03.
+- TypeScript type-check, targeted ESLint/Prettier, Pint, `git diff --check`, and production Vite build: ✅ passing on 2026-10-03.
+- Full Pest suite: ⚠️ not yet verified; the previous full local run exceeded the five-minute harness timeout without a failure report.
+- Sprint 3 dedicated webhook/reconciliation/effect-recovery feature tests: ⚠️ still required.
+- Sprint 4 browser coverage/manual browser evidence: ⚠️ still required before Sprint 4 exit.
 
 ## Xendit Test Mode Verification (Sprint 0)
 
@@ -124,6 +132,8 @@
 - [ ] Return URL handling (success/cancel)
 - [ ] Multiple payment attempt scenarios
 - [ ] Error state presentation
+- [ ] Legacy Midtrans Snap coexistence flow
+- [ ] Forged return/success URL does not mark payment paid without trusted server confirmation
 
 ## Test Data Fixtures
 

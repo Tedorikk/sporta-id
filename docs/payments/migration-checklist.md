@@ -1,8 +1,9 @@
 # Midtrans to Xendit Migration Checklist
 
-**Migration started:** 2026-10-02  
-**Target completion:** TBD  
+**Migration started:** 2026-10-02<br>
+**Target completion:** TBD<br>
 **Current sprint:** Sprint 4 (in progress)
+**Last updated:** 2026-10-04
 
 ## Sprint 0: Foundation & Verification ✅
 
@@ -384,48 +385,6 @@
 
 **Status:** Lifecycle code is implemented, but the dedicated webhook, reconciliation, and effect-recovery test files below are still required before Sprint 3 is considered verified.
 
-### Routes & Middleware
-- [ ] Add webhook route to `routes/web.php`
-  - [ ] Named route: `webhooks.xendit`
-  - [ ] Path: `/webhooks/xendit`
-  - [ ] POST only
-  - [ ] No auth/session middleware
-- [ ] Update `bootstrap/app.php`
-  - [ ] Exempt webhook route from CSRF
-  - [ ] Register scheduled reconciliation tasks
-
-### Tests
-- [ ] Create `tests/Feature/XenditWebhookTest.php`
-  - [ ] Valid webhook delivery
-  - [ ] Authentication rejection
-  - [ ] Duplicate delivery handling
-  - [ ] Malformed payload rejection
-  - [ ] Unknown payment handling
-  - [ ] Mismatched amount/account quarantine
-- [ ] Create `tests/Feature/PaymentReconciliationTest.php`
-  - [ ] Settlement from completed event
-  - [ ] Expiry handling
-  - [ ] State transition enforcement
-  - [ ] Duplicate settlement prevention
-  - [ ] Late payment after reservation expired
-  - [ ] Excess payment detection
-- [ ] Create `tests/Feature/PaymentEffectRecoveryTest.php`
-  - [ ] Effect replay after crash
-  - [ ] Idempotent fulfillment
-  - [ ] Receipt replay
-  - [ ] Pending payment reconciliation
-
-### Deployment Checklist (Sprint 3)
-- [ ] Webhook endpoint deployed and registered in Xendit dashboard (test mode)
-- [ ] Queue workers configured for `payments` queue
-- [ ] Scheduled tasks configured
-- [ ] Webhook token verified in test environment
-- [ ] Test webhook delivery from Xendit
-- [ ] Reconciliation command tested
-- [ ] Effect replay tested
-- [ ] Monitor error rates
-- [ ] Still using Midtrans for production (Xendit infrastructure ready, not active)
-
 ## Sprint 4: Frontend, Category Normalization & Browser Tests
 
 ### Frontend Updates
@@ -445,6 +404,7 @@
   - [x] Vote payment page
   - [x] Registration/order payment status pages
   - [ ] Payment history page (show provider)
+- [ ] Extract repeated page-level payment code into a shared helper/component only if it reduces duplication without changing verified behavior
 
 ### Controller Updates
 - [x] Update `app/Http/Controllers/RegistrationController.php`
@@ -511,6 +471,8 @@
   - [ ] Idempotency
 - [x] Update existing feature tests for the dual-provider controller flow
 - [ ] Browser test coverage for checkout UX
+- [ ] Add focused coverage for deletion safety with active remote checkout attempts
+- [ ] Add/finish Sprint 3 dedicated lifecycle tests (`XenditWebhookTest`, `PaymentReconciliationTest`, `PaymentEffectRecoveryTest`)
 
 ### Deployment Checklist (Sprint 4)
 - [ ] Deploy frontend changes
@@ -522,7 +484,7 @@
 - [ ] Manual UX verification in staging
 - [ ] Ready for cutover
 
-**Verified locally on 2026-10-03:** 79 focused checkout/Xendit/controller tests (361 assertions), TypeScript type-check, targeted ESLint/Prettier, Pint, and production Vite build. The full Pest suite exceeded the 5-minute harness limit and is not recorded as passing.
+**Verified locally on 2026-10-03:** 106 focused payment/checkout/Xendit/legacy/manual/status/controller tests (455 assertions), TypeScript type-check, targeted ESLint/Prettier, Pint, `git diff --check`, and production Vite build. The full Pest suite exceeded the 5-minute harness limit and is not recorded as passing.
 
 ## Sprint 5: Production Cutover & Coexistence Testing
 

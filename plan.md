@@ -500,12 +500,14 @@ Suggested delivery: seven ordered sprints, roughly 1–2 weeks each depending on
 
 **Owners:** frontend, backend, QA, merchant owner. **Depends on:** Sprints 2–3.
 
+**Current status (2026-10-04):** in progress. The dual-provider controller/page integration is implemented and focused payment/controller checks pass, but category normalization, deletion safety, shared legacy/manual reconciliation boundaries, provider-aware refund workflow, Sprint 3 dedicated lifecycle tests, browser acceptance, and full-suite verification remain open.
+
 #### Tasks
 
-- [ ] Implement neutral checkout button/helper across all five payment pages.
-- [ ] Use full-page navigation for external hosted checkout, not an Inertia SPA request to Xendit; handle JSON pay endpoints consistently.
-- [ ] Implement pending/preparing/retry/expired/review states, bounded status polling, and restore the original status page on success/cancel return.
-- [ ] Keep legacy Snap presentation for existing Midtrans attempts during coexistence.
+- [ ] Implement neutral checkout button/helper across all five payment pages. _(Page-level provider-aware behavior exists; shared extraction remains optional/pending.)_
+- [x] Use full-page navigation for external hosted checkout, not an Inertia SPA request to Xendit; handle JSON pay endpoints consistently.
+- [ ] Implement pending/preparing/retry/expired/review states, bounded status polling, and restore the original status page on success/cancel return. _(Core retry/status pages are updated; browser verification remains pending.)_
+- [x] Keep legacy Snap presentation for existing Midtrans attempts during coexistence.
 - [ ] Update category builder/defaults and normalize stored category collection methods after compatibility rollout.
 - [ ] Update frontend types, emails, translations, legal/help copy, provider display, and Wayfinder output.
 - [ ] Install approved browser-test tools and add controlled provider doubles to browser tests.

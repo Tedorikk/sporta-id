@@ -1,7 +1,9 @@
 # Xendit Payment Gateway Operations Runbook
 
-**Last updated:** 2026-10-03  
+**Last updated:** 2026-10-04<br>
 **Audience:** Development, Operations, Support teams
+
+> **Migration status:** Sprint 4 is in progress. Midtrans remains the default active gateway unless `PAYMENT_GATEWAY=xendit` is explicitly configured. Xendit test credentials that were previously exposed must be rotated before reuse in any shared or persistent environment.
 
 ## Overview
 
@@ -39,6 +41,12 @@ Xendit Webhook → XenditWebhookController → ProcessPaymentWebhook (Job) → P
 | `ReconcilePendingPayments` | Scheduled retrieval and reconciliation |
 | `PaymentWebhookReceipt` | Durable webhook ingress and deduplication |
 | `PaymentEffect` | Durable outbox for side effects |
+
+### Current Verification Caveats
+
+- Focused payment/controller suites pass locally, but the full Pest suite has not yet been recorded as passing because the previous full run exceeded the harness timeout.
+- Dedicated Sprint 3 lifecycle tests for webhook ingress, reconciliation, and effect recovery are still pending.
+- Hosted-checkout browser tests or equivalent documented manual browser evidence are still pending for Sprint 4 exit.
 
 ## Environment Configuration
 
