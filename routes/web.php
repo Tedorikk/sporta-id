@@ -147,7 +147,9 @@ Route::middleware('public.locale')->group(function () {
         ->middleware('throttle:20,1')->name('votes.pay');
 
     // --- Midtrans payment notification webhook (server-to-server, no session) --
+    // Webhook endpoints (no CSRF, no auth)
     Route::post('webhooks/midtrans', [PaymentNotificationController::class, 'handle'])->name('webhooks.midtrans');
+    Route::post('webhooks/xendit', [\App\Http\Controllers\XenditWebhookController::class, 'handle'])->name('webhooks.xendit');
 
     // --- Public "Find My ID Card" lookup (no auth required) --------------------
     Route::get('find-id', [PlayerLookupController::class, 'index'])->name('players.lookup');

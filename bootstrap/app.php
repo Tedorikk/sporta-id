@@ -22,9 +22,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state', SetPublicLocale::COOKIE]);
 
-        // Midtrans posts notifications without a Laravel session/CSRF token.
+        // Midtrans and Xendit post notifications without a Laravel session/CSRF token.
         $middleware->validateCsrfTokens(except: [
             'webhooks/midtrans',
+            'webhooks/xendit',
         ]);
 
         $middleware->web(append: [
@@ -41,8 +42,17 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withSchedule(function (Schedule $schedule): void {
-        // Safety net in case a Midtrans "expire" webhook is ever missed.
+        // Safety net in case a payment webhook is ever missed
         $schedule->command('registrations:expire-unpaid')->hourly();
+        
+        // Reconcile pending payments
+        $schedule->command('payments:reconcile-pending')->hourly();
+        
+        // Replay failed webhooks
+        $schedule->command('payments:replay-webhooks')->everyFifteenMinutes();
+        
+        // Dispatch pending effects
+        $schedule->command('payments:dispatch-effects')->everyFifteenMinutes();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
