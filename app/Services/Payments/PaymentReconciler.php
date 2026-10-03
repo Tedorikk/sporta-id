@@ -2,6 +2,7 @@
 
 namespace App\Services\Payments;
 
+use App\Jobs\ProcessPaymentEffect;
 use App\Models\Payment;
 use App\Models\PaymentEffect;
 use Illuminate\Support\Facades\DB;
@@ -22,10 +23,13 @@ class PaymentReconciler
     {
         DB::transaction(function () use ($payment, $outcome) {
             // Lock payment and payable for update
-            $payment = $payment->lockForUpdate()->fresh();
+            $payment = $payment->newQuery()
+                ->whereKey($payment->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
             $payable = $payment->payable()->lockForUpdate()->first();
 
-            if (!$payable) {
+            if (! $payable) {
                 throw new \RuntimeException("Payment {$payment->id} has no payable");
             }
 
@@ -37,12 +41,13 @@ class PaymentReconciler
             ]);
 
             // Check if transition is allowed
-            if (!$this->isTransitionAllowed($payment, $outcome)) {
+            if (! $this->isTransitionAllowed($payment, $outcome)) {
                 Log::warning('[Reconciler] Transition not allowed', [
                     'payment_id' => $payment->id,
                     'current_status' => $payment->status,
                     'new_status' => $outcome->status,
                 ]);
+
                 return;
             }
 
@@ -88,6 +93,7 @@ class PaymentReconciler
                 'current' => $currentStatus,
                 'new' => $newStatus,
             ]);
+
             return false;
         }
 
@@ -122,7 +128,7 @@ class PaymentReconciler
         ];
 
         // Update session/payment IDs if provided
-        if ($outcome->providerSessionId && !$payment->provider_session_id) {
+        if ($outcome->providerSessionId && ! $payment->provider_session_id) {
             $updates['provider_session_id'] = $outcome->providerSessionId;
         }
 
@@ -211,7 +217,7 @@ class PaymentReconciler
     {
         // Just mark checkout as closed
         // Payable handles its own expiry logic (separate from payment expiry)
-        
+
         Log::info('[Reconciler] Payment expired', [
             'payment_id' => $payment->id,
             'order_id' => $payment->order_id,
@@ -241,7 +247,7 @@ class PaymentReconciler
             // Check if effect already exists (idempotency)
             $existing = PaymentEffect::where('effect_key', $effectData['effect_key'])->first();
 
-            if (!$existing) {
+            if (! $existing) {
                 $effect = PaymentEffect::create([
                     'payment_id' => $payment->id,
                     'payable_type' => get_class($payable),
@@ -253,7 +259,7 @@ class PaymentReconciler
                 ]);
 
                 // Dispatch job to process effect
-                \App\Jobs\ProcessPaymentEffect::dispatch($effect)
+                ProcessPaymentEffect::dispatch($effect)
                     ->onQueue(config('payments.webhook_queue', 'payments'));
 
                 Log::info('[Reconciler] Effect created and dispatched', [

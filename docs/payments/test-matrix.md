@@ -8,7 +8,8 @@
 - Focused payment/checkout/Xendit/legacy/manual/status/controller suites: ✅ 106 tests, 455 assertions passing on 2026-10-03.
 - TypeScript type-check, targeted ESLint/Prettier, Pint, `git diff --check`, and production Vite build: ✅ passing on 2026-10-03.
 - Full Pest suite: ⚠️ not yet verified; the previous full local run exceeded the five-minute harness timeout without a failure report.
-- Sprint 3 dedicated webhook/reconciliation/effect-recovery feature tests: ⚠️ still required.
+- 2026-10-04 isolation run: `tests/Unit` passes; `tests/Feature` completes with five failures/errors isolated to existing category backfill migration tests, outside the payment gateway scope.
+- Sprint 3 dedicated webhook/reconciliation/effect-recovery feature tests: ✅ 16 tests, 51 assertions passing on 2026-10-04; included in the expanded focused 125-test payment lifecycle run.
 - Sprint 4 browser coverage/manual browser evidence: ⚠️ still required before Sprint 4 exit.
 
 ## Xendit Test Mode Verification (Sprint 0)

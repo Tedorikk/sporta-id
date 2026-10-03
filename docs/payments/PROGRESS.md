@@ -7,7 +7,7 @@
 ## Verified status
 
 - Sprints 1–2 infrastructure is implemented and the focused backfill, Xendit client, checkout, legacy Midtrans, manual-payment, status-check, and controller suites pass.
-- Sprint 3 lifecycle code is implemented, but dedicated webhook, neutral reconciliation, and effect-recovery test files remain outstanding.
+- Sprint 3 lifecycle code and dedicated webhook, neutral reconciliation, and effect-recovery test files are implemented and passing locally.
 - Registration, group registration, and paid voting now create checkout attempts through `PaymentCheckoutService`.
 - Registration deletion now blocks active or unresolved online checkout attempts before deleting local records.
 - Public payment pages branch by stored provider: Midtrans continues to open Snap, while Xendit uses a full-page hosted checkout redirect.
@@ -24,14 +24,18 @@
 - Production Vite build: **passing**.
 - Full Pest suite: **not yet verified**; the local run exceeded the five-minute harness timeout without producing a failure report.
 - Registration deletion-safety and checkout regression suites: **passing** (35 tests, 186 assertions) on 2026-10-04.
+- Expanded focused payment lifecycle suites, including Sprint 3 dedicated tests: **passing** (125 tests, 518 assertions) on 2026-10-04.
+- Full test isolation on 2026-10-04: `tests/Unit` passes (10 tests, 69 assertions); `tests/Feature` completes but has five failures/errors isolated to existing category backfill migration tests (`BasketballCategoryBackfillMigrationTest`, `RunningCategoryBackfillMigrationTest`).
 
 ## Remaining before Sprint 4 completion
 
 - Move legacy Midtrans webhook/manual decisions onto the shared reconciler or document the temporary compatibility boundary.
 - Complete provider-aware refund records and group partial-refund behavior.
 - Normalize category collection values from `midtrans` to `online` with a tested, resumable command.
-- Add the dedicated Sprint 3 tests and browser checkout/return coverage.
+- Add browser checkout/return coverage.
+- Complete staging/manual provider verification for Xendit webhook delivery, webhook token validation, and monitoring.
 - Run the complete Pest suite with a sufficient timeout and perform staging UX verification.
+- Resolve or separately triage the non-payment category backfill migration test failures before claiming the complete suite is green.
 - Keep Xendit dormant until cutover; Midtrans remains the default provider.
 
 ## Security follow-up

@@ -22,7 +22,7 @@ class XenditWebhookController extends Controller
     public function handle(XenditWebhookRequest $request): JsonResponse
     {
         // Authenticate webhook token
-        if (!$this->authenticateWebhook($request)) {
+        if (! $this->authenticateWebhook($request)) {
             Log::warning('[XenditWebhook] Authentication failed', [
                 'ip' => $request->ip(),
                 'event' => $request->input('event'),
@@ -32,7 +32,7 @@ class XenditWebhookController extends Controller
         }
 
         // Check if event type is supported
-        if (!$request->isSupportedEvent()) {
+        if (! $request->isSupportedEvent()) {
             Log::info('[XenditWebhook] Unsupported event type', [
                 'event' => $request->getEventType(),
                 'reference_id' => $request->getReferenceId(),
@@ -46,9 +46,13 @@ class XenditWebhookController extends Controller
             // Persist receipt for durability
             $receipt = $this->persistReceipt($request);
 
-            // Queue processing job
-            ProcessPaymentWebhook::dispatch($receipt)
-                ->onQueue(config('payments.webhook_queue', 'payments'));
+            if ($receipt->wasRecentlyCreated) {
+                // Queue processing job only for the first delivery. Duplicate
+                // deliveries reuse the durable receipt and must not enqueue
+                // duplicate processing work.
+                ProcessPaymentWebhook::dispatch($receipt)
+                    ->onQueue(config('payments.webhook_queue', 'payments'));
+            }
 
             Log::info('[XenditWebhook] Receipt persisted and queued', [
                 'receipt_id' => $receipt->id,
@@ -79,6 +83,7 @@ class XenditWebhookController extends Controller
 
         if (empty($expectedToken)) {
             Log::error('[XenditWebhook] Webhook token not configured');
+
             return false;
         }
 
@@ -177,16 +182,16 @@ class XenditWebhookController extends Controller
     {
         // For now, keep the full payload for debugging
         // In production, consider removing PII fields if present
-        
+
         // Remove any sensitive customer data if present
         if (isset($payload['data']['customer'])) {
             $customer = &$payload['data']['customer'];
-            
+
             // Keep only essential fields, mask email/phone
             if (isset($customer['email'])) {
                 $customer['email'] = $this->maskEmail($customer['email']);
             }
-            
+
             if (isset($customer['mobile_number'])) {
                 $customer['mobile_number'] = $this->maskPhone($customer['mobile_number']);
             }
@@ -209,12 +214,12 @@ class XenditWebhookController extends Controller
         $domain = $parts[1];
 
         if (strlen($local) > 3) {
-            $local = substr($local, 0, 2) . '***' . substr($local, -1);
+            $local = substr($local, 0, 2).'***'.substr($local, -1);
         } else {
             $local = '***';
         }
 
-        return $local . '@' . $domain;
+        return $local.'@'.$domain;
     }
 
     /**
@@ -223,7 +228,7 @@ class XenditWebhookController extends Controller
     private function maskPhone(string $phone): string
     {
         if (strlen($phone) > 6) {
-            return substr($phone, 0, 3) . '****' . substr($phone, -2);
+            return substr($phone, 0, 3).'****'.substr($phone, -2);
         }
 
         return '****';

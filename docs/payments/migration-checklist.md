@@ -348,25 +348,25 @@
   - [x] Register effect dispatch schedule
 
 ### Tests
-- [ ] Create `tests/Feature/XenditWebhookTest.php`
-  - [ ] Valid webhook delivery
-  - [ ] Authentication rejection
-  - [ ] Duplicate delivery handling
-  - [ ] Malformed payload rejection
-  - [ ] Unknown payment handling
-  - [ ] Mismatched amount/account quarantine
-- [ ] Create `tests/Feature/PaymentReconciliationTest.php`
-  - [ ] Settlement from completed event
-  - [ ] Expiry handling
-  - [ ] State transition enforcement
-  - [ ] Duplicate settlement prevention
-  - [ ] Late payment after reservation expired
-  - [ ] Excess payment detection
-- [ ] Create `tests/Feature/PaymentEffectRecoveryTest.php`
-  - [ ] Effect replay after crash
-  - [ ] Idempotent fulfillment
-  - [ ] Receipt replay
-  - [ ] Pending payment reconciliation
+- [x] Create `tests/Feature/XenditWebhookTest.php`
+  - [x] Valid webhook delivery
+  - [x] Authentication rejection
+  - [x] Duplicate delivery handling
+  - [x] Malformed payload rejection
+  - [x] Unknown payment handling
+  - [x] Mismatched amount/account quarantine
+- [x] Create `tests/Feature/PaymentReconciliationTest.php`
+  - [x] Settlement from completed event
+  - [x] Expiry handling
+  - [x] State transition enforcement
+  - [x] Duplicate settlement prevention
+  - [x] Late payment after reservation expired
+  - [x] Excess payment detection
+- [x] Create `tests/Feature/PaymentEffectRecoveryTest.php`
+  - [x] Effect replay after crash
+  - [x] Idempotent fulfillment
+  - [x] Receipt replay
+  - [x] Pending payment reconciliation
 
 ### Deployment Checklist (Sprint 3)
 - [x] Webhook endpoint deployed and routed
@@ -376,14 +376,14 @@
 - [x] Refund records migration created
 - [ ] Webhook token verified in test environment
 - [ ] Test webhook delivery from Xendit
-- [ ] Reconciliation command tested
-- [ ] Effect replay tested
+- [x] Reconciliation command tested locally with automated coverage
+- [x] Effect replay tested locally with automated coverage
 - [ ] Monitor error rates
 - [ ] Still using Midtrans for production (Xendit infrastructure complete, not active)
 
 **Sprint 3 Implementation Completed:** 2026-10-03
 
-**Status:** Lifecycle code is implemented, but the dedicated webhook, reconciliation, and effect-recovery test files below are still required before Sprint 3 is considered verified.
+**Status:** Lifecycle code and dedicated automated webhook, reconciliation, and effect-recovery tests are implemented. Staging/provider webhook delivery and operational monitoring checks are still required before Sprint 3 is fully verified.
 
 ## Sprint 4: Frontend, Category Normalization & Browser Tests
 
@@ -472,7 +472,7 @@
 - [x] Update existing feature tests for the dual-provider controller flow
 - [ ] Browser test coverage for checkout UX
 - [x] Add focused coverage for deletion safety with active remote checkout attempts
-- [ ] Add/finish Sprint 3 dedicated lifecycle tests (`XenditWebhookTest`, `PaymentReconciliationTest`, `PaymentEffectRecoveryTest`)
+- [x] Add/finish Sprint 3 dedicated lifecycle tests (`XenditWebhookTest`, `PaymentReconciliationTest`, `PaymentEffectRecoveryTest`)
 
 ### Deployment Checklist (Sprint 4)
 - [ ] Deploy frontend changes
@@ -487,6 +487,8 @@
 **Verified locally on 2026-10-03:** 106 focused payment/checkout/Xendit/legacy/manual/status/controller tests (455 assertions), TypeScript type-check, targeted ESLint/Prettier, Pint, `git diff --check`, and production Vite build. The full Pest suite exceeded the 5-minute harness limit and is not recorded as passing.
 
 **Verified locally on 2026-10-04:** Registration deletion-safety and checkout regression suites: 35 tests, 186 assertions passing; Pint and `git diff --check` passing.
+
+**Verified locally on 2026-10-04:** Expanded focused payment lifecycle suites, including the dedicated Sprint 3 webhook/reconciliation/effect recovery tests: 125 tests, 518 assertions passing after Pint.
 
 ## Sprint 5: Production Cutover & Coexistence Testing
 
