@@ -7,14 +7,14 @@ use App\Models\Payment;
 use App\Models\Registration;
 use App\Models\RegistrationCategory;
 use App\Models\RegistrationOrder;
-use App\Services\Midtrans\MidtransClient;
+use App\Services\Payments\CheckoutResult;
+use App\Services\Payments\PaymentCheckoutService;
 use App\Services\RegistrationConfirmationNotifier;
 use App\Services\RegistrationFieldRules;
 use App\Services\Running\RaceEntryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -35,7 +35,7 @@ class GroupRegistrationController extends Controller
     private const RESERVED_KEYS = ['name', 'email', 'phone', 'photo'];
 
     public function __construct(
-        private readonly MidtransClient $midtrans,
+        private readonly PaymentCheckoutService $checkoutService,
         private readonly RegistrationConfirmationNotifier $notifier,
         private readonly RegistrationFieldRules $fieldRuleBuilder,
         private readonly RaceEntryService $raceEntries,
@@ -76,11 +76,11 @@ class GroupRegistrationController extends Controller
             }
         }
 
-        $snapToken = null;
+        $checkoutResult = null;
 
         if ($order->status === RegistrationOrder::STATUS_PENDING_PAYMENT) {
             try {
-                $snapToken = $this->createPayment($order)->snap_token;
+                $checkoutResult = $this->createCheckout($order);
             } catch (\Throwable $e) {
                 report($e);
             }
@@ -89,9 +89,7 @@ class GroupRegistrationController extends Controller
         return response()->json([
             'order_id' => $order->qr_token,
             'status' => $order->status,
-            'snap_token' => $snapToken,
-            'midtrans_client_key' => config('services.midtrans.client_key'),
-            'midtrans_is_production' => (bool) config('services.midtrans.is_production'),
+            ...$this->checkoutPayload($order, $checkoutResult),
         ]);
     }
 
@@ -99,13 +97,16 @@ class GroupRegistrationController extends Controller
     {
         abort_unless($registrationOrder->status === RegistrationOrder::STATUS_PENDING_PAYMENT, 403, __('This order is not awaiting payment.'));
 
-        $payment = $this->createPayment($registrationOrder);
+        $result = $this->createCheckout($registrationOrder);
 
-        return response()->json([
-            'snap_token' => $payment->snap_token,
-            'midtrans_client_key' => config('services.midtrans.client_key'),
-            'midtrans_is_production' => (bool) config('services.midtrans.is_production'),
-        ]);
+        if (! $result->success) {
+            return response()->json([
+                'error' => $result->error,
+                'can_retry' => $result->canRetry,
+            ], $result->canRetry ? 503 : 400);
+        }
+
+        return response()->json($this->checkoutPayload($registrationOrder, $result));
     }
 
     public function status(RegistrationOrder $registrationOrder)
@@ -274,21 +275,39 @@ class GroupRegistrationController extends Controller
         return $order->fresh('registrations.registrationCategory');
     }
 
-    private function createPayment(RegistrationOrder $order): Payment
+    private function createCheckout(RegistrationOrder $order): CheckoutResult
     {
         $order->loadMissing('registrations.registrationCategory');
-        $amount = $order->registrations->sum(fn (Registration $r) => (float) $r->registrationCategory->price);
 
-        $payment = $order->payments()->create([
-            'order_id' => 'ORD-'.$order->id.'-'.Str::random(6),
-            'amount' => $amount,
-        ]);
+        return $this->checkoutService->getOrCreateCheckout(
+            $order,
+            route('registration_orders.status', $order),
+            route('registration_orders.status', $order),
+        );
+    }
 
-        $payment->setRelation('payable', $order);
+    /** @return array<string, mixed> */
+    private function checkoutPayload(RegistrationOrder $order, ?CheckoutResult $result): array
+    {
+        if ($result === null || ! $result->success) {
+            return [
+                'provider' => null,
+                'checkout_url' => null,
+                'snap_token' => null,
+                'midtrans_client_key' => config('services.midtrans.client_key'),
+                'midtrans_is_production' => (bool) config('services.midtrans.is_production'),
+            ];
+        }
 
-        $payment->snap_token = $this->midtrans->createSnapTransaction($payment);
-        $payment->save();
+        $provider = $order->payments()->latest('id')->value('provider');
 
-        return $payment;
+        return [
+            'provider' => $provider,
+            'checkout_url' => $provider === Payment::PROVIDER_XENDIT ? $result->checkoutUrl : null,
+            'snap_token' => $provider === Payment::PROVIDER_MIDTRANS ? $result->sessionId : null,
+            'expires_at' => $result->expiresAt?->format(DATE_ATOM),
+            'midtrans_client_key' => config('services.midtrans.client_key'),
+            'midtrans_is_production' => (bool) config('services.midtrans.is_production'),
+        ];
     }
 }

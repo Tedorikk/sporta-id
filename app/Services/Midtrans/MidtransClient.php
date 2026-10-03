@@ -3,6 +3,7 @@
 namespace App\Services\Midtrans;
 
 use App\Models\Payment;
+use App\Services\Payments\Payable;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -21,6 +22,10 @@ class MidtransClient
             throw new RuntimeException("Payment {$payment->order_id} has no payable to charge for.");
         }
 
+        $snapshot = $payment->request_snapshot ?? [];
+        $items = $snapshot['items'] ?? $payable->getPaymentItems($payment);
+        $customer = $snapshot['customer'] ?? $payable->getPaymentCustomer();
+
         $response = Http::withBasicAuth(config('services.midtrans.server_key'), '')
             ->acceptJson()
             ->connectTimeout(5)
@@ -33,8 +38,17 @@ class MidtransClient
                 // Names the thing being bought on Midtrans's own payment page
                 // and in the merchant dashboard — without it a payer only ever
                 // sees an order id and a total.
-                'item_details' => $payable->midtransItemDetails($payment),
-                'customer_details' => $payable->midtransCustomerDetails(),
+                'item_details' => array_map(static fn (array $item): array => [
+                    'id' => $item['reference_id'],
+                    'name' => $item['name'],
+                    'price' => $item['unit_amount'],
+                    'quantity' => $item['quantity'],
+                ], $items),
+                'customer_details' => [
+                    'first_name' => $customer['given_names'],
+                    'email' => $customer['email'],
+                    'phone' => $customer['mobile_number'] ?? null,
+                ],
             ]);
 
         if ($response->failed()) {

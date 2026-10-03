@@ -10,6 +10,7 @@ use App\Models\Registration;
 use App\Models\RegistrationCategory;
 use App\Models\Team;
 use App\Services\Basketball\RosterService;
+use App\Services\Payments\CheckoutResult;
 use App\Services\Payments\PaymentCheckoutService;
 use App\Services\RegistrationConfirmationNotifier;
 use App\Services\RegistrationFieldRules;
@@ -149,7 +150,7 @@ class RegistrationController extends Controller
                 && $registrationCategory->subject_type === RegistrationCategory::SUBJECT_INDIVIDUAL
                 ? CardTemplate::resolveFor($event, CardTemplate::SUBJECT_REGISTRATION, registrationCategoryId: $registrationCategory->id)
                 : null,
-            'checkoutResult' => $checkoutResult,
+            ...$this->checkoutPayload($registration, $checkoutResult),
         ]);
     }
 
@@ -223,17 +224,14 @@ class RegistrationController extends Controller
 
         $result = $this->createCheckout($registration);
 
-        if (!$result->success) {
+        if (! $result->success) {
             return response()->json([
                 'error' => $result->error,
                 'can_retry' => $result->canRetry,
             ], $result->canRetry ? 503 : 400);
         }
 
-        return response()->json([
-            'checkout_url' => $result->checkoutUrl,
-            'expires_at' => $result->expiresAt->toISOString(),
-        ]);
+        return response()->json($this->checkoutPayload($registration, $result));
     }
 
     public function status(Registration $registration)
@@ -242,7 +240,7 @@ class RegistrationController extends Controller
 
         return Inertia::render('registration-status', [
             'registration' => $registration,
-            'payment' => $registration->latestPayment() 
+            'payment' => $registration->latestPayment()
                 ? PaymentResource::make($registration->latestPayment())
                 : null,
         ]);
@@ -293,7 +291,7 @@ class RegistrationController extends Controller
         ];
     }
 
-    private function createCheckout(Registration $registration): \App\Services\Payments\CheckoutResult
+    private function createCheckout(Registration $registration): CheckoutResult
     {
         $successUrl = route('registrations.status', $registration);
         $failureUrl = route('registrations.status', $registration);
@@ -303,6 +301,31 @@ class RegistrationController extends Controller
             $successUrl,
             $failureUrl
         );
+    }
+
+    /** @return array<string, mixed> */
+    private function checkoutPayload(Registration $registration, ?CheckoutResult $result): array
+    {
+        if ($result === null || ! $result->success) {
+            return [
+                'provider' => null,
+                'checkoutUrl' => null,
+                'snapToken' => null,
+                'midtransClientKey' => config('services.midtrans.client_key'),
+                'midtransIsProduction' => (bool) config('services.midtrans.is_production'),
+            ];
+        }
+
+        $provider = $registration->payments()->latest('id')->value('provider');
+
+        return [
+            'provider' => $provider,
+            'checkoutUrl' => $provider === Payment::PROVIDER_XENDIT ? $result->checkoutUrl : null,
+            'snapToken' => $provider === Payment::PROVIDER_MIDTRANS ? $result->sessionId : null,
+            'expiresAt' => $result->expiresAt?->format(DATE_ATOM),
+            'midtransClientKey' => config('services.midtrans.client_key'),
+            'midtransIsProduction' => (bool) config('services.midtrans.is_production'),
+        ];
     }
 
     private function createManualPayment(Registration $registration, RegistrationCategory $registrationCategory): Payment

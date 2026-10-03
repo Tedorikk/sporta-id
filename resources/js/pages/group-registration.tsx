@@ -15,6 +15,10 @@ import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as z from 'zod';
 import {
+    status as orderStatus,
+    store as storeGroupRegistration,
+} from '@/actions/App/Http/Controllers/GroupRegistrationController';
+import {
     BooleanChoice,
     ChoiceGroup,
     DescriptionBlock,
@@ -95,12 +99,16 @@ function emptyParticipant(): Participant {
 }
 
 /** Every field across the category's pages, roster blocks excluded (individual categories never carry one). */
-function allFieldsOf(category: PublicRegistrationCategory): RegistrationField[] {
+function allFieldsOf(
+    category: PublicRegistrationCategory,
+): RegistrationField[] {
     return (category.form_pages ?? []).flatMap((page) => page.fields);
 }
 
 /** Only the fields that collect an answer — what validates, defaults and submits. */
-function inputFieldsOf(category: PublicRegistrationCategory): RegistrationField[] {
+function inputFieldsOf(
+    category: PublicRegistrationCategory,
+): RegistrationField[] {
     return allFieldsOf(category).filter(isInputField);
 }
 
@@ -176,7 +184,10 @@ function buildSchema(category: PublicRegistrationCategory, t: Translate) {
     });
 }
 
-function defaultValuesFor(category: PublicRegistrationCategory, draft: Participant) {
+function defaultValuesFor(
+    category: PublicRegistrationCategory,
+    draft: Participant,
+) {
     const defaults: Record<string, unknown> = { name: draft.name };
 
     inputFieldsOf(category).forEach((f) => {
@@ -188,8 +199,7 @@ function defaultValuesFor(category: PublicRegistrationCategory, draft: Participa
             ? (draft as unknown as Record<string, unknown>)[f.key]
             : draft.form_data[f.key];
 
-        defaults[f.key] =
-            existing ?? (f.type === 'checkbox' ? false : '');
+        defaults[f.key] = existing ?? (f.type === 'checkbox' ? false : '');
     });
 
     return defaults;
@@ -288,196 +298,197 @@ function ParticipantForm({
                         !isInputField(f) ? (
                             <DescriptionBlock key={f.key} field={f} />
                         ) : (
-                        <Controller
-                            key={f.key}
-                            name={f.key as never}
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel htmlFor={f.key}>
-                                        {f.label}
-                                        {f.required && <RequiredMark />}
-                                        {!f.required && (
-                                            <span className="font-normal text-muted-foreground">
-                                                {' '}
-                                                {t('(Optional)')}
-                                            </span>
-                                        )}
-                                    </FieldLabel>
+                            <Controller
+                                key={f.key}
+                                name={f.key as never}
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <Field data-invalid={fieldState.invalid}>
+                                        <FieldLabel htmlFor={f.key}>
+                                            {f.label}
+                                            {f.required && <RequiredMark />}
+                                            {!f.required && (
+                                                <span className="font-normal text-muted-foreground">
+                                                    {' '}
+                                                    {t('(Optional)')}
+                                                </span>
+                                            )}
+                                        </FieldLabel>
 
-                                    {f.type === 'file' ? (
-                                        <UploadImage
-                                            value={field.value as string}
-                                            ratio={imageRatioOf(f)}
-                                            uploadUrl="/public-upload/image"
-                                            deleteUrl="/public-upload/image"
-                                            onChange={(value) =>
-                                                field.onChange(value ?? '')
-                                            }
-                                            onError={(error) =>
-                                                setError(f.key as never, {
-                                                    type: 'manual',
-                                                    message:
-                                                        typeof error ===
-                                                        'string'
-                                                            ? error
-                                                            : t(
-                                                                  'Upload failed',
-                                                              ),
-                                                })
-                                            }
-                                            enableCrop
-                                            className="rounded-2xl border-2 border-black"
-                                        />
-                                    ) : f.type === 'document' ? (
-                                        <UploadDocument
-                                            value={field.value as string}
-                                            uploadUrl="/public-upload/document"
-                                            deleteUrl="/public-upload/document"
-                                            onChange={(value) =>
-                                                field.onChange(value ?? '')
-                                            }
-                                            onError={(error) =>
-                                                setError(f.key as never, {
-                                                    type: 'manual',
-                                                    message:
-                                                        typeof error ===
-                                                        'string'
-                                                            ? error
-                                                            : t(
-                                                                  'Upload failed',
-                                                              ),
-                                                })
-                                            }
-                                            className="rounded-2xl border-2 border-black"
-                                        />
-                                    ) : f.type === 'signature' ? (
-                                        <SignaturePad
-                                            value={field.value as string}
-                                            disabled={isSaving}
-                                            onChange={(value) =>
-                                                field.onChange(value ?? '')
-                                            }
-                                            onError={(error) =>
-                                                setError(f.key as never, {
-                                                    type: 'manual',
-                                                    message: error,
-                                                })
-                                            }
-                                        />
-                                    ) : f.type === 'rating' ? (
-                                        <RatingInput
-                                            value={field.value as string}
-                                            onChange={field.onChange}
-                                            max={f.max_rating ?? 5}
-                                            disabled={isSaving}
-                                        />
-                                    ) : f.type === 'textarea' ? (
-                                        <Textarea
-                                            {...field}
-                                            id={f.key}
-                                            value={field.value as string}
-                                            disabled={isSaving}
-                                            className="border-2 border-black"
-                                        />
-                                    ) : f.type === 'select' ? (
-                                        <Select
-                                            value={field.value as string}
-                                            onValueChange={field.onChange}
-                                            disabled={isSaving}
-                                        >
-                                            <SelectTrigger
+                                        {f.type === 'file' ? (
+                                            <UploadImage
+                                                value={field.value as string}
+                                                ratio={imageRatioOf(f)}
+                                                uploadUrl="/public-upload/image"
+                                                deleteUrl="/public-upload/image"
+                                                onChange={(value) =>
+                                                    field.onChange(value ?? '')
+                                                }
+                                                onError={(error) =>
+                                                    setError(f.key as never, {
+                                                        type: 'manual',
+                                                        message:
+                                                            typeof error ===
+                                                            'string'
+                                                                ? error
+                                                                : t(
+                                                                      'Upload failed',
+                                                                  ),
+                                                    })
+                                                }
+                                                enableCrop
+                                                className="rounded-2xl border-2 border-black"
+                                            />
+                                        ) : f.type === 'document' ? (
+                                            <UploadDocument
+                                                value={field.value as string}
+                                                uploadUrl="/public-upload/document"
+                                                deleteUrl="/public-upload/document"
+                                                onChange={(value) =>
+                                                    field.onChange(value ?? '')
+                                                }
+                                                onError={(error) =>
+                                                    setError(f.key as never, {
+                                                        type: 'manual',
+                                                        message:
+                                                            typeof error ===
+                                                            'string'
+                                                                ? error
+                                                                : t(
+                                                                      'Upload failed',
+                                                                  ),
+                                                    })
+                                                }
+                                                className="rounded-2xl border-2 border-black"
+                                            />
+                                        ) : f.type === 'signature' ? (
+                                            <SignaturePad
+                                                value={field.value as string}
+                                                disabled={isSaving}
+                                                onChange={(value) =>
+                                                    field.onChange(value ?? '')
+                                                }
+                                                onError={(error) =>
+                                                    setError(f.key as never, {
+                                                        type: 'manual',
+                                                        message: error,
+                                                    })
+                                                }
+                                            />
+                                        ) : f.type === 'rating' ? (
+                                            <RatingInput
+                                                value={field.value as string}
+                                                onChange={field.onChange}
+                                                max={f.max_rating ?? 5}
+                                                disabled={isSaving}
+                                            />
+                                        ) : f.type === 'textarea' ? (
+                                            <Textarea
+                                                {...field}
                                                 id={f.key}
-                                                className="w-full cursor-pointer border-2 border-black font-semibold"
+                                                value={field.value as string}
+                                                disabled={isSaving}
+                                                className="border-2 border-black"
+                                            />
+                                        ) : f.type === 'select' ? (
+                                            <Select
+                                                value={field.value as string}
+                                                onValueChange={field.onChange}
+                                                disabled={isSaving}
                                             >
-                                                <SelectValue
-                                                    placeholder={t(
-                                                        'Select an option',
+                                                <SelectTrigger
+                                                    id={f.key}
+                                                    className="w-full cursor-pointer border-2 border-black font-semibold"
+                                                >
+                                                    <SelectValue
+                                                        placeholder={t(
+                                                            'Select an option',
+                                                        )}
+                                                    />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {(f.options ?? []).map(
+                                                        (option) => (
+                                                            <SelectItem
+                                                                key={option}
+                                                                value={option}
+                                                                className="cursor-pointer"
+                                                            >
+                                                                {option}
+                                                            </SelectItem>
+                                                        ),
                                                     )}
-                                                />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {(f.options ?? []).map(
-                                                    (option) => (
-                                                        <SelectItem
-                                                            key={option}
-                                                            value={option}
-                                                            className="cursor-pointer"
-                                                        >
-                                                            {option}
-                                                        </SelectItem>
-                                                    ),
-                                                )}
-                                            </SelectContent>
-                                        </Select>
-                                    ) : f.type === 'radio' ? (
-                                        <ChoiceGroup
-                                            name={f.key}
-                                            label={f.label}
-                                            options={f.options ?? []}
-                                            value={field.value as string}
-                                            onChange={field.onChange}
-                                            disabled={isSaving}
-                                            controlStyle={{}}
-                                            invalid={fieldState.invalid}
-                                        />
-                                    ) : f.type === 'gender' ? (
-                                        <GenderChoice
-                                            name={f.key}
-                                            label={f.label}
-                                            value={field.value as string}
-                                            onChange={field.onChange}
-                                            disabled={isSaving}
-                                            controlStyle={{}}
-                                            invalid={fieldState.invalid}
-                                        />
-                                    ) : f.type === 'checkbox' ? (
-                                        <BooleanChoice
-                                            id={f.key}
-                                            label={f.help_text ?? t('Yes')}
-                                            checked={field.value as boolean}
-                                            onChange={field.onChange}
-                                            disabled={isSaving}
-                                            controlStyle={{}}
-                                        />
-                                    ) : (
-                                        <Input
-                                            {...field}
-                                            id={f.key}
-                                            value={field.value as string}
-                                            type={
-                                                f.type === 'date'
-                                                    ? 'date'
-                                                    : f.type === 'number'
-                                                      ? 'text'
-                                                      : f.type === 'email'
-                                                        ? 'email'
-                                                        : 'text'
-                                            }
-                                            inputMode={
-                                                f.type === 'number'
-                                                    ? 'decimal'
-                                                    : undefined
-                                            }
-                                            autoComplete="off"
-                                            disabled={isSaving}
-                                            className="border-2 border-black"
-                                        />
-                                    )}
+                                                </SelectContent>
+                                            </Select>
+                                        ) : f.type === 'radio' ? (
+                                            <ChoiceGroup
+                                                name={f.key}
+                                                label={f.label}
+                                                options={f.options ?? []}
+                                                value={field.value as string}
+                                                onChange={field.onChange}
+                                                disabled={isSaving}
+                                                controlStyle={{}}
+                                                invalid={fieldState.invalid}
+                                            />
+                                        ) : f.type === 'gender' ? (
+                                            <GenderChoice
+                                                name={f.key}
+                                                label={f.label}
+                                                value={field.value as string}
+                                                onChange={field.onChange}
+                                                disabled={isSaving}
+                                                controlStyle={{}}
+                                                invalid={fieldState.invalid}
+                                            />
+                                        ) : f.type === 'checkbox' ? (
+                                            <BooleanChoice
+                                                id={f.key}
+                                                label={f.help_text ?? t('Yes')}
+                                                checked={field.value as boolean}
+                                                onChange={field.onChange}
+                                                disabled={isSaving}
+                                                controlStyle={{}}
+                                            />
+                                        ) : (
+                                            <Input
+                                                {...field}
+                                                id={f.key}
+                                                value={field.value as string}
+                                                type={
+                                                    f.type === 'date'
+                                                        ? 'date'
+                                                        : f.type === 'number'
+                                                          ? 'text'
+                                                          : f.type === 'email'
+                                                            ? 'email'
+                                                            : 'text'
+                                                }
+                                                inputMode={
+                                                    f.type === 'number'
+                                                        ? 'decimal'
+                                                        : undefined
+                                                }
+                                                autoComplete="off"
+                                                disabled={isSaving}
+                                                className="border-2 border-black"
+                                            />
+                                        )}
 
-                                    {f.help_text && f.type !== 'checkbox' && (
-                                        <FieldDescription className="whitespace-pre-line">
-                                            {f.help_text}
-                                        </FieldDescription>
-                                    )}
-                                    {fieldState.invalid && (
-                                        <FieldError
-                                            errors={[fieldState.error]}
-                                        />
-                                    )}
-                                </Field>
-                            )}
-                        />
+                                        {f.help_text &&
+                                            f.type !== 'checkbox' && (
+                                                <FieldDescription className="whitespace-pre-line">
+                                                    {f.help_text}
+                                                </FieldDescription>
+                                            )}
+                                        {fieldState.invalid && (
+                                            <FieldError
+                                                errors={[fieldState.error]}
+                                            />
+                                        )}
+                                    </Field>
+                                )}
+                            />
                         ),
                     )}
 
@@ -542,6 +553,8 @@ export default function GroupRegistration({ event, categories }: Props) {
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [payment, setPayment] = useState<{
         orderId: string;
+        provider: 'midtrans' | 'xendit' | null;
+        checkoutUrl: string | null;
         snapToken: string | null;
         midtransClientKey: string | null;
         midtransIsProduction: boolean;
@@ -568,7 +581,8 @@ export default function GroupRegistration({ event, categories }: Props) {
         );
 
     const total = participants.reduce(
-        (sum, p) => sum + Number(categoryById(p.registration_category_id)?.price ?? 0),
+        (sum, p) =>
+            sum + Number(categoryById(p.registration_category_id)?.price ?? 0),
         0,
     );
 
@@ -604,7 +618,7 @@ export default function GroupRegistration({ event, categories }: Props) {
         setSubmitError(null);
 
         axios
-            .post(`/events/${event.id}/group-registration`, {
+            .post(storeGroupRegistration.url(event), {
                 participants: participants.map((p) => ({
                     registration_category_id: p.registration_category_id,
                     name: p.name,
@@ -618,13 +632,15 @@ export default function GroupRegistration({ event, categories }: Props) {
                 if (data.status === 'pending_payment') {
                     setPayment({
                         orderId: data.order_id,
+                        provider: data.provider,
+                        checkoutUrl: data.checkout_url,
                         snapToken: data.snap_token,
                         midtransClientKey: data.midtrans_client_key,
                         midtransIsProduction: data.midtrans_is_production,
                     });
                     setStep('payment');
                 } else {
-                    router.visit(`/registration-orders/${data.order_id}/status`);
+                    router.visit(orderStatus.url(data.order_id));
                 }
             })
             .catch((error) => {
@@ -637,6 +653,12 @@ export default function GroupRegistration({ event, categories }: Props) {
     }
 
     function payNow() {
+        if (payment?.checkoutUrl) {
+            window.location.assign(payment.checkoutUrl);
+
+            return;
+        }
+
         if (!payment?.snapToken || !payment.midtransClientKey) {
             return;
         }
@@ -646,13 +668,9 @@ export default function GroupRegistration({ event, categories }: Props) {
             .then(() => {
                 window.snap?.pay(payment.snapToken as string, {
                     onSuccess: () =>
-                        router.visit(
-                            `/registration-orders/${payment.orderId}/status`,
-                        ),
+                        router.visit(orderStatus.url(payment.orderId)),
                     onPending: () =>
-                        router.visit(
-                            `/registration-orders/${payment.orderId}/status`,
-                        ),
+                        router.visit(orderStatus.url(payment.orderId)),
                     onError: () => setIsPaying(false),
                     onClose: () => setIsPaying(false),
                 });
@@ -662,7 +680,9 @@ export default function GroupRegistration({ event, categories }: Props) {
 
     return (
         <>
-            <Head title={t('Group Registration — :event', { event: event.name })} />
+            <Head
+                title={t('Group Registration — :event', { event: event.name })}
+            />
 
             <div
                 className="relative flex min-h-screen items-center justify-center bg-paper px-4 py-10"
@@ -713,7 +733,9 @@ export default function GroupRegistration({ event, categories }: Props) {
                                                     </p>
                                                     <p className="truncate text-xs text-neutral-500">
                                                         {category?.name ??
-                                                            t('No category chosen')}
+                                                            t(
+                                                                'No category chosen',
+                                                            )}
                                                         {!complete &&
                                                             ` · ${t('Incomplete')}`}
                                                     </p>
@@ -808,9 +830,7 @@ export default function GroupRegistration({ event, categories }: Props) {
                                                     {categories.map((c) => (
                                                         <SelectItem
                                                             key={c.id}
-                                                            value={String(
-                                                                c.id,
-                                                            )}
+                                                            value={String(c.id)}
                                                             disabled={
                                                                 !c.is_available
                                                             }
@@ -922,7 +942,7 @@ export default function GroupRegistration({ event, categories }: Props) {
                                     'Your slots are reserved — complete payment to confirm every participant.',
                                 )}
                             </p>
-                            {payment.snapToken ? (
+                            {payment.snapToken || payment.checkoutUrl ? (
                                 <Button
                                     type="button"
                                     onClick={payNow}
@@ -932,7 +952,9 @@ export default function GroupRegistration({ event, categories }: Props) {
                                     {isPaying ? (
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     ) : null}
-                                    {isPaying ? t('Opening payment…') : t('Pay Now')}
+                                    {isPaying
+                                        ? t('Opening payment…')
+                                        : t('Pay Now')}
                                 </Button>
                             ) : (
                                 <p className="text-sm text-amber-600">
@@ -942,7 +964,7 @@ export default function GroupRegistration({ event, categories }: Props) {
                                 </p>
                             )}
                             <a
-                                href={`/registration-orders/${payment.orderId}/status`}
+                                href={orderStatus.url(payment.orderId)}
                                 className="text-sm font-medium text-neutral-500 underline-offset-2 hover:underline"
                             >
                                 {t('Check order status')}

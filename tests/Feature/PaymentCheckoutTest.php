@@ -5,7 +5,9 @@ namespace Tests\Feature;
 use App\Models\Payment;
 use App\Models\Registration;
 use App\Services\Payments\PaymentCheckoutService;
+use App\Services\Payments\PaymentGatewayManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -48,10 +50,51 @@ class PaymentCheckoutTest extends TestCase
         $this->assertEquals('ps-test-123', $payment->provider_session_id);
     }
 
+    public function test_midtrans_checkout_remains_compatible_with_neutral_payables(): void
+    {
+        Http::fake([
+            'app.sandbox.midtrans.com/snap/v1/transactions' => Http::response([
+                'token' => 'snap-neutral-123',
+            ], 201),
+        ]);
+
+        config(['payments.gateway' => 'midtrans']);
+
+        $registration = Registration::factory()->create();
+
+        $result = app(PaymentCheckoutService::class)->getOrCreateCheckout(
+            $registration,
+            'https://example.com/success',
+            'https://example.com/failure'
+        );
+
+        $this->assertTrue($result->success);
+        $this->assertEquals('snap-neutral-123', $result->sessionId);
+
+        $payment = $registration->payments()->firstOrFail();
+
+        $this->assertEquals(Payment::PROVIDER_MIDTRANS, $payment->provider);
+        $this->assertEquals('snap-neutral-123', $payment->snap_token);
+        $this->assertEquals(Payment::CHECKOUT_READY, $payment->checkout_state);
+    }
+
+    public function test_xendit_is_not_resolved_until_it_is_used(): void
+    {
+        config([
+            'payments.gateway' => 'midtrans',
+            'services.xendit.secret_key' => null,
+        ]);
+
+        $manager = app(PaymentGatewayManager::class);
+
+        $this->assertTrue($manager->hasProvider(Payment::PROVIDER_XENDIT));
+        $this->assertEquals(Payment::PROVIDER_MIDTRANS, $manager->defaultGateway()->getProvider());
+    }
+
     public function test_reuses_active_checkout(): void
     {
         $registration = Registration::factory()->create();
-        
+
         // Create existing active checkout
         $existingPayment = Payment::factory()->create([
             'payable_type' => Registration::class,
@@ -97,7 +140,7 @@ class PaymentCheckoutTest extends TestCase
         config(['payments.gateway' => 'xendit']);
 
         $registration = Registration::factory()->create();
-        
+
         // Create expired checkout
         Payment::factory()->create([
             'payable_type' => Registration::class,
@@ -128,7 +171,7 @@ class PaymentCheckoutTest extends TestCase
     public function test_returns_preparing_when_lease_active(): void
     {
         $registration = Registration::factory()->create();
-        
+
         // Create payment with active creation lease
         Payment::factory()->create([
             'payable_type' => Registration::class,
@@ -192,12 +235,94 @@ class PaymentCheckoutTest extends TestCase
         );
 
         $payment = Payment::where('payable_id', $registration->id)->first();
-        
+
         $this->assertNotNull($payment->request_snapshot);
         $this->assertIsArray($payment->request_snapshot);
         $this->assertArrayHasKey('amount', $payment->request_snapshot);
         $this->assertArrayHasKey('currency', $payment->request_snapshot);
+        $this->assertArrayHasKey('items', $payment->request_snapshot);
+        $this->assertArrayHasKey('customer', $payment->request_snapshot);
         $this->assertArrayHasKey('created_at', $payment->request_snapshot);
+    }
+
+    public function test_replacement_attempt_reuses_the_original_purchase_snapshot(): void
+    {
+        Http::fake([
+            'api.xendit.co/sessions' => Http::response([
+                'payment_session_id' => 'ps-frozen',
+                'payment_link_url' => 'https://checkout.xendit.co/v2/ps-frozen',
+                'status' => 'ACTIVE',
+                'expires_at' => now()->addMinutes(30)->toISOString(),
+            ], 200),
+        ]);
+
+        config(['payments.gateway' => 'xendit']);
+
+        $registration = Registration::factory()->create();
+        $registration->registrationCategory->update(['price' => 150000]);
+
+        $original = $registration->payments()->create([
+            'provider' => Payment::PROVIDER_XENDIT,
+            'order_id' => 'ORIGINAL-FROZEN',
+            'amount' => 100000,
+            'status' => Payment::STATUS_PENDING,
+            'checkout_state' => Payment::CHECKOUT_FAILED,
+            'request_snapshot' => [
+                'amount' => 100000,
+                'currency' => 'IDR',
+                'description' => 'Original registration',
+                'items' => [[
+                    'reference_id' => 'registration',
+                    'name' => 'Original registration',
+                    'quantity' => 1,
+                    'unit_amount' => 100000,
+                ]],
+                'customer' => [
+                    'email' => 'original@example.com',
+                    'given_names' => 'Original Customer',
+                ],
+                'created_at' => now()->subHour()->toISOString(),
+            ],
+        ]);
+
+        $result = app(PaymentCheckoutService::class)->getOrCreateCheckout(
+            $registration,
+            'https://example.com/success',
+            'https://example.com/failure'
+        );
+
+        $this->assertTrue($result->success);
+
+        $replacement = $registration->payments()->whereKeyNot($original->id)->firstOrFail();
+
+        $this->assertEquals(100000, (int) $replacement->amount);
+        $this->assertEquals($original->request_snapshot, $replacement->request_snapshot);
+
+        Http::assertSent(fn ($request) => $request['amount'] === 100000
+            && $request['items'][0]['net_unit_amount'] === 100000
+            && $request['customer']['email'] === 'original@example.com');
+    }
+
+    public function test_network_timeout_marks_checkout_outcome_unknown(): void
+    {
+        Http::fake(fn () => throw new ConnectionException('Connection timeout'));
+
+        config(['payments.gateway' => 'xendit']);
+
+        $registration = Registration::factory()->create();
+
+        $result = app(PaymentCheckoutService::class)->getOrCreateCheckout(
+            $registration,
+            'https://example.com/success',
+            'https://example.com/failure'
+        );
+
+        $this->assertFalse($result->success);
+        $this->assertEquals('unknown_outcome', $result->errorCode);
+        $this->assertEquals(
+            Payment::CHECKOUT_UNKNOWN,
+            $registration->payments()->firstOrFail()->checkout_state,
+        );
     }
 
     public function test_generates_unique_order_ids(): void

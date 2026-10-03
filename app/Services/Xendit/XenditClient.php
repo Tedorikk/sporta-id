@@ -2,6 +2,7 @@
 
 namespace App\Services\Xendit;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -14,9 +15,12 @@ use RuntimeException;
  */
 class XenditClient
 {
-    private string $secretKey;
+    private ?string $secretKey;
+
     private string $baseUrl;
+
     private int $connectTimeout;
+
     private int $timeout;
 
     public function __construct()
@@ -26,16 +30,14 @@ class XenditClient
         $this->connectTimeout = config('services.xendit.connect_timeout_seconds', 5);
         $this->timeout = config('services.xendit.timeout_seconds', 15);
 
-        if (empty($this->secretKey)) {
-            throw new RuntimeException('Xendit secret key is not configured');
-        }
     }
 
     /**
      * Create a new payment session.
      *
-     * @param array $data Session creation payload
+     * @param  array  $data  Session creation payload
      * @return array Session response with payment_session_id, payment_link_url, etc.
+     *
      * @throws RuntimeException on API errors
      */
     public function createSession(array $data): array
@@ -70,8 +72,9 @@ class XenditClient
     /**
      * Retrieve a payment session by ID.
      *
-     * @param string $sessionId Payment session ID (ps-...)
+     * @param  string  $sessionId  Payment session ID (ps-...)
      * @return array Session data with current status
+     *
      * @throws RuntimeException on API errors
      */
     public function retrieveSession(string $sessionId): array
@@ -96,8 +99,9 @@ class XenditClient
     /**
      * Cancel a payment session.
      *
-     * @param string $sessionId Payment session ID (ps-...)
+     * @param  string  $sessionId  Payment session ID (ps-...)
      * @return array Canceled session data
+     *
      * @throws RuntimeException on API errors
      */
     public function cancelSession(string $sessionId): array
@@ -124,14 +128,22 @@ class XenditClient
      */
     private function request(string $method, string $path, ?array $data = null)
     {
-        $url = $this->baseUrl . $path;
+        if (empty($this->secretKey)) {
+            throw new RuntimeException('Xendit secret key is not configured');
+        }
 
-        return Http::withBasicAuth($this->secretKey, '')
-            ->acceptJson()
-            ->contentType('application/json')
-            ->connectTimeout($this->connectTimeout)
-            ->timeout($this->timeout)
-            ->send($method, $url, $data ? ['json' => $data] : []);
+        $url = $this->baseUrl.$path;
+
+        try {
+            return Http::withBasicAuth($this->secretKey, '')
+                ->acceptJson()
+                ->contentType('application/json')
+                ->connectTimeout($this->connectTimeout)
+                ->timeout($this->timeout)
+                ->send($method, $url, $data ? ['json' => $data] : []);
+        } catch (ConnectionException $exception) {
+            throw new RuntimeException('Xendit connection failed: '.$exception->getMessage(), previous: $exception);
+        }
     }
 
     /**

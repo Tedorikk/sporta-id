@@ -1,13 +1,8 @@
 import { Head } from '@inertiajs/react';
 import axios from 'axios';
-import {
-    CheckCircle2,
-    Clock,
-    Loader2,
-    Ticket,
-    XCircle,
-} from 'lucide-react';
+import { CheckCircle2, Clock, Loader2, Ticket, XCircle } from 'lucide-react';
 import { useState } from 'react';
+import { pay } from '@/actions/App/Http/Controllers/GroupRegistrationController';
 import { PayLinkShare } from '@/components/public/pay-link-share';
 import { PublicPageHeader } from '@/components/public/public-page-header';
 import { Button } from '@/components/ui/button';
@@ -24,11 +19,13 @@ interface Props {
 const STATUS_COPY: Record<string, { label: string; description: string }> = {
     pending_payment: {
         label: 'Payment Pending',
-        description: 'Complete your payment to confirm every participant below.',
+        description:
+            'Complete your payment to confirm every participant below.',
     },
     confirmed: {
         label: 'Confirmed',
-        description: 'This order is confirmed — every participant below is registered.',
+        description:
+            'This order is confirmed — every participant below is registered.',
     },
     rejected: {
         label: 'Rejected',
@@ -45,8 +42,10 @@ const STATUS_COPY: Record<string, { label: string; description: string }> = {
 };
 
 interface PayResponse {
-    snap_token: string;
-    midtrans_client_key: string;
+    provider: 'midtrans' | 'xendit';
+    checkout_url: string | null;
+    snap_token: string | null;
+    midtrans_client_key: string | null;
     midtrans_is_production: boolean;
 }
 
@@ -81,14 +80,28 @@ export default function RegistrationOrderStatus({ order }: Props) {
         setIsPaying(true);
 
         axios
-            .post<PayResponse>(`/registration-orders/${order.qr_token}/pay`)
-            .then(({ data }) =>
-                loadSnapScript(
+            .post<PayResponse>(pay.url(order))
+            .then(({ data }) => {
+                if (data.provider === 'xendit' && data.checkout_url) {
+                    window.location.assign(data.checkout_url);
+
+                    return null;
+                }
+
+                if (!data.snap_token || !data.midtrans_client_key) {
+                    throw new Error('Payment checkout is unavailable.');
+                }
+
+                return loadSnapScript(
                     data.midtrans_client_key,
                     data.midtrans_is_production,
-                ).then(() => data),
-            )
+                ).then(() => data);
+            })
             .then((data) => {
+                if (!data?.snap_token) {
+                    return;
+                }
+
                 window.snap?.pay(data.snap_token, {
                     onSuccess: () => window.location.reload(),
                     onPending: () => window.location.reload(),

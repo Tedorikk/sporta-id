@@ -2,7 +2,7 @@
 
 **Migration started:** 2026-10-02  
 **Target completion:** TBD  
-**Current sprint:** Sprint 3
+**Current sprint:** Sprint 4 (in progress)
 
 ## Sprint 0: Foundation & Verification ✅
 
@@ -146,7 +146,7 @@
 - [x] Schema migrations tested locally
 - [x] Backfill command dry-run verified
 - [x] No breaking changes to existing payment flows (legacy still works)
-- [x] Existing tests still pass (to be verified in CI)
+- [ ] Full existing test suite passes (full local run exceeded the 5-minute harness limit; focused payment/controller suites pass)
 - [ ] Code review completed
 - [ ] Deploy schema changes to staging
 - [ ] Run backfill in staging (dry-run first)
@@ -239,7 +239,7 @@
 - [x] Xendit gateway registered and accessible
 - [x] Checkout service tested with HTTP fakes
 - [x] No automatic switch to Xendit yet (still creating with Midtrans by default)
-- [x] 14 test cases passing (XenditClient + PaymentCheckout)
+- [x] Focused Xendit client and checkout tests passing
 - [ ] Code review completed
 - [ ] Deploy to staging
 - [ ] Smoke test checkout service manually (don't activate in production flows yet)
@@ -248,7 +248,7 @@
 **Sprint 2 Completed:** 2026-10-03  
 **Status:** Xendit integration complete. Dormant until controllers updated and webhooks deployed. Safe to deploy with no production impact.
 
-## Sprint 3: Webhooks, Reconciliation & Effects ✅
+## Sprint 3: Webhooks, Reconciliation & Effects (implementation complete; verification pending)
 
 ### Webhook Handling
 - [x] Create `app/Http/Requests/XenditWebhookRequest.php`
@@ -380,8 +380,9 @@
 - [ ] Monitor error rates
 - [ ] Still using Midtrans for production (Xendit infrastructure complete, not active)
 
-**Sprint 3 Completed:** 2026-10-03  
-**Status:** Complete payment lifecycle implemented. Webhook → Reconciliation → Effects working end-to-end. Ready for controller integration in Sprint 4.
+**Sprint 3 Implementation Completed:** 2026-10-03
+
+**Status:** Lifecycle code is implemented, but the dedicated webhook, reconciliation, and effect-recovery test files below are still required before Sprint 3 is considered verified.
 
 ### Routes & Middleware
 - [ ] Add webhook route to `routes/web.php`
@@ -429,35 +430,35 @@
 
 ### Frontend Updates
 - [ ] Create `resources/js/lib/payment-checkout.ts`
-  - [ ] Hosted URL navigation (full-page redirect)
-  - [ ] Temporary legacy Snap branch
-  - [ ] Provider-aware flow selection
+  - [x] Hosted URL navigation (implemented directly in current pages)
+  - [x] Temporary legacy Snap branch (implemented directly in current pages)
+  - [x] Provider-aware flow selection (implemented directly in current pages)
 - [ ] Create `resources/js/components/public/payment-checkout-button.tsx`
   - [ ] Loading states
   - [ ] Retry button
   - [ ] Unavailable state
   - [ ] Resume existing checkout
   - [ ] Error display
-- [ ] Update payment-related pages to use new checkout flow
-  - [ ] Registration payment page
-  - [ ] Group registration payment page
-  - [ ] Vote payment page
-  - [ ] Payment status page (provider-neutral display)
+- [x] Update public payment-related pages to use the dual-provider checkout flow
+  - [x] Registration payment page
+  - [x] Group registration payment page
+  - [x] Vote payment page
+  - [x] Registration/order payment status pages
   - [ ] Payment history page (show provider)
 
 ### Controller Updates
-- [ ] Update `app/Http/Controllers/RegistrationController.php`
-  - [ ] Use `PaymentCheckoutService` for new payments
-  - [ ] Return neutral `CheckoutResult`
-  - [ ] Use `PaymentResource` for responses
+- [x] Update `app/Http/Controllers/RegistrationController.php`
+  - [x] Use `PaymentCheckoutService` for new payments
+  - [x] Return provider-aware checkout payload
+  - [x] Use `PaymentResource` on the status page
   - [ ] Handle deletion with active remote checkout safely
-- [ ] Update `app/Http/Controllers/GroupRegistrationController.php`
-  - [ ] Use checkout service
-  - [ ] Immutable group total
-  - [ ] Per-participant items in snapshot
-- [ ] Update `app/Http/Controllers/VoteController.php`
-  - [ ] Use checkout service
-  - [ ] Freeze amount/quantity
+- [x] Update `app/Http/Controllers/GroupRegistrationController.php`
+  - [x] Use checkout service
+  - [x] Immutable group total
+  - [x] Per-participant items in snapshot
+- [x] Update `app/Http/Controllers/VoteController.php`
+  - [x] Use checkout service
+  - [x] Freeze amount/quantity in the payment snapshot
   - [ ] Voting cutoff handling
 - [ ] Update `app/Http/Controllers/PaymentNotificationController.php`
   - [ ] Add legacy-only guard
@@ -508,7 +509,7 @@
   - [ ] Category normalization
   - [ ] Backward compatibility
   - [ ] Idempotency
-- [ ] Update existing feature tests for new controller flow
+- [x] Update existing feature tests for the dual-provider controller flow
 - [ ] Browser test coverage for checkout UX
 
 ### Deployment Checklist (Sprint 4)
@@ -520,6 +521,8 @@
 - [ ] Browser tests passing
 - [ ] Manual UX verification in staging
 - [ ] Ready for cutover
+
+**Verified locally on 2026-10-03:** 79 focused checkout/Xendit/controller tests (361 assertions), TypeScript type-check, targeted ESLint/Prettier, Pint, and production Vite build. The full Pest suite exceeded the 5-minute harness limit and is not recorded as passing.
 
 ## Sprint 5: Production Cutover & Coexistence Testing
 

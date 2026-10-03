@@ -7,6 +7,7 @@ use App\Services\Payments\CheckoutResult;
 use App\Services\Payments\Payable;
 use App\Services\Payments\PaymentGateway;
 use App\Services\Payments\PaymentOutcome;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
@@ -31,11 +32,15 @@ class XenditGateway implements PaymentGateway
     ): CheckoutResult {
         try {
             $sessionData = $this->buildSessionRequest($payment, $payable, $successUrl, $failureUrl);
-            
+
             $response = $this->client->createSession($sessionData);
 
             return $this->mapSessionToCheckoutResult($response);
         } catch (RuntimeException $e) {
+            if ($e->getPrevious() instanceof ConnectionException) {
+                throw $e;
+            }
+
             Log::error('[XenditGateway] Checkout creation failed', [
                 'payment_id' => $payment->id,
                 'order_id' => $payment->order_id,
@@ -61,13 +66,13 @@ class XenditGateway implements PaymentGateway
 
     public function retrieveStatus(Payment $payment): PaymentOutcome
     {
-        if (!$payment->provider_session_id) {
+        if (! $payment->provider_session_id) {
             throw new RuntimeException("Payment {$payment->order_id} has no Xendit session ID");
         }
 
         try {
             $session = $this->client->retrieveSession($payment->provider_session_id);
-            
+
             return $this->mapper->mapSessionToOutcome($session);
         } catch (RuntimeException $e) {
             Log::error('[XenditGateway] Status retrieval failed', [
@@ -82,13 +87,13 @@ class XenditGateway implements PaymentGateway
 
     public function cancelCheckout(Payment $payment): PaymentOutcome
     {
-        if (!$payment->provider_session_id) {
+        if (! $payment->provider_session_id) {
             throw new RuntimeException("Payment {$payment->order_id} has no Xendit session ID");
         }
 
         try {
             $session = $this->client->cancelSession($payment->provider_session_id);
-            
+
             return $this->mapper->mapSessionToOutcome($session);
         } catch (RuntimeException $e) {
             Log::error('[XenditGateway] Session cancellation failed', [
@@ -115,13 +120,14 @@ class XenditGateway implements PaymentGateway
         string $successUrl,
         string $failureUrl
     ): array {
-        $items = $this->formatItems($payable->getPaymentItems($payment));
-        $customer = $this->formatCustomer($payable->getPaymentCustomer());
-        $amount = $payable->getPaymentAmount();
+        $snapshot = $payment->request_snapshot ?? [];
+        $items = $this->formatItems($snapshot['items'] ?? $payable->getPaymentItems($payment));
+        $customer = $this->formatCustomer($snapshot['customer'] ?? $payable->getPaymentCustomer());
+        $amount = (int) ($snapshot['amount'] ?? $payment->amount);
 
         // Validate total matches items
         $itemsTotal = array_sum(array_map(
-            fn($item) => $item['net_unit_amount'] * $item['quantity'],
+            fn ($item) => $item['net_unit_amount'] * $item['quantity'],
             $items
         ));
 
@@ -149,7 +155,7 @@ class XenditGateway implements PaymentGateway
             'failure_return_url' => $failureUrl,
             'metadata' => [
                 'payment_id' => $payment->id,
-                'description' => $payable->getPaymentDescription(),
+                'description' => $snapshot['description'] ?? $payable->getPaymentDescription(),
             ],
         ];
     }
@@ -182,12 +188,12 @@ class XenditGateway implements PaymentGateway
         ];
 
         // Add optional surname if provided
-        if (!empty($customer['surname'])) {
+        if (! empty($customer['surname'])) {
             $formatted['surname'] = $customer['surname'];
         }
 
         // Add mobile number if provided and format to E.164
-        if (!empty($customer['mobile_number'])) {
+        if (! empty($customer['mobile_number'])) {
             $formatted['mobile_number'] = $this->formatPhoneNumber($customer['mobile_number']);
         }
 
@@ -206,17 +212,17 @@ class XenditGateway implements PaymentGateway
         // Handle Indonesian numbers
         if (str_starts_with($phone, '0')) {
             // Replace leading 0 with +62
-            return '+62' . substr($phone, 1);
+            return '+62'.substr($phone, 1);
         } elseif (str_starts_with($phone, '62')) {
             // Add + prefix
-            return '+' . $phone;
+            return '+'.$phone;
         } elseif (strlen($phone) >= 10) {
             // Assume Indonesian number without prefix
-            return '+62' . $phone;
+            return '+62'.$phone;
         }
 
         // Return as-is if we can't determine format (will fail validation at Xendit)
-        return '+' . $phone;
+        return '+'.$phone;
     }
 
     /**
@@ -225,7 +231,7 @@ class XenditGateway implements PaymentGateway
     private function calculateSessionExpiry(): \DateTimeImmutable
     {
         $sessionTtlMinutes = config('payments.session_ttl_minutes', 30);
-        
+
         return now()->addMinutes($sessionTtlMinutes)->toDateTimeImmutable();
     }
 
@@ -236,16 +242,16 @@ class XenditGateway implements PaymentGateway
     {
         $sessionId = $session['payment_session_id'] ?? null;
         $checkoutUrl = $session['payment_link_url'] ?? null;
-        $expiresAt = isset($session['expires_at']) 
-            ? new \DateTimeImmutable($session['expires_at']) 
+        $expiresAt = isset($session['expires_at'])
+            ? new \DateTimeImmutable($session['expires_at'])
             : null;
 
-        if (!$sessionId || !$checkoutUrl) {
+        if (! $sessionId || ! $checkoutUrl) {
             throw new RuntimeException('Xendit session missing required fields');
         }
 
         // Validate checkout URL is HTTPS and from Xendit
-        if (!$this->isValidCheckoutUrl($checkoutUrl)) {
+        if (! $this->isValidCheckoutUrl($checkoutUrl)) {
             throw new RuntimeException('Invalid checkout URL from Xendit');
         }
 
@@ -263,7 +269,7 @@ class XenditGateway implements PaymentGateway
     {
         $parsed = parse_url($url);
 
-        if (!$parsed || ($parsed['scheme'] ?? '') !== 'https') {
+        if (! $parsed || ($parsed['scheme'] ?? '') !== 'https') {
             return false;
         }
 

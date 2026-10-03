@@ -5,12 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Attendee;
 use App\Models\Award;
 use App\Models\Event;
+use App\Models\Payment;
 use App\Models\Registration;
 use App\Models\Vote;
-use App\Services\Midtrans\MidtransClient;
+use App\Services\Payments\PaymentCheckoutService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
@@ -26,7 +26,7 @@ use Inertia\Inertia;
  */
 class VoteController extends Controller
 {
-    public function __construct(private readonly MidtransClient $midtrans) {}
+    public function __construct(private readonly PaymentCheckoutService $checkoutService) {}
 
     public function create(Request $request, Event $event, Award $award)
     {
@@ -109,7 +109,7 @@ class VoteController extends Controller
         $vote = $award->votes()->create([
             'award_nominee_id' => $validated['award_nominee_id'],
             'quantity' => $award->is_paid ? $validated['quantity'] : 1,
-            // A free vote counts immediately; a paid one only once Midtrans
+            // A free vote counts immediately; a paid one only once the gateway
             // settles it, so an abandoned checkout never reaches a tally.
             'status' => $award->is_paid ? Vote::STATUS_PENDING : Vote::STATUS_COUNTED,
             'voter_type' => $voter === null ? null : $voter::class,
@@ -133,7 +133,7 @@ class VoteController extends Controller
     }
 
     /**
-     * Hands the browser a Snap token for a pending vote. Separate from store()
+     * Creates or resumes checkout for a pending vote. Separate from store()
      * so an abandoned checkout can be resumed from the status page rather than
      * stranding the voter with an unpayable vote.
      */
@@ -143,18 +143,26 @@ class VoteController extends Controller
 
         abort_unless($vote->status === Vote::STATUS_PENDING, 403, 'This vote is not awaiting payment.');
 
-        $payment = $vote->payments()->create([
-            'order_id' => 'VOTE-'.$vote->id.'-'.Str::random(6),
-            'amount' => $vote->amount,
-        ]);
+        $result = $this->checkoutService->getOrCreateCheckout(
+            $vote,
+            route('votes.status', $vote),
+            route('votes.status', $vote),
+        );
 
-        $payment->setRelation('payable', $vote);
+        if (! $result->success) {
+            return response()->json([
+                'error' => $result->error,
+                'can_retry' => $result->canRetry,
+            ], $result->canRetry ? 503 : 400);
+        }
 
-        $payment->snap_token = $this->midtrans->createSnapTransaction($payment);
-        $payment->save();
+        $provider = $vote->payments()->latest('id')->value('provider');
 
         return response()->json([
-            'snap_token' => $payment->snap_token,
+            'provider' => $provider,
+            'checkout_url' => $provider === Payment::PROVIDER_XENDIT ? $result->checkoutUrl : null,
+            'snap_token' => $provider === Payment::PROVIDER_MIDTRANS ? $result->sessionId : null,
+            'expires_at' => $result->expiresAt?->format(DATE_ATOM),
             'midtrans_client_key' => config('services.midtrans.client_key'),
             'midtrans_is_production' => (bool) config('services.midtrans.is_production'),
         ]);

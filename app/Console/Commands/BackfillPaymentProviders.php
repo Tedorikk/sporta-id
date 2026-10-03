@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Models\Payment;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 class BackfillPaymentProviders extends Command
 {
@@ -39,8 +38,8 @@ class BackfillPaymentProviders extends Command
 
         $stats = [
             'total' => 0,
-            'midtrans' => 0,
-            'manual' => 0,
+            Payment::PROVIDER_MIDTRANS => 0,
+            Payment::PROVIDER_MANUAL => 0,
             'ambiguous' => 0,
             'already_set' => 0,
         ];
@@ -51,6 +50,7 @@ class BackfillPaymentProviders extends Command
 
         if ($totalPayments === 0) {
             $this->info('No payments need backfilling.');
+
             return self::SUCCESS;
         }
 
@@ -63,9 +63,9 @@ class BackfillPaymentProviders extends Command
             ->chunkById($chunkSize, function ($payments) use ($dryRun, &$stats, &$ambiguous, $progressBar) {
                 foreach ($payments as $payment) {
                     $stats['total']++;
-                    
+
                     $provider = $this->determineProvider($payment);
-                    
+
                     if ($provider === 'ambiguous') {
                         $stats['ambiguous']++;
                         $ambiguous[] = [
@@ -73,20 +73,20 @@ class BackfillPaymentProviders extends Command
                             'order_id' => $payment->order_id,
                             'status' => $payment->status,
                             'amount' => $payment->amount,
-                            'has_snap_token' => !empty($payment->snap_token),
-                            'has_transaction_id' => !empty($payment->midtrans_transaction_id),
-                            'has_proof' => !empty($payment->proof_path),
+                            'has_snap_token' => ! empty($payment->snap_token),
+                            'has_transaction_id' => ! empty($payment->midtrans_transaction_id),
+                            'has_proof' => ! empty($payment->proof_path),
                             'verified_by' => $payment->verified_by,
                             'created_at' => $payment->created_at,
                         ];
                     } else {
                         $stats[$provider]++;
-                        
-                        if (!$dryRun) {
+
+                        if (! $dryRun) {
                             $this->backfillPayment($payment, $provider);
                         }
                     }
-                    
+
                     $progressBar->advance();
                 }
             });
@@ -100,19 +100,19 @@ class BackfillPaymentProviders extends Command
             ['Category', 'Count'],
             [
                 ['Total processed', $stats['total']],
-                ['Midtrans', $stats['midtrans']],
-                ['Manual transfer', $stats['manual']],
+                ['Midtrans', $stats[Payment::PROVIDER_MIDTRANS]],
+                ['Manual transfer', $stats[Payment::PROVIDER_MANUAL]],
                 ['Ambiguous (needs review)', $stats['ambiguous']],
             ]
         );
 
         // Show ambiguous payments
-        if (!empty($ambiguous)) {
+        if (! empty($ambiguous)) {
             $this->newLine();
             $this->warn('Ambiguous payments requiring manual review:');
             $this->table(
                 ['ID', 'Order ID', 'Status', 'Amount', 'Has Snap', 'Has TX ID', 'Has Proof', 'Verified By', 'Created'],
-                array_map(fn($p) => [
+                array_map(fn ($p) => [
                     $p['id'],
                     $p['order_id'],
                     $p['status'],
@@ -141,24 +141,24 @@ class BackfillPaymentProviders extends Command
      */
     private function determineProvider(Payment $payment): string
     {
-        $hasSnapToken = !empty($payment->snap_token);
-        $hasMidtransId = !empty($payment->midtrans_transaction_id);
-        $hasProof = !empty($payment->proof_path);
-        $isVerified = !empty($payment->verified_by);
+        $hasSnapToken = ! empty($payment->snap_token);
+        $hasMidtransId = ! empty($payment->midtrans_transaction_id);
+        $hasProof = ! empty($payment->proof_path);
+        $isVerified = ! empty($payment->verified_by);
 
         // Clear Midtrans: has Snap token or Midtrans transaction ID
         if ($hasSnapToken || $hasMidtransId) {
-            return 'midtrans';
+            return Payment::PROVIDER_MIDTRANS;
         }
 
         // Clear manual transfer: has proof upload and manual verification
         if ($hasProof && $isVerified) {
-            return 'manual';
+            return Payment::PROVIDER_MANUAL;
         }
 
         // Manual transfer without proof: verified but no online payment evidence
-        if ($isVerified && !$hasSnapToken && !$hasMidtransId) {
-            return 'manual';
+        if ($isVerified && ! $hasSnapToken && ! $hasMidtransId) {
+            return Payment::PROVIDER_MANUAL;
         }
 
         // Pending payment with no evidence - could be failed Midtrans creation or manual
@@ -193,20 +193,20 @@ class BackfillPaymentProviders extends Command
         ];
 
         // Copy Midtrans transaction ID to provider_payment_id for historical reference
-        if ($provider === 'midtrans' && $payment->midtrans_transaction_id) {
+        if ($provider === Payment::PROVIDER_MIDTRANS && $payment->midtrans_transaction_id) {
             $updates['provider_payment_id'] = $payment->midtrans_transaction_id;
-            
+
             // Determine mode from config or assume production for old payments
             $updates['provider_mode'] = config('services.midtrans.is_production') ? 'live' : 'test';
         }
 
         // Set checkout state for historical records
-        if ($provider === 'manual') {
+        if ($provider === Payment::PROVIDER_MANUAL) {
             $updates['checkout_state'] = Payment::CHECKOUT_CLOSED;
         } elseif ($payment->status === Payment::STATUS_SETTLEMENT) {
             $updates['checkout_state'] = Payment::CHECKOUT_CLOSED;
             $updates['fulfillment_state'] = Payment::FULFILLMENT_FULFILLED;
-        } elseif (in_array($payment->status, [Payment::STATUS_EXPIRE, Payment::STATUS_CANCEL])) {
+        } elseif (in_array($payment->status, [Payment::STATUS_EXPIRE, Payment::STATUS_CANCEL], true)) {
             $updates['checkout_state'] = Payment::CHECKOUT_CLOSED;
         }
 

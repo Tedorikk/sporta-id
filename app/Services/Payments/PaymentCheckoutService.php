@@ -3,8 +3,10 @@
 namespace App\Services\Payments;
 
 use App\Models\Payment;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use RuntimeException;
 
 /**
  * Manages payment checkout creation with deduplication and concurrency control.
@@ -21,9 +23,9 @@ class PaymentCheckoutService
     /**
      * Get or create a checkout session for a payable.
      *
-     * @param Payable $payable The item being purchased
-     * @param string $successUrl Where to redirect after payment
-     * @param string $failureUrl Where to redirect after cancel/failure
+     * @param  Payable  $payable  The item being purchased
+     * @param  string  $successUrl  Where to redirect after payment
+     * @param  string  $failureUrl  Where to redirect after cancel/failure
      * @return CheckoutResult Checkout URL and metadata, or error
      */
     public function getOrCreateCheckout(
@@ -32,12 +34,13 @@ class PaymentCheckoutService
         string $failureUrl
     ): CheckoutResult {
         // Check if checkout is globally disabled
-        if (!config('payments.checkout_enabled', true)) {
+        if (! config('payments.checkout_enabled', true)) {
             return CheckoutResult::unavailable();
         }
 
-        // Find or create a payment attempt
-        return DB::transaction(function () use ($payable, $successUrl, $failureUrl) {
+        // Hold the payable lock only while selecting an attempt and acquiring
+        // its creation lease. Provider HTTP calls must happen after commit.
+        $paymentOrResult = DB::transaction(function () use ($payable) {
             // Lock the payable to prevent concurrent checkout creation
             $payable = $this->lockPayable($payable);
 
@@ -63,10 +66,18 @@ class PaymentCheckoutService
                 if ($this->hasActiveCreationLease($payment)) {
                     return CheckoutResult::preparing();
                 }
+
+                if ($payment->checkout_state === Payment::CHECKOUT_UNKNOWN) {
+                    return CheckoutResult::error(
+                        message: 'The previous checkout attempt has an unknown outcome and requires reconciliation.',
+                        code: 'unknown_outcome',
+                        canRetry: false,
+                    );
+                }
             }
 
             // Create new payment attempt if none exists or previous expired
-            if (!$payment || $this->shouldCreateNewAttempt($payment)) {
+            if (! $payment || $this->shouldCreateNewAttempt($payment)) {
                 $payment = $this->createPaymentAttempt($payable);
             }
 
@@ -76,8 +87,12 @@ class PaymentCheckoutService
             return $payment;
         });
 
+        if ($paymentOrResult instanceof CheckoutResult) {
+            return $paymentOrResult;
+        }
+
         // Perform remote checkout creation outside the transaction lock
-        return $this->performCheckoutCreation($payment, $payable, $successUrl, $failureUrl);
+        return $this->performCheckoutCreation($paymentOrResult, $payable, $successUrl, $failureUrl);
     }
 
     /**
@@ -85,8 +100,21 @@ class PaymentCheckoutService
      */
     private function lockPayable(Payable $payable): Payable
     {
-        // Reload with pessimistic lock
-        return $payable->lockForUpdate()->fresh();
+        if (! $payable instanceof Model) {
+            throw new RuntimeException('Payable implementations must be Eloquent models.');
+        }
+
+        /** @var Payable|null $lockedPayable */
+        $lockedPayable = $payable->newQuery()
+            ->whereKey($payable->getKey())
+            ->lockForUpdate()
+            ->first();
+
+        if (! $lockedPayable instanceof Payable) {
+            throw new RuntimeException('The payable no longer exists.');
+        }
+
+        return $lockedPayable;
     }
 
     /**
@@ -96,14 +124,12 @@ class PaymentCheckoutService
     {
         return $payable->payments()
             ->where('status', Payment::STATUS_PENDING)
-            ->whereIn('checkout_state', [
-                Payment::CHECKOUT_CREATING,
-                Payment::CHECKOUT_READY,
-                Payment::CHECKOUT_UNKNOWN,
-            ])
-            ->orWhere(function ($query) {
-                $query->where('status', Payment::STATUS_PENDING)
-                    ->whereNull('checkout_state');
+            ->where(function ($query) {
+                $query->whereIn('checkout_state', [
+                    Payment::CHECKOUT_CREATING,
+                    Payment::CHECKOUT_READY,
+                    Payment::CHECKOUT_UNKNOWN,
+                ])->orWhereNull('checkout_state');
             })
             ->latest()
             ->first();
@@ -124,12 +150,12 @@ class PaymentCheckoutService
     private function shouldCreateNewAttempt(Payment $payment): bool
     {
         // Create new attempt if previous is in terminal state
-        if (in_array($payment->checkout_state, [Payment::CHECKOUT_FAILED, Payment::CHECKOUT_CLOSED])) {
+        if (in_array($payment->checkout_state, [Payment::CHECKOUT_FAILED, Payment::CHECKOUT_CLOSED], true)) {
             return true;
         }
 
         // Create new attempt if checkout expired
-        if ($payment->checkout_state === Payment::CHECKOUT_READY 
+        if ($payment->checkout_state === Payment::CHECKOUT_READY
             && $payment->checkout_expires_at?->isPast()) {
             return true;
         }
@@ -150,9 +176,12 @@ class PaymentCheckoutService
     {
         $gateway = $this->gatewayManager->defaultGateway();
         $provider = $gateway->getProvider();
-
         $orderId = $this->generateOrderId();
-        $amount = $payable->getPaymentAmount();
+        $previousPayment = $payable->payments()->latest('id')->first();
+        $previousSnapshot = $previousPayment?->request_snapshot;
+        $amount = isset($previousSnapshot['amount'])
+            ? (int) $previousSnapshot['amount']
+            : $payable->getPaymentAmount();
 
         Log::info('[CheckoutService] Creating new payment attempt', [
             'provider' => $provider,
@@ -160,16 +189,25 @@ class PaymentCheckoutService
             'amount' => $amount,
         ]);
 
-        return $payable->payments()->create([
+        $payment = $payable->payments()->make([
             'order_id' => $orderId,
             'amount' => $amount,
             'currency' => config('payments.currency', 'IDR'),
             'status' => Payment::STATUS_PENDING,
             'provider' => $provider,
-            'provider_mode' => config('services.xendit.mode', 'test'),
+            'provider_mode' => $provider === Payment::PROVIDER_XENDIT
+                ? config('services.xendit.mode', 'test')
+                : null,
             'checkout_state' => Payment::CHECKOUT_CREATING,
-            'request_snapshot' => $this->createRequestSnapshot($payable),
         ]);
+
+        $payment->setRelation('payable', $payable);
+        $payment->request_snapshot = is_array($previousSnapshot)
+            ? $previousSnapshot
+            : $this->createRequestSnapshot($payable, $payment);
+        $payment->save();
+
+        return $payment;
     }
 
     /**
@@ -178,7 +216,7 @@ class PaymentCheckoutService
     private function acquireCreationLease(Payment $payment): void
     {
         $leaseMinutes = 5; // 5 minutes to complete creation
-        
+
         $payment->update([
             'checkout_state' => Payment::CHECKOUT_CREATING,
             'creation_lease_expires_at' => now()->addMinutes($leaseMinutes),
@@ -207,6 +245,9 @@ class PaymentCheckoutService
                     'checkout_expires_at' => $result->expiresAt,
                     'checkout_state' => Payment::CHECKOUT_READY,
                     'creation_lease_expires_at' => null,
+                    'snap_token' => $payment->provider === Payment::PROVIDER_MIDTRANS
+                        ? $result->sessionId
+                        : null,
                 ]);
 
                 Log::info('[CheckoutService] Checkout created successfully', [
@@ -242,7 +283,7 @@ class PaymentCheckoutService
             $payment->update([
                 'checkout_state' => Payment::CHECKOUT_UNKNOWN,
                 'creation_lease_expires_at' => null,
-                'review_reason' => 'Creation interrupted: ' . $e->getMessage(),
+                'review_reason' => 'Creation interrupted: '.$e->getMessage(),
             ]);
 
             return CheckoutResult::error(
@@ -256,14 +297,14 @@ class PaymentCheckoutService
     /**
      * Create immutable snapshot of payment request.
      */
-    private function createRequestSnapshot(Payable $payable): array
+    private function createRequestSnapshot(Payable $payable, Payment $payment): array
     {
-        // Create a minimal snapshot - avoid storing full PII
         return [
-            'amount' => $payable->getPaymentAmount(),
+            'amount' => (int) $payment->amount,
             'currency' => config('payments.currency', 'IDR'),
             'description' => $payable->getPaymentDescription(),
-            'item_count' => count($payable->getPaymentItems(new Payment())),
+            'items' => $payable->getPaymentItems($payment),
+            'customer' => $payable->getPaymentCustomer(),
             'created_at' => now()->toISOString(),
         ];
     }
@@ -276,7 +317,7 @@ class PaymentCheckoutService
         // Format: ORD-{timestamp}-{random}
         $timestamp = now()->format('YmdHis');
         $random = strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 6));
-        
+
         return "ORD-{$timestamp}-{$random}";
     }
 }

@@ -2,6 +2,7 @@
 
 use App\Mail\RegistrationConfirmed;
 use App\Models\Event;
+use App\Models\Payment;
 use App\Models\Registration;
 use App\Models\RegistrationCategory;
 use App\Models\RegistrationOrder;
@@ -61,7 +62,12 @@ test('a paid group order creates one payment for the summed total across partici
         ],
     ])->assertOk();
 
-    $response->assertJson(['status' => RegistrationOrder::STATUS_PENDING_PAYMENT, 'snap_token' => 'tok-order']);
+    $response->assertJson([
+        'status' => RegistrationOrder::STATUS_PENDING_PAYMENT,
+        'provider' => Payment::PROVIDER_MIDTRANS,
+        'checkout_url' => null,
+        'snap_token' => 'tok-order',
+    ]);
 
     $order = RegistrationOrder::sole();
     $payment = $order->payments()->sole();

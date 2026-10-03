@@ -3,6 +3,7 @@
 namespace App\Services\Midtrans;
 
 use App\Models\Payment;
+use App\Services\Payments\Payable as PaymentPayable;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\DB;
 
@@ -81,7 +82,7 @@ class PaymentReconciler
      * Loads the paid-for record with its row locked, so two notifications for
      * the same order can't both decide they were the one that settled it.
      */
-    private function lockPayable(Payment $payment): ?Payable
+    private function lockPayable(Payment $payment): ?PaymentPayable
     {
         if ($payment->payable_type === null || $payment->payable_id === null) {
             return null;
@@ -95,7 +96,7 @@ class PaymentReconciler
 
         $payable = $class::query()->whereKey($payment->payable_id)->lockForUpdate()->first();
 
-        return $payable instanceof Payable ? $payable : null;
+        return $payable instanceof PaymentPayable ? $payable : null;
     }
 
     private function resolvePaymentStatus(array $transaction): string

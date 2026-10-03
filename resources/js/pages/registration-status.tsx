@@ -2,6 +2,7 @@ import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import { CheckCircle2, Clock, Loader2, Users, XCircle } from 'lucide-react';
 import { useState } from 'react';
+import { pay } from '@/actions/App/Http/Controllers/RegistrationController';
 import { ManualPaymentPanel } from '@/components/public/manual-payment-panel';
 import { PayLinkShare } from '@/components/public/pay-link-share';
 import { PublicPageHeader } from '@/components/public/public-page-header';
@@ -48,8 +49,10 @@ const STATUS_COPY: Record<string, { label: string; description: string }> = {
 };
 
 interface PayResponse {
-    snap_token: string;
-    midtrans_client_key: string;
+    provider: 'midtrans' | 'xendit';
+    checkout_url: string | null;
+    snap_token: string | null;
+    midtrans_client_key: string | null;
     midtrans_is_production: boolean;
 }
 
@@ -59,8 +62,7 @@ export default function RegistrationStatus({ registration, payment }: Props) {
     const { t } = useT();
     const [isPaying, setIsPaying] = useState(false);
     const isManualPayment =
-        registration.registration_category.payment_method ===
-        'manual_transfer';
+        registration.registration_category.payment_method === 'manual_transfer';
 
     const copy = STATUS_COPY[registration.status] ?? STATUS_COPY.confirmed;
     const statusLabel = t(copy.label);
@@ -85,14 +87,28 @@ export default function RegistrationStatus({ registration, payment }: Props) {
         setIsPaying(true);
 
         axios
-            .post<PayResponse>(`/registrations/${registration.qr_token}/pay`)
-            .then(({ data }) =>
-                loadSnapScript(
+            .post<PayResponse>(pay.url(registration))
+            .then(({ data }) => {
+                if (data.provider === 'xendit' && data.checkout_url) {
+                    window.location.assign(data.checkout_url);
+
+                    return null;
+                }
+
+                if (!data.snap_token || !data.midtrans_client_key) {
+                    throw new Error('Payment checkout is unavailable.');
+                }
+
+                return loadSnapScript(
                     data.midtrans_client_key,
                     data.midtrans_is_production,
-                ).then(() => data),
-            )
+                ).then(() => data);
+            })
             .then((data) => {
+                if (!data?.snap_token) {
+                    return;
+                }
+
                 window.snap?.pay(data.snap_token, {
                     onSuccess: () => window.location.reload(),
                     onPending: () => window.location.reload(),
@@ -141,8 +157,7 @@ export default function RegistrationStatus({ registration, payment }: Props) {
                                 <ManualPaymentPanel
                                     qrToken={registration.qr_token}
                                     amount={
-                                        registration.registration_category
-                                            .price
+                                        registration.registration_category.price
                                     }
                                     instructions={
                                         registration.registration_category
@@ -150,9 +165,7 @@ export default function RegistrationStatus({ registration, payment }: Props) {
                                             ?.manual_payment_instructions
                                     }
                                     payment={payment}
-                                    onSubmitted={() =>
-                                        window.location.reload()
-                                    }
+                                    onSubmitted={() => window.location.reload()}
                                 />
                             )}
 
@@ -194,8 +207,7 @@ export default function RegistrationStatus({ registration, payment }: Props) {
                                                     registration
                                                         .registration_category
                                                         .name,
-                                                event: registration.event
-                                                    .name,
+                                                event: registration.event.name,
                                             },
                                         )}
                                     />

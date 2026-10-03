@@ -218,6 +218,8 @@ test('a paid category creates a pending-payment registration with a snap token',
             ->component('register-dynamic')
             ->where('confirmedRegistration.status', 'pending_payment')
             ->where('snapToken', 'snap-token-abc')
+            ->where('checkoutUrl', null)
+            ->where('provider', Payment::PROVIDER_MIDTRANS)
             ->where('cardTemplate', null)
         );
 

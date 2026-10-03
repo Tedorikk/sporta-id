@@ -1,18 +1,15 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Head, router } from '@inertiajs/react';
-import {
-    CheckCircle2,
-    Clock,
-    Loader2,
-    Lock,
-    Save,
-    Users,
-} from 'lucide-react';
+import { CheckCircle2, Clock, Loader2, Lock, Save, Users } from 'lucide-react';
 import QRCode from 'qrcode';
 import type { CSSProperties } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as z from 'zod';
+import {
+    status as registrationStatus,
+    store as storeRegistration,
+} from '@/actions/App/Http/Controllers/RegistrationController';
 import { RegistrationIdCardCard } from '@/components/id-card/registration-id-card-card';
 import { TeamIdCardCard } from '@/components/id-card/team-id-card-card';
 import { IdCardActions } from '@/components/id-card-actions';
@@ -99,6 +96,8 @@ interface Props {
     isTournament?: boolean;
     cardTemplate?: CardTemplate | null;
     snapToken?: string | null;
+    checkoutUrl?: string | null;
+    provider?: string | null;
     midtransClientKey?: string | null;
     midtransIsProduction?: boolean;
 }
@@ -108,6 +107,7 @@ function PaymentPendingView({
     registrationCategory,
     registration,
     snapToken,
+    checkoutUrl,
     midtransClientKey,
     midtransIsProduction,
     accentStyle,
@@ -116,6 +116,7 @@ function PaymentPendingView({
     registrationCategory: Props['registrationCategory'];
     registration: Registration;
     snapToken: string | null;
+    checkoutUrl: string | null;
     midtransClientKey: string | null;
     midtransIsProduction: boolean;
     accentStyle: CSSProperties;
@@ -124,6 +125,12 @@ function PaymentPendingView({
     const [isPaying, setIsPaying] = useState(false);
 
     const payNow = () => {
+        if (checkoutUrl) {
+            window.location.assign(checkoutUrl);
+
+            return;
+        }
+
         if (!snapToken || !midtransClientKey) {
             return;
         }
@@ -134,13 +141,9 @@ function PaymentPendingView({
             .then(() => {
                 window.snap?.pay(snapToken, {
                     onSuccess: () =>
-                        router.visit(
-                            `/registrations/${registration.qr_token}/status`,
-                        ),
+                        router.visit(registrationStatus.url(registration)),
                     onPending: () =>
-                        router.visit(
-                            `/registrations/${registration.qr_token}/status`,
-                        ),
+                        router.visit(registrationStatus.url(registration)),
                     onError: () => setIsPaying(false),
                     onClose: () => setIsPaying(false),
                 });
@@ -187,7 +190,7 @@ function PaymentPendingView({
                             )}
                         </p>
 
-                        {snapToken ? (
+                        {snapToken || checkoutUrl ? (
                             <Button
                                 type="button"
                                 onClick={payNow}
@@ -328,7 +331,8 @@ function RegistrationSuccessView({
     const cardRef = useRef<HTMLDivElement>(null);
     const [qrDataUrl, setQrDataUrl] = useState('');
     const team = registration.team ?? null;
-    const showCard = registrationCategory.form_settings?.post_submit_display !== 'message';
+    const showCard =
+        registrationCategory.form_settings?.post_submit_display !== 'message';
     const rosterField = rosterFieldOf(registrationCategory.form_pages ?? []);
     const teamMembersField = teamMembersFieldOf(
         registrationCategory.form_pages ?? [],
@@ -678,6 +682,7 @@ export default function RegisterDynamic({
     isTournament = false,
     cardTemplate,
     snapToken,
+    checkoutUrl,
     midtransClientKey,
     midtransIsProduction,
 }: Props) {
@@ -885,7 +890,7 @@ export default function RegisterDynamic({
         }
 
         router.post(
-            `/events/${event.id}/registration-categories/${registrationCategory.id}/register`,
+            storeRegistration.url([event, registrationCategory]),
             payload as never,
             {
                 onFinish: () => setIsSaving(false),
@@ -946,9 +951,7 @@ export default function RegisterDynamic({
             return;
         }
 
-        const firstInvalid = namesToCheck.find(
-            (k) => getFieldState(k).invalid,
-        );
+        const firstInvalid = namesToCheck.find((k) => getFieldState(k).invalid);
 
         if (firstInvalid) {
             requestAnimationFrame(() => scrollToField(firstInvalid as string));
@@ -969,6 +972,7 @@ export default function RegisterDynamic({
                 registrationCategory={registrationCategory}
                 registration={confirmedRegistration}
                 snapToken={snapToken ?? null}
+                checkoutUrl={checkoutUrl ?? null}
                 midtransClientKey={midtransClientKey ?? null}
                 midtransIsProduction={midtransIsProduction ?? false}
                 accentStyle={accentStyle}

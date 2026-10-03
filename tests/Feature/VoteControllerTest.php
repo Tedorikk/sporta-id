@@ -446,7 +446,11 @@ test('paying a pending vote returns a snap token for the full batch', function (
 
     $this->postJson(route('votes.pay', $vote))
         ->assertOk()
-        ->assertJson(['snap_token' => 'snap-vote-token']);
+        ->assertJson([
+            'provider' => Payment::PROVIDER_MIDTRANS,
+            'checkout_url' => null,
+            'snap_token' => 'snap-vote-token',
+        ]);
 
     $payment = $vote->payments()->firstOrFail();
 

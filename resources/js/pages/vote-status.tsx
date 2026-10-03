@@ -2,6 +2,7 @@ import { Head, router } from '@inertiajs/react';
 import { CheckCircle2, Clock, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
+import { pay } from '@/actions/App/Http/Controllers/VoteController';
 import { PublicPageHeader } from '@/components/public/public-page-header';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/hooks/use-t';
@@ -58,7 +59,7 @@ export default function VoteStatus({ vote, award, event }: Props) {
         // The Snap token is minted per attempt rather than stored on the page,
         // so an abandoned checkout can simply be retried from here.
         window
-            .fetch(`/votes/${vote.reference}/pay`, {
+            .fetch(pay.url(vote), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -71,8 +72,18 @@ export default function VoteStatus({ vote, award, event }: Props) {
                 },
             })
             .then((response) => response.json())
-            .then((payload) =>
-                loadSnapScript(
+            .then((payload) => {
+                if (payload.provider === 'xendit' && payload.checkout_url) {
+                    window.location.assign(payload.checkout_url);
+
+                    return null;
+                }
+
+                if (!payload.snap_token || !payload.midtrans_client_key) {
+                    throw new Error('Payment checkout is unavailable.');
+                }
+
+                return loadSnapScript(
                     payload.midtrans_client_key,
                     payload.midtrans_is_production,
                 ).then(() => {
@@ -82,8 +93,8 @@ export default function VoteStatus({ vote, award, event }: Props) {
                         onError: () => setIsPaying(false),
                         onClose: () => setIsPaying(false),
                     });
-                }),
-            )
+                });
+            })
             .catch(() => setIsPaying(false));
     };
 
