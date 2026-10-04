@@ -10,7 +10,10 @@
 - Sprint 3 lifecycle code and dedicated webhook, neutral reconciliation, and effect-recovery test files are implemented and passing locally.
 - Registration, group registration, and paid voting now create checkout attempts through `PaymentCheckoutService`.
 - Registration deletion now blocks active or unresolved online checkout attempts before deleting local records.
+- Sprints 1–3 infrastructure is implemented and the focused backfill, Xendit client, checkout, legacy Midtrans, manual-payment, status-check, and controller suites pass.
 - Category payment methods now default to `online`, keep legacy `midtrans` compatibility, and can be normalized with `payments:normalize-methods`.
+- Replaced the legacy `App\Services\Midtrans\PaymentReconciler` boundary, migrating `PaymentNotificationController`, `ManualPaymentVerificationController`, and `CheckPaymentStatus` to use the shared generic `App\Services\Payments\PaymentReconciler`.
+- Registration refunds are now provider-aware, persist structured `PaymentRefundRecord`s, and correctly handle group-order partial refunds.
 - Xendit dashboard webhook URL/token test succeeded for Payment Session Completed against the configured tunnel URL.
 - Public payment pages branch by stored provider: Midtrans continues to open Snap, while Xendit uses a full-page hosted checkout redirect.
 - New attempts persist a frozen amount, item, customer, and description snapshot; replacement attempts reuse it.
@@ -32,8 +35,6 @@
 
 ## Remaining before Sprint 4 completion
 
-- Move legacy Midtrans webhook/manual decisions onto the shared reconciler or document the temporary compatibility boundary.
-- Complete provider-aware refund records and group partial-refund behavior.
 - Add browser checkout/return coverage.
 - Complete staging/manual provider verification for matched sandbox payment settlement, queues/scheduler, UX, and monitoring.
 - Run the complete Pest suite with a sufficient timeout and perform staging UX verification.

@@ -420,18 +420,18 @@
   - [x] Use checkout service
   - [x] Freeze amount/quantity in the payment snapshot
   - [ ] Voting cutoff handling
-- [ ] Update `app/Http/Controllers/PaymentNotificationController.php`
-  - [ ] Add legacy-only guard
-  - [ ] Route to shared reconciliation
-  - [ ] Preserve Midtrans signature check
-- [ ] Update `app/Http/Controllers/ManualPaymentVerificationController.php`
-  - [ ] Use shared reconciler
-  - [ ] Require manual provider explicitly
-- [ ] Update `app/Http/Controllers/RegistrationRefundController.php`
-  - [ ] Provider-aware refund instructions
-  - [ ] Create `PaymentRefundRecord`
-  - [ ] Correct group partial refund logic
-  - [ ] Cumulative amount validation
+- [x] Update `app/Http/Controllers/PaymentNotificationController.php`
+  - [x] Add legacy-only guard
+  - [x] Route to shared reconciliation
+  - [x] Preserve Midtrans signature check
+- [x] Update `app/Http/Controllers/ManualPaymentVerificationController.php`
+  - [x] Use shared reconciler
+  - [x] Require manual provider explicitly
+- [x] Update `app/Http/Controllers/RegistrationRefundController.php`
+  - [x] Provider-aware refund instructions
+  - [x] Create `PaymentRefundRecord`
+  - [x] Correct group partial refund logic
+  - [x] Cumulative amount validation
 
 ### Category Normalization
 - [x] Create migration: `change_registration_category_payment_method_default`
