@@ -57,8 +57,8 @@ class PaymentReconciler
             // Apply to payable and create effects if settlement
             if ($outcome->status === 'settlement') {
                 $this->handleSettlement($payment, $payable, $outcome);
-            } elseif ($outcome->status === 'expire') {
-                $this->handleExpiry($payment, $payable);
+            } elseif (in_array($outcome->status, ['expire', 'cancel', 'deny', 'failure'])) {
+                $this->handleFailureOrExpiry($payment, $payable, $outcome);
             }
 
             Log::info('[Reconciler] Payment reconciled', [
@@ -104,6 +104,7 @@ class PaymentReconciler
                 Payment::STATUS_EXPIRE,
                 Payment::STATUS_CANCEL,
                 Payment::STATUS_FAILURE,
+                Payment::STATUS_DENY,
             ]);
         }
 
@@ -130,10 +131,16 @@ class PaymentReconciler
         // Update session/payment IDs if provided
         if ($outcome->providerSessionId && ! $payment->provider_session_id) {
             $updates['provider_session_id'] = $outcome->providerSessionId;
+            if ($outcome->provider === 'midtrans') {
+                $updates['snap_token'] = $outcome->providerSessionId;
+            }
         }
 
         if ($outcome->providerPaymentId) {
             $updates['provider_payment_id'] = $outcome->providerPaymentId;
+            if ($outcome->provider === 'midtrans') {
+                $updates['midtrans_transaction_id'] = $outcome->providerPaymentId;
+            }
         }
 
         if ($outcome->providerRequestId) {
@@ -146,7 +153,7 @@ class PaymentReconciler
         }
 
         // Update checkout state
-        if (in_array($outcome->status, ['settlement', 'expire', 'cancel'])) {
+        if (in_array($outcome->status, ['settlement', 'expire', 'cancel', 'deny', 'failure'])) {
             $updates['checkout_state'] = Payment::CHECKOUT_CLOSED;
         }
 
@@ -211,16 +218,17 @@ class PaymentReconciler
     }
 
     /**
-     * Handle expiry: update checkout state.
+     * Handle expiry, cancellation, or failure.
      */
-    private function handleExpiry(Payment $payment, Payable $payable): void
+    private function handleFailureOrExpiry(Payment $payment, Payable $payable, PaymentOutcome $outcome): void
     {
         // Just mark checkout as closed
         // Payable handles its own expiry logic (separate from payment expiry)
 
-        Log::info('[Reconciler] Payment expired', [
+        Log::info('[Reconciler] Payment failed or expired', [
             'payment_id' => $payment->id,
             'order_id' => $payment->order_id,
+            'status' => $outcome->status,
         ]);
     }
 

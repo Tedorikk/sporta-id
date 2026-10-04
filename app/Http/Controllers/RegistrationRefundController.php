@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\Payment;
+use App\Models\PaymentRefundRecord;
 use App\Models\Registration;
 use App\Models\RegistrationOrder;
 use Illuminate\Http\Request;
@@ -58,26 +59,42 @@ class RegistrationRefundController extends Controller
             if (! $isGroupOrder) {
                 $payment->update([
                     'status' => Payment::STATUS_REFUND,
-                    'raw_notification' => [
-                        ...($payment->raw_notification ?? []),
-                        'refund' => [
-                            'recorded_by' => auth()->id(),
-                            'recorded_at' => now()->toIso8601String(),
-                            'note' => $validated['note'] ?? null,
-                        ],
-                    ],
                 ]);
             }
+
+            PaymentRefundRecord::create([
+                'payment_id' => $payment->id,
+                'registration_id' => $registration->id,
+                'amount' => $registration->getPaymentAmount(),
+                'provider' => $payment->provider ?? 'midtrans',
+                'refunded_by' => auth()->id(),
+                'refund_note' => $validated['note'] ?? null,
+                'refunded_at' => now(),
+            ]);
 
             $registration->update(['status' => Registration::STATUS_CANCELLED]);
             $registration->registrationCategory()->decrement('registered_count');
         });
 
+        $providerName = match ($payment->provider) {
+            'xendit' => 'Xendit',
+            'manual_transfer' => 'manual',
+            default => 'Midtrans',
+        };
+
+        $instructions = $providerName === 'manual'
+            ? 'Refund recorded. You will need to manually transfer the money back to the participant.'
+            : "Refund recorded. Issue the actual refund in your {$providerName} dashboard if you have not already.";
+
+        if ($isGroupOrder && $providerName !== 'manual') {
+            $instructions = "Refund recorded for this participant. The order's other participants are unaffected — issue their portion of the refund in your {$providerName} dashboard if needed.";
+        } elseif ($isGroupOrder) {
+            $instructions = "Refund recorded for this participant. The order's other participants are unaffected — manually transfer their portion back to the participant if needed.";
+        }
+
         return back()->with(['toast' => [
             'title' => 'Success',
-            'description' => $isGroupOrder
-                ? 'Refund recorded for this participant. The order\'s other participants are unaffected — issue their portion of the refund in your Midtrans dashboard if needed.'
-                : 'Refund recorded. Issue the actual refund in your Midtrans dashboard if you have not already.',
+            'description' => $instructions,
         ]]);
     }
 }

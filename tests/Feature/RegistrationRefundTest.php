@@ -2,6 +2,7 @@
 
 use App\Models\Event;
 use App\Models\Payment;
+use App\Models\PaymentRefundRecord;
 use App\Models\Registration;
 use App\Models\RegistrationCategory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -65,11 +66,11 @@ test('the recorded refund keeps who did it and why', function () {
     $this->actingAs($user)
         ->post(route('registrations.refund', [$registration->event, $registration]), ['note' => 'Duplicate charge']);
 
-    $refund = $registration->payments()->first()->raw_notification['refund'];
+    $refund = PaymentRefundRecord::where('registration_id', $registration->id)->first();
 
-    expect($refund['recorded_by'])->toBe($user->id)
-        ->and($refund['note'])->toBe('Duplicate charge')
-        ->and($refund)->toHaveKey('recorded_at');
+    expect($refund->refunded_by)->toBe($user->id)
+        ->and($refund->refund_note)->toBe('Duplicate charge')
+        ->and($refund->refunded_at)->not->toBeNull();
 });
 
 test('refunding twice does not release the quota twice', function () {

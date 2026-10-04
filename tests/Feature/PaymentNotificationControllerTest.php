@@ -84,14 +84,15 @@ test('a capture notification with accepted fraud status confirms the registratio
     expect($registration->fresh()->status)->toBe(Registration::STATUS_CONFIRMED);
 });
 
-test('a capture notification with denied fraud status rejects the registration', function () {
+test('a capture notification with denied fraud status fails the payment but leaves registration pending', function () {
     ['category' => $category, 'registration' => $registration, 'payment' => $payment] = makePendingPayment();
 
     $this->postJson(route('webhooks.midtrans'), signedNotification($payment, 'capture', 'deny'))
         ->assertOk();
 
-    expect($registration->fresh()->status)->toBe(Registration::STATUS_REJECTED)
-        ->and($category->fresh()->registered_count)->toBe(0);
+    expect($registration->fresh()->status)->toBe(Registration::STATUS_PENDING_PAYMENT)
+        ->and($payment->fresh()->status)->toBe(Payment::STATUS_DENY)
+        ->and($category->fresh()->registered_count)->toBe(1);
 });
 
 test('an invalid signature is rejected and changes nothing', function () {
@@ -106,22 +107,24 @@ test('an invalid signature is rejected and changes nothing', function () {
         ->and($payment->fresh()->status)->toBe(Payment::STATUS_PENDING);
 });
 
-test('an expire notification releases quota', function () {
+test('an expire notification fails the payment but leaves registration pending', function () {
     ['category' => $category, 'registration' => $registration, 'payment' => $payment] = makePendingPayment();
 
     $this->postJson(route('webhooks.midtrans'), signedNotification($payment, 'expire'))->assertOk();
 
-    expect($registration->fresh()->status)->toBe(Registration::STATUS_EXPIRED)
-        ->and($category->fresh()->registered_count)->toBe(0);
+    expect($registration->fresh()->status)->toBe(Registration::STATUS_PENDING_PAYMENT)
+        ->and($payment->fresh()->status)->toBe(Payment::STATUS_EXPIRE)
+        ->and($category->fresh()->registered_count)->toBe(1);
 });
 
-test('a deny notification rejects the registration and releases quota', function () {
+test('a deny notification fails the payment but leaves registration pending', function () {
     ['category' => $category, 'registration' => $registration, 'payment' => $payment] = makePendingPayment();
 
     $this->postJson(route('webhooks.midtrans'), signedNotification($payment, 'deny'))->assertOk();
 
-    expect($registration->fresh()->status)->toBe(Registration::STATUS_REJECTED)
-        ->and($category->fresh()->registered_count)->toBe(0);
+    expect($registration->fresh()->status)->toBe(Registration::STATUS_PENDING_PAYMENT)
+        ->and($payment->fresh()->status)->toBe(Payment::STATUS_DENY)
+        ->and($category->fresh()->registered_count)->toBe(1);
 });
 
 test('a pending notification does not change the registration', function () {
@@ -132,11 +135,11 @@ test('a pending notification does not change the registration', function () {
     expect($registration->fresh()->status)->toBe(Registration::STATUS_PENDING_PAYMENT);
 });
 
-test('a duplicate notification does not double-release quota', function () {
+test('a duplicate notification does not change registration', function () {
     ['category' => $category, 'payment' => $payment] = makePendingPayment();
 
     $this->postJson(route('webhooks.midtrans'), signedNotification($payment, 'expire'))->assertOk();
     $this->postJson(route('webhooks.midtrans'), signedNotification($payment, 'expire'))->assertOk();
 
-    expect($category->fresh()->registered_count)->toBe(0);
+    expect($category->fresh()->registered_count)->toBe(1);
 });

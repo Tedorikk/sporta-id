@@ -4,13 +4,13 @@ namespace App\Console\Commands;
 
 use App\Models\Registration;
 use App\Models\RegistrationOrder;
-use App\Services\Midtrans\MidtransClient;
-use App\Services\Midtrans\PaymentReconciler;
+use App\Services\Payments\PaymentGatewayManager;
+use App\Services\Payments\PaymentReconciler;
 use Illuminate\Console\Command;
 
 /**
  * Manual recovery tool: actively pulls a registration's (or group order's)
- * payment status from Midtrans instead of waiting for a webhook — for
+ * payment status from the provider instead of waiting for a webhook — for
  * something stuck on pending_payment because the notification URL was
  * never configured (or a webhook was missed), even though the payment
  * actually went through.
@@ -21,9 +21,9 @@ class CheckPaymentStatus extends Command
         {registration : Registration ID to reconcile (or order ID with --order)}
         {--order : Treat the ID as a RegistrationOrder id instead of a Registration id}';
 
-    protected $description = "Pull a registration's (or order's) latest payment status directly from Midtrans and reconcile it";
+    protected $description = "Pull a registration's (or order's) latest payment status directly from the provider and reconcile it";
 
-    public function handle(MidtransClient $midtrans, PaymentReconciler $reconciler): int
+    public function handle(PaymentGatewayManager $gatewayManager, PaymentReconciler $reconciler): int
     {
         $payable = $this->option('order')
             ? RegistrationOrder::find($this->argument('registration'))
@@ -43,15 +43,17 @@ class CheckPaymentStatus extends Command
             return self::FAILURE;
         }
 
-        $this->info("Checking Midtrans for order {$payment->order_id}...");
+        $provider = $payment->provider ?? 'midtrans';
 
-        $transaction = $midtrans->getStatus($payment->order_id);
+        $this->info("Checking {$provider} for order {$payment->order_id}...");
 
-        $this->line('Midtrans transaction_status: '.($transaction['transaction_status'] ?? 'unknown'));
+        $outcome = $gatewayManager->gateway($provider)->retrieveStatus($payment);
+
+        $this->line("Provider status: {$outcome->providerStatus}");
 
         $statusBefore = $payable->status;
 
-        $reconciler->reconcile($payment, $transaction);
+        $reconciler->reconcile($payment, $outcome);
 
         $statusAfter = $payable->fresh()->status;
 

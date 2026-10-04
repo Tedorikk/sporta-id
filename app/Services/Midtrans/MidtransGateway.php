@@ -32,7 +32,7 @@ class MidtransGateway implements PaymentGateway
             // Note: Midtrans Snap doesn't use the success/failure URLs in the API.
             // Return URLs are configured in the Snap embed/popup or in dashboard.
             // We generate a Snap token which the frontend uses to open the Snap modal.
-            
+
             $snapToken = $this->client->createSnapTransaction($payment);
 
             // Midtrans Snap tokens don't have a strongly documented expiry,
@@ -47,7 +47,7 @@ class MidtransGateway implements PaymentGateway
             );
         } catch (RuntimeException $e) {
             return CheckoutResult::error(
-                message: 'Failed to create payment session: ' . $e->getMessage(),
+                message: 'Failed to create payment session: '.$e->getMessage(),
                 code: 'midtrans_error',
                 canRetry: true,
             );
@@ -62,7 +62,7 @@ class MidtransGateway implements PaymentGateway
             return $this->mapStatusToOutcome($status);
         } catch (RuntimeException $e) {
             throw new RuntimeException(
-                "Failed to retrieve Midtrans status for {$payment->order_id}: " . $e->getMessage(),
+                "Failed to retrieve Midtrans status for {$payment->order_id}: ".$e->getMessage(),
                 previous: $e
             );
         }
@@ -86,7 +86,7 @@ class MidtransGateway implements PaymentGateway
      *
      * Midtrans status values: pending, settlement, capture, deny, cancel, expire, failure
      */
-    private function mapStatusToOutcome(array $status): PaymentOutcome
+    public function mapStatusToOutcome(array $status): PaymentOutcome
     {
         $transactionStatus = $status['transaction_status'] ?? 'pending';
         $fraudStatus = $status['fraud_status'] ?? null;
@@ -95,23 +95,31 @@ class MidtransGateway implements PaymentGateway
         $currency = $status['currency'] ?? 'IDR';
 
         // Map Midtrans status to application status
-        $appStatus = match ($transactionStatus) {
-            'capture' => $fraudStatus === 'accept' ? 'settlement' : 'pending',
-            'settlement' => 'settlement',
-            'pending' => 'pending',
-            'deny' => 'deny',
-            'cancel' => 'cancel',
-            'expire' => 'expire',
-            'failure' => 'failure',
-            default => 'pending',
-        };
+        if ($fraudStatus === 'deny') {
+            $appStatus = 'deny';
+        } else {
+            $appStatus = match ($transactionStatus) {
+                'capture' => $fraudStatus === 'accept' ? 'settlement' : 'pending',
+                'settlement' => 'settlement',
+                'pending' => 'pending',
+                'deny' => 'deny',
+                'cancel' => 'cancel',
+                'expire' => 'expire',
+                'failure' => 'failure',
+                default => 'pending',
+            };
+        }
 
         // If settled, extract paid timestamp
         $paidAt = null;
-        if ($appStatus === 'settlement' && isset($status['settlement_time'])) {
-            $paidAt = new \DateTimeImmutable($status['settlement_time']);
-        } elseif ($appStatus === 'settlement' && isset($status['transaction_time'])) {
-            $paidAt = new \DateTimeImmutable($status['transaction_time']);
+        if ($appStatus === 'settlement') {
+            if (isset($status['settlement_time'])) {
+                $paidAt = new \DateTimeImmutable($status['settlement_time']);
+            } elseif (isset($status['transaction_time'])) {
+                $paidAt = new \DateTimeImmutable($status['transaction_time']);
+            } else {
+                $paidAt = now()->toDateTimeImmutable();
+            }
         }
 
         return new PaymentOutcome(

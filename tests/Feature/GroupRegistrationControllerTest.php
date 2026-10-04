@@ -6,7 +6,8 @@ use App\Models\Payment;
 use App\Models\Registration;
 use App\Models\RegistrationCategory;
 use App\Models\RegistrationOrder;
-use App\Services\Midtrans\PaymentReconciler;
+use App\Services\Payments\PaymentOutcome;
+use App\Services\Payments\PaymentReconciler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -95,10 +96,13 @@ test('settling a group order confirms every participant and sends notifications'
     $order = RegistrationOrder::sole();
     $payment = $order->payments()->sole();
 
-    app(PaymentReconciler::class)->reconcile($payment, [
-        'transaction_status' => 'settlement',
-        'transaction_id' => 'mt-order-1',
-    ]);
+    app(PaymentReconciler::class)->reconcile($payment, PaymentOutcome::settled(
+        provider: 'midtrans',
+        amount: $payment->amount,
+        currency: 'IDR',
+        paidAt: now(),
+        paymentId: 'mt-order-1'
+    ));
 
     expect($order->fresh()->status)->toBe(RegistrationOrder::STATUS_CONFIRMED)
         ->and($order->fresh()->registrations->pluck('status')->unique()->all())->toBe([Registration::STATUS_CONFIRMED]);
@@ -106,7 +110,7 @@ test('settling a group order confirms every participant and sends notifications'
     Mail::assertQueued(RegistrationConfirmed::class, 2);
 });
 
-test('an expired group order releases quota for every participant and confirms none', function () {
+test('an expired payment leaves the group order pending', function () {
     Http::fake(['app.sandbox.midtrans.com/snap/v1/transactions' => Http::response(['token' => 'tok'], 201)]);
     $event = Event::factory()->create();
     $category = groupOrderCategory($event, ['price' => 150000]);
@@ -121,11 +125,16 @@ test('an expired group order releases quota for every participant and confirms n
     $order = RegistrationOrder::sole();
     $payment = $order->payments()->sole();
 
-    app(PaymentReconciler::class)->reconcile($payment, ['transaction_status' => 'expire']);
+    app(PaymentReconciler::class)->reconcile($payment, PaymentOutcome::expired(
+        provider: 'midtrans',
+        providerStatus: 'expire'
+    ));
 
-    expect($order->fresh()->status)->toBe(RegistrationOrder::STATUS_EXPIRED)
-        ->and($order->fresh()->registrations->pluck('status')->unique()->all())->toBe([Registration::STATUS_EXPIRED])
-        ->and($category->fresh()->registered_count)->toBe(0);
+    // For group orders, when the payment fails/expires, the order and registrations remain pending
+    // so the user can retry the checkout.
+    expect($order->fresh()->status)->toBe(RegistrationOrder::STATUS_PENDING_PAYMENT)
+        ->and($order->fresh()->registrations->pluck('status')->unique()->all())->toBe([Registration::STATUS_PENDING_PAYMENT])
+        ->and($category->fresh()->registered_count)->toBe(2);
 });
 
 test('a group order is rejected when the shared quota cannot fit every participant', function () {

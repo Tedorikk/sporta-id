@@ -4,12 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Services\Midtrans\MidtransClient;
-use App\Services\Midtrans\PaymentReconciler;
+use App\Services\Midtrans\MidtransGateway;
+use App\Services\Payments\PaymentReconciler;
 use Illuminate\Http\Request;
 
 class PaymentNotificationController extends Controller
 {
-    public function __construct(private readonly PaymentReconciler $reconciler) {}
+    public function __construct(
+        private readonly PaymentReconciler $reconciler,
+        private readonly MidtransGateway $gateway,
+    ) {}
 
     /**
      * Midtrans's webhook target — see PaymentReconciler for what actually
@@ -23,7 +27,8 @@ class PaymentNotificationController extends Controller
 
         $payment = Payment::where('order_id', $notification['order_id'] ?? null)->firstOrFail();
 
-        $this->reconciler->reconcile($payment, $notification);
+        $outcome = $this->gateway->mapStatusToOutcome($notification);
+        $this->reconciler->reconcile($payment, $outcome);
 
         return response()->json(['message' => 'OK']);
     }
