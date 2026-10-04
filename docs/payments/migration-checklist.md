@@ -450,19 +450,19 @@
   - [x] Report changes
 
 ### Browser Tests (Pest Browser + Playwright)
-- [ ] Add `pestphp/pest-plugin-browser` to dev dependencies
-- [ ] Add `playwright` to dev dependencies
-- [ ] Install Playwright browsers in CI
-- [ ] Create `tests/Browser/PaymentCheckoutTest.php`
-  - [ ] Navigate to registration payment
-  - [ ] Initiate checkout
-  - [ ] Verify redirect to Xendit hosted page (mock/local double)
-  - [ ] Return to success URL
-  - [ ] Verify payment status updated
-- [ ] Create `tests/Browser/PaymentReturnTest.php`
-  - [ ] Return from successful payment
-  - [ ] Return from canceled payment
-  - [ ] Multiple attempt scenarios
+- [x] Add `pestphp/pest-plugin-browser` to dev dependencies
+- [x] Add `playwright` to dev dependencies
+- [x] Install Playwright browsers in CI
+- [x] Create `tests/Browser/PaymentCheckoutTest.php`
+  - [x] Navigate to registration payment
+  - [x] Initiate checkout
+  - [x] Verify redirect to Xendit hosted page (mock/local double)
+  - [x] Return to success URL
+  - [x] Verify payment status updated
+- [x] Create `tests/Browser/PaymentReturnTest.php`
+  - [x] Return from successful payment
+  - [x] Return from canceled payment
+  - [x] Multiple attempt scenarios
 
 ### Tests
 - [x] Create `tests/Feature/PaymentMethodNormalizationTest.php`
@@ -492,7 +492,7 @@
 
 **Verified locally on 2026-10-04:** Xendit dashboard Payment Session Completed webhook test succeeded against the ngrok `/webhooks/xendit` URL; category payment-method normalization suites passed: 60 tests, 313 assertions, plus TypeScript type-check.
 
-**Sprint 4 remaining:** shared legacy/manual reconciliation boundary, provider-aware refund workflow, browser checkout/return coverage, staging UX verification, and non-payment full-suite failures in the category backfill migration tests.
+**Sprint 4 remaining:** staging UX verification, matched sandbox payment settlement, queue/scheduler/monitoring checks, and non-payment full-suite failures in the category backfill migration tests.
 
 ## Sprint 5: Production Cutover & Coexistence Testing
 

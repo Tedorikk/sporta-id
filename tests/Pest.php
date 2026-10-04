@@ -19,7 +19,11 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
-    ->in('Feature');
+    ->in('Feature', 'Browser');
+
+if (class_exists(\Pest\Browser\Browsable::class)) {
+    pest()->use(\Pest\Browser\Browsable::class)->in('Browser');
+}
 
 /*
 |--------------------------------------------------------------------------

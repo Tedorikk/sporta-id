@@ -35,7 +35,6 @@
 
 ## Remaining before Sprint 4 completion
 
-- Add browser checkout/return coverage.
 - Complete staging/manual provider verification for matched sandbox payment settlement, queues/scheduler, UX, and monitoring.
 - Run the complete Pest suite with a sufficient timeout and perform staging UX verification.
 - Resolve or separately triage the non-payment category backfill migration test failures before claiming the complete suite is green.

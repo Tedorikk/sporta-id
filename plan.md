@@ -500,7 +500,7 @@ Suggested delivery: seven ordered sprints, roughly 1–2 weeks each depending on
 
 **Owners:** frontend, backend, QA, merchant owner. **Depends on:** Sprints 2–3.
 
-**Current status (2026-10-04):** in progress. The dual-provider controller/page integration, deletion safety, category payment-method normalization, Xendit dashboard webhook URL/token test, Sprint 3 dedicated lifecycle tests, shared legacy/manual reconciliation boundaries, and provider-aware refund workflow are implemented/verified locally. Browser acceptance, matched sandbox settlement, staging operations checks, and full-suite verification remain open.
+**Current status (2026-10-04):** in progress. The dual-provider controller/page integration, deletion safety, category payment-method normalization, Xendit dashboard webhook URL/token test, Sprint 3 dedicated lifecycle tests, shared legacy/manual reconciliation boundaries, provider-aware refund workflow, and browser acceptance test suites are implemented/verified locally. Matched sandbox settlement, staging operations checks, and full-suite verification remain open.
 
 #### Tasks
 

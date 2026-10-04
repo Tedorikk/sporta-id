@@ -18,7 +18,7 @@ test('a user returning from a successful payment sees the confirmed status', fun
     // Simulate returning to the success URL
     $this->visit(route('registrations.status', [$registration->event, $registration->qr_token]))
          ->assertSee('Confirmed')
-         ->assertDontSee('Pay');
+         ->assertDontSee('Pay Now');
 });
 
 test('a user returning from a canceled payment sees the pending status and can try again', function () {
@@ -44,5 +44,5 @@ test('a user returning from a canceled payment sees the pending status and can t
 
     // They return to the status page
     $this->visit(route('registrations.status', [$registration->event, $registration->qr_token]))
-         ->assertSee('Pay'); // The retry button should be present
+         ->assertSee('Pay Now'); // The retry button should be present
 });
