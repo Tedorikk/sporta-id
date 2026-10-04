@@ -10,6 +10,8 @@
 - Sprint 3 lifecycle code and dedicated webhook, neutral reconciliation, and effect-recovery test files are implemented and passing locally.
 - Registration, group registration, and paid voting now create checkout attempts through `PaymentCheckoutService`.
 - Registration deletion now blocks active or unresolved online checkout attempts before deleting local records.
+- Category payment methods now default to `online`, keep legacy `midtrans` compatibility, and can be normalized with `payments:normalize-methods`.
+- Xendit dashboard webhook URL/token test succeeded for Payment Session Completed against the configured tunnel URL.
 - Public payment pages branch by stored provider: Midtrans continues to open Snap, while Xendit uses a full-page hosted checkout redirect.
 - New attempts persist a frozen amount, item, customer, and description snapshot; replacement attempts reuse it.
 - Midtrans remains the default provider. Xendit is dormant until `PAYMENT_GATEWAY=xendit` is explicitly configured.
@@ -26,12 +28,12 @@
 - Registration deletion-safety and checkout regression suites: **passing** (35 tests, 186 assertions) on 2026-10-04.
 - Expanded focused payment lifecycle suites, including Sprint 3 dedicated tests: **passing** (125 tests, 518 assertions) on 2026-10-04.
 - Full test isolation on 2026-10-04: `tests/Unit` passes (10 tests, 69 assertions); `tests/Feature` completes but has five failures/errors isolated to existing category backfill migration tests (`BasketballCategoryBackfillMigrationTest`, `RunningCategoryBackfillMigrationTest`).
+- Payment-method normalization, registration category, manual payment, and registration controller suites: **passing** (60 tests, 313 assertions) on 2026-10-04.
 
 ## Remaining before Sprint 4 completion
 
 - Move legacy Midtrans webhook/manual decisions onto the shared reconciler or document the temporary compatibility boundary.
 - Complete provider-aware refund records and group partial-refund behavior.
-- Normalize category collection values from `midtrans` to `online` with a tested, resumable command.
 - Add browser checkout/return coverage.
 - Complete staging/manual provider verification for Xendit webhook delivery, webhook token validation, and monitoring.
 - Run the complete Pest suite with a sufficient timeout and perform staging UX verification.

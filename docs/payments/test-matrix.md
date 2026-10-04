@@ -11,6 +11,8 @@
 - 2026-10-04 isolation run: `tests/Unit` passes; `tests/Feature` completes with five failures/errors isolated to existing category backfill migration tests, outside the payment gateway scope.
 - Sprint 3 dedicated webhook/reconciliation/effect-recovery feature tests: ✅ 16 tests, 51 assertions passing on 2026-10-04; included in the expanded focused 125-test payment lifecycle run.
 - Sprint 4 browser coverage/manual browser evidence: ⚠️ still required before Sprint 4 exit.
+- Xendit dashboard webhook URL/token check: ✅ Payment Session Completed test succeeded on 2026-10-04 against the configured ngrok `/webhooks/xendit` URL.
+- Payment method normalization: ✅ 60 focused tests, 313 assertions passing on 2026-10-04 with TypeScript type-check passing.
 
 ## Xendit Test Mode Verification (Sprint 0)
 

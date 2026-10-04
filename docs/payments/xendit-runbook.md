@@ -46,6 +46,7 @@ Xendit Webhook → XenditWebhookController → ProcessPaymentWebhook (Job) → P
 
 - Focused payment/controller suites pass locally, but the full Pest suite has not yet been recorded as passing because the previous full run exceeded the harness timeout.
 - Dedicated Sprint 3 lifecycle tests for webhook ingress, reconciliation, and effect recovery pass locally; staging/provider webhook delivery still needs manual verification.
+- Xendit dashboard webhook URL/token test succeeded for Payment Session Completed against the configured ngrok `/webhooks/xendit` URL on 2026-10-04.
 - Hosted-checkout browser tests or equivalent documented manual browser evidence are still pending for Sprint 4 exit.
 
 ## Environment Configuration

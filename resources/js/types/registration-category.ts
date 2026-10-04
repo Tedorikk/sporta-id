@@ -3,7 +3,7 @@ import type { PlayerRole } from './player';
 export type RegistrationSubjectType = 'team' | 'individual';
 
 /** Mirrors RegistrationCategory::PAYMENT_METHODS. */
-export type PaymentMethod = 'midtrans' | 'manual_transfer';
+export type PaymentMethod = 'online' | 'midtrans' | 'manual_transfer';
 
 export type RegistrationFieldType =
     | 'text'

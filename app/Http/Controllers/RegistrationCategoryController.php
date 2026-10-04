@@ -347,7 +347,7 @@ class RegistrationCategoryController extends Controller
             'subject_type' => ['required', Rule::in(RegistrationCategory::SUBJECT_TYPES)],
             'price' => ['nullable', 'numeric', 'min:0'],
             'quota' => ['nullable', 'integer', 'min:1'],
-            'payment_method' => ['nullable', Rule::in(RegistrationCategory::PAYMENT_METHODS)],
+            'payment_method' => ['nullable', Rule::in(RegistrationCategory::ACCEPTED_PAYMENT_METHODS)],
             'registration_open' => ['nullable', 'boolean'],
             'opens_at' => ['nullable', 'date'],
             'closes_at' => ['nullable', 'date', 'after_or_equal:opens_at'],

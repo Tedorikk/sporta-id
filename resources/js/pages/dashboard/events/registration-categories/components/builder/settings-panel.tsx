@@ -528,8 +528,8 @@ export function SettingsPanel({
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="midtrans">
-                                        Midtrans (card, e-wallet, etc.)
+                                    <SelectItem value="online">
+                                        Online checkout (card, e-wallet, etc.)
                                     </SelectItem>
                                     <SelectItem value="manual_transfer">
                                         Manual transfer — registrant uploads

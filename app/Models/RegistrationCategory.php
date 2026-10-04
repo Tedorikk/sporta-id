@@ -25,9 +25,21 @@ class RegistrationCategory extends Model
 
     public const PAYMENT_METHOD_MIDTRANS = 'midtrans';
 
+    public const PAYMENT_METHOD_ONLINE = 'online';
+
     public const PAYMENT_METHOD_MANUAL_TRANSFER = 'manual_transfer';
 
     public const PAYMENT_METHODS = [
+        self::PAYMENT_METHOD_ONLINE,
+        self::PAYMENT_METHOD_MANUAL_TRANSFER,
+    ];
+
+    public const LEGACY_PAYMENT_METHODS = [
+        self::PAYMENT_METHOD_MIDTRANS,
+    ];
+
+    public const ACCEPTED_PAYMENT_METHODS = [
+        self::PAYMENT_METHOD_ONLINE,
         self::PAYMENT_METHOD_MIDTRANS,
         self::PAYMENT_METHOD_MANUAL_TRANSFER,
     ];
@@ -56,7 +68,7 @@ class RegistrationCategory extends Model
         'registered_count' => 0,
         'registration_open' => true,
         'status' => 'active',
-        'payment_method' => self::PAYMENT_METHOD_MIDTRANS,
+        'payment_method' => self::PAYMENT_METHOD_ONLINE,
     ];
 
     protected static function boot()
@@ -121,6 +133,14 @@ class RegistrationCategory extends Model
     public function usesManualPayment(): bool
     {
         return $this->payment_method === self::PAYMENT_METHOD_MANUAL_TRANSFER;
+    }
+
+    public function usesOnlinePayment(): bool
+    {
+        return in_array($this->payment_method, [
+            self::PAYMENT_METHOD_ONLINE,
+            self::PAYMENT_METHOD_MIDTRANS,
+        ], true);
     }
 
     public function isOpen(): bool

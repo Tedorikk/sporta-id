@@ -228,7 +228,7 @@
 
 ### Environment Setup
 - [x] Add Xendit test credentials to `.env` (already present)
-- [ ] Configure webhook URL (local tunnel for dev - Sprint 3)
+- [x] Configure webhook URL (local tunnel for dev - Sprint 3)
 - [x] Verify configuration loading
 - [x] Test Xendit client registration
 
@@ -374,8 +374,8 @@
 - [x] Queue workers configured for `payments` queue
 - [x] Scheduled tasks configured (reconcile, replay, dispatch)
 - [x] Refund records migration created
-- [ ] Webhook token verified in test environment
-- [ ] Test webhook delivery from Xendit
+- [x] Webhook token verified in test environment
+- [x] Test webhook delivery from Xendit
 - [x] Reconciliation command tested locally with automated coverage
 - [x] Effect replay tested locally with automated coverage
 - [ ] Monitor error rates
@@ -434,20 +434,20 @@
   - [ ] Cumulative amount validation
 
 ### Category Normalization
-- [ ] Create migration: `change_registration_category_payment_method_default`
-  - [ ] Change default from 'midtrans' to 'online'
-  - [ ] Add 'online' to enum values
-  - [ ] Keep 'midtrans' for backward compatibility temporarily
-- [ ] Update `app/Models/RegistrationCategory.php`
-  - [ ] Add `PAYMENT_METHOD_ONLINE` constant
-  - [ ] Update default
-  - [ ] Bridge reads (accept both 'midtrans' and 'online' as online)
-- [ ] Create `app/Console/Commands/NormalizePaymentMethods.php`
-  - [ ] Dry-run mode
-  - [ ] Update 'midtrans' → 'online' in categories
-  - [ ] Chunked/resumable
-  - [ ] Idempotent
-  - [ ] Report changes
+- [x] Create migration: `change_registration_category_payment_method_default`
+  - [x] Change default from 'midtrans' to 'online'
+  - [x] Add 'online' to accepted values
+  - [x] Keep 'midtrans' for backward compatibility temporarily
+- [x] Update `app/Models/RegistrationCategory.php`
+  - [x] Add `PAYMENT_METHOD_ONLINE` constant
+  - [x] Update default
+  - [x] Bridge reads (accept both 'midtrans' and 'online' as online)
+- [x] Create `app/Console/Commands/NormalizePaymentMethods.php`
+  - [x] Dry-run mode
+  - [x] Update 'midtrans' → 'online' in categories
+  - [x] Chunked/resumable
+  - [x] Idempotent
+  - [x] Report changes
 
 ### Browser Tests (Pest Browser + Playwright)
 - [ ] Add `pestphp/pest-plugin-browser` to dev dependencies
@@ -466,9 +466,9 @@
 
 ### Tests
 - [ ] Create `tests/Feature/PaymentMethodNormalizationTest.php`
-  - [ ] Category normalization
-  - [ ] Backward compatibility
-  - [ ] Idempotency
+  - [x] Category normalization
+  - [x] Backward compatibility
+  - [x] Idempotency
 - [x] Update existing feature tests for the dual-provider controller flow
 - [ ] Browser test coverage for checkout UX
 - [x] Add focused coverage for deletion safety with active remote checkout attempts
@@ -489,6 +489,8 @@
 **Verified locally on 2026-10-04:** Registration deletion-safety and checkout regression suites: 35 tests, 186 assertions passing; Pint and `git diff --check` passing.
 
 **Verified locally on 2026-10-04:** Expanded focused payment lifecycle suites, including the dedicated Sprint 3 webhook/reconciliation/effect recovery tests: 125 tests, 518 assertions passing after Pint.
+
+**Verified locally on 2026-10-04:** Xendit dashboard Payment Session Completed webhook test succeeded against the ngrok `/webhooks/xendit` URL; category payment-method normalization suites passed: 60 tests, 313 assertions, plus TypeScript type-check.
 
 ## Sprint 5: Production Cutover & Coexistence Testing
 
