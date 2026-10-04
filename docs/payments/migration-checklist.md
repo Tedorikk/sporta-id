@@ -465,7 +465,7 @@
   - [ ] Multiple attempt scenarios
 
 ### Tests
-- [ ] Create `tests/Feature/PaymentMethodNormalizationTest.php`
+- [x] Create `tests/Feature/PaymentMethodNormalizationTest.php`
   - [x] Category normalization
   - [x] Backward compatibility
   - [x] Idempotency
@@ -491,6 +491,8 @@
 **Verified locally on 2026-10-04:** Expanded focused payment lifecycle suites, including the dedicated Sprint 3 webhook/reconciliation/effect recovery tests: 125 tests, 518 assertions passing after Pint.
 
 **Verified locally on 2026-10-04:** Xendit dashboard Payment Session Completed webhook test succeeded against the ngrok `/webhooks/xendit` URL; category payment-method normalization suites passed: 60 tests, 313 assertions, plus TypeScript type-check.
+
+**Sprint 4 remaining:** shared legacy/manual reconciliation boundary, provider-aware refund workflow, browser checkout/return coverage, staging UX verification, and non-payment full-suite failures in the category backfill migration tests.
 
 ## Sprint 5: Production Cutover & Coexistence Testing
 

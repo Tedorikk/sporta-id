@@ -13,6 +13,7 @@
 - Sprint 4 browser coverage/manual browser evidence: ⚠️ still required before Sprint 4 exit.
 - Xendit dashboard webhook URL/token check: ✅ Payment Session Completed test succeeded on 2026-10-04 against the configured ngrok `/webhooks/xendit` URL.
 - Payment method normalization: ✅ 60 focused tests, 313 assertions passing on 2026-10-04 with TypeScript type-check passing.
+- Remaining manual/staging coverage: matched sandbox payment settlement from an app-created checkout, queue/scheduler processing, browser return UX, and monitoring/alert verification.
 
 ## Xendit Test Mode Verification (Sprint 0)
 

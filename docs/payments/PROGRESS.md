@@ -35,7 +35,7 @@
 - Move legacy Midtrans webhook/manual decisions onto the shared reconciler or document the temporary compatibility boundary.
 - Complete provider-aware refund records and group partial-refund behavior.
 - Add browser checkout/return coverage.
-- Complete staging/manual provider verification for Xendit webhook delivery, webhook token validation, and monitoring.
+- Complete staging/manual provider verification for matched sandbox payment settlement, queues/scheduler, UX, and monitoring.
 - Run the complete Pest suite with a sufficient timeout and perform staging UX verification.
 - Resolve or separately triage the non-payment category backfill migration test failures before claiming the complete suite is green.
 - Keep Xendit dormant until cutover; Midtrans remains the default provider.

@@ -39,7 +39,7 @@ This plan is based on inspection of this repository and Xendit's official docume
 | Notification      | `PaymentNotificationController` verifies SHA-512 and reconciles synchronously                                     | Keep legacy endpoint during drain; add authenticated Xendit ingress and durable processing                |
 | State application | `PaymentReconciler` locks payment/payable, updates payment, invokes payable transition                            | Add payment-level transition guards; current payable guards do not stop payment-row status regression     |
 | Persistence       | `Payment` has `midtrans_transaction_id`, `snap_token`, `raw_notification`, amount/status; polymorphic payable     | Add provider-neutral identifiers, checkout metadata, receipt tracking, and snapshots                      |
-| Collection choice | `RegistrationCategory::PAYMENT_METHOD_MIDTRANS`, DB default `midtrans`, React union `midtrans \| manual_transfer` | Migrate collection choice independently from historical provider identity                                 |
+| Collection choice | `RegistrationCategory::PAYMENT_METHOD_ONLINE`, DB default `online`, temporary legacy read support for `midtrans`, React union includes `online` and legacy `midtrans` | Continue separating collection choice from immutable provider identity; remove legacy category value after normalization/drain |
 | Expiry            | Registration/order reserves for one day; hourly `registrations:expire-unpaid` releases quota locally              | Separate short-lived checkout expiry from reservation expiry and reconcile before release                 |
 | Recovery          | `payments:check-status` reads only latest registration/order payment from Midtrans                                | Support provider routing, exact attempt, paid votes, and older unresolved attempts                        |
 | UI                | Five pages load `resources/js/lib/midtrans.ts`; browser globals declare `window.snap`                             | Add neutral checkout response and hosted redirect; retain legacy Snap branch during drain                 |
@@ -345,7 +345,7 @@ Use Artisan generators with `--no-interaction` for PHP artifacts; follow reposit
 - `resources/js/pages/group-registration.tsx`: replace local Snap state and popup calls; preserve pending group status, participant details, and retry.
 - `resources/js/pages/registration-status.tsx`, `registration-order-status.tsx`, `vote-status.tsx`: render local authoritative status, resume checkout, bounded polling, and delayed-confirmation messaging.
 - `resources/js/types/payment.ts`: neutral identifiers and checkout result discriminated union; remove legacy fields only after the compatibility UI retires.
-- `resources/js/types/registration-category.ts`: move to `'online' | 'manual_transfer'`, with temporary legacy read support.
+- `resources/js/types/registration-category.ts`: moved to include `online`, `manual_transfer`, and temporary legacy `midtrans` read support.
 - `resources/js/types/global.d.ts`: remove Snap globals after the final legacy branch is removed.
 - `resources/js/types/award.ts`: retain whole-IDR requirement with provider-neutral explanation.
 - `resources/js/pages/dashboard/events/registration-categories/builder.tsx` and `components/builder/settings-panel.tsx`: neutral default and “Online payment” choice; manual-transfer choice remains explicit.
@@ -500,7 +500,7 @@ Suggested delivery: seven ordered sprints, roughly 1–2 weeks each depending on
 
 **Owners:** frontend, backend, QA, merchant owner. **Depends on:** Sprints 2–3.
 
-**Current status (2026-10-04):** in progress. The dual-provider controller/page integration is implemented and focused payment/controller checks pass, but category normalization, deletion safety, shared legacy/manual reconciliation boundaries, provider-aware refund workflow, Sprint 3 dedicated lifecycle tests, browser acceptance, and full-suite verification remain open.
+**Current status (2026-10-04):** in progress. The dual-provider controller/page integration, deletion safety, category payment-method normalization, Xendit dashboard webhook URL/token test, and Sprint 3 dedicated lifecycle tests are implemented/verified locally. Shared legacy/manual reconciliation boundaries, provider-aware refund workflow, browser acceptance, matched sandbox settlement, staging operations checks, and full-suite verification remain open.
 
 #### Tasks
 
@@ -508,7 +508,7 @@ Suggested delivery: seven ordered sprints, roughly 1–2 weeks each depending on
 - [x] Use full-page navigation for external hosted checkout, not an Inertia SPA request to Xendit; handle JSON pay endpoints consistently.
 - [ ] Implement pending/preparing/retry/expired/review states, bounded status polling, and restore the original status page on success/cancel return. _(Core retry/status pages are updated; browser verification remains pending.)_
 - [x] Keep legacy Snap presentation for existing Midtrans attempts during coexistence.
-- [ ] Update category builder/defaults and normalize stored category collection methods after compatibility rollout.
+- [x] Update category builder/defaults and add a tested stored category collection-method normalization command.
 - [ ] Update frontend types, emails, translations, legal/help copy, provider display, and Wayfinder output.
 - [ ] Install approved browser-test tools and add controlled provider doubles to browser tests.
 - [ ] Execute actual Xendit sandbox channel acceptance separately from deterministic CI tests.
