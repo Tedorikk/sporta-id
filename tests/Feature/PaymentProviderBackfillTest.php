@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Payment;
 use App\Models\Registration;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -14,7 +15,7 @@ class PaymentProviderBackfillTest extends TestCase
     public function test_backfills_midtrans_payments_with_snap_token(): void
     {
         $registration = Registration::factory()->create();
-        
+
         $payment = Payment::factory()->create([
             'payable_type' => Registration::class,
             'payable_id' => $registration->id,
@@ -26,7 +27,7 @@ class PaymentProviderBackfillTest extends TestCase
             ->assertSuccessful();
 
         $payment->refresh();
-        
+
         $this->assertEquals('midtrans', $payment->provider);
         $this->assertEquals('IDR', $payment->currency);
     }
@@ -34,7 +35,7 @@ class PaymentProviderBackfillTest extends TestCase
     public function test_backfills_midtrans_payments_with_transaction_id(): void
     {
         $registration = Registration::factory()->create();
-        
+
         $payment = Payment::factory()->create([
             'payable_type' => Registration::class,
             'payable_id' => $registration->id,
@@ -47,7 +48,7 @@ class PaymentProviderBackfillTest extends TestCase
             ->assertSuccessful();
 
         $payment->refresh();
-        
+
         $this->assertEquals('midtrans', $payment->provider);
         $this->assertEquals('mt-123456', $payment->provider_payment_id);
         $this->assertEquals('IDR', $payment->currency);
@@ -56,8 +57,8 @@ class PaymentProviderBackfillTest extends TestCase
     public function test_backfills_manual_payments_with_verification(): void
     {
         $registration = Registration::factory()->create();
-        $verifier = \App\Models\User::factory()->create();
-        
+        $verifier = User::factory()->create();
+
         $payment = Payment::factory()->create([
             'payable_type' => Registration::class,
             'payable_id' => $registration->id,
@@ -72,7 +73,7 @@ class PaymentProviderBackfillTest extends TestCase
             ->assertSuccessful();
 
         $payment->refresh();
-        
+
         $this->assertEquals('manual_transfer', $payment->provider);
         $this->assertEquals(Payment::CHECKOUT_CLOSED, $payment->checkout_state);
     }
@@ -80,7 +81,7 @@ class PaymentProviderBackfillTest extends TestCase
     public function test_backfill_is_idempotent(): void
     {
         $registration = Registration::factory()->create();
-        
+
         $payment = Payment::factory()->create([
             'payable_type' => Registration::class,
             'payable_id' => $registration->id,
@@ -93,7 +94,7 @@ class PaymentProviderBackfillTest extends TestCase
         $this->artisan('payments:backfill-providers')->assertSuccessful();
 
         $payment->refresh();
-        
+
         // Should still be midtrans with correct data
         $this->assertEquals('midtrans', $payment->provider);
         $this->assertEquals('IDR', $payment->currency);
@@ -102,7 +103,7 @@ class PaymentProviderBackfillTest extends TestCase
     public function test_dry_run_does_not_modify_database(): void
     {
         $registration = Registration::factory()->create();
-        
+
         $payment = Payment::factory()->create([
             'payable_type' => Registration::class,
             'payable_id' => $registration->id,
@@ -114,7 +115,7 @@ class PaymentProviderBackfillTest extends TestCase
             ->assertSuccessful();
 
         $payment->refresh();
-        
+
         // Should not have been modified
         $this->assertNull($payment->provider);
     }
@@ -122,7 +123,7 @@ class PaymentProviderBackfillTest extends TestCase
     public function test_sets_checkout_state_for_settled_payments(): void
     {
         $registration = Registration::factory()->create();
-        
+
         $payment = Payment::factory()->create([
             'payable_type' => Registration::class,
             'payable_id' => $registration->id,
@@ -136,7 +137,7 @@ class PaymentProviderBackfillTest extends TestCase
             ->assertSuccessful();
 
         $payment->refresh();
-        
+
         $this->assertEquals('midtrans', $payment->provider);
         $this->assertEquals(Payment::CHECKOUT_CLOSED, $payment->checkout_state);
         $this->assertEquals(Payment::FULFILLMENT_FULFILLED, $payment->fulfillment_state);

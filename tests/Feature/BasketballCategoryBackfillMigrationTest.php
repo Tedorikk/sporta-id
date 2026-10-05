@@ -25,7 +25,7 @@ function stepsBackToBeforeBackfill(): int
 function replayBackfillOver(callable $seedLegacyRows): void
 {
     Artisan::call('migrate:rollback', ['--step' => stepsBackToBeforeBackfill(), '--force' => true]);
-    
+
     expect(Schema::hasColumn('basketball_event_categories', 'price'))->toBeTrue();
 
     $seedLegacyRows();

@@ -15,6 +15,7 @@ class ProcessPaymentEffect implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 5;
+
     public int $timeout = 60;
 
     /**
@@ -35,6 +36,7 @@ class ProcessPaymentEffect implements ShouldQueue
                 'effect_id' => $this->effect->id,
                 'effect_type' => $this->effect->effect_type,
             ]);
+
             return;
         }
 
@@ -82,13 +84,13 @@ class ProcessPaymentEffect implements ShouldQueue
     {
         $payable = $this->effect->payable;
 
-        if (!$payable) {
+        if (! $payable) {
             throw new \RuntimeException('Payable not found for confirmation email');
         }
 
         // Check if already sent (idempotency)
         // The payable's handlePaymentSettled should be idempotent
-        
+
         Log::info('[ProcessEffect] Sending confirmation email', [
             'effect_id' => $this->effect->id,
             'payable_type' => get_class($payable),
@@ -106,7 +108,7 @@ class ProcessPaymentEffect implements ShouldQueue
     {
         // Placeholder for quota update logic
         // This would decrement available slots or update registration counts
-        
+
         Log::info('[ProcessEffect] Updating quota', [
             'effect_id' => $this->effect->id,
         ]);
@@ -120,7 +122,7 @@ class ProcessPaymentEffect implements ShouldQueue
     private function assignBib(): void
     {
         // Placeholder for bib assignment logic
-        
+
         Log::info('[ProcessEffect] Assigning bib', [
             'effect_id' => $this->effect->id,
         ]);
@@ -134,7 +136,7 @@ class ProcessPaymentEffect implements ShouldQueue
     private function incrementVoteCount(): void
     {
         // Placeholder for vote count logic
-        
+
         Log::info('[ProcessEffect] Incrementing vote count', [
             'effect_id' => $this->effect->id,
         ]);

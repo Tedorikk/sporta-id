@@ -17,6 +17,8 @@
 - Public payment pages branch by stored provider: Midtrans continues to open Snap, while Xendit uses a full-page hosted checkout redirect.
 - New attempts persist a frozen amount, item, customer, and description snapshot; replacement attempts reuse it.
 - Midtrans remains the default provider. Xendit is dormant until `PAYMENT_GATEWAY=xendit` is explicitly configured.
+- Implemented automated tests for Provider Cutover & Coexistence (`PaymentGatewayCutoverTest`).
+- Built audit command `payments:audit-migration` for verifying the drain period prior to Midtrans retirement.
 
 ## Verification performed
 
@@ -29,13 +31,12 @@
 - Registration deletion-safety and checkout regression suites: **passing** (35 tests, 186 assertions) on 2026-10-04.
 - Expanded focused payment lifecycle suites, including Sprint 3 dedicated tests: **passing** (125 tests, 518 assertions) on 2026-10-04.
 - Payment-method normalization, registration category, manual payment, and registration controller suites: **passing** (60 tests, 313 assertions) on 2026-10-04.
-- Full Pest test suite now fully passing (595 tests, 3072 assertions) on 2026-10-05. Category backfill migration tests failures resolved.
+- Full Pest test suite now fully passing (599 tests, 3079 assertions) on 2026-10-05. Category backfill migration tests failures resolved.
 
-## Next Phase: Sprint 5
+## Next Phase: Sprint 5 Deployment & Verification
 - Pre-Cutover Verification
 - Cutover Execution
-- Coexistence Period
-- Auditing Payments
+- Coexistence Period Monitoring
 
 ## Security follow-up
 

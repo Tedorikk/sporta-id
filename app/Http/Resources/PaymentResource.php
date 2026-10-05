@@ -30,7 +30,7 @@ class PaymentResource extends JsonResource
             'currency' => $this->currency,
             'status' => $this->status,
             'provider' => $this->provider,
-            
+
             // Checkout state (for UI feedback)
             'checkout_state' => $this->checkout_state,
             'checkout_url' => $this->when(
@@ -41,12 +41,12 @@ class PaymentResource extends JsonResource
                 $this->hasActiveCheckout(),
                 $this->checkout_expires_at?->toISOString()
             ),
-            
+
             // Payment timestamps
             'paid_at' => $this->paid_at?->toISOString(),
             'created_at' => $this->created_at->toISOString(),
             'updated_at' => $this->updated_at->toISOString(),
-            
+
             // Relations
             'payable_type' => $this->payable_type,
             'payable_id' => $this->payable_id,

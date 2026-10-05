@@ -151,14 +151,15 @@ class RegistrationOrder extends Model implements Payable
     public function getPaymentAmount(): int
     {
         $this->loadMissing('registrations.registrationCategory');
-        
-        return (int) $this->registrations->sum(fn($r) => $r->registrationCategory?->price ?? 0);
+
+        return (int) $this->registrations->sum(fn ($r) => $r->registrationCategory?->price ?? 0);
     }
 
     public function getPaymentDescription(): string
     {
         $count = $this->registrations->count();
-        return "Group Registration ({$count} participant".($count > 1 ? 's' : '').")";
+
+        return "Group Registration ({$count} participant".($count > 1 ? 's' : '').')';
     }
 
     // --- Legacy Midtrans methods (deprecated, kept for compatibility) ---
@@ -166,8 +167,8 @@ class RegistrationOrder extends Model implements Payable
     public function midtransItemDetails(Payment $payment): array
     {
         $items = $this->getPaymentItems($payment);
-        
-        return array_map(fn($item) => [
+
+        return array_map(fn ($item) => [
             'id' => $item['reference_id'],
             'name' => $item['name'],
             'price' => $item['unit_amount'],
@@ -178,7 +179,7 @@ class RegistrationOrder extends Model implements Payable
     public function midtransCustomerDetails(): array
     {
         $customer = $this->getPaymentCustomer();
-        
+
         return [
             'first_name' => $customer['given_names'],
             'email' => $customer['email'],

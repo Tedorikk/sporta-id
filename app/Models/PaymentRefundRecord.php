@@ -65,7 +65,7 @@ class PaymentRefundRecord extends Model
     {
         $totalRefunded = static::getTotalRefunded($payment->id);
         $remaining = (float) $payment->amount - $totalRefunded;
-        
+
         return $amount <= $remaining && $amount > 0;
     }
 }

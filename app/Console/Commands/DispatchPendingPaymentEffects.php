@@ -50,6 +50,7 @@ class DispatchPendingPaymentEffects extends Command
 
         if ($effects->isEmpty()) {
             $this->info('No pending effects to dispatch.');
+
             return self::SUCCESS;
         }
 
@@ -63,9 +64,10 @@ class DispatchPendingPaymentEffects extends Command
         ];
 
         foreach ($effects as $effect) {
-            if (!$effect->canRetry()) {
+            if (! $effect->canRetry()) {
                 $stats['skipped']++;
                 $progressBar->advance();
+
                 continue;
             }
 
@@ -105,18 +107,21 @@ class DispatchPendingPaymentEffects extends Command
     {
         $effect = PaymentEffect::find($effectId);
 
-        if (!$effect) {
+        if (! $effect) {
             $this->error("Effect {$effectId} not found.");
+
             return self::FAILURE;
         }
 
         if ($effect->isCompleted()) {
             $this->warn("Effect {$effectId} is already completed.");
+
             return self::FAILURE;
         }
 
-        if (!$effect->canRetry()) {
+        if (! $effect->canRetry()) {
             $this->warn("Effect {$effectId} cannot be retried (too many attempts).");
+
             return self::FAILURE;
         }
 

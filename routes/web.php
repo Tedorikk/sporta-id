@@ -54,6 +54,7 @@ use App\Http\Controllers\TeamQrController;
 use App\Http\Controllers\TeamRosterController;
 use App\Http\Controllers\VerificationCodeController;
 use App\Http\Controllers\VoteController;
+use App\Http\Controllers\XenditWebhookController;
 use Illuminate\Support\Facades\Route;
 
 // --- Public, registrant-facing pages -----------------------------------------
@@ -149,7 +150,7 @@ Route::middleware('public.locale')->group(function () {
     // --- Midtrans payment notification webhook (server-to-server, no session) --
     // Webhook endpoints (no CSRF, no auth)
     Route::post('webhooks/midtrans', [PaymentNotificationController::class, 'handle'])->name('webhooks.midtrans');
-    Route::post('webhooks/xendit', [\App\Http\Controllers\XenditWebhookController::class, 'handle'])->name('webhooks.xendit');
+    Route::post('webhooks/xendit', [XenditWebhookController::class, 'handle'])->name('webhooks.xendit');
 
     // --- Public "Find My ID Card" lookup (no auth required) --------------------
     Route::get('find-id', [PlayerLookupController::class, 'index'])->name('players.lookup');

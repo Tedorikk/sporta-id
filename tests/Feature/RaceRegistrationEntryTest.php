@@ -4,6 +4,7 @@ use App\Models\Event;
 use App\Models\RaceParticipant;
 use App\Models\RegistrationCategory;
 use App\Models\RunningEventCategory;
+use App\Services\Midtrans\MidtransGateway;
 use App\Services\Payments\PaymentReconciler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -71,7 +72,7 @@ test('a paid race registration only joins the start list once payment settles', 
     $registration = $category->registrations()->sole();
     $payment = $registration->payments()->sole();
 
-    app(PaymentReconciler::class)->reconcile($payment, app(\App\Services\Midtrans\MidtransGateway::class)->mapStatusToOutcome([
+    app(PaymentReconciler::class)->reconcile($payment, app(MidtransGateway::class)->mapStatusToOutcome([
         'transaction_status' => 'settlement',
         'transaction_id' => 'mt-1',
     ]));
@@ -91,7 +92,7 @@ test('an expired paid registration never appears on the start list', function ()
     $registration = $category->registrations()->sole();
     $payment = $registration->payments()->sole();
 
-    app(PaymentReconciler::class)->reconcile($payment, app(\App\Services\Midtrans\MidtransGateway::class)->mapStatusToOutcome(['transaction_status' => 'expire']));
+    app(PaymentReconciler::class)->reconcile($payment, app(MidtransGateway::class)->mapStatusToOutcome(['transaction_status' => 'expire']));
 
     expect(RaceParticipant::count())->toBe(0)
         ->and($registration->fresh()->status)->toBe('expired')

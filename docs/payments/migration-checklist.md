@@ -533,20 +533,20 @@
 - [ ] Old in-flight Midtrans payments still reconcilable
 
 ### Tests
-- [ ] Create `tests/Feature/PaymentGatewayCutoverTest.php`
-  - [ ] Provider selection based on config
-  - [ ] Both providers coexist
-  - [ ] Routing by stored provider
-  - [ ] No cross-provider errors
-  - [ ] Historical access preserved
+- [x] Create `tests/Feature/PaymentGatewayCutoverTest.php`
+  - [x] Provider selection based on config
+  - [x] Both providers coexist
+  - [x] Routing by stored provider
+  - [x] No cross-provider errors
+  - [x] Historical access preserved
 
 ### Audit Command
-- [ ] Create `app/Console/Commands/AuditPaymentMigration.php`
-  - [ ] Count payments by provider
-  - [ ] Sum amounts by provider and status
-  - [ ] Report unresolved legacy attempts
-  - [ ] Report ambiguous classifications
-  - [ ] Retirement readiness report
+- [x] Create `app/Console/Commands/AuditPaymentMigration.php`
+  - [x] Count payments by provider
+  - [x] Sum amounts by provider and status
+  - [x] Report unresolved legacy attempts
+  - [x] Report ambiguous classifications
+  - [x] Retirement readiness report
 
 ### Deployment Checklist (Sprint 5)
 - [ ] Production deployment completed

@@ -14,6 +14,7 @@ use InvalidArgumentException;
 class XenditStatusMapper
 {
     private string $expectedBusinessId;
+
     private string $expectedMode;
 
     public function __construct()
@@ -25,8 +26,8 @@ class XenditStatusMapper
     /**
      * Map a session retrieval response to PaymentOutcome.
      *
-     * @param array $session Session data from GET /sessions/{id}
-     * @return PaymentOutcome
+     * @param  array  $session  Session data from GET /sessions/{id}
+     *
      * @throws InvalidArgumentException if session data is invalid
      */
     public function mapSessionToOutcome(array $session): PaymentOutcome
@@ -62,8 +63,8 @@ class XenditStatusMapper
     /**
      * Map a webhook event to PaymentOutcome.
      *
-     * @param array $webhook Webhook payload with 'event' and 'data'
-     * @return PaymentOutcome
+     * @param  array  $webhook  Webhook payload with 'event' and 'data'
+     *
      * @throws InvalidArgumentException if webhook is invalid
      */
     public function mapWebhookToOutcome(array $webhook): PaymentOutcome
@@ -71,7 +72,7 @@ class XenditStatusMapper
         $event = $webhook['event'] ?? null;
         $data = $webhook['data'] ?? [];
 
-        if (!$event || !$data) {
+        if (! $event || ! $data) {
             throw new InvalidArgumentException('Invalid webhook: missing event or data');
         }
 
@@ -109,10 +110,10 @@ class XenditStatusMapper
         } elseif (isset($session['created'])) {
             $paidAt = new \DateTimeImmutable($session['created']);
         } else {
-            $paidAt = new \DateTimeImmutable();
+            $paidAt = new \DateTimeImmutable;
         }
 
-        if (!$amount || !$currency) {
+        if (! $amount || ! $currency) {
             throw new InvalidArgumentException('Completed session missing amount or currency');
         }
 
@@ -136,7 +137,7 @@ class XenditStatusMapper
     {
         // Validate business_id matches (from session or webhook envelope)
         $businessId = $webhookBusinessId ?? ($session['business_id'] ?? null);
-        
+
         if ($businessId && $this->expectedBusinessId && $businessId !== $this->expectedBusinessId) {
             throw new InvalidArgumentException(
                 "Business ID mismatch: expected {$this->expectedBusinessId}, got {$businessId}"

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Services\Xendit\XenditClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -27,7 +28,7 @@ class XenditClientTest extends TestCase
             ], 200),
         ]);
 
-        $client = new XenditClient();
+        $client = new XenditClient;
 
         $result = $client->createSession([
             'reference_id' => 'ORD-001',
@@ -55,7 +56,7 @@ class XenditClientTest extends TestCase
             ], 200),
         ]);
 
-        $client = new XenditClient();
+        $client = new XenditClient;
 
         $result = $client->retrieveSession('ps-test-123');
 
@@ -72,7 +73,7 @@ class XenditClientTest extends TestCase
             ], 200),
         ]);
 
-        $client = new XenditClient();
+        $client = new XenditClient;
 
         $result = $client->cancelSession('ps-test-123');
 
@@ -88,7 +89,7 @@ class XenditClientTest extends TestCase
             ], 400),
         ]);
 
-        $client = new XenditClient();
+        $client = new XenditClient;
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('INVALID_REQUEST');
@@ -101,9 +102,9 @@ class XenditClientTest extends TestCase
 
     public function test_handles_network_timeout(): void
     {
-        Http::fake(fn() => throw new \Illuminate\Http\Client\ConnectionException('Connection timeout'));
+        Http::fake(fn () => throw new ConnectionException('Connection timeout'));
 
-        $client = new XenditClient();
+        $client = new XenditClient;
 
         $this->expectException(\RuntimeException::class);
 
@@ -121,11 +122,11 @@ class XenditClientTest extends TestCase
 
         config(['services.xendit.secret_key' => 'test-secret-key']);
 
-        $client = new XenditClient();
+        $client = new XenditClient;
         $client->createSession(['reference_id' => 'ORD-003', 'amount' => 100000]);
 
         Http::assertSent(function ($request) {
-            return $request->hasHeader('Authorization', 'Basic ' . base64_encode('test-secret-key:'));
+            return $request->hasHeader('Authorization', 'Basic '.base64_encode('test-secret-key:'));
         });
     }
 }

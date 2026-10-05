@@ -4,7 +4,6 @@ namespace App\Jobs;
 
 use App\Models\Payment;
 use App\Models\PaymentWebhookReceipt;
-use App\Services\Payments\PaymentGatewayManager;
 use App\Services\Payments\PaymentReconciler;
 use App\Services\Xendit\XenditStatusMapper;
 use Illuminate\Bus\Queueable;
@@ -12,7 +11,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ProcessPaymentWebhook implements ShouldQueue
@@ -20,6 +18,7 @@ class ProcessPaymentWebhook implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 5;
+
     public int $backoff = 60; // Start with 1 minute backoff
 
     /**
@@ -41,6 +40,7 @@ class ProcessPaymentWebhook implements ShouldQueue
             Log::info('[ProcessWebhook] Receipt already processed', [
                 'receipt_id' => $this->receipt->id,
             ]);
+
             return;
         }
 
@@ -50,15 +50,16 @@ class ProcessPaymentWebhook implements ShouldQueue
         try {
             // Parse webhook payload
             $payload = $this->receipt->sanitized_payload;
-            
+
             // Map to payment outcome
             $outcome = $mapper->mapWebhookToOutcome($payload);
 
             // Find the payment
             $payment = $this->findPayment($this->receipt);
 
-            if (!$payment) {
+            if (! $payment) {
                 $this->handleUnmatchedPayment($this->receipt);
+
                 return;
             }
 
@@ -66,7 +67,7 @@ class ProcessPaymentWebhook implements ShouldQueue
             $this->validateBinding($payment, $this->receipt, $outcome);
 
             // Link receipt to payment if not already linked
-            if (!$this->receipt->payment_id) {
+            if (! $this->receipt->payment_id) {
                 $this->receipt->update(['payment_id' => $payment->id]);
             }
 
@@ -140,9 +141,10 @@ class ProcessPaymentWebhook implements ShouldQueue
         if ($receipt->reference_id) {
             $payment = Payment::where('order_id', $receipt->reference_id)->first();
 
-            if ($payment && !$payment->provider) {
+            if ($payment && ! $payment->provider) {
                 // Backfill provider if missing
                 $payment->update(['provider' => 'xendit']);
+
                 return $payment;
             }
         }

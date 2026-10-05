@@ -57,6 +57,7 @@ class ReconcilePendingPayments extends Command
 
         if ($payments->isEmpty()) {
             $this->info('No pending payments to reconcile.');
+
             return self::SUCCESS;
         }
 
@@ -108,17 +109,20 @@ class ReconcilePendingPayments extends Command
     ): int {
         $payment = Payment::find($paymentId);
 
-        if (!$payment) {
+        if (! $payment) {
             $this->error("Payment {$paymentId} not found.");
+
             return self::FAILURE;
         }
 
         try {
             $this->reconcileSingle($payment, $gatewayManager, $reconciler);
             $this->info("Payment {$payment->order_id} reconciled successfully.");
+
             return self::SUCCESS;
         } catch (\Exception $e) {
             $this->error("Failed to reconcile payment: {$e->getMessage()}");
+
             return self::FAILURE;
         }
     }
@@ -133,17 +137,20 @@ class ReconcilePendingPayments extends Command
     ): int {
         $payment = Payment::where('order_id', $orderId)->first();
 
-        if (!$payment) {
+        if (! $payment) {
             $this->error("Payment with order ID {$orderId} not found.");
+
             return self::FAILURE;
         }
 
         try {
             $this->reconcileSingle($payment, $gatewayManager, $reconciler);
             $this->info("Payment {$payment->order_id} reconciled successfully.");
+
             return self::SUCCESS;
         } catch (\Exception $e) {
             $this->error("Failed to reconcile payment: {$e->getMessage()}");
+
             return self::FAILURE;
         }
     }
@@ -159,12 +166,14 @@ class ReconcilePendingPayments extends Command
         // Skip if already settled
         if ($payment->isSettled()) {
             $this->line("Payment {$payment->order_id} already settled, skipping.");
+
             return;
         }
 
         // Skip if no provider set
-        if (!$payment->provider) {
+        if (! $payment->provider) {
             $this->warn("Payment {$payment->order_id} has no provider, skipping.");
+
             return;
         }
 
@@ -174,8 +183,9 @@ class ReconcilePendingPayments extends Command
         }
 
         // Get the gateway for this payment's provider
-        if (!$gatewayManager->hasProvider($payment->provider)) {
+        if (! $gatewayManager->hasProvider($payment->provider)) {
             $this->warn("Provider {$payment->provider} not available, skipping payment {$payment->order_id}.");
+
             return;
         }
 

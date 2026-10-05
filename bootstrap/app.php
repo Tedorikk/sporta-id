@@ -44,13 +44,13 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (Schedule $schedule): void {
         // Safety net in case a payment webhook is ever missed
         $schedule->command('registrations:expire-unpaid')->hourly();
-        
+
         // Reconcile pending payments
         $schedule->command('payments:reconcile-pending')->hourly();
-        
+
         // Replay failed webhooks
         $schedule->command('payments:replay-webhooks')->everyFifteenMinutes();
-        
+
         // Dispatch pending effects
         $schedule->command('payments:dispatch-effects')->everyFifteenMinutes();
     })

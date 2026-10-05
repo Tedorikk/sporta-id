@@ -8,7 +8,7 @@ use App\Models\Registration;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\PaymentEffect>
+ * @extends Factory<PaymentEffect>
  */
 class PaymentEffectFactory extends Factory
 {
@@ -31,7 +31,7 @@ class PaymentEffectFactory extends Factory
             'payable_type' => Registration::class,
             'payable_id' => $this->faker->numberBetween(1, 1000),
             'effect_type' => $effectType,
-            'effect_key' => $this->faker->unique()->uuid() . '|' . $effectType,
+            'effect_key' => $this->faker->unique()->uuid().'|'.$effectType,
             'payload' => [
                 'type' => $effectType,
                 'data' => [
@@ -76,7 +76,7 @@ class PaymentEffectFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'effect_type' => 'confirmation_email',
-            'effect_key' => $attributes['payment_id'] . '|confirmation_email|' . $attributes['payable_id'],
+            'effect_key' => $attributes['payment_id'].'|confirmation_email|'.$attributes['payable_id'],
         ]);
     }
 
@@ -87,7 +87,7 @@ class PaymentEffectFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'effect_type' => 'quota_update',
-            'effect_key' => $attributes['payment_id'] . '|quota_update|' . $attributes['payable_id'],
+            'effect_key' => $attributes['payment_id'].'|quota_update|'.$attributes['payable_id'],
         ]);
     }
 }

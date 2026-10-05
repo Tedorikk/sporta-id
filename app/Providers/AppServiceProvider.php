@@ -4,7 +4,11 @@ namespace App\Providers;
 
 use App\Services\Midtrans\MidtransClient;
 use App\Services\Midtrans\MidtransGateway;
+use App\Services\Payments\PaymentCheckoutService;
 use App\Services\Payments\PaymentGatewayManager;
+use App\Services\Xendit\XenditClient;
+use App\Services\Xendit\XenditGateway;
+use App\Services\Xendit\XenditStatusMapper;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -20,25 +24,25 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register payment gateway manager as singleton
         $this->app->singleton(PaymentGatewayManager::class, function ($app) {
-            $manager = new PaymentGatewayManager();
+            $manager = new PaymentGatewayManager;
 
             // Register Midtrans gateway if legacy support is enabled
             if (config('payments.legacy_midtrans_enabled', true)) {
-                $midtransClient = new MidtransClient();
+                $midtransClient = new MidtransClient;
                 $manager->register('midtrans', new MidtransGateway($midtransClient));
             }
 
             // Register Xendit gateway
-            $xenditClient = new \App\Services\Xendit\XenditClient();
-            $xenditMapper = new \App\Services\Xendit\XenditStatusMapper();
-            $manager->register('xendit', new \App\Services\Xendit\XenditGateway($xenditClient, $xenditMapper));
+            $xenditClient = new XenditClient;
+            $xenditMapper = new XenditStatusMapper;
+            $manager->register('xendit', new XenditGateway($xenditClient, $xenditMapper));
 
             return $manager;
         });
 
         // Register checkout service
-        $this->app->singleton(\App\Services\Payments\PaymentCheckoutService::class, function ($app) {
-            return new \App\Services\Payments\PaymentCheckoutService(
+        $this->app->singleton(PaymentCheckoutService::class, function ($app) {
+            return new PaymentCheckoutService(
                 $app->make(PaymentGatewayManager::class)
             );
         });

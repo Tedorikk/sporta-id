@@ -6,6 +6,7 @@ use App\Models\Event;
 use App\Models\Payment;
 use App\Models\Registration;
 use App\Models\RegistrationCategory;
+use App\Services\Midtrans\MidtransGateway;
 use App\Services\Payments\PaymentReconciler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -132,7 +133,7 @@ test('settlement emails the registrant and notifies the organizers', function ()
 
     $payment = $registration->payments()->firstOrFail();
 
-    app(PaymentReconciler::class)->reconcile($payment, app(\App\Services\Midtrans\MidtransGateway::class)->mapStatusToOutcome([
+    app(PaymentReconciler::class)->reconcile($payment, app(MidtransGateway::class)->mapStatusToOutcome([
         'order_id' => $payment->order_id,
         'transaction_status' => 'settlement',
         'transaction_id' => 'txn-1',
@@ -158,7 +159,7 @@ test('a replayed settlement webhook does not send the confirmation twice', funct
     ])->assertOk();
 
     $payment = Payment::firstOrFail();
-    $notification = app(\App\Services\Midtrans\MidtransGateway::class)->mapStatusToOutcome([
+    $notification = app(MidtransGateway::class)->mapStatusToOutcome([
         'order_id' => $payment->order_id,
         'transaction_status' => 'settlement',
         'transaction_id' => 'txn-1',
@@ -185,7 +186,7 @@ test('an expired payment tells nobody it was confirmed', function () {
 
     $payment = Payment::firstOrFail();
 
-    app(PaymentReconciler::class)->reconcile($payment, app(\App\Services\Midtrans\MidtransGateway::class)->mapStatusToOutcome([
+    app(PaymentReconciler::class)->reconcile($payment, app(MidtransGateway::class)->mapStatusToOutcome([
         'order_id' => $payment->order_id,
         'transaction_status' => 'expire',
     ]));

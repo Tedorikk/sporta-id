@@ -7,7 +7,7 @@ use App\Models\PaymentWebhookReceipt;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\PaymentWebhookReceipt>
+ * @extends Factory<PaymentWebhookReceipt>
  */
 class PaymentWebhookReceiptFactory extends Factory
 {
@@ -19,20 +19,20 @@ class PaymentWebhookReceiptFactory extends Factory
     public function definition(): array
     {
         $provider = $this->faker->randomElement(['xendit', 'midtrans']);
-        $sessionId = $provider === 'xendit' ? 'ps-' . $this->faker->uuid() : null;
-        $referenceId = 'order-' . $this->faker->unique()->numberBetween(1000, 9999);
-        
+        $sessionId = $provider === 'xendit' ? 'ps-'.$this->faker->uuid() : null;
+        $referenceId = 'order-'.$this->faker->unique()->numberBetween(1000, 9999);
+
         return [
             'provider' => $provider,
             'provider_account_id' => $provider === 'xendit' ? $this->faker->numerify('########') : null,
             'provider_mode' => $this->faker->randomElement(['test', 'live']),
-            'event_type' => $provider === 'xendit' 
+            'event_type' => $provider === 'xendit'
                 ? $this->faker->randomElement(['payment_session.completed', 'payment_session.expired'])
                 : 'transaction.notification',
             'session_id' => $sessionId,
             'reference_id' => $referenceId,
             'payment_id' => null, // Will be linked after payment creation
-            'dedupe_key' => "{$provider}|{$sessionId}|{$referenceId}|" . $this->faker->uuid(),
+            'dedupe_key' => "{$provider}|{$sessionId}|{$referenceId}|".$this->faker->uuid(),
             'payload_digest' => hash('sha256', $this->faker->text()),
             'sanitized_payload' => [
                 'event' => $provider === 'xendit' ? 'payment_session.completed' : 'transaction.notification',

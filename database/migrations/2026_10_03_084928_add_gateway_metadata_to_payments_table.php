@@ -67,7 +67,7 @@ return new class extends Migration
             $table->index(['checkout_state', 'created_at'], 'payments_checkout_state_created_at_index');
             $table->index(['status', 'last_reconciled_at'], 'payments_status_reconciled_index');
             $table->index(['provider', 'provider_status'], 'payments_provider_status_index');
-            
+
             // Unique composite index for provider session (nullable unique)
             // Note: Multiple NULL values are allowed, uniqueness only enforced when non-null
             $table->unique(['provider', 'provider_account_id', 'provider_mode', 'provider_session_id'], 'payments_provider_session_unique');

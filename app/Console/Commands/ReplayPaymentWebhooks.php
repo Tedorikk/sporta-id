@@ -38,7 +38,7 @@ class ReplayPaymentWebhooks extends Command
 
         // Find unprocessed or failed receipts
         $limit = (int) $this->option('limit');
-        
+
         $receipts = PaymentWebhookReceipt::whereIn('processing_state', ['received', 'failed', 'unmatched'])
             ->where(function ($query) {
                 $query->where('processing_attempts', '<', 5)
@@ -50,6 +50,7 @@ class ReplayPaymentWebhooks extends Command
 
         if ($receipts->isEmpty()) {
             $this->info('No unprocessed receipts to replay.');
+
             return self::SUCCESS;
         }
 
@@ -63,9 +64,10 @@ class ReplayPaymentWebhooks extends Command
         ];
 
         foreach ($receipts as $receipt) {
-            if (!$receipt->canRetry()) {
+            if (! $receipt->canRetry()) {
                 $stats['skipped']++;
                 $progressBar->advance();
+
                 continue;
             }
 
@@ -103,13 +105,15 @@ class ReplayPaymentWebhooks extends Command
     {
         $receipt = PaymentWebhookReceipt::find($receiptId);
 
-        if (!$receipt) {
+        if (! $receipt) {
             $this->error("Receipt {$receiptId} not found.");
+
             return self::FAILURE;
         }
 
-        if (!$receipt->canRetry()) {
+        if (! $receipt->canRetry()) {
             $this->warn("Receipt {$receiptId} cannot be retried (already processed or too many attempts).");
+
             return self::FAILURE;
         }
 

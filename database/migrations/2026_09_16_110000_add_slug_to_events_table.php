@@ -46,6 +46,7 @@ return new class extends Migration
             Schema::table('events', function (Blueprint $table) {
                 $table->dropColumn('slug');
             });
+
             return;
         }
 

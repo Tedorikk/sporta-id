@@ -256,7 +256,7 @@ class Registration extends Model implements Payable
     public function getPaymentDescription(): string
     {
         $this->loadMissing(['event', 'registrationCategory']);
-        
+
         return trim(($this->event?->name ?? 'Event').' — '.($this->registrationCategory?->name ?? 'Registration'));
     }
 
@@ -265,9 +265,9 @@ class Registration extends Model implements Payable
     public function midtransItemDetails(Payment $payment): array
     {
         $items = $this->getPaymentItems($payment);
-        
+
         // Convert to Midtrans format
-        return array_map(fn($item) => [
+        return array_map(fn ($item) => [
             'id' => $item['reference_id'],
             'name' => $item['name'],
             'price' => $item['unit_amount'],
@@ -278,7 +278,7 @@ class Registration extends Model implements Payable
     public function midtransCustomerDetails(): array
     {
         $customer = $this->getPaymentCustomer();
-        
+
         // Convert to Midtrans format
         return [
             'first_name' => $customer['given_names'],
