@@ -12,6 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
         Schema::table('registration_categories', function (Blueprint $table) {
             $table->string('payment_method')->default('online')->change();
         });
@@ -26,6 +29,9 @@ return new class extends Migration
             ->where('payment_method', 'online')
             ->update(['payment_method' => 'midtrans']);
 
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
         Schema::table('registration_categories', function (Blueprint $table) {
             $table->string('payment_method')->default('midtrans')->change();
         });

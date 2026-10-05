@@ -1,8 +1,8 @@
 # Midtrans to Xendit Migration Progress
 
-**Updated:** 2026-10-04
+**Updated:** 2026-10-05
 
-**Current phase:** Sprint 4 in progress
+**Current phase:** Sprint 5 (Production Cutover & Coexistence Testing)
 
 ## Verified status
 
@@ -10,7 +10,6 @@
 - Sprint 3 lifecycle code and dedicated webhook, neutral reconciliation, and effect-recovery test files are implemented and passing locally.
 - Registration, group registration, and paid voting now create checkout attempts through `PaymentCheckoutService`.
 - Registration deletion now blocks active or unresolved online checkout attempts before deleting local records.
-- Sprints 1–3 infrastructure is implemented and the focused backfill, Xendit client, checkout, legacy Midtrans, manual-payment, status-check, and controller suites pass.
 - Category payment methods now default to `online`, keep legacy `midtrans` compatibility, and can be normalized with `payments:normalize-methods`.
 - Replaced the legacy `App\Services\Midtrans\PaymentReconciler` boundary, migrating `PaymentNotificationController`, `ManualPaymentVerificationController`, and `CheckPaymentStatus` to use the shared generic `App\Services\Payments\PaymentReconciler`.
 - Registration refunds are now provider-aware, persist structured `PaymentRefundRecord`s, and correctly handle group-order partial refunds.
@@ -27,18 +26,16 @@
 - Laravel Pint: **passing**.
 - `git diff --check`: **passing**.
 - Production Vite build: **passing**.
-- Full Pest suite: **not yet verified**; the local run exceeded the five-minute harness timeout without producing a failure report.
 - Registration deletion-safety and checkout regression suites: **passing** (35 tests, 186 assertions) on 2026-10-04.
 - Expanded focused payment lifecycle suites, including Sprint 3 dedicated tests: **passing** (125 tests, 518 assertions) on 2026-10-04.
-- Full test isolation on 2026-10-04: `tests/Unit` passes (10 tests, 69 assertions); `tests/Feature` completes but has five failures/errors isolated to existing category backfill migration tests (`BasketballCategoryBackfillMigrationTest`, `RunningCategoryBackfillMigrationTest`).
 - Payment-method normalization, registration category, manual payment, and registration controller suites: **passing** (60 tests, 313 assertions) on 2026-10-04.
+- Full Pest test suite now fully passing (595 tests, 3072 assertions) on 2026-10-05. Category backfill migration tests failures resolved.
 
-## Remaining before Sprint 4 completion
-
-- Complete staging/manual provider verification for matched sandbox payment settlement, queues/scheduler, UX, and monitoring.
-- Run the complete Pest suite with a sufficient timeout and perform staging UX verification.
-- Resolve or separately triage the non-payment category backfill migration test failures before claiming the complete suite is green.
-- Keep Xendit dormant until cutover; Midtrans remains the default provider.
+## Next Phase: Sprint 5
+- Pre-Cutover Verification
+- Cutover Execution
+- Coexistence Period
+- Auditing Payments
 
 ## Security follow-up
 

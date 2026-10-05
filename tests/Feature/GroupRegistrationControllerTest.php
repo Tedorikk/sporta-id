@@ -130,11 +130,11 @@ test('an expired payment leaves the group order pending', function () {
         providerStatus: 'expire'
     ));
 
-    // For group orders, when the payment fails/expires, the order and registrations remain pending
-    // so the user can retry the checkout.
-    expect($order->fresh()->status)->toBe(RegistrationOrder::STATUS_PENDING_PAYMENT)
-        ->and($order->fresh()->registrations->pluck('status')->unique()->all())->toBe([Registration::STATUS_PENDING_PAYMENT])
-        ->and($category->fresh()->registered_count)->toBe(2);
+    // For group orders, when the payment fails/expires, the order and registrations also expire
+    // freeing up their quota slots.
+    expect($order->fresh()->status)->toBe(RegistrationOrder::STATUS_EXPIRED)
+        ->and($order->fresh()->registrations->pluck('status')->unique()->all())->toBe([Registration::STATUS_EXPIRED])
+        ->and($category->fresh()->registered_count)->toBe(0);
 });
 
 test('a group order is rejected when the shared quota cannot fit every participant', function () {

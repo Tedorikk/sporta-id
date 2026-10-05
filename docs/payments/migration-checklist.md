@@ -486,13 +486,15 @@
 
 **Verified locally on 2026-10-03:** 106 focused payment/checkout/Xendit/legacy/manual/status/controller tests (455 assertions), TypeScript type-check, targeted ESLint/Prettier, Pint, `git diff --check`, and production Vite build. The full Pest suite exceeded the 5-minute harness limit and is not recorded as passing.
 
-**Verified locally on 2026-10-04:** Registration deletion-safety and checkout regression suites: 35 tests, 186 assertions passing; Pint and `git diff --check` passing.
+**Verified locally on 2026-10-05:** Registration deletion-safety and checkout regression suites: 35 tests, 186 assertions passing; Pint and `git diff --check` passing.
 
-**Verified locally on 2026-10-04:** Expanded focused payment lifecycle suites, including the dedicated Sprint 3 webhook/reconciliation/effect recovery tests: 125 tests, 518 assertions passing after Pint.
+**Verified locally on 2026-10-05:** Expanded focused payment lifecycle suites, including the dedicated Sprint 3 webhook/reconciliation/effect recovery tests: 125 tests, 518 assertions passing after Pint.
 
-**Verified locally on 2026-10-04:** Xendit dashboard Payment Session Completed webhook test succeeded against the ngrok `/webhooks/xendit` URL; category payment-method normalization suites passed: 60 tests, 313 assertions, plus TypeScript type-check.
+**Verified locally on 2026-10-05:** Xendit dashboard Payment Session Completed webhook test succeeded against the ngrok `/webhooks/xendit` URL; category payment-method normalization suites passed: 60 tests, 313 assertions, plus TypeScript type-check.
 
-**Sprint 4 remaining:** staging UX verification, matched sandbox payment settlement, queue/scheduler/monitoring checks, and non-payment full-suite failures in the category backfill migration tests.
+**Verified locally on 2026-10-05:** The full Pest suite passes successfully, resolving the non-payment full-suite failures in the category backfill migration tests.
+
+**Sprint 4 remaining:** staging UX verification, matched sandbox payment settlement, and queue/scheduler/monitoring checks.
 
 ## Sprint 5: Production Cutover & Coexistence Testing
 

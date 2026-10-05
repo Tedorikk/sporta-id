@@ -25,7 +25,7 @@ function stepsBackToBeforeBackfill(): int
 function replayBackfillOver(callable $seedLegacyRows): void
 {
     Artisan::call('migrate:rollback', ['--step' => stepsBackToBeforeBackfill(), '--force' => true]);
-
+    
     expect(Schema::hasColumn('basketball_event_categories', 'price'))->toBeTrue();
 
     $seedLegacyRows();
@@ -129,12 +129,16 @@ test('a basketball category on an event with no basketball event record is left 
     expect(fn () => replayBackfillOver(function () use ($orphanBasketballEvent) {
         DB::table('basketball_event_categories')->insert([
             'basketball_event_id' => $orphanBasketballEvent->id,
-            'name' => 'Orphan',
-            'slug' => 'orphan',
+            'name' => 'Ghost',
+            'slug' => 'ghost',
             'format' => 'pool_stage',
+            'price' => 350000,
+            'quota' => 16,
             'status' => 'OPEN',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
+        $orphanBasketballEvent->event()->delete();
     }))->toThrow(QueryException::class);
 });

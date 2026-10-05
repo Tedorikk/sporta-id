@@ -64,7 +64,7 @@ test('it closes expired payments without confirming the registration', function 
 
     expect($payment->fresh()->status)->toBe(Payment::STATUS_EXPIRE)
         ->and($payment->fresh()->checkout_state)->toBe(Payment::CHECKOUT_CLOSED)
-        ->and($payment->payable->fresh()->status)->toBe(Registration::STATUS_PENDING_PAYMENT)
+        ->and($payment->payable->fresh()->status)->toBe(Registration::STATUS_EXPIRED)
         ->and(PaymentEffect::count())->toBe(0);
 });
 

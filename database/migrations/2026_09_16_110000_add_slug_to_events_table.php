@@ -31,14 +31,24 @@ return new class extends Migration
             });
         });
 
-        Schema::table('events', function (Blueprint $table) {
-            $table->string('slug')->nullable(false)->change();
-            $table->unique('slug');
-        });
+        if (DB::getDriverName() !== 'sqlite') {
+            Schema::table('events', function (Blueprint $table) {
+                $table->string('slug')->nullable(false)->change();
+                $table->unique('slug');
+            });
+        }
     }
 
     public function down(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            DB::statement('DROP INDEX IF EXISTS events_slug_unique');
+            Schema::table('events', function (Blueprint $table) {
+                $table->dropColumn('slug');
+            });
+            return;
+        }
+
         Schema::table('events', function (Blueprint $table) {
             // SQLite refuses to drop a column that's still covered by an
             // explicit index (unlike an inline unique constraint) — the

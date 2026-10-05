@@ -6,7 +6,7 @@ use App\Models\Event;
 use App\Models\Payment;
 use App\Models\Registration;
 use App\Models\RegistrationCategory;
-use App\Services\Midtrans\PaymentReconciler;
+use App\Services\Payments\PaymentReconciler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -132,12 +132,12 @@ test('settlement emails the registrant and notifies the organizers', function ()
 
     $payment = $registration->payments()->firstOrFail();
 
-    app(PaymentReconciler::class)->reconcile($payment, [
+    app(PaymentReconciler::class)->reconcile($payment, app(\App\Services\Midtrans\MidtransGateway::class)->mapStatusToOutcome([
         'order_id' => $payment->order_id,
         'transaction_status' => 'settlement',
         'transaction_id' => 'txn-1',
         'payment_type' => 'bank_transfer',
-    ]);
+    ]));
 
     expect($registration->fresh()->status)->toBe(Registration::STATUS_CONFIRMED);
 
@@ -158,12 +158,12 @@ test('a replayed settlement webhook does not send the confirmation twice', funct
     ])->assertOk();
 
     $payment = Payment::firstOrFail();
-    $notification = [
+    $notification = app(\App\Services\Midtrans\MidtransGateway::class)->mapStatusToOutcome([
         'order_id' => $payment->order_id,
         'transaction_status' => 'settlement',
         'transaction_id' => 'txn-1',
         'payment_type' => 'bank_transfer',
-    ];
+    ]);
 
     app(PaymentReconciler::class)->reconcile($payment, $notification);
     app(PaymentReconciler::class)->reconcile($payment->fresh(), $notification);
@@ -185,10 +185,10 @@ test('an expired payment tells nobody it was confirmed', function () {
 
     $payment = Payment::firstOrFail();
 
-    app(PaymentReconciler::class)->reconcile($payment, [
+    app(PaymentReconciler::class)->reconcile($payment, app(\App\Services\Midtrans\MidtransGateway::class)->mapStatusToOutcome([
         'order_id' => $payment->order_id,
         'transaction_status' => 'expire',
-    ]);
+    ]));
 
     Mail::assertNotQueued(RegistrationConfirmed::class);
     expect(Registration::firstOrFail()->status)->toBe(Registration::STATUS_EXPIRED);

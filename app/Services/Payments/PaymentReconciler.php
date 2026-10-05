@@ -223,7 +223,10 @@ class PaymentReconciler
     private function handleFailureOrExpiry(Payment $payment, Payable $payable, PaymentOutcome $outcome): void
     {
         // Just mark checkout as closed
-        // Payable handles its own expiry logic (separate from payment expiry)
+        // Some payables (like Votes) void themselves when payment expires.
+        // Others (like Registrations) might have separate expiry logic, but
+        // can still listen to this if they want to.
+        $payable->applyPaymentStatus($payment, $outcome->status);
 
         Log::info('[Reconciler] Payment failed or expired', [
             'payment_id' => $payment->id,
