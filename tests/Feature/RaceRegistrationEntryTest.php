@@ -61,7 +61,12 @@ test('a free race registration is entered on the start list with a bib immediate
 });
 
 test('a paid race registration only joins the start list once payment settles', function () {
-    Http::fake(['app.sandbox.midtrans.com/snap/v1/transactions' => Http::response(['token' => 'tok'], 201)]);
+    Http::fake([
+        'api.xendit.co/v2/payment_sessions' => Http::response([
+            'id' => 'ps-test-123',
+            'checkout_url' => 'https://checkout.xendit.co/v2/ps-test-123',
+        ], 200),
+    ]);
     $category = raceEntryCategory(['bib_start_number' => 1], ['price' => 150000]);
 
     $this->post(route('registrations.store', [$category->event, $category]), raceRegistrationPayload('Bagus Wicaksono'))
@@ -83,7 +88,12 @@ test('a paid race registration only joins the start list once payment settles', 
 });
 
 test('an expired paid registration never appears on the start list', function () {
-    Http::fake(['app.sandbox.midtrans.com/snap/v1/transactions' => Http::response(['token' => 'tok'], 201)]);
+    Http::fake([
+        'api.xendit.co/v2/payment_sessions' => Http::response([
+            'id' => 'ps-test-123',
+            'checkout_url' => 'https://checkout.xendit.co/v2/ps-test-123',
+        ], 200),
+    ]);
     $category = raceEntryCategory([], ['price' => 150000]);
 
     $this->post(route('registrations.store', [$category->event, $category]), raceRegistrationPayload('Unpaid Runner'))

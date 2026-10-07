@@ -32,7 +32,6 @@ use App\Http\Controllers\OrganizationInvitationController;
 use App\Http\Controllers\OrganizationMemberAccountController;
 use App\Http\Controllers\OrganizationMemberController;
 use App\Http\Controllers\OrganizationSwitchController;
-use App\Http\Controllers\PaymentNotificationController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\PlayerLookupController;
 use App\Http\Controllers\PlayerQrController;
@@ -147,9 +146,7 @@ Route::middleware('public.locale')->group(function () {
     Route::post('votes/{vote}/pay', [VoteController::class, 'pay'])
         ->middleware('throttle:20,1')->name('votes.pay');
 
-    // --- Midtrans payment notification webhook (server-to-server, no session) --
     // Webhook endpoints (no CSRF, no auth)
-    Route::post('webhooks/midtrans', [PaymentNotificationController::class, 'handle'])->name('webhooks.midtrans');
     Route::post('webhooks/xendit', [XenditWebhookController::class, 'handle'])->name('webhooks.xendit');
 
     // --- Public "Find My ID Card" lookup (no auth required) --------------------

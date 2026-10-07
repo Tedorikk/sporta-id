@@ -8,7 +8,6 @@ import { PublicPageHeader } from '@/components/public/public-page-header';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/hooks/use-t';
 import { formatRupiah } from '@/lib/format-currency';
-import { loadSnapScript } from '@/lib/midtrans';
 import type { VoteReceipt } from '@/types/award';
 
 interface Props {
@@ -74,27 +73,13 @@ export default function VoteStatus({ vote, award, event }: Props) {
             })
             .then(async (response) => { const payload = await response.json().catch(() => ({})); if (!response.ok) { throw new Error(payload.error || "Payment checkout is unavailable at this time."); } return payload; })
             .then((payload) => {
-                if (payload.provider === 'xendit' && payload.checkoutUrl) {
+                if (payload.checkoutUrl) {
                     window.location.assign(payload.checkoutUrl);
 
                     return null;
                 }
 
-                if (!payload.snapToken || !payload.midtransClientKey) {
-                    throw new Error('Payment checkout is unavailable.');
-                }
-
-                return loadSnapScript(
-                    payload.midtransClientKey,
-                    payload.midtransIsProduction,
-                ).then(() => {
-                    window.snap?.pay(payload.snapToken, {
-                        onSuccess: () => router.reload(),
-                        onPending: () => router.reload(),
-                        onError: () => setIsPaying(false),
-                        onClose: () => setIsPaying(false),
-                    });
-                });
+                throw new Error('Payment checkout is unavailable.');
             })
             .catch((error) => { setIsPaying(false); toast.error(error.message || "Payment checkout is unavailable at this time."); });
     };

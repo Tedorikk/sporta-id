@@ -51,7 +51,21 @@ test('a free group order confirms every participant immediately', function () {
 });
 
 test('a paid group order creates one payment for the summed total across participants', function () {
-    Http::fake(['app.sandbox.midtrans.com/snap/v1/transactions' => Http::response(['token' => 'tok-order'], 201)]);
+    Http::fake([
+        'api.xendit.co/v2/payment_requests' => Http::response([
+            'id' => 'pr-test',
+            'status' => 'PENDING',
+            'payment_method' => [
+                'type' => 'DIRECT_BANK_TRANSFER',
+                'reusability' => 'ONE_TIME_USE',
+                'reference_id' => 'ref-test',
+            ],
+        ], 200),
+        'api.xendit.co/v2/payment_sessions' => Http::response([
+            'id' => 'ps-test-123',
+            'checkout_url' => 'https://checkout.xendit.co/v2/ps-test-123',
+        ], 200),
+    ]);
     $event = Event::factory()->create();
     $fiveK = groupOrderCategory($event, ['name' => '5K', 'price' => 150000]);
     $tenK = groupOrderCategory($event, ['name' => '10K', 'price' => 200000]);
@@ -67,7 +81,7 @@ test('a paid group order creates one payment for the summed total across partici
         'status' => RegistrationOrder::STATUS_PENDING_PAYMENT,
         'provider' => Payment::PROVIDER_MIDTRANS,
         'checkout_url' => null,
-        'snap_token' => 'tok-order',
+        
     ]);
 
     $order = RegistrationOrder::sole();
@@ -82,7 +96,12 @@ test('a paid group order creates one payment for the summed total across partici
 
 test('settling a group order confirms every participant and sends notifications', function () {
     Mail::fake();
-    Http::fake(['app.sandbox.midtrans.com/snap/v1/transactions' => Http::response(['token' => 'tok'], 201)]);
+    Http::fake([
+        'api.xendit.co/v2/payment_sessions' => Http::response([
+            'id' => 'ps-test-123',
+            'checkout_url' => 'https://checkout.xendit.co/v2/ps-test-123',
+        ], 200),
+    ]);
     $event = Event::factory()->create();
     $category = groupOrderCategory($event, ['price' => 150000]);
 
@@ -111,7 +130,12 @@ test('settling a group order confirms every participant and sends notifications'
 });
 
 test('an expired payment leaves the group order pending', function () {
-    Http::fake(['app.sandbox.midtrans.com/snap/v1/transactions' => Http::response(['token' => 'tok'], 201)]);
+    Http::fake([
+        'api.xendit.co/v2/payment_sessions' => Http::response([
+            'id' => 'ps-test-123',
+            'checkout_url' => 'https://checkout.xendit.co/v2/ps-test-123',
+        ], 200),
+    ]);
     $event = Event::factory()->create();
     $category = groupOrderCategory($event, ['price' => 150000]);
 

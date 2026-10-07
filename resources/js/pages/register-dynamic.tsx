@@ -63,7 +63,6 @@ import { accentColors } from '@/lib/color';
 import { formatRupiah } from '@/lib/format-currency';
 import { formatDateTime } from '@/lib/format-date';
 import type { Translate } from '@/lib/i18n';
-import { loadSnapScript } from '@/lib/midtrans';
 import {
     clearDraft,
     draftKey,
@@ -96,31 +95,22 @@ interface Props {
     /** Whether this category feeds a bracket — the roster block's jersey/identity fields only apply then. */
     isTournament?: boolean;
     cardTemplate?: CardTemplate | null;
-    snapToken?: string | null;
-    checkoutUrl?: string | null;
+        checkoutUrl?: string | null;
     provider?: string | null;
-    midtransClientKey?: string | null;
-    midtransIsProduction?: boolean;
-}
+        }
 
 function PaymentPendingView({
     event,
     registrationCategory,
     registration,
-    snapToken,
     checkoutUrl,
-    midtransClientKey,
-    midtransIsProduction,
     accentStyle,
 }: {
     event: Event;
     registrationCategory: Props['registrationCategory'];
     registration: Registration;
-    snapToken: string | null;
-    checkoutUrl: string | null;
-    midtransClientKey: string | null;
-    midtransIsProduction: boolean;
-    accentStyle: CSSProperties;
+        checkoutUrl: string | null;
+            accentStyle: CSSProperties;
 }) {
     const { t } = useT();
     const [isPaying, setIsPaying] = useState(false);
@@ -132,24 +122,7 @@ function PaymentPendingView({
             return;
         }
 
-        if (!snapToken || !midtransClientKey) {
-            return;
-        }
-
-        setIsPaying(true);
-
-        loadSnapScript(midtransClientKey, midtransIsProduction)
-            .then(() => {
-                window.snap?.pay(snapToken, {
-                    onSuccess: () =>
-                        router.visit(registrationStatus.url(registration)),
-                    onPending: () =>
-                        router.visit(registrationStatus.url(registration)),
-                    onError: () => setIsPaying(false),
-                    onClose: () => setIsPaying(false),
-                });
-            })
-            .catch((error) => { setIsPaying(false); const msg = (axios.isAxiosError(error) && error.response?.data?.error) ? error.response.data.error : error.message; toast.error(msg || "Payment checkout is unavailable at this time."); });
+        throw new Error('Payment checkout is unavailable.');
     };
 
     return (
@@ -191,7 +164,7 @@ function PaymentPendingView({
                             )}
                         </p>
 
-                        {snapToken || checkoutUrl ? (
+                        {checkoutUrl ? (
                             <Button
                                 type="button"
                                 onClick={payNow}
@@ -462,8 +435,8 @@ const RESERVED_KEYS = ['name', 'email', 'phone', 'photo'];
 
 /**
  * Injected into a paid category's form when the organizer didn't ask for an
- * email themselves. A paid registration has nowhere to send the Midtrans
- * receipt or our confirmation without one, and the server enforces the same
+ * email themselves. A paid registration has nowhere to send the payment
+   * receipt or our confirmation without one, and the server enforces the same
  * rule — so the field has to exist even if the form builder omitted it.
  */
 const emailField = (t: Translate): RegistrationField => ({
@@ -682,10 +655,7 @@ export default function RegisterDynamic({
     rosterDeadline = null,
     isTournament = false,
     cardTemplate,
-    snapToken,
     checkoutUrl,
-    midtransClientKey,
-    midtransIsProduction,
 }: Props) {
     useForceLightMode();
 
@@ -972,11 +942,8 @@ export default function RegisterDynamic({
                 event={event}
                 registrationCategory={registrationCategory}
                 registration={confirmedRegistration}
-                snapToken={snapToken ?? null}
-                checkoutUrl={checkoutUrl ?? null}
-                midtransClientKey={midtransClientKey ?? null}
-                midtransIsProduction={midtransIsProduction ?? false}
-                accentStyle={accentStyle}
+                                checkoutUrl={checkoutUrl ?? null}
+                                                accentStyle={accentStyle}
             />
         );
     }
@@ -1102,7 +1069,7 @@ export default function RegisterDynamic({
                                           },
                                       )
                                     : t(
-                                          'After you submit this form your slot is reserved and you’ll be taken to the Midtrans payment page to pay :price. The registration is confirmed once payment settles.',
+                                          'After you submit this form your slot is reserved and you’ll be taken to the payment page to pay :price. The registration is confirmed once payment settles.',
                                           {
                                               price: formatRupiah(
                                                   registrationCategory.price,

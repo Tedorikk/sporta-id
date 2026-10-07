@@ -245,9 +245,6 @@ class PaymentCheckoutService
                     'checkout_expires_at' => $result->expiresAt,
                     'checkout_state' => Payment::CHECKOUT_READY,
                     'creation_lease_expires_at' => null,
-                    'snap_token' => $payment->provider === Payment::PROVIDER_MIDTRANS
-                        ? $result->sessionId
-                        : null,
                 ]);
 
                 Log::info('[CheckoutService] Checkout created successfully', [

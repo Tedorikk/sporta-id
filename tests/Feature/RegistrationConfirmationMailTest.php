@@ -113,7 +113,13 @@ test('a free registration emails the registrant a confirmation', function () {
 
 test('settlement emails the registrant and notifies the organizers', function () {
     Mail::fake();
-    Http::fake(['app.sandbox.midtrans.com/snap/v1/transactions' => Http::response(['token' => 'snap-token-abc'], 201)]);
+    Http::fake([
+        'api.xendit.co/v2/payment_requests' => Http::response([], 200),
+        'api.xendit.co/v2/payment_sessions' => Http::response([
+            'id' => 'ps-test-123',
+            'checkout_url' => 'https://checkout.xendit.co/v2/ps-test-123',
+        ], 200),
+    ]);
 
     $category = paidFlowCategory([
         'price' => '150000',
@@ -148,7 +154,13 @@ test('settlement emails the registrant and notifies the organizers', function ()
 
 test('a replayed settlement webhook does not send the confirmation twice', function () {
     Mail::fake();
-    Http::fake(['app.sandbox.midtrans.com/snap/v1/transactions' => Http::response(['token' => 'snap-token-abc'], 201)]);
+    Http::fake([
+        'api.xendit.co/v2/payment_requests' => Http::response([], 200),
+        'api.xendit.co/v2/payment_sessions' => Http::response([
+            'id' => 'ps-test-123',
+            'checkout_url' => 'https://checkout.xendit.co/v2/ps-test-123',
+        ], 200),
+    ]);
 
     $category = paidFlowCategory(['price' => '150000']);
 
@@ -174,7 +186,13 @@ test('a replayed settlement webhook does not send the confirmation twice', funct
 
 test('an expired payment tells nobody it was confirmed', function () {
     Mail::fake();
-    Http::fake(['app.sandbox.midtrans.com/snap/v1/transactions' => Http::response(['token' => 'snap-token-abc'], 201)]);
+    Http::fake([
+        'api.xendit.co/v2/payment_requests' => Http::response([], 200),
+        'api.xendit.co/v2/payment_sessions' => Http::response([
+            'id' => 'ps-test-123',
+            'checkout_url' => 'https://checkout.xendit.co/v2/ps-test-123',
+        ], 200),
+    ]);
 
     $category = paidFlowCategory(['price' => '150000']);
 
@@ -198,7 +216,13 @@ test('an expired payment tells nobody it was confirmed', function () {
 // ─── Midtrans gets a real email to send its own receipt to ─────────────────
 
 test('the email collected is forwarded to midtrans as customer_details', function () {
-    Http::fake(['app.sandbox.midtrans.com/snap/v1/transactions' => Http::response(['token' => 'snap-token-abc'], 201)]);
+    Http::fake([
+        'api.xendit.co/v2/payment_requests' => Http::response([], 200),
+        'api.xendit.co/v2/payment_sessions' => Http::response([
+            'id' => 'ps-test-123',
+            'checkout_url' => 'https://checkout.xendit.co/v2/ps-test-123',
+        ], 200),
+    ]);
 
     $category = paidFlowCategory(['price' => '150000']);
 

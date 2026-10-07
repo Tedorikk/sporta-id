@@ -22,9 +22,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state', SetPublicLocale::COOKIE]);
 
-        // Midtrans and Xendit post notifications without a Laravel session/CSRF token.
+        // Xendit posts notifications without a Laravel session/CSRF token.
         $middleware->validateCsrfTokens(except: [
-            'webhooks/midtrans',
             'webhooks/xendit',
         ]);
 

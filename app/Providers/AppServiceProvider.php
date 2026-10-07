@@ -2,8 +2,6 @@
 
 namespace App\Providers;
 
-use App\Services\Midtrans\MidtransClient;
-use App\Services\Midtrans\MidtransGateway;
 use App\Services\Payments\PaymentCheckoutService;
 use App\Services\Payments\PaymentGatewayManager;
 use App\Services\Xendit\XenditClient;
@@ -25,12 +23,6 @@ class AppServiceProvider extends ServiceProvider
         // Register payment gateway manager as singleton
         $this->app->singleton(PaymentGatewayManager::class, function ($app) {
             $manager = new PaymentGatewayManager;
-
-            // Register Midtrans gateway if legacy support is enabled
-            if (config('payments.legacy_midtrans_enabled', true)) {
-                $midtransClient = new MidtransClient;
-                $manager->register('midtrans', new MidtransGateway($midtransClient));
-            }
 
             // Register Xendit gateway
             $xenditClient = new XenditClient;

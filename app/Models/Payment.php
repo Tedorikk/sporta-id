@@ -73,7 +73,7 @@ class Payment extends Model
         'checkout_url', 'checkout_expires_at', 'checkout_state', 'creation_lease_expires_at',
         'request_snapshot', 'provider_status', 'provider_updated_at', 'last_reconciled_at',
         'fulfillment_state', 'review_reason',
-        'midtrans_transaction_id', 'payment_type', 'snap_token', 'raw_notification', 'paid_at',
+        'payment_type', 'raw_notification', 'paid_at',
         'proof_path', 'payer_account_name', 'verified_by', 'verified_at',
     ];
 

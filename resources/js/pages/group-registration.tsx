@@ -53,7 +53,6 @@ import { useT } from '@/hooks/use-t';
 import { accentColors } from '@/lib/color';
 import { formatRupiah } from '@/lib/format-currency';
 import type { Translate } from '@/lib/i18n';
-import { loadSnapScript } from '@/lib/midtrans';
 import type { Event } from '@/types/event';
 import type {
     PublicRegistrationCategory,
@@ -556,9 +555,9 @@ export default function GroupRegistration({ event, categories }: Props) {
         orderId: string;
         provider: 'midtrans' | 'xendit' | null;
         checkoutUrl: string | null;
-        snapToken: string | null;
-        midtransClientKey: string | null;
-        midtransIsProduction: boolean;
+        
+        
+        
     } | null>(null);
 
     const { accent, accentDark } = accentColors(event.accent_color);
@@ -635,9 +634,9 @@ export default function GroupRegistration({ event, categories }: Props) {
                         orderId: data.order_id,
                         provider: data.provider,
                         checkoutUrl: data.checkoutUrl,
-                        snapToken: data.snapToken,
-                        midtransClientKey: data.midtransClientKey,
-                        midtransIsProduction: data.midtransIsProduction,
+                        
+                        
+                        
                     });
                     setStep('payment');
                 } else {
@@ -660,23 +659,7 @@ export default function GroupRegistration({ event, categories }: Props) {
             return;
         }
 
-        if (!payment?.snapToken || !payment.midtransClientKey) {
-            return;
-        }
-
-        setIsPaying(true);
-        loadSnapScript(payment.midtransClientKey, payment.midtransIsProduction)
-            .then(() => {
-                window.snap?.pay(payment.snapToken as string, {
-                    onSuccess: () =>
-                        router.visit(orderStatus.url(payment.orderId)),
-                    onPending: () =>
-                        router.visit(orderStatus.url(payment.orderId)),
-                    onError: () => setIsPaying(false),
-                    onClose: () => setIsPaying(false),
-                });
-            })
-            .catch((error) => { setIsPaying(false); const msg = (axios.isAxiosError(error) && error.response?.data?.error) ? error.response.data.error : error.message; toast.error(msg || "Payment checkout is unavailable at this time."); });
+        if (payment?.checkoutUrl) { window.location.assign(payment.checkoutUrl); return; } throw new Error('Payment checkout is unavailable.');
     }
 
     return (
@@ -943,7 +926,7 @@ export default function GroupRegistration({ event, categories }: Props) {
                                     'Your slots are reserved — complete payment to confirm every participant.',
                                 )}
                             </p>
-                            {payment.snapToken || payment.checkoutUrl ? (
+                            {payment.checkoutUrl ? (
                                 <Button
                                     type="button"
                                     onClick={payNow}

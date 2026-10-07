@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { useForceLightMode } from '@/hooks/use-force-light-mode';
 import { useT } from '@/hooks/use-t';
 import { formatRupiah } from '@/lib/format-currency';
-import { loadSnapScript } from '@/lib/midtrans';
 import type { Event } from '@/types/event';
 import type { Payment } from '@/types/payment';
 import type { Registration } from '@/types/registration';
@@ -90,32 +89,13 @@ export default function RegistrationStatus({ registration, payment }: Props) {
         axios
             .post<PayResponse>(pay.url(registration))
             .then(({ data }) => {
-                if (data.provider === 'xendit' && data.checkoutUrl) {
+                if (data.checkoutUrl) {
                     window.location.assign(data.checkoutUrl);
 
                     return null;
                 }
 
-                if (!data.snapToken || !data.midtransClientKey) {
-                    throw new Error('Payment checkout is unavailable.');
-                }
-
-                return loadSnapScript(
-                    data.midtransClientKey,
-                    data.midtransIsProduction,
-                ).then(() => data);
-            })
-            .then((data) => {
-                if (!data?.snapToken) {
-                    return;
-                }
-
-                window.snap?.pay(data.snapToken, {
-                    onSuccess: () => window.location.reload(),
-                    onPending: () => window.location.reload(),
-                    onError: () => setIsPaying(false),
-                    onClose: () => setIsPaying(false),
-                });
+                throw new Error('Payment checkout is unavailable.');
             })
             .catch((error) => { setIsPaying(false); const msg = (axios.isAxiosError(error) && error.response?.data?.error) ? error.response.data.error : error.message; toast.error(msg || "Payment checkout is unavailable at this time."); });
     };
