@@ -24,11 +24,11 @@ class RegistrationConfirmationNotifier
         $this->mailOrganizers($registration);
     }
 
-    public function resendRegistrant(Registration $registration): void
+    public function resendRegistrant(Registration $registration): bool
     {
         $registration->loadMissing(['registrationCategory', 'event']);
 
-        $this->mailRegistrant($registration, recordStatus: true);
+        return $this->mailRegistrant($registration, recordStatus: true);
     }
 
     /**
@@ -36,15 +36,15 @@ class RegistrationConfirmationNotifier
      * confirmation with their ID card link. Email is mandatory on paid
      * categories, but a free one may not collect it at all.
      */
-    private function mailRegistrant(Registration $registration, bool $recordStatus = false): void
+    private function mailRegistrant(Registration $registration, bool $recordStatus = false): bool
     {
         if (blank($registration->email)) {
-            return;
+            return false;
         }
 
         // The registrant's own language, not the request's: the webhook that
         // confirms a paid registration has no request at all.
-        $this->send(
+        return $this->send(
             $registration->email,
             (new RegistrationConfirmed($registration))->locale($registration->locale ?? 'id'),
             $recordStatus ? $registration : null,
@@ -65,7 +65,7 @@ class RegistrationConfirmationNotifier
      * A bad address or a mail outage must never roll back a payment that has
      * already settled, so delivery failures are reported and swallowed.
      */
-    private function send(string $recipient, RegistrationConfirmed|RegistrationReceived $mailable, ?Registration $registration = null): void
+    private function send(string $recipient, RegistrationConfirmed|RegistrationReceived $mailable, ?Registration $registration = null): bool
     {
         try {
             Mail::to($recipient)->send($mailable);
@@ -75,6 +75,8 @@ class RegistrationConfirmationNotifier
                 'confirmation_email_failed_at' => null,
                 'confirmation_email_failure' => null,
             ])->save();
+
+            return true;
         } catch (\Throwable $e) {
             $registration?->forceFill([
                 'confirmation_email_failed_at' => now(),
@@ -82,6 +84,8 @@ class RegistrationConfirmationNotifier
             ])->save();
 
             report($e);
+
+            return false;
         }
     }
 }

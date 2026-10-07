@@ -16,10 +16,18 @@ class RegistrationConfirmationEmailController extends Controller
         abort_unless($registration->status === Registration::STATUS_CONFIRMED, 422, 'Only confirmed registrations can receive confirmation emails.');
         abort_if(blank($registration->email), 422, 'This registration does not have an email address.');
 
-        $this->notifier->resendRegistrant($registration);
+        $sent = $this->notifier->resendRegistrant($registration);
+
+        if (! $sent) {
+            return back()->with(['toast' => [
+                'title' => 'Email failed',
+                'description' => $registration->fresh()->confirmation_email_failure ?? 'The confirmation email could not be resent.',
+                'variant' => 'destructive',
+            ]]);
+        }
 
         return back()->with(['toast' => [
-            'title' => 'Email queued',
+            'title' => 'Email sent',
             'description' => 'The confirmation email was resent.',
         ]]);
     }
