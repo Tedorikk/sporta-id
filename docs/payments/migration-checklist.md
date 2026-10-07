@@ -518,19 +518,19 @@
 - [ ] Monitor new registration payments
 - [ ] Verify Xendit session creation succeeds
 - [ ] Verify webhook delivery and processing
-- [ ] Verify payment settlement and confirmation
-- [ ] Test multiple payment methods (QRIS, VA, e-wallet)
-- [ ] Verify emails sent after payment
+- [x] Verify payment settlement and confirmation
+- [x] Test multiple payment methods (QRIS, VA, e-wallet)
+- [x] Verify emails sent after payment
 
 ### Coexistence Period
-- [ ] Both Midtrans and Xendit payments active
-- [ ] Monitor error rates for both providers
-- [ ] Verify reconciliation works for both
-- [ ] Recovery commands support both
-- [ ] Admin dashboard displays both correctly
-- [ ] Historical data accessible
-- [ ] New payments via Xendit only
-- [ ] Old in-flight Midtrans payments still reconcilable
+- [x] Both Midtrans and Xendit payments active
+- [x] Monitor error rates for both providers
+- [x] Verify reconciliation works for both
+- [x] Recovery commands support both
+- [x] Admin dashboard displays both correctly
+- [x] Historical data accessible
+- [x] New payments via Xendit only
+- [x] Old in-flight Midtrans payments still reconcilable
 
 ### Tests
 - [x] Create `tests/Feature/PaymentGatewayCutoverTest.php`
@@ -549,14 +549,14 @@
   - [x] Retirement readiness report
 
 ### Deployment Checklist (Sprint 5)
-- [ ] Production deployment completed
-- [ ] Variable switch executed
-- [ ] First Xendit payment confirmed successful
-- [ ] Webhook processing verified
-- [ ] Monitoring showing healthy metrics
-- [ ] No rollback needed
-- [ ] Communication sent to stakeholders
-- [ ] Support team briefed
+- [x] Production deployment completed
+- [x] Variable switch executed
+- [x] First Xendit payment confirmed successful
+- [x] Webhook processing verified
+- [x] Monitoring showing healthy metrics
+- [x] No rollback needed
+- [x] Communication sent to stakeholders
+- [x] Support team briefed
 
 ### Rollback Procedure (If Needed)
 - [ ] Set `PAYMENT_GATEWAY=midtrans`

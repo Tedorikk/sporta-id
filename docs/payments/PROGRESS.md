@@ -1,8 +1,8 @@
 # Midtrans to Xendit Migration Progress
 
-**Updated:** 2026-10-05
+**Updated:** 2026-10-07
 
-**Current phase:** Sprint 5 (Production Cutover & Coexistence Testing)
+**Current phase:** Sprint 6 (Midtrans Retirement)
 
 ## Verified status
 
@@ -33,10 +33,10 @@
 - Payment-method normalization, registration category, manual payment, and registration controller suites: **passing** (60 tests, 313 assertions) on 2026-10-04.
 - Full Pest test suite now fully passing (599 tests, 3079 assertions) on 2026-10-05. Category backfill migration tests failures resolved.
 
-## Next Phase: Sprint 5 Deployment & Verification
-- Pre-Cutover Verification
-- Cutover Execution
-- Coexistence Period Monitoring
+## Next Phase: Sprint 6 Midtrans Retirement
+- Execute Midtrans code removal and cleanup once drain period is over.
+
+
 
 ## Security follow-up
 
