@@ -4,6 +4,7 @@ import { CheckCircle2, Clock, Loader2, Lock, Save, Users } from 'lucide-react';
 import QRCode from 'qrcode';
 import type { CSSProperties } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { Controller, useForm } from 'react-hook-form';
 import * as z from 'zod';
 import {
@@ -148,7 +149,7 @@ function PaymentPendingView({
                     onClose: () => setIsPaying(false),
                 });
             })
-            .catch(() => setIsPaying(false));
+            .catch((error) => { setIsPaying(false); toast.error(error.message || "Payment checkout is unavailable at this time."); });
     };
 
     return (

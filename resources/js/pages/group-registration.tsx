@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Head, router } from '@inertiajs/react';
 import axios from 'axios';
+import { toast } from 'sonner';
 import {
     ArrowLeft,
     CheckCircle2,
@@ -633,10 +634,10 @@ export default function GroupRegistration({ event, categories }: Props) {
                     setPayment({
                         orderId: data.order_id,
                         provider: data.provider,
-                        checkoutUrl: data.checkout_url,
-                        snapToken: data.snap_token,
-                        midtransClientKey: data.midtrans_client_key,
-                        midtransIsProduction: data.midtrans_is_production,
+                        checkoutUrl: data.checkoutUrl,
+                        snapToken: data.snapToken,
+                        midtransClientKey: data.midtransClientKey,
+                        midtransIsProduction: data.midtransIsProduction,
                     });
                     setStep('payment');
                 } else {
@@ -675,7 +676,7 @@ export default function GroupRegistration({ event, categories }: Props) {
                     onClose: () => setIsPaying(false),
                 });
             })
-            .catch(() => setIsPaying(false));
+            .catch((error) => { setIsPaying(false); toast.error(error.message || "Payment checkout is unavailable at this time."); });
     }
 
     return (

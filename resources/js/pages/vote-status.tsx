@@ -1,4 +1,5 @@
 import { Head, router } from '@inertiajs/react';
+import { toast } from 'sonner';
 import { CheckCircle2, Clock, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
@@ -71,23 +72,23 @@ export default function VoteStatus({ vote, award, event }: Props) {
                             ?.getAttribute('content') ?? '',
                 },
             })
-            .then((response) => response.json())
+            .then(async (response) => { const payload = await response.json().catch(() => ({})); if (!response.ok) { throw new Error(payload.error || "Payment checkout is unavailable at this time."); } return payload; })
             .then((payload) => {
-                if (payload.provider === 'xendit' && payload.checkout_url) {
-                    window.location.assign(payload.checkout_url);
+                if (payload.provider === 'xendit' && payload.checkoutUrl) {
+                    window.location.assign(payload.checkoutUrl);
 
                     return null;
                 }
 
-                if (!payload.snap_token || !payload.midtrans_client_key) {
+                if (!payload.snapToken || !payload.midtransClientKey) {
                     throw new Error('Payment checkout is unavailable.');
                 }
 
                 return loadSnapScript(
-                    payload.midtrans_client_key,
-                    payload.midtrans_is_production,
+                    payload.midtransClientKey,
+                    payload.midtransIsProduction,
                 ).then(() => {
-                    window.snap?.pay(payload.snap_token, {
+                    window.snap?.pay(payload.snapToken, {
                         onSuccess: () => router.reload(),
                         onPending: () => router.reload(),
                         onError: () => setIsPaying(false),
@@ -95,7 +96,7 @@ export default function VoteStatus({ vote, award, event }: Props) {
                     });
                 });
             })
-            .catch(() => setIsPaying(false));
+            .catch((error) => { setIsPaying(false); toast.error(error.message); });
     };
 
     return (

@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import axios from 'axios';
+import { toast } from 'sonner';
 import { CheckCircle2, Clock, Loader2, Ticket, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { pay } from '@/actions/App/Http/Controllers/GroupRegistrationController';
@@ -43,10 +44,10 @@ const STATUS_COPY: Record<string, { label: string; description: string }> = {
 
 interface PayResponse {
     provider: 'midtrans' | 'xendit';
-    checkout_url: string | null;
-    snap_token: string | null;
-    midtrans_client_key: string | null;
-    midtrans_is_production: boolean;
+    checkoutUrl: string | null;
+    snapToken: string | null;
+    midtransClientKey: string | null;
+    midtransIsProduction: boolean;
 }
 
 export default function RegistrationOrderStatus({ order }: Props) {
@@ -82,34 +83,34 @@ export default function RegistrationOrderStatus({ order }: Props) {
         axios
             .post<PayResponse>(pay.url(order))
             .then(({ data }) => {
-                if (data.provider === 'xendit' && data.checkout_url) {
-                    window.location.assign(data.checkout_url);
+                if (data.provider === 'xendit' && data.checkoutUrl) {
+                    window.location.assign(data.checkoutUrl);
 
                     return null;
                 }
 
-                if (!data.snap_token || !data.midtrans_client_key) {
+                if (!data.snapToken || !data.midtransClientKey) {
                     throw new Error('Payment checkout is unavailable.');
                 }
 
                 return loadSnapScript(
-                    data.midtrans_client_key,
-                    data.midtrans_is_production,
+                    data.midtransClientKey,
+                    data.midtransIsProduction,
                 ).then(() => data);
             })
             .then((data) => {
-                if (!data?.snap_token) {
+                if (!data?.snapToken) {
                     return;
                 }
 
-                window.snap?.pay(data.snap_token, {
+                window.snap?.pay(data.snapToken, {
                     onSuccess: () => window.location.reload(),
                     onPending: () => window.location.reload(),
                     onError: () => setIsPaying(false),
                     onClose: () => setIsPaying(false),
                 });
             })
-            .catch(() => setIsPaying(false));
+            .catch((error) => { setIsPaying(false); toast.error(error.message || "Payment checkout is unavailable at this time."); });
     };
 
     return (
