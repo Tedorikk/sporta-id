@@ -567,71 +567,72 @@
 ## Sprint 6: Midtrans Retirement
 
 ### Drain Period
-- [ ] Minimum 30 days after cutover
-- [ ] All Midtrans payments resolved (settled/expired/canceled)
-- [ ] Run audit command to verify no pending Midtrans payments
-- [ ] Reconciliation command shows zero unresolved Midtrans attempts
-- [ ] Financial reconciliation completed
-- [ ] Export Midtrans historical data for archival
+- [x] Minimum 30 days after cutover
+- [x] All Midtrans payments resolved (settled/expired/canceled)
+- [x] Run audit command to verify no pending Midtrans payments
+- [x] Reconciliation command shows zero unresolved Midtrans attempts
+- [x] Financial reconciliation completed
+- [x] Export Midtrans historical data for archival
 
 ### Code Removal
-- [ ] Set `PAYMENT_LEGACY_MIDTRANS_ENABLED=false`
-- [ ] Verify no errors from disabled legacy adapter
-- [ ] Remove Midtrans-specific code:
-  - [ ] Delete `app/Services/Midtrans/MidtransClient.php`
-  - [ ] Delete `app/Services/Midtrans/MidtransGateway.php`
-  - [ ] Delete `app/Services/Midtrans/Payable.php` (already moved)
-  - [ ] Delete `app/Http/Controllers/PaymentNotificationController.php`
-  - [ ] Delete `resources/js/lib/midtrans.ts`
-  - [ ] Remove Snap script loading from templates
-  - [ ] Remove `MIDTRANS_*` from `.env.example`
-  - [ ] Remove Midtrans config from `config/services.php`
-  - [ ] Remove legacy webhook route
-  - [ ] Remove CSRF exception for legacy webhook
-- [ ] Create migration: `drop_legacy_midtrans_columns_from_payments_table`
-  - [ ] Export data first (backup)
-  - [ ] Drop `snap_token`
-  - [ ] Drop `midtrans_transaction_id`
-  - [ ] Keep `provider` and neutral fields forever
-- [ ] Remove 'midtrans' from category payment_method enum
-- [ ] Remove legacy compatibility bridges
+- [x] Set `PAYMENT_LEGACY_MIDTRANS_ENABLED=false`
+- [x] Verify no errors from disabled legacy adapter
+- [x] Remove Midtrans-specific code:
+  - [x] Delete `app/Services/Midtrans/MidtransClient.php`
+  - [x] Delete `app/Services/Midtrans/MidtransGateway.php`
+  - [x] Delete `app/Services/Midtrans/Payable.php` (already moved)
+  - [x] Delete `app/Http/Controllers/PaymentNotificationController.php`
+  - [x] Delete `resources/js/lib/midtrans.ts`
+  - [x] Remove Snap script loading from templates
+  - [x] Remove `MIDTRANS_*` from `.env.example`
+  - [x] Remove Midtrans config from `config/services.php`
+  - [x] Remove legacy webhook route
+  - [x] Remove CSRF exception for legacy webhook
+- [x] Create migration: `drop_legacy_midtrans_columns_from_payments_table`
+  - [x] Export data first (backup)
+  - [x] Drop `snap_token`
+  - [x] Drop `midtrans_transaction_id`
+  - [x] Keep `provider` and neutral fields forever
+- [x] Remove 'midtrans' from category payment_method enum
+- [x] Remove legacy compatibility bridges
 
 ### Tests
-- [ ] Create `tests/Feature/PaymentGatewayRetirementTest.php`
-  - [ ] Verify Midtrans code removed
-  - [ ] Verify Xendit-only operation
-  - [ ] Verify historical data preserved
-- [ ] Remove or update tests referencing Midtrans directly
-- [ ] Update test fixtures to Xendit only
+- [x] Create `tests/Feature/PaymentGatewayRetirementTest.php`
+  - [x] Verify Midtrans code removed
+  - [x] Verify Xendit-only operation
+  - [x] Verify historical data preserved
+- [x] Remove or update tests referencing Midtrans directly
+- [x] Update test fixtures to Xendit only
 
 ### Documentation
-- [ ] Update runbook to remove Midtrans procedures
-- [ ] Document historical data access for refunds/disputes
-- [ ] Archive Midtrans credentials securely (for historical dispute resolution)
-- [ ] Update README and setup documentation
-- [ ] Mark migration complete
+- [x] Update runbook to remove Midtrans procedures
+- [x] Document historical data access for refunds/disputes
+- [x] Archive Midtrans credentials securely (for historical dispute resolution)
+- [x] Update README and setup documentation
+- [x] Mark migration complete
 
 ### Deployment Checklist (Sprint 6)
-- [ ] Drain period confirmed complete
-- [ ] Audit shows zero pending Midtrans payments
-- [ ] Export backup completed
-- [ ] Code removal deployed
-- [ ] Schema migration executed
-- [ ] Tests passing without Midtrans
-- [ ] Monitoring updated (remove Midtrans metrics)
-- [ ] Documentation updated
-- [ ] Migration marked complete
-- [ ] Retrospective held
+- [x] Drain period confirmed complete
+- [x] Audit shows zero pending Midtrans payments
+- [x] Export backup completed
+- [x] Code removal deployed
+- [x] Schema migration executed
+- [x] Tests passing without Midtrans
+- [x] Monitoring updated (remove Midtrans metrics)
+- [x] Documentation updated
+- [x] Migration marked complete
+- [x] Retrospective held
 
-## Post-Migration
+**Sprint 6 Completed:** 2026-10-07
+
+## Sprint 7: Post-Migration Cleanup & Handoff
 
 ### Monitoring & Maintenance
-- [ ] Regular reconciliation via cron
-- [ ] Monitor payment success rates
-- [ ] Monitor webhook delivery reliability
-- [ ] Alert on quarantined/unmatched payments
-- [ ] Regular audit command execution
-- [ ] Performance metrics collection
+- [ ] Verify regular reconciliation via cron
+- [ ] Monitor payment success rates on Xendit
+- [ ] Verify webhook delivery reliability in production
+- [ ] Verify alerts on quarantined/unmatched payments
+- [ ] Post-migration metrics collection and handoff
 
 ### Future Enhancements (Not in Scope)
 - Automated refund API
