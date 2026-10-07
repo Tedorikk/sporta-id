@@ -40,6 +40,7 @@ use App\Http\Controllers\PublicEventController;
 use App\Http\Controllers\RaceParticipantController;
 use App\Http\Controllers\RaceResultController;
 use App\Http\Controllers\RegistrationCategoryController;
+use App\Http\Controllers\RegistrationConfirmationEmailController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\RegistrationQrController;
 use App\Http\Controllers\RegistrationRefundController;
@@ -245,6 +246,8 @@ Route::middleware(['auth', 'verified', 'organization.current'])->group(function 
                 ->name('registrations.reject-payment');
             Route::patch('registrations/{registration}/verification-code', [VerificationCodeController::class, 'registration'])
                 ->name('registrations.verification-code');
+            Route::post('registrations/{registration}/confirmation-email', [RegistrationConfirmationEmailController::class, 'store'])
+                ->name('registrations.confirmation-email');
             Route::delete('registrations/{registration}', [RegistrationController::class, 'destroy'])
                 ->name('registrations.destroy');
             Route::patch('attendees/{attendee}/verification-code', [VerificationCodeController::class, 'attendee'])

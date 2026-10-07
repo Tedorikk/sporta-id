@@ -109,6 +109,52 @@ test('a free registration emails the registrant a confirmation', function () {
     ])->assertOk();
 
     Mail::assertQueued(RegistrationConfirmed::class, fn ($mail) => $mail->hasTo('budi@example.com'));
+
+    expect(Registration::where('name', 'Budi Santoso')->firstOrFail()->confirmation_email_sent_at)->not->toBeNull();
+});
+
+test('an organizer can resend a confirmation email', function () {
+    Mail::fake();
+
+    $category = paidFlowCategory();
+    $user = organizerOf($category->event);
+    $registration = Registration::create([
+        'registration_category_id' => $category->id,
+        'event_id' => $category->event_id,
+        'name' => 'Budi Santoso',
+        'email' => 'budi@example.com',
+        'status' => Registration::STATUS_CONFIRMED,
+        'form_data' => [],
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('registrations.confirmation-email', [$category->event, $registration]))
+        ->assertRedirect();
+
+    Mail::assertQueued(RegistrationConfirmed::class, fn ($mail) => $mail->hasTo('budi@example.com'));
+
+    expect($registration->fresh()->confirmation_email_sent_at)->not->toBeNull();
+});
+
+test('a pending registration cannot receive a confirmation resend', function () {
+    Mail::fake();
+
+    $category = paidFlowCategory();
+    $user = organizerOf($category->event);
+    $registration = Registration::create([
+        'registration_category_id' => $category->id,
+        'event_id' => $category->event_id,
+        'name' => 'Budi Santoso',
+        'email' => 'budi@example.com',
+        'status' => Registration::STATUS_PENDING_PAYMENT,
+        'form_data' => [],
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('registrations.confirmation-email', [$category->event, $registration]))
+        ->assertStatus(422);
+
+    Mail::assertNothingQueued();
 });
 
 test('settlement emails the registrant and notifies the organizers', function () {

@@ -3,6 +3,9 @@ import {
     ChevronLeft,
     Download,
     ExternalLink,
+    MailCheck,
+    MailQuestion,
+    MailWarning,
     Printer,
     RefreshCw,
     Search,
@@ -121,6 +124,44 @@ function PaymentCell({ payment }: { payment: Payment | null }) {
     );
 }
 
+function ConfirmationEmailCell({ registration }: { registration: Registration }) {
+    if (!registration.email) {
+        return <span className="text-muted-foreground">No email</span>;
+    }
+
+    if (registration.confirmation_email_failed_at) {
+        return (
+            <div className="flex flex-col gap-1">
+                <Badge variant="destructive" className="w-fit gap-1">
+                    <MailWarning className="h-3 w-3" /> Failed
+                </Badge>
+                <span className="max-w-40 truncate text-xs text-muted-foreground">
+                    {registration.confirmation_email_failure ?? 'Delivery failed'}
+                </span>
+            </div>
+        );
+    }
+
+    if (registration.confirmation_email_sent_at) {
+        return (
+            <div className="flex flex-col gap-1">
+                <Badge variant="outline" className="w-fit gap-1">
+                    <MailCheck className="h-3 w-3" /> Sent
+                </Badge>
+                <span className="text-xs text-muted-foreground">
+                    <LocalTime value={registration.confirmation_email_sent_at} />
+                </span>
+            </div>
+        );
+    }
+
+    return (
+        <Badge variant="secondary" className="w-fit gap-1">
+            <MailQuestion className="h-3 w-3" /> Not sent
+        </Badge>
+    );
+}
+
 function EmptyState() {
     return (
         <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-14 text-center">
@@ -150,6 +191,7 @@ export default function RegistrationCategoryShow({
     const [isDeleting, setIsDeleting] = useState(false);
     const [reviewing, setReviewing] = useState<Registration | null>(null);
     const [isReviewing, setIsReviewing] = useState(false);
+    const [resendingId, setResendingId] = useState<number | null>(null);
 
     const isPaidCategory =
         Boolean(registrationCategory.price) &&
@@ -212,6 +254,19 @@ export default function RegistrationCategoryShow({
                     setIsReviewing(false);
                     setReviewing(null);
                 },
+            },
+        );
+    };
+
+    const resendConfirmationEmail = (registration: Registration) => {
+        setResendingId(registration.id);
+
+        router.post(
+            `/dashboard/events/${event.id}/registrations/${registration.id}/confirmation-email`,
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => setResendingId(null),
             },
         );
     };
@@ -433,6 +488,7 @@ export default function RegistrationCategoryShow({
                                     <TableHead>Team Status</TableHead>
                                 )}
                                 <TableHead>Status</TableHead>
+                                <TableHead>Email Status</TableHead>
                                 {isPaidCategory && (
                                     <TableHead>Payment</TableHead>
                                 )}
@@ -535,6 +591,11 @@ export default function RegistrationCategoryShow({
                                             )}
                                         </Badge>
                                     </TableCell>
+                                    <TableCell>
+                                        <ConfirmationEmailCell
+                                            registration={registration}
+                                        />
+                                    </TableCell>
                                     {isPaidCategory && (
                                         <TableCell>
                                             <PaymentCell
@@ -564,8 +625,27 @@ export default function RegistrationCategoryShow({
                                                 >
                                                     <ExternalLink className="h-4 w-4" />
                                                 </a>
-                                            </Button>
-                                        )}
+                                                </Button>
+                                            )}
+                                        {registration.status === 'confirmed' &&
+                                            registration.email && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    title="Resend confirmation email"
+                                                    disabled={
+                                                        resendingId ===
+                                                        registration.id
+                                                    }
+                                                    onClick={() =>
+                                                        resendConfirmationEmail(
+                                                            registration,
+                                                        )
+                                                    }
+                                                >
+                                                    <MailCheck className="h-4 w-4" />
+                                                </Button>
+                                            )}
                                         {registrationCategory.subject_type ===
                                             'individual' &&
                                             registration.status ===

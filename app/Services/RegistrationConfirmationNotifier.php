@@ -20,8 +20,15 @@ class RegistrationConfirmationNotifier
     {
         $registration->loadMissing(['registrationCategory', 'event']);
 
-        $this->mailRegistrant($registration);
+        $this->mailRegistrant($registration, recordStatus: true);
         $this->mailOrganizers($registration);
+    }
+
+    public function resendRegistrant(Registration $registration): void
+    {
+        $registration->loadMissing(['registrationCategory', 'event']);
+
+        $this->mailRegistrant($registration, recordStatus: true);
     }
 
     /**
@@ -29,7 +36,7 @@ class RegistrationConfirmationNotifier
      * confirmation with their ID card link. Email is mandatory on paid
      * categories, but a free one may not collect it at all.
      */
-    private function mailRegistrant(Registration $registration): void
+    private function mailRegistrant(Registration $registration, bool $recordStatus = false): void
     {
         if (blank($registration->email)) {
             return;
@@ -40,6 +47,7 @@ class RegistrationConfirmationNotifier
         $this->send(
             $registration->email,
             (new RegistrationConfirmed($registration))->locale($registration->locale ?? 'id'),
+            $recordStatus ? $registration : null,
         );
     }
 
@@ -57,11 +65,22 @@ class RegistrationConfirmationNotifier
      * A bad address or a mail outage must never roll back a payment that has
      * already settled, so delivery failures are reported and swallowed.
      */
-    private function send(string $recipient, RegistrationConfirmed|RegistrationReceived $mailable): void
+    private function send(string $recipient, RegistrationConfirmed|RegistrationReceived $mailable, ?Registration $registration = null): void
     {
         try {
             Mail::to($recipient)->send($mailable);
+
+            $registration?->forceFill([
+                'confirmation_email_sent_at' => now(),
+                'confirmation_email_failed_at' => null,
+                'confirmation_email_failure' => null,
+            ])->save();
         } catch (\Throwable $e) {
+            $registration?->forceFill([
+                'confirmation_email_failed_at' => now(),
+                'confirmation_email_failure' => str($e->getMessage())->limit(1000)->toString(),
+            ])->save();
+
             report($e);
         }
     }

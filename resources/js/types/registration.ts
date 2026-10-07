@@ -21,6 +21,9 @@ export interface Registration {
     form_data: Record<string, unknown> | null;
     status: RegistrationStatus;
     expires_at: string | null;
+    confirmation_email_sent_at: string | null;
+    confirmation_email_failed_at: string | null;
+    confirmation_email_failure: string | null;
     created_at: string;
     registration_category?: RegistrationCategory;
     event?: Event;
