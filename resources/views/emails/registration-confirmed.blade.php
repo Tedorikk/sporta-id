@@ -1,11 +1,15 @@
 <x-mail::message>
 # {{ __('You’re registered') }}
 
+@if (filled($confirmationEmailBody))
+{!! nl2br(e($confirmationEmailBody)) !!}
+@else
 {{ __('Hi :name, your registration for **:event** is confirmed.', ['name' => $registration->name, 'event' => $registration->event->name]) }}
 
 - {{ __('Category') }}: {{ $registration->registrationCategory->name }}
 - {{ __('Participant') }}: {{ $registration->name }}
 - {{ __('Event dates') }}: {{ $registration->event->start_date?->translatedFormat('j M Y') }}@if ($registration->event->end_date && $registration->event->end_date->ne($registration->event->start_date)) – {{ $registration->event->end_date->translatedFormat('j M Y') }}@endif
+@endif
 
 @if (filled($registration->registrationCategory->form_settings['confirmation_message'] ?? null))
 <x-mail::panel>

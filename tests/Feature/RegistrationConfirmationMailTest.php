@@ -319,3 +319,29 @@ test('the confirmation email includes the category confirmation message', functi
 
     expect($rendered)->toContain('Please bring your ID card and arrive 30 minutes before check-in.');
 });
+
+test('the confirmation email subject and body can be customized', function () {
+    $category = paidFlowCategory([
+        'form_settings' => [
+            'confirmation_email_subject' => 'Ticket for {event}: {name}',
+            'confirmation_email_body' => "Hello {name},\nYour {category} registration is ready for {event}.\nStatus: {status_url}",
+        ],
+    ]);
+
+    $registration = Registration::create([
+        'registration_category_id' => $category->id,
+        'event_id' => $category->event_id,
+        'name' => 'Budi Santoso',
+        'email' => 'budi@example.com',
+        'status' => Registration::STATUS_CONFIRMED,
+        'form_data' => [],
+    ]);
+
+    $mail = new RegistrationConfirmed($registration);
+    $rendered = $mail->render();
+
+    expect($mail->envelope()->subject)->toBe('Ticket for '.$category->event->name.': Budi Santoso')
+        ->and($rendered)->toContain('Hello Budi Santoso')
+        ->and($rendered)->toContain('Your 5K Run registration is ready for '.$category->event->name)
+        ->and($rendered)->toContain(route('registrations.status', $registration));
+});

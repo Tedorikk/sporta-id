@@ -11,6 +11,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Str;
 
 /**
  * Sent to the registrant once their registration is confirmed — immediately
@@ -31,7 +32,7 @@ class RegistrationConfirmed extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: __('You’re registered — :event', ['event' => $this->registration->event->name]),
+            subject: $this->confirmationEmailSubject(),
         );
     }
 
@@ -50,6 +51,7 @@ class RegistrationConfirmed extends Mailable implements ShouldQueue
             with: [
                 'registration' => $this->registration,
                 'payment' => $payment,
+                'confirmationEmailBody' => $this->confirmationEmailBody(),
                 // A team sheet that still needs work — members missing, or
                 // registered without their details — and by when.
                 'rosterIncomplete' => $tournamentTeam && ! app(RosterService::class)->summary($team)['complete'],
@@ -59,5 +61,55 @@ class RegistrationConfirmed extends Mailable implements ShouldQueue
                 'teamMembersField' => $this->registration->registrationCategory->teamMembersField(),
             ],
         );
+    }
+
+    private function confirmationEmailSubject(): string
+    {
+        $subject = $this->registration->registrationCategory->form_settings['confirmation_email_subject'] ?? null;
+
+        if (blank($subject)) {
+            return __('You’re registered — :event', ['event' => $this->registration->event->name]);
+        }
+
+        return $this->replacePlaceholders($subject);
+    }
+
+    private function confirmationEmailBody(): ?string
+    {
+        $body = $this->registration->registrationCategory->form_settings['confirmation_email_body'] ?? null;
+
+        if (blank($body)) {
+            return null;
+        }
+
+        return $this->replacePlaceholders($body);
+    }
+
+    private function replacePlaceholders(string $value): string
+    {
+        return Str::of($value)->replace(array_keys($this->placeholderValues()), array_values($this->placeholderValues()))->toString();
+    }
+
+    /** @return array<string, string> */
+    private function placeholderValues(): array
+    {
+        $event = $this->registration->event;
+        $category = $this->registration->registrationCategory;
+        $eventDates = $event->start_date?->translatedFormat('j M Y') ?? '';
+
+        if ($event->end_date && $event->start_date && $event->end_date->ne($event->start_date)) {
+            $eventDates .= ' – '.$event->end_date->translatedFormat('j M Y');
+        }
+
+        return [
+            '{name}' => $this->registration->name,
+            '{event}' => $event->name,
+            '{category}' => $category->name,
+            '{event_dates}' => $eventDates,
+            '{id_card_url}' => $this->registration->team
+                ? route('teams.id-card', $this->registration->team)
+                : route('registrations.id-card', $this->registration),
+            '{status_url}' => route('registrations.status', $this->registration),
+        ];
     }
 }

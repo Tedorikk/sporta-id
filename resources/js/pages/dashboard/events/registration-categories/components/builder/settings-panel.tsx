@@ -725,6 +725,45 @@ export function SettingsPanel({
                             className="min-h-20"
                         />
                     </Field>
+
+                    <Field>
+                        <FieldLabel>Confirmation email subject</FieldLabel>
+                        <FieldDescription>
+                            Optional. Supports placeholders like {'{event}'},{' '}
+                            {'{category}'}, and {'{name}'}.
+                        </FieldDescription>
+                        <Input
+                            value={settings.confirmation_email_subject ?? ''}
+                            onChange={(e) =>
+                                onSettingsChange({
+                                    confirmation_email_subject: e.target.value,
+                                })
+                            }
+                            placeholder="Example: Your ticket for {event}"
+                        />
+                    </Field>
+
+                    <Field>
+                        <FieldLabel>Confirmation email body</FieldLabel>
+                        <FieldDescription>
+                            Optional. Replaces the default greeting and event
+                            details. Available placeholders: {'{name}'},{' '}
+                            {'{event}'}, {'{category}'}, {'{event_dates}'},{' '}
+                            {'{id_card_url}'}, {'{status_url}'}.
+                        </FieldDescription>
+                        <Textarea
+                            value={settings.confirmation_email_body ?? ''}
+                            onChange={(e) =>
+                                onSettingsChange({
+                                    confirmation_email_body: e.target.value,
+                                })
+                            }
+                            placeholder={
+                                'Hi {name},\n\nYour registration for {event} is confirmed.\nCategory: {category}\nEvent dates: {event_dates}'
+                            }
+                            className="min-h-32"
+                        />
+                    </Field>
                 </FieldGroup>
             </TabsContent>
 

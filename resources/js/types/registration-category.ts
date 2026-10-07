@@ -249,6 +249,8 @@ export interface FormBranding {
 export interface FormSettings {
     prevent_duplicate_by?: string | null;
     confirmation_message?: string | null;
+    confirmation_email_subject?: string | null;
+    confirmation_email_body?: string | null;
     notify_emails?: string[];
     /** What the success screen shows after a confirmed submission. Defaults to 'id_card'. */
     post_submit_display?: 'id_card' | 'message' | null;
