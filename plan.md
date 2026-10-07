@@ -565,11 +565,11 @@ Suggested delivery: seven ordered sprints, roughly 1–2 weeks each depending on
 
 #### Mandatory drain gates
 
-- [ ] Zero unresolved pending/creating/unknown Midtrans attempts, including older attempts hidden by a latest-payment query.
-- [ ] All legacy remotely payable checkouts are completed, expired, or canceled according to authoritative provider status.
-- [ ] Late settlements, refunds, disputes, and receipt/effect backlogs reconciled or assigned to a documented historical-provider process.
-- [ ] Latest possible payment lifetime, provider callback retry horizon, and agreed observation margin have elapsed; record the account-specific values instead of assuming a fixed 24 hours is sufficient.
-- [ ] No new Midtrans creation observed since cutover; compatible-release rollback window formally closed.
+- [x] Zero unresolved pending/creating/unknown Midtrans attempts, including older attempts hidden by a latest-payment query.
+- [x] All legacy remotely payable checkouts are completed, expired, or canceled according to authoritative provider status.
+- [x] Late settlements, refunds, disputes, and receipt/effect backlogs reconciled or assigned to a documented historical-provider process.
+- [x] Latest possible payment lifetime, provider callback retry horizon, and agreed observation margin have elapsed; record the account-specific values instead of assuming a fixed 24 hours is sufficient.
+- [x] No new Midtrans creation observed since cutover; compatible-release rollback window formally closed.
 - [ ] Historical provider IDs/amounts/statuses/refund records exported and backup restore verified; key-retirement timing does not block required historical operations.
 
 #### Tasks
