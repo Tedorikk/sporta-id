@@ -42,7 +42,7 @@ class XenditGateway implements PaymentGateway
             }
 
             Log::error('[XenditGateway] Checkout creation failed', [
-                'payment_id' => $payment->id,
+                'payment_id' => (string) $payment->id,
                 'order_id' => $payment->order_id,
                 'error' => $e->getMessage(),
             ]);
@@ -57,7 +57,7 @@ class XenditGateway implements PaymentGateway
             }
 
             return CheckoutResult::error(
-                message: 'Failed to create payment session. Please try again.',
+                message: 'Failed to create payment session: ' . $e->getMessage(),
                 code: 'xendit_error',
                 canRetry: true,
             );
@@ -76,7 +76,7 @@ class XenditGateway implements PaymentGateway
             return $this->mapper->mapSessionToOutcome($session);
         } catch (RuntimeException $e) {
             Log::error('[XenditGateway] Status retrieval failed', [
-                'payment_id' => $payment->id,
+                'payment_id' => (string) $payment->id,
                 'session_id' => $payment->provider_session_id,
                 'error' => $e->getMessage(),
             ]);
@@ -97,7 +97,7 @@ class XenditGateway implements PaymentGateway
             return $this->mapper->mapSessionToOutcome($session);
         } catch (RuntimeException $e) {
             Log::error('[XenditGateway] Session cancellation failed', [
-                'payment_id' => $payment->id,
+                'payment_id' => (string) $payment->id,
                 'session_id' => $payment->provider_session_id,
                 'error' => $e->getMessage(),
             ]);
@@ -151,10 +151,10 @@ class XenditGateway implements PaymentGateway
             'expires_at' => $expiresAt->format('c'), // ISO 8601
             'customer' => $customer,
             'items' => $items,
-            'success_return_url' => $successUrl,
-            'failure_return_url' => $failureUrl,
+            'success_return_url' => app()->isLocal() ? str_replace('http://', 'https://', $successUrl) : $successUrl,
+            'failure_return_url' => app()->isLocal() ? str_replace('http://', 'https://', $failureUrl) : $failureUrl,
             'metadata' => [
-                'payment_id' => $payment->id,
+                'payment_id' => (string) $payment->id,
                 'description' => $snapshot['description'] ?? $payable->getPaymentDescription(),
             ],
         ];
@@ -169,7 +169,7 @@ class XenditGateway implements PaymentGateway
             return [
                 'reference_id' => $item['reference_id'] ?? "item-{$index}",
                 'name' => $item['name'],
-                'type' => 'REGISTRATION_FEE', // Could be made dynamic per item type
+                'type' => 'FEE', // Could be made dynamic per item type
                 'category' => 'EVENT',
                 'net_unit_amount' => (int) $item['unit_amount'],
                 'quantity' => (int) $item['quantity'],
@@ -183,13 +183,17 @@ class XenditGateway implements PaymentGateway
     private function formatCustomer(array $customer): array
     {
         $formatted = [
+            'reference_id' => $customer['reference_id'] ?? md5($customer['email'] ?? 'unknown') . '-' . uniqid(),
+            'type' => 'INDIVIDUAL',
             'email' => $customer['email'],
-            'given_names' => $customer['given_names'],
+            'individual_detail' => [
+                'given_names' => $customer['given_names'] ?? 'Customer',
+            ],
         ];
 
         // Add optional surname if provided
         if (! empty($customer['surname'])) {
-            $formatted['surname'] = $customer['surname'];
+            $formatted['individual_detail']['surname'] = $customer['surname'];
         }
 
         // Add mobile number if provided and format to E.164
@@ -252,7 +256,7 @@ class XenditGateway implements PaymentGateway
 
         // Validate checkout URL is HTTPS and from Xendit
         if (! $this->isValidCheckoutUrl($checkoutUrl)) {
-            throw new RuntimeException('Invalid checkout URL from Xendit');
+            throw new RuntimeException('Invalid checkout URL from Xendit: ' . $checkoutUrl);
         }
 
         return CheckoutResult::success(
@@ -280,6 +284,8 @@ class XenditGateway implements PaymentGateway
             'checkout.xendit.co',
             'checkout-staging.xendit.co',
             'checkout-sandbox.xendit.co',
+            'dev.xen.to',
+            'xen.to',
         ];
 
         return in_array($host, $allowedHosts);
