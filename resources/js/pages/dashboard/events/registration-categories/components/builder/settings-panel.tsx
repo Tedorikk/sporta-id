@@ -710,6 +710,10 @@ export function SettingsPanel({
 
                     <Field>
                         <FieldLabel>Confirmation message</FieldLabel>
+                        <FieldDescription>
+                            Shown after a successful submission and included in
+                            the registrant confirmation email.
+                        </FieldDescription>
                         <Textarea
                             value={settings.confirmation_message ?? ''}
                             onChange={(e) =>
@@ -717,7 +721,7 @@ export function SettingsPanel({
                                     confirmation_message: e.target.value,
                                 })
                             }
-                            placeholder="Shown after a successful submission"
+                            placeholder="Example: Please bring your ID and arrive 30 minutes before check-in."
                             className="min-h-20"
                         />
                     </Field>

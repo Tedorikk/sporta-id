@@ -7,6 +7,12 @@
 - {{ __('Participant') }}: {{ $registration->name }}
 - {{ __('Event dates') }}: {{ $registration->event->start_date?->translatedFormat('j M Y') }}@if ($registration->event->end_date && $registration->event->end_date->ne($registration->event->start_date)) – {{ $registration->event->end_date->translatedFormat('j M Y') }}@endif
 
+@if (filled($registration->registrationCategory->form_settings['confirmation_message'] ?? null))
+<x-mail::panel>
+{!! nl2br(e($registration->registrationCategory->form_settings['confirmation_message'])) !!}
+</x-mail::panel>
+@endif
+
 @if ($payment)
 ## {{ __('Payment receipt') }}
 

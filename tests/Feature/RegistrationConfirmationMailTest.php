@@ -252,3 +252,24 @@ test('the confirmation email links the id card by qr_token, not by id', function
     expect($rendered)->toContain($registration->qr_token)
         ->and($rendered)->not->toContain("/registrations/{$registration->id}/id-card");
 });
+
+test('the confirmation email includes the category confirmation message', function () {
+    $category = paidFlowCategory([
+        'form_settings' => [
+            'confirmation_message' => 'Please bring your ID card and arrive 30 minutes before check-in.',
+        ],
+    ]);
+
+    $registration = Registration::create([
+        'registration_category_id' => $category->id,
+        'event_id' => $category->event_id,
+        'name' => 'Budi Santoso',
+        'email' => 'budi@example.com',
+        'status' => Registration::STATUS_CONFIRMED,
+        'form_data' => [],
+    ]);
+
+    $rendered = (new RegistrationConfirmed($registration))->render();
+
+    expect($rendered)->toContain('Please bring your ID card and arrive 30 minutes before check-in.');
+});
