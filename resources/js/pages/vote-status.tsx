@@ -96,7 +96,7 @@ export default function VoteStatus({ vote, award, event }: Props) {
                     });
                 });
             })
-            .catch((error) => { setIsPaying(false); toast.error(error.message); });
+            .catch((error) => { setIsPaying(false); toast.error(error.message || "Payment checkout is unavailable at this time."); });
     };
 
     return (

@@ -149,7 +149,7 @@ function PaymentPendingView({
                     onClose: () => setIsPaying(false),
                 });
             })
-            .catch((error) => { setIsPaying(false); toast.error(error.message || "Payment checkout is unavailable at this time."); });
+            .catch((error) => { setIsPaying(false); const msg = (axios.isAxiosError(error) && error.response?.data?.error) ? error.response.data.error : error.message; toast.error(msg || "Payment checkout is unavailable at this time."); });
     };
 
     return (
