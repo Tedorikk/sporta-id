@@ -1,8 +1,9 @@
-import { Head } from '@inertiajs/react';
+import { Head, router, usePoll } from '@inertiajs/react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { CheckCircle2, Clock, Loader2, Users, XCircle } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { RefreshCw } from 'lucide-react';
 import { pay } from '@/actions/App/Http/Controllers/RegistrationController';
 import { ManualPaymentPanel } from '@/components/public/manual-payment-panel';
 import { PayLinkShare } from '@/components/public/pay-link-share';
@@ -61,6 +62,25 @@ export default function RegistrationStatus({ registration, payment }: Props) {
 
     const { t } = useT();
     const [isPaying, setIsPaying] = useState(false);
+    const [isChecking, setIsChecking] = useState(false);
+
+    const { start, stop } = usePoll(3000, { only: ['registration', 'payment'] }, { autoStart: false });
+
+    useEffect(() => {
+        if (registration.status === 'pending_payment') {
+            start();
+        } else {
+            stop();
+        }
+    }, [registration.status, start, stop]);
+
+    const checkStatus = () => {
+        setIsChecking(true);
+        router.reload({
+            only: ['registration', 'payment'],
+            onFinish: () => setIsChecking(false),
+        });
+    };
     const isManualPayment =
         registration.registration_category.payment_method === 'manual_transfer';
 
@@ -171,6 +191,16 @@ export default function RegistrationStatus({ registration, payment }: Props) {
                                         {isPaying
                                             ? t('Opening payment…')
                                             : t('Pay Now')}
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={checkStatus}
+                                        disabled={isChecking}
+                                        className="w-full font-bold tracking-wide uppercase"
+                                    >
+                                        <RefreshCw className={`mr-2 h-4 w-4 ${isChecking ? 'animate-spin' : ''}`} />
+                                        {t('Check Status')}
                                     </Button>
                                     <PayLinkShare
                                         qrToken={registration.qr_token}
