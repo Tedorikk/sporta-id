@@ -5,7 +5,6 @@ import { CheckCircle2, Clock, Loader2, Users, XCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { pay } from '@/actions/App/Http/Controllers/RegistrationController';
-import { ManualPaymentPanel } from '@/components/public/manual-payment-panel';
 import { PayLinkShare } from '@/components/public/pay-link-share';
 import { PublicPageHeader } from '@/components/public/public-page-header';
 import { Button } from '@/components/ui/button';
@@ -84,20 +83,28 @@ export default function RegistrationStatus({ registration, payment }: Props) {
     const isManualPayment =
         registration.registration_category.payment_method === 'manual_transfer';
 
-    const copy = STATUS_COPY[registration.status] ?? STATUS_COPY.confirmed;
+    const manualPaymentThanks =
+        isManualPayment && registration.status === 'pending_payment';
+    const copy = manualPaymentThanks
+        ? {
+              label: 'Thank you for your purchase!',
+              description:
+                  'We will send a message via email to confirm your purchase.',
+          }
+        : (STATUS_COPY[registration.status] ?? STATUS_COPY.confirmed);
     const statusLabel = t(copy.label);
     const hasRoster = Boolean(registration.team);
     const isTeamMembersCategory = (
         registration.registration_category.form_pages ?? []
     ).some((page) => page.fields.some(isTeamMembersField));
     const Icon =
-        registration.status === 'confirmed'
+        registration.status === 'confirmed' || manualPaymentThanks
             ? CheckCircle2
             : registration.status === 'pending_payment'
               ? Clock
               : XCircle;
     const iconColor =
-        registration.status === 'confirmed'
+        registration.status === 'confirmed' || manualPaymentThanks
             ? 'text-green-600 bg-green-100'
             : registration.status === 'pending_payment'
               ? 'text-amber-600 bg-amber-100'
@@ -152,23 +159,6 @@ export default function RegistrationStatus({ registration, payment }: Props) {
                         <p className="text-sm font-medium text-neutral-500">
                             {registration.name}
                         </p>
-
-                        {registration.status === 'pending_payment' &&
-                            isManualPayment && (
-                                <ManualPaymentPanel
-                                    qrToken={registration.qr_token}
-                                    amount={
-                                        registration.registration_category.price
-                                    }
-                                    instructions={
-                                        registration.registration_category
-                                            .form_settings
-                                            ?.manual_payment_instructions
-                                    }
-                                    payment={payment}
-                                    onSubmitted={() => window.location.reload()}
-                                />
-                            )}
 
                         {registration.status === 'pending_payment' &&
                             !isManualPayment && (

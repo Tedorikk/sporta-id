@@ -86,7 +86,7 @@ class RegistrationController extends Controller
                 }
             }
 
-            $isFree = $category->isFree();
+            $isConfirmedImmediately = $category->isFree() || $category->usesManualPayment();
 
             $registration = Registration::create([
                 'registration_category_id' => $category->id,
@@ -97,11 +97,13 @@ class RegistrationController extends Controller
                 'phone' => $validated['phone'] ?? null,
                 'photo' => $validated['photo'] ?? null,
                 'form_data' => $validated['form_data'] ?? [],
-                // Paid categories stay pending_payment (the model default) until
-                // the Midtrans webhook confirms settlement; quota is still
-                // reserved immediately, same as a free registration.
-                'status' => $isFree ? Registration::STATUS_CONFIRMED : Registration::STATUS_PENDING_PAYMENT,
-                'expires_at' => $isFree ? null : now()->addDay(),
+                // Gateway-paid categories stay pending_payment until Xendit
+                // confirms settlement. Manual-transfer categories are treated
+                // as confirmed immediately: the payment record is created as
+                // settled after the registration is committed, and the
+                // registrant receives the confirmation email right away.
+                'status' => $isConfirmedImmediately ? Registration::STATUS_CONFIRMED : Registration::STATUS_PENDING_PAYMENT,
+                'expires_at' => $isConfirmedImmediately ? null : now()->addDay(),
                 // Remembered so the confirmation the webhook sends later is
                 // in the language the registrant actually read the form in.
                 'locale' => app()->getLocale(),
@@ -117,28 +119,25 @@ class RegistrationController extends Controller
         // no redirect, no separate "thanks" page to navigate to.
         $registration->loadMissing(['team.basketballEventCategory', 'event', 'registrationCategory']);
 
-        if ($registration->status === Registration::STATUS_CONFIRMED) {
-            $this->notifier->notify($registration);
-        }
-
         $checkoutResult = null;
 
-        if ($registration->status === Registration::STATUS_PENDING_PAYMENT) {
-            if ($registrationCategory->usesManualPayment()) {
-                // No gateway to call — the registrant uploads a transfer proof
-                // (uploadProof()) and an organizer verifies it by hand.
-                $this->createManualPayment($registration, $registrationCategory);
-            } else {
-                // The registration itself (and its quota slot) is already committed at
-                // this point — if the gateway is unreachable or misconfigured, don't turn
-                // that into a 500. The registrant lands on the pending-payment view
-                // with no checkout yet; "Pay Now" there (or on the status page) retries.
-                try {
-                    $checkoutResult = $this->createCheckout($registration);
-                } catch (\Throwable $e) {
-                    report($e);
-                }
+        if ($registrationCategory->usesManualPayment()) {
+            $this->createManualPayment($registration, $registrationCategory);
+            $registration->load('payments');
+        } elseif ($registration->status === Registration::STATUS_PENDING_PAYMENT) {
+            // The registration itself (and its quota slot) is already committed at
+            // this point — if the gateway is unreachable or misconfigured, don't turn
+            // that into a 500. The registrant lands on the pending-payment view
+            // with no checkout yet; "Pay Now" there (or on the status page) retries.
+            try {
+                $checkoutResult = $this->createCheckout($registration);
+            } catch (\Throwable $e) {
+                report($e);
             }
+        }
+
+        if ($registration->status === Registration::STATUS_CONFIRMED) {
+            $this->notifier->notify($registration);
         }
 
         return Inertia::render('register-dynamic', [
@@ -342,6 +341,10 @@ class RegistrationController extends Controller
             'amount' => $registrationCategory->price,
             'provider' => Payment::PROVIDER_MANUAL,
             'currency' => 'IDR',
+            'status' => Payment::STATUS_SETTLEMENT,
+            'payment_type' => Payment::PROVIDER_MANUAL,
+            'paid_at' => now(),
+            'verified_at' => now(),
         ]);
     }
 

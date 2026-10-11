@@ -260,7 +260,7 @@ test('a paid category creates a pending-payment registration with a checkout url
     });
 });
 
-test('a manual transfer category creates a pending-payment registration with upload proof props', function () {
+test('a manual transfer category immediately confirms the registration and records a settled payment', function () {
     $category = makeRegistrationCategory([
         'price' => '99000',
         'payment_method' => RegistrationCategory::PAYMENT_METHOD_MANUAL_TRANSFER,
@@ -275,21 +275,24 @@ test('a manual transfer category creates a pending-payment registration with upl
         ->assertInertia(fn ($page) => $page
             ->component('register-dynamic')
             ->where('registrationCategory.payment_method', RegistrationCategory::PAYMENT_METHOD_MANUAL_TRANSFER)
-            ->where('confirmedRegistration.status', Registration::STATUS_PENDING_PAYMENT)
+            ->where('confirmedRegistration.status', Registration::STATUS_CONFIRMED)
             ->where('confirmedRegistration.name', 'Jane Doe')
             ->where('checkoutUrl', null)
             ->where('provider', null)
-            ->where('cardTemplate', null)
+            ->has('cardTemplate')
         );
 
     $registration = Registration::where('name', 'Jane Doe')->firstOrFail();
     $payment = $registration->payments()->firstOrFail();
 
-    expect($registration->status)->toBe(Registration::STATUS_PENDING_PAYMENT)
+    expect($registration->status)->toBe(Registration::STATUS_CONFIRMED)
         ->and($registration->email)->toBe('jane@example.com')
-        ->and($registration->expires_at)->not->toBeNull()
+        ->and($registration->expires_at)->toBeNull()
         ->and($category->fresh()->registered_count)->toBe(1)
         ->and($payment->provider)->toBe(Payment::PROVIDER_MANUAL)
+        ->and($payment->status)->toBe(Payment::STATUS_SETTLEMENT)
+        ->and($payment->paid_at)->not->toBeNull()
+        ->and($payment->verified_at)->not->toBeNull()
         ->and((float) $payment->amount)->toBe(99000.0);
 });
 
