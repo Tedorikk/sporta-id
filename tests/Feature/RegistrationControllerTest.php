@@ -196,9 +196,18 @@ test('the confirmed registration reflects a category-specific card template when
         ->assertInertia(fn ($page) => $page->where('cardTemplate.canvas.width', 200));
 });
 
-test('a paid category creates a pending-payment registration with a snap token', function () {
+test('a paid category creates a pending-payment registration with a checkout url', function () {
+    config([
+        'payments.gateway' => Payment::PROVIDER_XENDIT,
+        'services.xendit.secret_key' => 'xnd_test_secret',
+    ]);
+
     Http::fake([
-        'app.sandbox.midtrans.com/snap/v1/transactions' => Http::response(['token' => 'snap-token-abc'], 201),
+        'api.xendit.co/sessions' => Http::response([
+            'payment_session_id' => 'ps-test-session',
+            'payment_link_url' => 'https://checkout.xendit.co/web/test-session',
+            'expires_at' => now()->addMinutes(30)->toISOString(),
+        ], 201),
     ]);
 
     $category = makeRegistrationCategory(['price' => '150000']);
@@ -217,9 +226,9 @@ test('a paid category creates a pending-payment registration with a snap token',
         ->assertInertia(fn ($page) => $page
             ->component('register-dynamic')
             ->where('confirmedRegistration.status', 'pending_payment')
-            ->where('snapToken', 'snap-token-abc')
-            ->where('checkoutUrl', null)
-            ->where('provider', Payment::PROVIDER_MIDTRANS)
+            ->where('snapToken', null)
+            ->where('checkoutUrl', 'https://checkout.xendit.co/web/test-session')
+            ->where('provider', Payment::PROVIDER_XENDIT)
             ->where('cardTemplate', null)
         );
 
@@ -232,21 +241,56 @@ test('a paid category creates a pending-payment registration with a snap token',
 
     $payment = $registration->payments()->firstOrFail();
 
-    expect($payment->snap_token)->toBe('snap-token-abc')
+    expect($payment->provider_session_id)->toBe('ps-test-session')
+        ->and($payment->checkout_url)->toBe('https://checkout.xendit.co/web/test-session')
+        ->and($payment->provider)->toBe(Payment::PROVIDER_XENDIT)
         ->and((float) $payment->amount)->toBe(150000.0);
 
     Http::assertSent(function ($request) use ($payment, $category) {
         $data = $request->data();
-        $item = $data['item_details'][0] ?? [];
+        $item = $data['items'][0] ?? [];
 
-        return ($data['transaction_details']['order_id'] ?? null) === $payment->order_id
-            && ($data['transaction_details']['gross_amount'] ?? null) === 150000
-            // Midtrans's own payment page shows item_details, so the payer sees
+        return ($data['reference_id'] ?? null) === $payment->order_id
+            && ($data['amount'] ?? null) === 150000
+            // Xendit's own payment page shows item_details, so the payer sees
             // what they're buying and not just an order id.
             && str_contains($item['name'] ?? '', $category->name)
-            && ($item['price'] ?? null) === 150000
+            && ($item['net_unit_amount'] ?? null) === 150000
             && ($item['quantity'] ?? null) === 1;
     });
+});
+
+test('a manual transfer category creates a pending-payment registration with upload proof props', function () {
+    $category = makeRegistrationCategory([
+        'price' => '99000',
+        'payment_method' => RegistrationCategory::PAYMENT_METHOD_MANUAL_TRANSFER,
+    ]);
+
+    $this->post(route('registrations.store', [$category->event, $category]), [
+        'name' => 'Jane Doe',
+        'email' => 'jane@example.com',
+        'form_data' => ['shirt_size' => 'M'],
+    ])
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('register-dynamic')
+            ->where('registrationCategory.payment_method', RegistrationCategory::PAYMENT_METHOD_MANUAL_TRANSFER)
+            ->where('confirmedRegistration.status', Registration::STATUS_PENDING_PAYMENT)
+            ->where('confirmedRegistration.name', 'Jane Doe')
+            ->where('checkoutUrl', null)
+            ->where('provider', null)
+            ->where('cardTemplate', null)
+        );
+
+    $registration = Registration::where('name', 'Jane Doe')->firstOrFail();
+    $payment = $registration->payments()->firstOrFail();
+
+    expect($registration->status)->toBe(Registration::STATUS_PENDING_PAYMENT)
+        ->and($registration->email)->toBe('jane@example.com')
+        ->and($registration->expires_at)->not->toBeNull()
+        ->and($category->fresh()->registered_count)->toBe(1)
+        ->and($payment->provider)->toBe(Payment::PROVIDER_MANUAL)
+        ->and((float) $payment->amount)->toBe(99000.0);
 });
 
 test('a team-subject category also creates a team and returns it inline', function () {

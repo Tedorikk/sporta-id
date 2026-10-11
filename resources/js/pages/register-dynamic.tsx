@@ -95,9 +95,9 @@ interface Props {
     /** Whether this category feeds a bracket — the roster block's jersey/identity fields only apply then. */
     isTournament?: boolean;
     cardTemplate?: CardTemplate | null;
-        checkoutUrl?: string | null;
+    checkoutUrl?: string | null;
     provider?: string | null;
-        }
+}
 
 function PaymentPendingView({
     event,
@@ -109,8 +109,8 @@ function PaymentPendingView({
     event: Event;
     registrationCategory: Props['registrationCategory'];
     registration: Registration;
-        checkoutUrl: string | null;
-            accentStyle: CSSProperties;
+    checkoutUrl: string | null;
+    accentStyle: CSSProperties;
 }) {
     const { t } = useT();
     const [isPaying, setIsPaying] = useState(false);
@@ -662,7 +662,6 @@ export default function RegisterDynamic({
     const { t, locale } = useT();
     const [isSaving, setIsSaving] = useState(false);
     const [pageIndex, setPageIndex] = useState(0);
-    const [honeypot, setHoneypot] = useState('');
     const pages = useMemo(
         () =>
             withRequiredEmail(
@@ -833,7 +832,6 @@ export default function RegisterDynamic({
         const payload: Record<string, unknown> = {
             name: raw.name,
             form_data: {},
-            website: honeypot,
         };
         const formData = payload.form_data as Record<string, unknown>;
 
@@ -942,8 +940,8 @@ export default function RegisterDynamic({
                 event={event}
                 registrationCategory={registrationCategory}
                 registration={confirmedRegistration}
-                                checkoutUrl={checkoutUrl ?? null}
-                                                accentStyle={accentStyle}
+                checkoutUrl={checkoutUrl ?? null}
+                accentStyle={accentStyle}
             />
         );
     }
@@ -1124,18 +1122,6 @@ export default function RegisterDynamic({
                         onSubmit={handleSubmit(onSubmit)}
                         className="px-6 py-6"
                     >
-                        {/* Honeypot — hidden from real visitors, a filled value is a strong bot signal. */}
-                        <input
-                            value={honeypot}
-                            onChange={(e) => setHoneypot(e.target.value)}
-                            type="text"
-                            name="website"
-                            tabIndex={-1}
-                            autoComplete="off"
-                            className="absolute -left-[9999px] h-0 w-0 opacity-0"
-                            aria-hidden="true"
-                        />
-
                         {isFirstPage && rosterField && (
                             <RosterRequirementsCard
                                 field={rosterField}
