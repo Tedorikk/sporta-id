@@ -296,6 +296,35 @@ test('a manual transfer category immediately confirms the registration and recor
         ->and((float) $payment->amount)->toBe(99000.0);
 });
 
+test('a free manual transfer category confirms without creating a null amount payment', function () {
+    $category = makeRegistrationCategory([
+        'price' => null,
+        'payment_method' => RegistrationCategory::PAYMENT_METHOD_MANUAL_TRANSFER,
+    ]);
+
+    $this->post(route('registrations.store', [$category->event, $category]), [
+        'name' => 'Jane Doe',
+        'email' => 'jane@example.com',
+        'form_data' => ['shirt_size' => 'M'],
+    ])
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('register-dynamic')
+            ->where('registrationCategory.payment_method', RegistrationCategory::PAYMENT_METHOD_MANUAL_TRANSFER)
+            ->where('confirmedRegistration.status', Registration::STATUS_CONFIRMED)
+            ->where('confirmedRegistration.name', 'Jane Doe')
+            ->where('checkoutUrl', null)
+            ->where('provider', null)
+        );
+
+    $registration = Registration::where('name', 'Jane Doe')->firstOrFail();
+
+    expect($registration->status)->toBe(Registration::STATUS_CONFIRMED)
+        ->and($registration->expires_at)->toBeNull()
+        ->and($registration->payments()->exists())->toBeFalse()
+        ->and($category->fresh()->registered_count)->toBe(1);
+});
+
 test('a team-subject category also creates a team and returns it inline', function () {
     $category = makeRegistrationCategory([
         'subject_type' => RegistrationCategory::SUBJECT_TEAM,

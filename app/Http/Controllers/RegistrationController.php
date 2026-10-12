@@ -121,8 +121,8 @@ class RegistrationController extends Controller
 
         $checkoutResult = null;
 
-        if ($registrationCategory->usesManualPayment()) {
-            $this->createManualPayment($registration, $registrationCategory);
+        if ($registration->registrationCategory->usesManualPayment() && ! $registration->registrationCategory->isFree()) {
+            $this->createManualPayment($registration, $registration->registrationCategory);
             $registration->load('payments');
         } elseif ($registration->status === Registration::STATUS_PENDING_PAYMENT) {
             // The registration itself (and its quota slot) is already committed at
