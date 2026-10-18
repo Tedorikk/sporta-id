@@ -18,6 +18,30 @@ import { cn } from '@/lib/utils';
 
 const MIN_ZOOM = 0.2;
 const MAX_ZOOM = 3;
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+interface UploadErrorResponse {
+    message?: string;
+    errors?: Record<string, string[]>;
+}
+
+function uploadErrorMessage(error: unknown, fallback: string): string {
+    if (!axios.isAxiosError<UploadErrorResponse>(error)) {
+        return error instanceof Error ? error.message : fallback;
+    }
+
+    const validationMessage = error.response?.data.errors?.image?.[0];
+
+    if (validationMessage) {
+        return validationMessage;
+    }
+
+    if (error.response?.status === 413) {
+        return 'The image is larger than the server allows.';
+    }
+
+    return error.response?.data.message ?? error.message ?? fallback;
+}
 
 // Matches the transparent squares convention so the crop preview honestly
 // shows what will be see-through in the exported PNG once zoomed out.
@@ -111,7 +135,7 @@ export function UploadImage({
             formData.append('image', file);
 
             const { data } = await axios.post(uploadUrl, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
+                headers: { Accept: 'application/json' },
                 onUploadProgress: (progressEvent) => {
                     if (!progressEvent.total) {
                         return;
@@ -131,7 +155,7 @@ export function UploadImage({
         } catch (err) {
             onError?.(
                 t('Upload failed. Please try again. :reason', {
-                    reason: err instanceof Error ? err.message : String(err),
+                    reason: uploadErrorMessage(err, t('Unknown upload error')),
                 }),
             );
             setLocalPreview(null);
@@ -142,8 +166,8 @@ export function UploadImage({
     };
 
     const validateFile = (file: File): boolean => {
-        if (!file.type.startsWith('image/')) {
-            onError?.(t('Please upload an image file'));
+        if (!ACCEPTED_IMAGE_TYPES.includes(file.type.toLowerCase())) {
+            onError?.(t('Please upload a JPG, PNG, or WEBP image'));
 
             return false;
         }

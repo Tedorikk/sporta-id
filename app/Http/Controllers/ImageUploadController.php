@@ -24,7 +24,7 @@ class ImageUploadController extends Controller
     {
         $file = $request->file('image');
 
-        $filename = Str::uuid().'.'.$file->getClientOriginalExtension();
+        $filename = Str::uuid().'.'.$file->extension();
 
         $path = $file->storeAs($this->directory, $filename, 'public');
 
