@@ -74,11 +74,21 @@ class RaceResultController extends Controller
         $this->authorizeCategory($event, $category);
 
         $request->validate([
-            'file' => ['required', 'file', 'mimes:csv,txt', 'max:5120'],
+            'file' => ['bail', 'required', 'file', 'mimes:csv,txt', 'max:5120'],
+        ], [
+            'file.required' => 'Please choose a CSV file to import.',
+            'file.uploaded' => 'The results file could not be uploaded. It may be larger than 5 MB.',
+            'file.file' => 'The results upload must be a file.',
+            'file.mimes' => 'The results file must be a CSV file.',
+            'file.max' => 'The results file must not be larger than 5 MB.',
         ]);
 
-        ['updated' => $updated, 'skipped' => $skipped, 'errors' => $errors] = $this->importer
+        ['updated' => $updated, 'skipped' => $skipped, 'errors' => $errors, 'fatal_error' => $fatalError] = $this->importer
             ->import($category, $request->file('file'));
+
+        if ($fatalError !== null) {
+            return redirect()->back()->withErrors(['file' => $fatalError]);
+        }
 
         return redirect()->back()->with([
             'toast' => [

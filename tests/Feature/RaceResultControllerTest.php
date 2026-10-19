@@ -151,6 +151,131 @@ test('a results file is applied by bib number', function () {
         ->and($bagus->fresh()->duration_seconds)->toBeNull();
 });
 
+test('a results file larger than five megabytes is rejected', function () {
+    $event = Event::factory()->running()->create();
+    $distance = tenK($event);
+    $user = organizerOf($event);
+
+    $this->actingAs($user)
+        ->post(route('race_results.import', [$event, $distance]), [
+            'file' => UploadedFile::fake()->create('results.csv', 5121, 'text/csv'),
+        ])
+        ->assertInvalid([
+            'file' => 'The results file must not be larger than 5 MB.',
+        ]);
+});
+
+test('an empty results file is rejected with a useful error', function () {
+    $event = Event::factory()->running()->create();
+    $distance = tenK($event);
+    $user = organizerOf($event);
+
+    $this->actingAs($user)
+        ->post(route('race_results.import', [$event, $distance]), [
+            'file' => resultsCsv(''),
+        ])
+        ->assertInvalid([
+            'file' => 'The CSV file is empty.',
+        ]);
+});
+
+test('a results file containing only headers is rejected', function () {
+    $event = Event::factory()->running()->create();
+    $distance = tenK($event);
+    $user = organizerOf($event);
+
+    $this->actingAs($user)
+        ->post(route('race_results.import', [$event, $distance]), [
+            'file' => resultsCsv("bib,time,status\n"),
+        ])
+        ->assertInvalid([
+            'file' => 'The CSV file does not contain any result rows.',
+        ]);
+});
+
+test('utf eight bom and semicolon separated results are supported', function () {
+    $event = Event::factory()->running()->create();
+    $distance = tenK($event);
+    $participant = runner($distance, 'Nadia Putri', '101');
+    $user = organizerOf($event);
+
+    $this->actingAs($user)
+        ->post(route('race_results.import', [$event, $distance]), [
+            'file' => resultsCsv("\xEF\xBB\xBFbib;time;status\r\n101;48:12;finished\r\n"),
+        ])
+        ->assertRedirect()
+        ->assertSessionDoesntHaveErrors();
+
+    expect($participant->fresh()->duration_seconds)->toBe(2892);
+});
+
+test('utf sixteen results are rejected with conversion instructions', function () {
+    $event = Event::factory()->running()->create();
+    $distance = tenK($event);
+    $user = organizerOf($event);
+    $utf16Csv = "\xFF\xFEb\x00i\x00b\x00,\x00t\x00i\x00m\x00e\x00\n\x00";
+
+    $this->actingAs($user)
+        ->post(route('race_results.import', [$event, $distance]), [
+            'file' => resultsCsv($utf16Csv),
+        ])
+        ->assertInvalid([
+            'file' => 'UTF-16 CSV files are not supported. Save or export the file as UTF-8 CSV and try again.',
+        ]);
+});
+
+test('duplicate bib rows do not overwrite the first imported result', function () {
+    $event = Event::factory()->running()->create();
+    $distance = tenK($event);
+    $participant = runner($distance, 'Nadia Putri', '101');
+    $user = organizerOf($event);
+
+    $this->actingAs($user)
+        ->post(route('race_results.import', [$event, $distance]), [
+            'file' => resultsCsv("bib,time\n101,48:12\n101,50:00\n"),
+        ])
+        ->assertRedirect()
+        ->assertSessionHas('import_errors', fn (array $errors) => count($errors) === 1
+            && str_contains($errors[0], 'appears more than once'));
+
+    expect($participant->fresh()->duration_seconds)->toBe(2892);
+});
+
+test('an unknown status is reported instead of marking the runner finished', function () {
+    $event = Event::factory()->running()->create();
+    $distance = tenK($event);
+    $participant = runner($distance, 'Nadia Putri', '101');
+    $user = organizerOf($event);
+
+    $this->actingAs($user)
+        ->post(route('race_results.import', [$event, $distance]), [
+            'file' => resultsCsv("bib,time,status\n101,48:12,retired\n"),
+        ])
+        ->assertRedirect()
+        ->assertSessionHas('import_errors', fn (array $errors) => count($errors) === 1
+            && str_contains($errors[0], 'not a supported status'));
+
+    expect($participant->fresh()->duration_seconds)->toBeNull();
+});
+
+test('an oversized row count is rejected before any results are changed', function () {
+    $event = Event::factory()->running()->create();
+    $distance = tenK($event);
+    $participant = runner($distance, 'Nadia Putri', '101');
+    $user = organizerOf($event);
+    $csv = "bib,time\n101,48:12\n".str_repeat("999,50:00\n", 10000);
+
+    $this->actingAs($user)
+        ->post(route('race_results.import', [$event, $distance]), [
+            'file' => resultsCsv($csv),
+        ])
+        ->assertInvalid([
+            'file' => 'The CSV file has more than 10,000 data rows. Split it into smaller files and import them separately.',
+        ]);
+
+    expect($participant->fresh()->duration_seconds)->toBeNull();
+});
+
 test('an import reports the rows it could not apply and keeps the rest', function () {
     $event = Event::factory()->running()->create();
     $distance = tenK($event);
@@ -182,8 +307,9 @@ test('an import needs a bib column and a time column', function () {
         ->post(route('race_results.import', [$event, $distance]), [
             'file' => resultsCsv("runner,place\nNadia,1\n"),
         ])
-        ->assertRedirect()
-        ->assertSessionHas('import_errors', fn (array $errors) => count($errors) === 1);
+        ->assertInvalid([
+            'file' => 'The CSV file needs a "bib" column and a "time" column.',
+        ]);
 });
 
 test('a bib belonging to another distance is not matched', function () {
