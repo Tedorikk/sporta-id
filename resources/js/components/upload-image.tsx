@@ -220,10 +220,21 @@ export function UploadImage({
             const croppedFile = await getCroppedImageFile(
                 cropSrc,
                 croppedAreaPixels,
+                'image.jpg',
+                { maxBytes: maxSizeMB * 1024 * 1024 },
             );
+
+            if (!validateFile(croppedFile)) {
+                return;
+            }
+
             await uploadFile(croppedFile);
-        } catch {
-            onError?.(t('Could not crop image. Please try again.'));
+        } catch (error) {
+            onError?.(
+                error instanceof Error
+                    ? error.message
+                    : t('Could not crop image. Please try again.'),
+            );
         } finally {
             setIsCropProcessing(false);
             setCropperOpen(false);
