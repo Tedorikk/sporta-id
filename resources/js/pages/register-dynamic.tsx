@@ -4,13 +4,9 @@ import { CheckCircle2, Clock, Loader2, Lock, Save, Users } from 'lucide-react';
 import QRCode from 'qrcode';
 import type { CSSProperties } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
 import { Controller, useForm } from 'react-hook-form';
 import * as z from 'zod';
-import {
-    status as registrationStatus,
-    store as storeRegistration,
-} from '@/actions/App/Http/Controllers/RegistrationController';
+import { store as storeRegistration } from '@/actions/App/Http/Controllers/RegistrationController';
 import { RegistrationIdCardCard } from '@/components/id-card/registration-id-card-card';
 import { TeamIdCardCard } from '@/components/id-card/team-id-card-card';
 import { IdCardActions } from '@/components/id-card-actions';
@@ -113,7 +109,6 @@ function PaymentPendingView({
     accentStyle: CSSProperties;
 }) {
     const { t } = useT();
-    const [isPaying, setIsPaying] = useState(false);
 
     const payNow = () => {
         if (checkoutUrl) {
@@ -168,15 +163,9 @@ function PaymentPendingView({
                             <Button
                                 type="button"
                                 onClick={payNow}
-                                disabled={isPaying}
                                 className="mt-2 w-full cursor-pointer bg-[var(--accent)] font-bold tracking-wide text-white uppercase hover:bg-[var(--accent-dark)]"
                             >
-                                {isPaying ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                ) : null}
-                                {isPaying
-                                    ? t('Opening payment…')
-                                    : t('Pay Now')}
+                                {t('Pay Now')}
                             </Button>
                         ) : (
                             <p className="text-sm text-amber-600">
@@ -436,7 +425,7 @@ const RESERVED_KEYS = ['name', 'email', 'phone', 'photo'];
 /**
  * Injected into a paid category's form when the organizer didn't ask for an
  * email themselves. A paid registration has nowhere to send the payment
-   * receipt or our confirmation without one, and the server enforces the same
+ * receipt or our confirmation without one, and the server enforces the same
  * rule — so the field has to exist even if the form builder omitted it.
  */
 const emailField = (t: Translate): RegistrationField => ({
@@ -496,19 +485,31 @@ function teamMembersFieldOf(pages: FormPage[]): RegistrationField | undefined {
 
 /** Which page a field key lives on, so a cross-page error can jump there first. */
 function pageIndexOf(pages: FormPage[], key: string): number {
+    const fieldKey = key
+        .replace(/^form_data\./, '')
+        .replace(/^roster(?:\..*)?$/, 'roster')
+        .replace(/^members(?:\..*)?$/, 'members');
+
     return pages.findIndex((page) =>
         page.fields.some((f) => {
-            if (key === 'roster') {
+            if (fieldKey === 'roster') {
                 return isRosterField(f);
             }
 
-            if (key === 'members') {
+            if (fieldKey === 'members') {
                 return isTeamMembersField(f);
             }
 
-            return f.key === key;
+            return f.key === fieldKey;
         }),
     );
+}
+
+function visibleFieldKey(key: string): string {
+    return key
+        .replace(/^form_data\./, '')
+        .replace(/^roster(?:\..*)?$/, 'roster')
+        .replace(/^members(?:\..*)?$/, 'members');
 }
 
 /** Radio/gender choices only tag their `<input>`s with `name`, not `id`. */
@@ -876,7 +877,7 @@ export default function RegisterDynamic({
                     });
 
                     if (firstKey) {
-                        const key = firstKey;
+                        const key = visibleFieldKey(firstKey);
                         const target = pageIndexOf(pages, key);
 
                         if (target !== -1) {
@@ -890,6 +891,23 @@ export default function RegisterDynamic({
                 },
             },
         );
+    };
+
+    const onInvalid = (invalidFields: Record<string, unknown>) => {
+        const firstKey = Object.keys(invalidFields)[0];
+
+        if (!firstKey) {
+            return;
+        }
+
+        const key = visibleFieldKey(firstKey);
+        const target = pageIndexOf(pages, key);
+
+        if (target !== -1) {
+            setPageIndex(target);
+        }
+
+        requestAnimationFrame(() => scrollToField(key));
     };
 
     async function goNext() {
@@ -1119,7 +1137,7 @@ export default function RegisterDynamic({
                     )}
 
                     <form
-                        onSubmit={handleSubmit(onSubmit)}
+                        onSubmit={handleSubmit(onSubmit, onInvalid)}
                         className="px-6 py-6"
                     >
                         {isFirstPage && rosterField && (
