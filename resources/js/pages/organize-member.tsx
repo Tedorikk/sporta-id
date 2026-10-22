@@ -1,5 +1,13 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { Clock, Loader2, Lock, Pencil, Plus, Trash2, UserRound } from 'lucide-react';
+import {
+    Clock,
+    Loader2,
+    Lock,
+    Pencil,
+    Plus,
+    Trash2,
+    UserRound,
+} from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -30,6 +38,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { UploadDocument } from '@/components/upload-document';
 import { UploadImage } from '@/components/upload-image';
 import { useForceLightMode } from '@/hooks/use-force-light-mode';
 import { useT } from '@/hooks/use-t';
@@ -140,7 +149,9 @@ function MemberDialog({
         value: slot.role,
         label: slot.label,
         full:
-            slot.max !== null && slot.count >= slot.max && member?.role !== slot.role,
+            slot.max !== null &&
+            slot.count >= slot.max &&
+            member?.role !== slot.role,
     }));
     const defaultRole =
         member?.role ??
@@ -150,10 +161,14 @@ function MemberDialog({
     const form = useForm<MemberForm>(
         toMemberForm(member ?? undefined, memberFields, defaultRole),
     );
-    const { data, setData, errors, processing, reset, clearErrors, isDirty } = form;
+    const { data, setData, errors, processing, reset, clearErrors, isDirty } =
+        form;
     const askedFields = memberFields.filter((mf) =>
         teamMemberFieldAppliesTo(mf, data.role),
     );
+
+    const setUploadError = (key: string) => (message: string) =>
+        form.setError(`extra.${key}`, message);
 
     function handleOpenChange(next: boolean) {
         if (!next) {
@@ -186,7 +201,10 @@ function MemberDialog({
                 options,
             );
         } else {
-            form.post(`/registrations/${token}/organize-member/players`, options);
+            form.post(
+                `/registrations/${token}/organize-member/players`,
+                options,
+            );
         }
     }
 
@@ -213,10 +231,15 @@ function MemberDialog({
                             </FieldLabel>
                             <Select
                                 value={data.role}
-                                onValueChange={(value) => setData('role', value)}
+                                onValueChange={(value) =>
+                                    setData('role', value)
+                                }
                                 disabled={processing}
                             >
-                                <SelectTrigger id="member_role" className="w-full">
+                                <SelectTrigger
+                                    id="member_role"
+                                    className="w-full"
+                                >
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -232,7 +255,9 @@ function MemberDialog({
                                     ))}
                                 </SelectContent>
                             </Select>
-                            {errors.role && <FieldError>{errors.role}</FieldError>}
+                            {errors.role && (
+                                <FieldError>{errors.role}</FieldError>
+                            )}
                         </Field>
 
                         <Field data-invalid={Boolean(errors.name)}>
@@ -243,14 +268,21 @@ function MemberDialog({
                             <Input
                                 id="member_name"
                                 value={data.name}
-                                onChange={(e) => setData('name', e.target.value)}
+                                onChange={(e) =>
+                                    setData('name', e.target.value)
+                                }
                                 autoComplete="name"
                                 disabled={processing}
                             />
-                            {errors.name && <FieldError>{errors.name}</FieldError>}
+                            {errors.name && (
+                                <FieldError>{errors.name}</FieldError>
+                            )}
                         </Field>
 
-                        <Field data-invalid={Boolean(errors.photo)} className="w-44">
+                        <Field
+                            data-invalid={Boolean(errors.photo)}
+                            className="w-44"
+                        >
                             <FieldLabel>
                                 {t('Photo')}
                                 <RequiredMark />
@@ -260,12 +292,16 @@ function MemberDialog({
                                 value={data.photo}
                                 uploadUrl="/public-upload/image"
                                 deleteUrl="/public-upload/image"
-                                onChange={(value) => setData('photo', value ?? '')}
+                                onChange={(value) =>
+                                    setData('photo', value ?? '')
+                                }
                                 enableCrop
                                 disabled={processing}
                                 className="rounded-xl border"
                             />
-                            {errors.photo && <FieldError>{errors.photo}</FieldError>}
+                            {errors.photo && (
+                                <FieldError>{errors.photo}</FieldError>
+                            )}
                         </Field>
 
                         <Field data-invalid={Boolean(errors.phone_number)}>
@@ -303,10 +339,14 @@ function MemberDialog({
                                 id="member_email"
                                 type="email"
                                 value={data.email}
-                                onChange={(e) => setData('email', e.target.value)}
+                                onChange={(e) =>
+                                    setData('email', e.target.value)
+                                }
                                 disabled={processing}
                             />
-                            {errors.email && <FieldError>{errors.email}</FieldError>}
+                            {errors.email && (
+                                <FieldError>{errors.email}</FieldError>
+                            )}
                         </Field>
 
                         {askedFields.map((mf) => {
@@ -315,8 +355,13 @@ function MemberDialog({
                             )[`extra.${mf.key}`];
 
                             return (
-                                <Field key={mf.key} data-invalid={Boolean(error)}>
-                                    <FieldLabel htmlFor={`member_extra_${mf.key}`}>
+                                <Field
+                                    key={mf.key}
+                                    data-invalid={Boolean(error)}
+                                >
+                                    <FieldLabel
+                                        htmlFor={`member_extra_${mf.key}`}
+                                    >
                                         {mf.label}
                                         {mf.required && <RequiredMark />}
                                         {!mf.required && (
@@ -326,7 +371,39 @@ function MemberDialog({
                                             </span>
                                         )}
                                     </FieldLabel>
-                                    {mf.type === 'select' ? (
+                                    {mf.type === 'file' ? (
+                                        <UploadImage
+                                            value={data.extra[mf.key] ?? ''}
+                                            ratio={4 / 5}
+                                            uploadUrl="/public-upload/image"
+                                            deleteUrl="/public-upload/image"
+                                            onChange={(value) =>
+                                                setData('extra', {
+                                                    ...data.extra,
+                                                    [mf.key]: value ?? '',
+                                                })
+                                            }
+                                            onError={setUploadError(mf.key)}
+                                            enableCrop
+                                            disabled={processing}
+                                            className="rounded-xl border"
+                                            placeholder={t('Upload photo')}
+                                        />
+                                    ) : mf.type === 'document' ? (
+                                        <UploadDocument
+                                            value={data.extra[mf.key] ?? ''}
+                                            uploadUrl="/public-upload/document"
+                                            deleteUrl="/public-upload/document"
+                                            onChange={(value) =>
+                                                setData('extra', {
+                                                    ...data.extra,
+                                                    [mf.key]: value ?? '',
+                                                })
+                                            }
+                                            onError={setUploadError(mf.key)}
+                                            disabled={processing}
+                                        />
+                                    ) : mf.type === 'select' ? (
                                         <Select
                                             value={data.extra[mf.key] ?? ''}
                                             onValueChange={(value) =>
@@ -538,7 +615,9 @@ export default function OrganizeMember({
 
     function remove(member: Player) {
         if (
-            !window.confirm(t('Remove :name from the list?', { name: member.name }))
+            !window.confirm(
+                t('Remove :name from the list?', { name: member.name }),
+            )
         ) {
             return;
         }
@@ -693,7 +772,9 @@ export default function OrganizeMember({
 
             {editable && (
                 <MemberDialog
-                    key={editing ? `${editing.id}:${editing.updated_at}` : 'new'}
+                    key={
+                        editing ? `${editing.id}:${editing.updated_at}` : 'new'
+                    }
                     token={registration.qr_token}
                     member={editing}
                     memberFields={memberFields}

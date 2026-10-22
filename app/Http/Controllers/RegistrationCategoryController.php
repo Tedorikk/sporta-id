@@ -427,7 +427,20 @@ class RegistrationCategoryController extends Controller
             'form_pages.*.fields.*.member_fields' => ['nullable', 'array'],
             'form_pages.*.fields.*.member_fields.*.key' => ['required', 'string', 'max:100', 'regex:/^[a-z0-9_]+$/'],
             'form_pages.*.fields.*.member_fields.*.label' => ['required', 'string', 'max:255'],
-            'form_pages.*.fields.*.member_fields.*.type' => ['required', Rule::in(RegistrationCategory::ROSTER_MEMBER_FIELD_TYPES)],
+            'form_pages.*.fields.*.member_fields.*.type' => [
+                'required',
+                function (string $attribute, mixed $value, Closure $fail) use ($request) {
+                    preg_match('/^(form_pages\.\d+\.fields\.\d+)\./', $attribute, $matches);
+                    $fieldType = $request->input($matches[1].'.type');
+                    $allowedTypes = $fieldType === RegistrationCategory::TEAM_MEMBERS_TYPE
+                        ? RegistrationCategory::TEAM_MEMBER_FIELD_TYPES
+                        : RegistrationCategory::ROSTER_MEMBER_FIELD_TYPES;
+
+                    if (! in_array($value, $allowedTypes, true)) {
+                        $fail('The selected :attribute is invalid.');
+                    }
+                },
+            ],
             'form_pages.*.fields.*.member_fields.*.required' => ['nullable', 'boolean'],
             'form_pages.*.fields.*.member_fields.*.options' => ['nullable', 'array'],
             'form_pages.*.fields.*.member_fields.*.options.*' => ['string', 'max:255'],

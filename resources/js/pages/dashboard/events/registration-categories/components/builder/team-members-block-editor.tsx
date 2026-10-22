@@ -14,7 +14,7 @@ import type {
     TeamMemberField,
     TeamMemberSlot,
 } from '@/types/registration-category';
-import { ROSTER_MEMBER_FIELD_TYPES } from '@/types/registration-category';
+import { TEAM_MEMBER_FIELD_TYPES } from '@/types/registration-category';
 import { OptionEditor } from './option-editor';
 
 function slugKey(label: string): string {
@@ -63,7 +63,10 @@ export function TeamMembersBlockEditor({
         }
 
         onChange({
-            slots: [...slots, { role: key, label: 'Member', min: 1, max: null }],
+            slots: [
+                ...slots,
+                { role: key, label: 'Member', min: 1, max: null },
+            ],
         });
     }
 
@@ -286,7 +289,7 @@ export function TeamMembersBlockEditor({
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {ROSTER_MEMBER_FIELD_TYPES.map((t) => (
+                                        {TEAM_MEMBER_FIELD_TYPES.map((t) => (
                                             <SelectItem
                                                 key={t.value}
                                                 value={t.value}

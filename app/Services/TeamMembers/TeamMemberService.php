@@ -83,6 +83,7 @@ class TeamMemberService
                     'date' => ['date'],
                     'select' => [Rule::in($field['options'] ?? [])],
                     'phone' => ['string', 'max:50', 'regex:/^[0-9+\-\s()]{6,25}$/'],
+                    'file', 'document' => ['url', 'max:255'],
                     default => ['string', 'max:255'],
                 },
             ];

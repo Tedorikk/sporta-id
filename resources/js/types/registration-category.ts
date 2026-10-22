@@ -69,6 +69,9 @@ export const TEAM_LOGO_KEY = 'team_logo';
 export type RosterMemberFieldType =
     'text' | 'number' | 'date' | 'select' | 'phone';
 
+/** Extra answer types supported by the generic Organize Members block. */
+export type TeamMemberFieldType = RosterMemberFieldType | 'file' | 'document';
+
 /** An organiser-defined question asked of every roster member; answers land in players.extra. */
 export interface RosterMemberField {
     key: string;
@@ -105,7 +108,7 @@ export interface TeamMemberSlot {
 export interface TeamMemberField {
     key: string;
     label: string;
-    type: RosterMemberFieldType;
+    type: TeamMemberFieldType;
     required: boolean;
     options?: string[];
     roles?: string[];
@@ -226,6 +229,15 @@ export const ROSTER_MEMBER_FIELD_TYPES: {
     { value: 'date', label: 'Date' },
     { value: 'select', label: 'Dropdown' },
     { value: 'phone', label: 'Phone' },
+];
+
+export const TEAM_MEMBER_FIELD_TYPES: {
+    value: TeamMemberFieldType;
+    label: string;
+}[] = [
+    ...ROSTER_MEMBER_FIELD_TYPES,
+    { value: 'file', label: 'Photo upload' },
+    { value: 'document', label: 'Document upload (PDF, Word)' },
 ];
 
 export interface FormPage {

@@ -19,6 +19,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { UploadDocument } from '@/components/upload-document';
 import { UploadImage } from '@/components/upload-image';
 import { useT } from '@/hooks/use-t';
 import type { Translate } from '@/lib/i18n';
@@ -116,10 +117,15 @@ export function teamMembersSchema(field: RegistrationField, t: Translate) {
 }
 
 /** One empty entry per required slot, so the minimum members are already on the page. */
-export function defaultTeamMembers(field: RegistrationField): TeamMemberInput[] {
+export function defaultTeamMembers(
+    field: RegistrationField,
+): TeamMemberInput[] {
     return (field.slots ?? []).flatMap((slot) =>
         Array.from({ length: slot.min }, () =>
-            emptyTeamMember(slot.role, (field.member_fields ?? []) as TeamMemberField[]),
+            emptyTeamMember(
+                slot.role,
+                (field.member_fields ?? []) as TeamMemberField[],
+            ),
         ),
     );
 }
@@ -143,7 +149,10 @@ export function TeamMembersBlock({
     disabled,
 }: TeamMembersBlockProps) {
     const { t } = useT();
-    const { fields, append, remove } = useFieldArray({ control, name: 'members' });
+    const { fields, append, remove } = useFieldArray({
+        control,
+        name: 'members',
+    });
     const members = fields as unknown as (TeamMemberInput & { id: string })[];
     const slots = field.slots ?? [];
     const memberFields = (field.member_fields ?? []) as TeamMemberField[];
@@ -288,7 +297,10 @@ function MemberCard({
                     name={`${base}.photo`}
                     control={control}
                     render={({ field }) => (
-                        <Field data-invalid={Boolean(errors?.photo)} className="w-28">
+                        <Field
+                            data-invalid={Boolean(errors?.photo)}
+                            className="w-28"
+                        >
                             <FieldLabel>
                                 {t('Photo')}
                                 <RequiredMark />
@@ -298,7 +310,9 @@ function MemberCard({
                                 ratio={4 / 5}
                                 uploadUrl="/public-upload/image"
                                 deleteUrl="/public-upload/image"
-                                onChange={(value) => field.onChange(value ?? '')}
+                                onChange={(value) =>
+                                    field.onChange(value ?? '')
+                                }
                                 onError={uploadError('photo')}
                                 enableCrop
                                 disabled={disabled}
@@ -354,7 +368,9 @@ function MemberCard({
                                     <FieldError errors={[fieldState.error]} />
                                 ) : (
                                     <FieldDescription>
-                                        {t('Include the country code, e.g. +62.')}
+                                        {t(
+                                            'Include the country code, e.g. +62.',
+                                        )}
                                     </FieldDescription>
                                 )}
                             </Field>
@@ -382,7 +398,37 @@ function MemberCard({
                                             </span>
                                         )}
                                     </FieldLabel>
-                                    {mf.type === 'select' ? (
+                                    {mf.type === 'file' ? (
+                                        <UploadImage
+                                            value={field.value as string}
+                                            ratio={4 / 5}
+                                            uploadUrl="/public-upload/image"
+                                            deleteUrl="/public-upload/image"
+                                            onChange={(value) =>
+                                                field.onChange(value ?? '')
+                                            }
+                                            onError={uploadError(
+                                                `extra.${mf.key}`,
+                                            )}
+                                            enableCrop
+                                            disabled={disabled}
+                                            className="rounded-xl border"
+                                            placeholder={t('Upload photo')}
+                                        />
+                                    ) : mf.type === 'document' ? (
+                                        <UploadDocument
+                                            value={field.value as string}
+                                            uploadUrl="/public-upload/document"
+                                            deleteUrl="/public-upload/document"
+                                            onChange={(value) =>
+                                                field.onChange(value ?? '')
+                                            }
+                                            onError={uploadError(
+                                                `extra.${mf.key}`,
+                                            )}
+                                            disabled={disabled}
+                                        />
+                                    ) : mf.type === 'select' ? (
                                         <Select
                                             value={field.value as string}
                                             onValueChange={field.onChange}
@@ -426,7 +472,9 @@ function MemberCard({
                                         />
                                     )}
                                     {fieldState.invalid && (
-                                        <FieldError errors={[fieldState.error]} />
+                                        <FieldError
+                                            errors={[fieldState.error]}
+                                        />
                                     )}
                                 </Field>
                             )}

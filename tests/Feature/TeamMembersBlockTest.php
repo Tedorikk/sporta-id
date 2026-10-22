@@ -19,7 +19,10 @@ function teamMembersCategory(): RegistrationCategory
                 ['role' => 'dancer', 'label' => 'Dancer', 'min' => 4, 'max' => 10],
                 ['role' => 'choreographer', 'label' => 'Choreographer', 'min' => 0, 'max' => 1],
             ],
-            'member_fields' => [],
+            'member_fields' => [
+                ['key' => 'portrait', 'label' => 'Portrait', 'type' => 'file', 'required' => false],
+                ['key' => 'permission_letter', 'label' => 'Permission letter', 'type' => 'document', 'required' => false],
+            ],
         ]]],
     ]]);
 }
@@ -33,14 +36,76 @@ test('an organiser can put a custom-role team-members block on a non-basketball 
         'form_pages' => [['key' => 'p', 'title' => 'Members', 'fields' => [[
             'key' => 'members', 'label' => 'Members', 'type' => 'team_members', 'required' => true,
             'slots' => [['role' => 'dancer', 'label' => 'Dancer', 'min' => 4, 'max' => 10]],
-            'member_fields' => [],
+            'member_fields' => [
+                ['key' => 'portrait', 'label' => 'Portrait', 'type' => 'file', 'required' => false],
+                ['key' => 'permission_letter', 'label' => 'Permission letter', 'type' => 'document', 'required' => false],
+            ],
         ]]]],
     ];
 
     $this->post(route('registration_categories.store', $event), $payload)
         ->assertRedirect()->assertSessionHasNoErrors();
 
-    expect(RegistrationCategory::sole()->teamMembersField()['slots'][0]['role'])->toBe('dancer');
+    $block = RegistrationCategory::sole()->teamMembersField();
+
+    expect($block['slots'][0]['role'])->toBe('dancer')
+        ->and($block['member_fields'])->toHaveCount(2)
+        ->and($block['member_fields'][0]['type'])->toBe('file')
+        ->and($block['member_fields'][1]['type'])->toBe('document');
+});
+
+test('photo and document questions are validated and stored per member', function () {
+    $category = teamMembersCategory();
+    $pages = $category->form_pages;
+    $pages[0]['fields'][0]['slots'][0]['min'] = 1;
+    $pages[0]['fields'][0]['member_fields'] = [
+        ['key' => 'headshot', 'label' => 'Headshot', 'type' => 'file', 'required' => true],
+        ['key' => 'consent', 'label' => 'Consent form', 'type' => 'document', 'required' => true],
+    ];
+    $category->update(['form_pages' => $pages]);
+
+    $member = [
+        'role' => 'dancer',
+        'name' => 'A',
+        'photo' => 'https://example.com/id.jpg',
+        'phone_number' => '+6281111111111',
+        'extra' => [
+            'headshot' => 'not-a-url',
+            'consent' => '',
+        ],
+    ];
+
+    $this->post(route('registrations.store', [$category->event, $category]), [
+        'name' => 'Crew A',
+        'form_data' => [],
+        'members' => [$member],
+    ])->assertSessionHasErrors([
+        'members.0.extra.headshot',
+        'members.0.extra.consent',
+    ]);
+
+    $member['extra'] = [
+        'headshot' => 'https://example.com/headshot.webp',
+        'consent' => 'https://example.com/consent.pdf',
+    ];
+
+    $this->post(route('registrations.store', [$category->event, $category]), [
+        'name' => 'Crew A',
+        'form_data' => [],
+        'members' => [$member],
+    ])->assertOk();
+
+    $registration = Registration::sole();
+    $player = $registration->team->players()->sole();
+
+    expect($player->extra)->toBe($member['extra']);
+
+    $member['extra']['consent'] = 'https://example.com/revised-consent.docx';
+
+    $this->put(route('team-members.update', [$registration, $player]), $member)
+        ->assertSessionHasNoErrors();
+
+    expect($player->fresh()->extra)->toBe($member['extra']);
 });
 
 test('a team-members block is rejected alongside a roster block, and on an individual category', function () {

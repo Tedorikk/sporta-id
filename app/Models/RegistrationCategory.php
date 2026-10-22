@@ -241,6 +241,9 @@ class RegistrationCategory extends Model
     /** Answer types an organiser may ask per roster member, beyond the fixed identity fields. */
     public const ROSTER_MEMBER_FIELD_TYPES = ['text', 'number', 'date', 'select', 'phone'];
 
+    /** Answer types supported by the generic Organize Members block. */
+    public const TEAM_MEMBER_FIELD_TYPES = [...self::ROSTER_MEMBER_FIELD_TYPES, 'file', 'document'];
+
     /**
      * A `file` field with this key on a team category is the team's logo: its
      * upload is copied onto teams.logo so ID cards and brackets show it.
