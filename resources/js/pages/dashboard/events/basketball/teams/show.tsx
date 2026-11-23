@@ -6,6 +6,7 @@ import {
     Check,
     Copy,
     Download,
+    Eye,
     IdCard,
     Mail,
     Pencil,
@@ -29,6 +30,7 @@ import type { Player } from '@/types/player';
 import type { ReviewIssue, Team, TeamReview } from '@/types/team';
 import { AddExistingPlayerDialog } from './components/add-existing-player-dialog';
 import type { BasketballClub } from './components/add-existing-player-dialog';
+import { PlayerDetailDialog } from './components/player-detail-dialog';
 import { PlayerFormDialog } from './components/player-form-dialog';
 
 const STATUS_BADGE: Record<
@@ -162,6 +164,14 @@ function PlayerRosterCard({
                 </div>
 
                 <div className="flex shrink-0 flex-col gap-1">
+                    <PlayerDetailDialog
+                        player={player}
+                        trigger={
+                            <Button variant="ghost" size="icon">
+                                <Eye className="h-4 w-4" />
+                            </Button>
+                        }
+                    />
                     <PlayerFormDialog
                         event={event}
                         team={team}
