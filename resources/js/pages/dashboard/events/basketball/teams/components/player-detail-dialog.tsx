@@ -11,20 +11,63 @@ import {
 import { playerRoleLabel } from '@/types/player';
 import type { Player } from '@/types/player';
 
-function DetailRow({ label, value }: { label: string; value: ReactNode }) {
+function DetailRow({
+    label,
+    value,
+}: {
+    label: string;
+    value: ReactNode | null | undefined;
+}) {
+    if (value === null || value === undefined || value === '') {
+        return null;
+    }
+
     return (
         <div className="flex flex-col gap-0.5 border-b py-2 last:border-b-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <span className="text-xs font-medium text-muted-foreground">
                 {label}
             </span>
-            <span className="text-sm break-words sm:text-right">
-                {value}
-            </span>
+            <span className="text-sm break-words sm:text-right">{value}</span>
         </div>
     );
 }
 
-const empty = <span className="italic text-muted-foreground">Not set</span>;
+const isImageUrl = (url: string) =>
+    /\.(jpe?g|png|gif|webp|avif|bmp)(\?.*)?$/i.test(url);
+const isUrl = (value: string) => /^https?:\/\//i.test(value);
+
+function FileLink({ url, label }: { url: string; label: string }) {
+    if (isImageUrl(url)) {
+        return (
+            <a
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2"
+            >
+                <img
+                    src={url}
+                    alt={label}
+                    className="h-10 w-10 rounded border object-cover"
+                />
+                <span className="text-sm underline underline-offset-2">
+                    View full image
+                </span>
+            </a>
+        );
+    }
+
+    return (
+        <a
+            href={url}
+            target="_blank"
+            rel="noreferrer"
+            className="text-sm underline underline-offset-2"
+        >
+            {label}
+        </a>
+    );
+}
 
 export function PlayerDetailDialog({
     player,
@@ -59,50 +102,41 @@ export function PlayerDetailDialog({
                         <>
                             <DetailRow
                                 label="Jersey Number"
-                                value={player.jersey_number ?? empty}
+                                value={player.jersey_number}
                             />
                             <DetailRow
                                 label="Position"
-                                value={player.position ?? empty}
+                                value={player.position}
                             />
                         </>
                     )}
                     <DetailRow
                         label="Club"
-                        value={player.basketball_club?.name ?? empty}
+                        value={player.basketball_club?.name}
                     />
                     <DetailRow
                         label="Date of Birth"
                         value={
                             player.dob
                                 ? format(new Date(player.dob), 'PP')
-                                : empty
+                                : null
                         }
                     />
-                    <DetailRow
-                        label="Birthplace"
-                        value={player.birthplace ?? empty}
-                    />
+                    <DetailRow label="Birthplace" value={player.birthplace} />
                     <DetailRow
                         label="Phone Number"
-                        value={player.phone_number ?? empty}
+                        value={player.phone_number}
                     />
-                    <DetailRow label="Email" value={player.email ?? empty} />
+                    <DetailRow label="Email" value={player.email} />
                     <DetailRow
                         label="Identity Document"
                         value={
                             player.identity_card ? (
-                                <a
-                                    href={player.identity_card}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="underline underline-offset-2"
-                                >
-                                    View document
-                                </a>
-                            ) : (
-                                empty
-                            )
+                                <FileLink
+                                    url={player.identity_card}
+                                    label="View document"
+                                />
+                            ) : null
                         }
                     />
                     <DetailRow
@@ -110,14 +144,10 @@ export function PlayerDetailDialog({
                         value={
                             player.certificate ? (
                                 <span className="flex items-center justify-end gap-2">
-                                    <a
-                                        href={player.certificate}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="underline underline-offset-2"
-                                    >
-                                        View certificate
-                                    </a>
+                                    <FileLink
+                                        url={player.certificate}
+                                        label="View certificate"
+                                    />
                                     {player.is_certificate_validated && (
                                         <Badge
                                             variant="secondary"
@@ -127,9 +157,7 @@ export function PlayerDetailDialog({
                                         </Badge>
                                     )}
                                 </span>
-                            ) : (
-                                empty
-                            )
+                            ) : null
                         }
                     />
                     {player.extra &&
@@ -140,10 +168,17 @@ export function PlayerDetailDialog({
                                     key={key}
                                     label={key
                                         .replace(/_/g, ' ')
-                                        .replace(/^\w/, (c) =>
-                                            c.toUpperCase(),
-                                        )}
-                                    value={value}
+                                        .replace(/^\w/, (c) => c.toUpperCase())}
+                                    value={
+                                        isUrl(value) ? (
+                                            <FileLink
+                                                url={value}
+                                                label="Open link"
+                                            />
+                                        ) : (
+                                            value
+                                        )
+                                    }
                                 />
                             ))}
                     <DetailRow
