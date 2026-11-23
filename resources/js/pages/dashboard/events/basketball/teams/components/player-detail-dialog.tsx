@@ -1,6 +1,8 @@
 import { format } from 'date-fns';
+import { Maximize2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
@@ -81,16 +83,35 @@ export function PlayerDetailDialog({
             <DialogTrigger asChild>{trigger}</DialogTrigger>
             <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
+                    <div className="flex items-center gap-4">
                         {player.photo && (
                             <img
                                 src={player.photo}
                                 alt={player.name}
-                                className="h-10 w-10 shrink-0 rounded-full object-cover"
+                                className="h-20 w-20 shrink-0 rounded-full object-cover"
                             />
                         )}
-                        {player.name}
-                    </DialogTitle>
+                        <div className="flex flex-col items-start gap-2">
+                            <DialogTitle>{player.name}</DialogTitle>
+                            {player.photo && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    asChild
+                                    className="w-fit"
+                                >
+                                    <a
+                                        href={player.photo}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                    >
+                                        <Maximize2 className="mr-1.5 h-3.5 w-3.5" />
+                                        View Full Photo
+                                    </a>
+                                </Button>
+                            )}
+                        </div>
+                    </div>
                 </DialogHeader>
 
                 <div className="flex flex-col">
